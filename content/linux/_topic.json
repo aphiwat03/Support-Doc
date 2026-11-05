@@ -1,0 +1,8 @@
+{
+  "slug": "linux",
+  "title": "Linux Administration",
+  "description": "คำสั่งพื้นฐาน, การจัดการสิทธิ์ไฟล์, Process, Service systemctl และการวิเคราะห์ Log",
+  "icon": "Terminal",
+  "color": "from-amber-500 to-orange-600",
+  "display_order": 1
+}

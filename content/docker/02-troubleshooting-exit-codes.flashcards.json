@@ -1,0 +1,26 @@
+[
+  {
+    "seed_key": "docker:02-troubleshooting-exit-codes:fc01",
+    "lesson_slug": "docker-troubleshooting-exit-codes",
+    "front_text": "Exit Code 137 ใน Docker มีความหมายว่าอย่างไร?",
+    "back_text": "คอนเทนเนอร์ถูกบังคับปิดด้วย SIGKILL (128 + 9) สาเหตุยอดนิยมคือ OOMKilled (Out of Memory - ใช้ RAM เกิน Limit)",
+    "hint": "SIGKILL / OOMKilled (Out of Memory)",
+    "display_order": 1
+  },
+  {
+    "seed_key": "docker:02-troubleshooting-exit-codes:fc02",
+    "lesson_slug": "docker-troubleshooting-exit-codes",
+    "front_text": "Exit Code 143 ใน Docker มีความหมายว่าอย่างไร?",
+    "back_text": "คอนเทนเนอร์หยุดทำงานอย่างสุภาพด้วย SIGTERM (128 + 15) เช่น ได้รับคำสั่ง docker stop หรือระบบกำลัง Deploy ใหม่",
+    "hint": "Graceful shutdown via SIGTERM",
+    "display_order": 2
+  },
+  {
+    "seed_key": "docker:02-troubleshooting-exit-codes:fc03",
+    "lesson_slug": "docker-troubleshooting-exit-codes",
+    "front_text": "คำสั่งใดใช้ตรวจสอบว่าคอนเทนเนอร์โดน OOMKilled หรือไม่แบบรวดเร็ว?",
+    "back_text": "docker inspect <container> --format '{{.State.OOMKilled}}' หรือดูใน Kernel Log ด้วยคำสั่ง dmesg -T | grep -i oom",
+    "hint": "docker inspect .State.OOMKilled",
+    "display_order": 3
+  }
+]

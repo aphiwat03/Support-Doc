@@ -1,0 +1,114 @@
+[
+  {
+    "seed_key": "linux:08-remote-access:q01",
+    "lesson_slug": "linux-remote-access",
+    "question_text": "เพื่อให้การล็อกอินแบบ SSH Key-based ทำงานได้โดยไม่ถูก `sshd` ปฏิเสธ สิทธิ์ (Octal Permission) ที่ถูกต้องของโฟลเดอร์ `~/.ssh` และไฟล์ `~/.ssh/authorized_keys` คือข้อใดตามลำดับ?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "บริการ `sshd` มีโหมด `StrictModes` ซึ่งกำหนดให้โฟลเดอร์ `~/.ssh` ต้องมีสิทธิ์ `700` (`drwx------` เจ้าของเข้าได้คนเดียว) และไฟล์ `~/.ssh/authorized_keys` ต้องมีสิทธิ์ `600` (`-rw-------` เจ้าของอ่าน/เขียนได้คนเดียว) หากเปิดสิทธิ์ให้กลุ่มหรือผู้อื่นแก้ไขได้ `sshd` จะปฏิเสธการใช้ Key ทันที",
+    "tags": ["ssh", "permissions", "security"],
+    "choices": [
+      { "choice_text": "`~/.ssh` เป็น 700 และ `~/.ssh/authorized_keys` เป็น 600", "is_correct": true, "explanation": "ถูกต้อง — เป็นสิทธิ์มาตรฐานที่ปลอดภัยและผ่านการตรวจสอบของ sshd" },
+      { "choice_text": "`~/.ssh` เป็น 777 และ `~/.ssh/authorized_keys` เป็น 666", "is_correct": false, "explanation": "สิทธิ์ 777 และ 666 เปิดให้ผู้อื่นเขียนทับกุญแจได้ จึงถูก sshd บล็อกการล็อกอินทันที" },
+      { "choice_text": "`~/.ssh` เป็น 644 และ `~/.ssh/authorized_keys` เป็น 755", "is_correct": false, "explanation": "โฟลเดอร์ต้องมีสิทธิ์ x (700) จึงจะเข้าถึงไฟล์ข้างในได้ ส่วนไฟล์กุญแจไม่ควรมีสิทธิ์ x" },
+      { "choice_text": "`~/.ssh` เป็น 400 และ `~/.ssh/authorized_keys` เป็น 000", "is_correct": false, "explanation": "โฟลเดอร์ที่ไม่มีสิทธิ์ x (400) จะไม่สามารถเปิดอ่านไฟล์ข้างในได้ และสิทธิ์ 000 อ่านไม่ได้เลย" }
+    ]
+  },
+  {
+    "seed_key": "linux:08-remote-access:q02",
+    "lesson_slug": "linux-remote-access",
+    "question_text": "เมื่อพยายามเชื่อมต่อ SSH ด้วยคำสั่งด้านล่างแล้วได้รับข้อความแจ้งเตือนดังภาพ สาเหตุเกิดจากอะไรและควรแก้ไขอย่างไร?",
+    "scenario_text": "$ ssh -i ~/.ssh/id_ed25519 support@10.20.1.50\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\nPermissions 0644 for '/home/user/.ssh/id_ed25519' are too open.\nIt is required that your private key files are NOT accessible by others.\nThis private key will be ignored.",
+    "question_type": "scenario",
+    "difficulty": "easy",
+    "explanation": "ข้อความ `Permissions 0644 for '/home/user/.ssh/id_ed25519' are too open` ระบุว่าไฟล์ Private Key บนเครื่องต้นทางมีสิทธิ์เปิดกว้างเกินไป (`644` ทำให้คนอื่นในเครื่องอ่านไฟล์กุญแจส่วนตัวได้) โปรแกรม `ssh` จึงเพิกเฉยไม่ยอมใช้กุญแจนี้ วิธีแก้คือรัน `chmod 600 ~/.ssh/id_ed25519`",
+    "tags": ["ssh", "permissions", "troubleshooting"],
+    "choices": [
+      { "choice_text": "ไฟล์ Private Key มีสิทธิ์เปิดกว้างเกินไป (0644) ให้แก้ไขด้วยคำสั่ง `chmod 600 ~/.ssh/id_ed25519`", "is_correct": true, "explanation": "ถูกต้อง — กุญแจส่วนตัวต้องจำกัดให้เจ้าของอ่านได้คนเดียวเท่านั้น (600 หรือ 400)" },
+      { "choice_text": "ไฟล์ Private Key หมดอายุ ต้องสร้างใหม่ด้วย `ssh-keygen` ทุก 30 วัน", "is_correct": false, "explanation": "กุญแจ SSH มาตรฐานไม่ได้หมดอายุตามข้อความนี้ แต่ติดเรื่อง Permission 0644" },
+      { "choice_text": "ต้องเปลี่ยนสิทธิ์เป็น `chmod 777 ~/.ssh/id_ed25519` เพื่อให้โปรแกรม ssh อ่านไฟล์ได้", "is_correct": false, "explanation": "ยิ่งเปลี่ยนเป็น 777 จะยิ่งเปิดกว้างและยังติดข้อผิดพลาดเดิม" },
+      { "choice_text": "เซิร์ฟเวอร์ปลายทาง `10.20.1.50` ปิดพอร์ต 22 อยู่", "is_correct": false, "explanation": "ปัญหานี้เกิดที่การตรวจสิทธิ์ไฟล์ Private Key บนเครื่องต้นทางของเราเอง" }
+    ]
+  },
+  {
+    "seed_key": "linux:08-remote-access:q03",
+    "lesson_slug": "linux-remote-access",
+    "question_text": "ข้อผิดพลาด `Connection refused` กับ `Connection timed out` ขณะรันคำสั่ง `ssh user@10.20.1.50` บ่งชี้สาเหตุต่างกันอย่างไร?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "medium",
+    "explanation": "`Connection refused` แปลว่าแพ็กเก็ตเดินทางไปถึงเครื่อง `10.20.1.50` แล้ว แต่ปลายทางตอบปฏิเสธกลับมาทันทีเพราะพอร์ต 22 ไม่มีบริการ `sshd` เปิดฟังอยู่ (เช่น `sshd` หยุดทำงาน หรือเปลี่ยนไปฟังพอร์ตอื่น) ส่วน `Connection timed out` แปลว่าส่งแพ็กเก็ตไปแล้วไม่ได้รับการตอบกลับเลย มักเกิดจากติด Firewall, Security Group, Routing หรือยังไม่ได้ต่อ VPN",
+    "tags": ["ssh", "network", "troubleshooting"],
+    "choices": [
+      { "choice_text": "Connection refused คือไปถึงเครื่องแล้วแต่พอร์ตไม่มีบริการ sshd เปิดรับ ส่วน Connection timed out คือแพ็กเก็ตไปไม่ถึงหรือถูก Firewall ดรอปเงียบๆ", "is_correct": true, "explanation": "ถูกต้อง — ช่วยแยกแยะได้ทันทีว่าปัญหาอยู่ที่ตัวบริการ sshd หรืออยู่ที่ระดับเครือข่าย/Firewall" },
+      { "choice_text": "Connection refused คือใส่รหัสผ่านผิด ส่วน Connection timed out คือใส่ชื่อผู้ใช้ผิด", "is_correct": false, "explanation": "หากใส่รหัสผ่านหรือกุญแจผิดจะขึ้นว่า Permission denied ไม่ใช่ Connection refused" },
+      { "choice_text": "ทั้งสองข้อความมีความหมายเหมือนกัน ขึ้นอยู่กับเวอร์ชันของ Ubuntu หรือ RHEL", "is_correct": false, "explanation": "เป็นรหัสข้อผิดพลาดระดับ TCP ที่ต่างกันอย่างชัดเจนในทุกระบบปฏิบัติการ" },
+      { "choice_text": "Connection refused เกิดจากสายแลนหลุด ส่วน Connection timed out เกิดจากฮาร์ดดิสก์เต็ม", "is_correct": false, "explanation": "สายแลนหลุดจะไม่สามารถส่งแพ็กเก็ตไปรับคำตอบ RST (Refused) จากปลายทางได้" }
+    ]
+  },
+  {
+    "seed_key": "linux:08-remote-access:q04",
+    "lesson_slug": "linux-remote-access",
+    "question_text": "ทีม Infrastructure แจ้งว่าเพิ่งติดตั้ง OS ใหม่ให้กับเซิร์ฟเวอร์ `10.20.1.88` เสร็จเรียบร้อย เมื่อคุณสั่ง `ssh support@10.20.1.88` จึงพบข้อความเตือนด้านล่าง หลังจากยืนยันกับทีม Infra แล้วว่าเป็นการลงเครื่องใหม่จริง คุณควรรันคำสั่งใดเพื่อล้างค่า Host key เก่าของ IP นี้ออกจากไฟล์ `known_hosts`?",
+    "scenario_text": "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\nIT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\nHost key for 10.20.1.88 has changed and you have requested strict checking.\nHost key verification failed.",
+    "question_type": "scenario",
+    "difficulty": "medium",
+    "explanation": "เมื่อเซิร์ฟเวอร์ถูกติดตั้ง OS ใหม่ที่ IP เดิม ลายนิ้วมือของเครื่อง (Host key) จะเปลี่ยนไป ทำให้ไม่ตรงกับค่าเก่าที่บันทึกไว้ใน `~/.ssh/known_hosts` คำสั่งที่ปลอดภัยและตรงจุดที่สุดในการลบเฉพาะบรรทัดของโฮสต์นั้นคือ `ssh-keygen -R 10.20.1.88`",
+    "tags": ["ssh", "known_hosts", "ssh-keygen", "troubleshooting"],
+    "choices": [
+      { "choice_text": "ssh-keygen -R 10.20.1.88", "is_correct": true, "explanation": "ถูกต้อง — ลบเฉพาะรายการ Host key ของ 10.20.1.88 ออกจาก ~/.ssh/known_hosts อย่างปลอดภัย" },
+      { "choice_text": "ssh-copy-id 10.20.1.88", "is_correct": false, "explanation": "ssh-copy-id ใช้ส่ง Public key ของเราไปปลายทาง ซึ่งจะติดปัญหา Host key verification failed เช่นเดียวกัน" },
+      { "choice_text": "rm -rf ~/.ssh", "is_correct": false, "explanation": "การลบทั้งโฟลเดอร์ ~/.ssh จะทำให้ Private Key และคอนฟิกทั้งหมดของเราหายไปด้วย!" },
+      { "choice_text": "chmod 777 ~/.ssh/known_hosts", "is_correct": false, "explanation": "การเปลี่ยนสิทธิ์ไฟล์ไม่ได้ลบค่า Host key เก่าที่ขัดแย้งกันออก" }
+    ]
+  },
+  {
+    "seed_key": "linux:08-remote-access:q05",
+    "lesson_slug": "linux-remote-access",
+    "question_text": "หากเซิร์ฟเวอร์ปลายทางเปิดรับ SSH ที่พอร์ต `2222` และคุณต้องการคัดลอกไฟล์ `/tmp/report.txt` จากเซิร์ฟเวอร์มาไว้ที่โฟลเดอร์ปัจจุบันด้วยคำสั่ง `scp` ต้องระบุตัวเลือกพอร์ตอย่างไร?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "medium",
+    "explanation": "ข้อควรระวังยอดฮิต: คำสั่ง `ssh` ใช้ `-p` (ตัวพิมพ์เล็ก) สำหรับระบุพอร์ต แต่คำสั่ง `scp` ใช้ **`-P` (ตัวพิมพ์ใหญ่)** สำหรับระบุพอร์ต (เนื่องจาก `-p` พิมพ์เล็กใน `scp` ถูกใช้สำหรับ preserve timestamps/modes เหมือนใน `cp -p`)",
+    "tags": ["scp", "ssh", "ports"],
+    "choices": [
+      { "choice_text": "scp -P 2222 support@10.20.1.50:/tmp/report.txt ./", "is_correct": true, "explanation": "ถูกต้อง — คำสั่ง scp ต้องใช้ -P (ตัวพิมพ์ใหญ่) ในการระบุหมายเลขพอร์ต" },
+      { "choice_text": "scp -p 2222 support@10.20.1.50:/tmp/report.txt ./", "is_correct": false, "explanation": "-p (ตัวพิมพ์เล็ก) ใน scp หมายถึงการคงค่าเวลาและสิทธิ์ของไฟล์ ไม่ใช่การระบุพอร์ต" },
+      { "choice_text": "scp --port=2222 support@10.20.1.50:/tmp/report.txt ./", "is_correct": false, "explanation": "scp มาตรฐานไม่รองรับตัวเลือก --port=" },
+      { "choice_text": "scp -i 2222 support@10.20.1.50:/tmp/report.txt ./", "is_correct": false, "explanation": "-i ใช้สำหรับระบุไฟล์ Private Key (identity file) ไม่ใช่หมายเลขพอร์ต" }
+    ]
+  },
+  {
+    "seed_key": "linux:08-remote-access:q06",
+    "lesson_slug": "linux-remote-access",
+    "question_text": "เหตุใดการใช้โปรแกรม `tmux` บนเซิร์ฟเวอร์จึงมีประโยชน์อย่างมากสำหรับเจ้าหน้าที่ Support เวลาต้องติดตาม Log หรือรันสคริปต์ตรวจสอบที่ใช้เวลานาน?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "`tmux` สร้างเซสชันเทอร์มินัลที่รันอยู่บนฝั่งเซิร์ฟเวอร์ หากสัญญาณอินเทอร์เน็ตของเจ้าหน้าที่หลุดหรือหน้าต่าง SSH ปิดลง งานที่รันอยู่ใน `tmux` จะไม่ถูกตัดจบ และสามารถใช้คำสั่ง `tmux attach` กลับเข้ามาดูหน้าจอเดิมต่อได้ทันที",
+    "tags": ["tmux", "ssh", "remote-access"],
+    "choices": [
+      { "choice_text": "ช่วยให้โปรเซสและหน้าจอทำงานต่อไปบนเซิร์ฟเวอร์แม้การเชื่อมต่อ SSH จะหลุด และสามารถกลับเข้าเซสชันเดิมได้ด้วย `tmux attach`", "is_correct": true, "explanation": "ถูกต้อง — ป้องกันงานค้างหรือตัดจบกลางคันเมื่อเน็ตหลุด" },
+      { "choice_text": "ช่วยเร่งความเร็วของ CPU บนเซิร์ฟเวอร์ให้ทำงานเร็วขึ้น 2 เท่า", "is_correct": false, "explanation": "tmux เป็น Terminal Multiplexer ไม่ได้เร่งความเร็วฮาร์ดแวร์ CPU" },
+      { "choice_text": "ช่วยข้ามการตรวจสอบรหัสผ่านและ SSH Key ทั้งหมด", "is_correct": false, "explanation": "ต้องล็อกอินผ่าน SSH ตามปกติก่อนจึงจะรัน tmux บนเซิร์ฟเวอร์ได้" },
+      { "choice_text": "ช่วยบีบอัดไฟล์ Log ทั้งหมดใน `/var/log` เป็น `.gz` อัตโนมัติ", "is_correct": false, "explanation": "หน้าที่บีบอัดไฟล์ Log ตามรอบคือ logrotate ไม่ใช่ tmux" }
+    ]
+  },
+  {
+    "seed_key": "linux:08-remote-access:q07",
+    "lesson_slug": "linux-remote-access",
+    "question_text": "เมื่อต้องการซิงก์โฟลเดอร์ไฟล์ Log ขนาดใหญ่จากเซิร์ฟเวอร์ปลายทางมาที่เครื่องโลคอล โดยต้องการให้ส่งเฉพาะส่วนที่เปลี่ยนแปลง คงค่าสิทธิ์/เวลาเดิม และบีบอัดข้อมูลระหว่างส่งผ่านเครือข่าย ควรใช้คำสั่งใด?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "medium",
+    "explanation": "คำสั่ง `rsync -avz` เหมาะสมที่สุด โดย `-a` (archive) คัดลอกทั้งโฟลเดอร์พร้อมคงสิทธิ์และเวลาเดิม, `-v` (verbose) แสดงรายการไฟล์ที่ส่ง, และ `-z` (compress) บีบอัดข้อมูลขณะส่งผ่านเครือข่าย และหากหลุดกลางคันสามารถรันซ้ำเพื่อส่งต่อเฉพาะส่วนที่ยังขาดได้",
+    "tags": ["rsync", "scp", "remote-access"],
+    "choices": [
+      { "choice_text": "rsync -avz support@10.20.1.50:/var/log/app/ ./app-logs/", "is_correct": true, "explanation": "ถูกต้อง — ประหยัดแบนด์วิดท์ด้วย -z และส่งเฉพาะส่วนที่ต่างกัน" },
+      { "choice_text": "ssh -v support@10.20.1.50 /var/log/app/", "is_correct": false, "explanation": "เป็นการสั่งรันพาธโฟลเดอร์ผ่าน ssh ซึ่งจะฟ้องว่าเป็นไดเรกทอรี ไม่ใช่การโอนไฟล์" },
+      { "choice_text": "tmux -avz support@10.20.1.50:/var/log/app/", "is_correct": false, "explanation": "tmux ใช้จัดการเซสชันหน้าจอ ไม่ใช่คำสั่งโอนถ่ายไฟล์" },
+      { "choice_text": "cp -p support@10.20.1.50:/var/log/app/ ./", "is_correct": false, "explanation": "คำสั่ง cp มาตรฐานใช้คัดลอกไฟล์ภายในเครื่องเดียวกัน ไม่รองรับการส่งข้ามเครื่องผ่าน SSH" }
+    ]
+  }
+]

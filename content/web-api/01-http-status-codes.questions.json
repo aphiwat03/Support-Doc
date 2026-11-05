@@ -1,0 +1,98 @@
+[
+  {
+    "seed_key": "web-api:01-http-status-codes:q01",
+    "lesson_slug": "web-http-status-codes",
+    "question_text": "ผู้ใช้งานเปิดหน้าเว็บแล้วพบข้อผิดพลาด '502 Bad Gateway' จาก Nginx ข้อใดคือสาเหตุที่เป็นไปได้มากที่สุด?",
+    "scenario_text": "ระบบแจ้งเตือนว่าหน้าเว็บล่ม Nginx ส่ง 502 Bad Gateway กลับมายัง Client",
+    "difficulty": "medium",
+    "question_type": "multiple_choice",
+    "explanation": "502 Bad Gateway เกิดจากตัว Reverse Proxy (Nginx) พยายามส่งต่อคำขอไปยัง Backend Upstream Service แต่ Backend ดับอยู่ ไม่ได้เปิดพอร์ต หรือแครช ทำให้เกิด Connection Refused",
+    "tags": ["web", "http", "status-codes", "502", "nginx"],
+    "choices": [
+      {
+        "choice_text": "Backend Application Server ด้านหลังหยุดทำงาน แครชล่ม หรือไม่เปิดพอร์ตตามที่ Nginx คอนฟิกไว้",
+        "is_correct": true,
+        "explanation": "ถูกต้อง Nginx ไม่สามารถเชื่อมต่อไปยัง Upstream ได้จึงส่ง 502 Bad Gateway"
+      },
+      {
+        "choice_text": "Backend ประมวลผลช้าเกินกว่า 60 วินาที",
+        "is_correct": false,
+        "explanation": "ประมวลผลนานเกิน Timeout จะได้รหัส 504 Gateway Timeout ไม่ใช่ 502"
+      },
+      {
+        "choice_text": "Client ส่ง Header Authorization ที่มี Token หมดอายุมา",
+        "is_correct": false,
+        "explanation": "Token หมดอายุจะได้รหัส 401 Unauthorized"
+      },
+      {
+        "choice_text": "Client ส่ง URL ที่ไม่มีอยู่จริงบนเซิร์ฟเวอร์",
+        "is_correct": false,
+        "explanation": "URL ไม่มีอยู่จริงจะได้รหัส 404 Not Found"
+      }
+    ]
+  },
+  {
+    "seed_key": "web-api:01-http-status-codes:q02",
+    "lesson_slug": "web-http-status-codes",
+    "question_text": "ความแตกต่างระหว่างรหัส HTTP 401 Unauthorized และ 403 Forbidden คือข้อใด?",
+    "scenario_text": "คำถามสัมภาษณ์งานตำแหน่ง Technical Support Engineer",
+    "difficulty": "easy",
+    "question_type": "multiple_choice",
+    "explanation": "401 คือไม่พบข้อมูลยืนยันตัวตน (ยังไม่ได้ Login หรือ Token ผิด/หมดอายุ) ส่วน 403 คือระบบรู้จักตัวตนแล้วแต่ผู้ใช้นั้นไม่มีสิทธิ์ (No Permission) ในการเข้าถึงทรัพยากรนั้น",
+    "tags": ["web", "http", "auth", "interview"],
+    "choices": [
+      {
+        "choice_text": "401 คือยังไม่ผ่านการยืนยันตัวตน (Authentication Failed/No Token), ส่วน 403 คือยืนยันตัวตนแล้วแต่ไม่มีสิทธิ์เข้าถึง (Authorization Failed/Forbidden)",
+        "is_correct": true,
+        "explanation": "ถูกต้อง 401 = Who are you? / 403 = I know who you are, but you cannot enter."
+      },
+      {
+        "choice_text": "401 ใช้กับหน้าเว็บ ส่วน 403 ใช้กับ REST API เท่านั้น",
+        "is_correct": false,
+        "explanation": "ทั้งสองรหัสเป็นมาตรฐาน HTTP ใช้ได้ทั้ง Web และ API"
+      },
+      {
+        "choice_text": "401 เป็นข้อผิดพลาดฝั่ง Server ส่วน 403 เป็นฝั่ง Client",
+        "is_correct": false,
+        "explanation": "ทั้งรหัสขึ้นต้นด้วย 4xx จัดเป็น Client Error ทั้งคู่"
+      },
+      {
+        "choice_text": "401 คือเซิร์ฟเวอร์หาไฟล์ไม่พบ ส่วน 403 คือไฟล์ถูกลบไปแล้ว",
+        "is_correct": false,
+        "explanation": "ไฟล์หาไม่พบคือ 404 Not Found หรือ 410 Gone"
+      }
+    ]
+  },
+  {
+    "seed_key": "web-api:01-http-status-codes:q03",
+    "lesson_slug": "web-http-status-codes",
+    "question_text": "ผู้ใช้งานกดปุ่ม Export Report ข้อมูลประจำปี แล้วหน้าเว็บหมุนค้างอยู่ 60 วินาที จากนั้นขึ้นข้อความ '504 Gateway Timeout' จุดแรกที่ทีม Support ควรเข้าไปตรวจสอบคืออะไร?",
+    "scenario_text": "ลูกค้าแจ้งว่าฟังก์ชัน Export รายงานยอดขายขนาดใหญ่ใช้งานไม่ได้ ขึ้น 504 หลังจากรอนานประมาณ 1 นาที",
+    "difficulty": "medium",
+    "question_type": "multiple_choice",
+    "explanation": "504 Gateway Timeout หมายถึง Reverse Proxy เชื่อมต่อ Backend ได้แต่ Backend ทำงานค้างจนเกิน proxy_read_timeout สาเหตุอันดับหนึ่งของการ Export ข้อมูลช้าคือ Slow Query หรือ Database Lock ในฐานข้อมูล",
+    "tags": ["web", "http", "504", "database", "timeout"],
+    "choices": [
+      {
+        "choice_text": "ตรวจสอบ Slow Query หรือคำสั่งที่ค้างอยู่ใน Database และดูภาระ CPU/Memory ของ Backend Service",
+        "is_correct": true,
+        "explanation": "ถูกต้อง Backend ยังไม่ตายแต่ประมวลผลนานเกินกำหนด มักเกิดจากฐานข้อมูลช้า"
+      },
+      {
+        "choice_text": "สั่งรีสตาร์ท Router ของผู้ใช้งานทันที",
+        "is_correct": false,
+        "explanation": "504 เกิดขึ้นที่ฝั่งเซิร์ฟเวอร์ (Proxy กับ Upstream) ไม่เกี่ยวกับเน็ตบ้านผู้ใช้"
+      },
+      {
+        "choice_text": "ตรวจสอบว่าผู้ใช้จำรหัสผ่านถูกหรือไม่",
+        "is_correct": false,
+        "explanation": "รหัสผ่านผิดจะไม่ทำให้เกิด 504 Timeout"
+      },
+      {
+        "choice_text": "เปลี่ยนโดเมนเนมของเว็บไซต์ใหม่",
+        "is_correct": false,
+        "explanation": "ไม่เกี่ยวกับการทำงานของ Gateway Timeout"
+      }
+    ]
+  }
+]

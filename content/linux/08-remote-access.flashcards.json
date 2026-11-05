@@ -1,0 +1,110 @@
+[
+  {
+    "seed_key": "linux:08-remote-access:fc01",
+    "lesson_slug": "linux-remote-access",
+    "front_text": "สิทธิ์ (Octal Permission) ที่บังคับสำหรับโฟลเดอร์ ~/.ssh และไฟล์ ~/.ssh/authorized_keys",
+    "back_text": "• ~/.ssh : 700 (drwx------)\n• ~/.ssh/authorized_keys : 600 (-rw-------)\n• Private Key (เช่น ~/.ssh/id_ed25519) : 600 (-rw-------)",
+    "hint": "โฟลเดอร์ 700, ไฟล์กุญแจ 600",
+    "tags": ["ssh", "permissions"],
+    "display_order": 1
+  },
+  {
+    "seed_key": "linux:08-remote-access:fc02",
+    "lesson_slug": "linux-remote-access",
+    "front_text": "คำสั่งเชื่อมต่อ SSH โดยระบุพอร์ต 2222 และระบุไฟล์ Private Key",
+    "back_text": "ssh -p 2222 -i ~/.ssh/my_key user@host\n\n-p (พิมพ์เล็ก): ระบุพอร์ต\n-i: ระบุไฟล์ Identity (Private Key)",
+    "hint": "ssh ใช้ -p ตัวพิมพ์เล็ก",
+    "tags": ["ssh", "remote-access"],
+    "display_order": 2
+  },
+  {
+    "seed_key": "linux:08-remote-access:fc03",
+    "lesson_slug": "linux-remote-access",
+    "front_text": "คำสั่งเปิดโหมด Verbose ใน SSH เพื่อไล่หาสาเหตุเวลาล็อกอินไม่ผ่าน",
+    "back_text": "ssh -v user@host\n(สามารถเพิ่มเป็น -vv หรือ -vvv เพื่อดูรายละเอียดมากขึ้น)",
+    "hint": "-v ย่อมาจาก verbose",
+    "tags": ["ssh", "troubleshooting"],
+    "display_order": 3
+  },
+  {
+    "seed_key": "linux:08-remote-access:fc04",
+    "lesson_slug": "linux-remote-access",
+    "front_text": "ความต่างของตัวเลือกระบุพอร์ตระหว่างคำสั่ง ssh กับคำสั่ง scp",
+    "back_text": "• ssh ใช้ -p (ตัวพิมพ์เล็ก): ssh -p 2222 user@host\n• scp ใช้ -P (ตัวพิมพ์ใหญ่): scp -P 2222 file.txt user@host:/tmp/",
+    "hint": "scp ใช้ -p พิมพ์เล็กสำหรับ preserve timestamps ไปแล้ว จึงต้องใช้ -P พิมพ์ใหญ่สำหรับพอร์ต",
+    "tags": ["ssh", "scp"],
+    "display_order": 4
+  },
+  {
+    "seed_key": "linux:08-remote-access:fc05",
+    "lesson_slug": "linux-remote-access",
+    "front_text": "คำสั่งสร้างคู่กุญแจ SSH แบบ Ed25519 และคำสั่งส่ง Public Key ไปยังเซิร์ฟเวอร์",
+    "back_text": "• สร้างกุญแจ: ssh-keygen -t ed25519\n• ส่ง Public Key: ssh-copy-id user@host",
+    "hint": "สร้างด้วย ssh-keygen ส่งด้วย ssh-copy-id",
+    "tags": ["ssh-keygen", "ssh"],
+    "display_order": 5
+  },
+  {
+    "seed_key": "linux:08-remote-access:fc06",
+    "lesson_slug": "linux-remote-access",
+    "front_text": "เมื่อเซิร์ฟเวอร์ปลายทางถูกลง OS ใหม่แล้วขึ้น REMOTE HOST IDENTIFICATION HAS CHANGED แก้ด้วยคำสั่งใด?",
+    "back_text": "ssh-keygen -R <hostname_หรือ_IP>\n(ต้องยืนยันกับทีม Infra ก่อนเสมอว่ามีการ Rebuild เครื่องจริง)",
+    "hint": "-R = Remove host key จาก known_hosts",
+    "tags": ["ssh-keygen", "known_hosts"],
+    "display_order": 6
+  },
+  {
+    "seed_key": "linux:08-remote-access:fc07",
+    "lesson_slug": "linux-remote-access",
+    "front_text": "เมื่อรัน ssh แล้วขึ้น Permission denied (publickey) เกิดจากสาเหตุใดได้บ้าง?",
+    "back_text": "1. ใช้ชื่อ user ผิด หรือระบุไฟล์กุญแจ (-i) ผิดดอก\n2. ยังไม่ได้นำ Public Key ไปใส่ใน ~/.ssh/authorized_keys ของปลายทาง\n3. สิทธิ์ของ ~/.ssh (ต้อง 700) หรือ authorized_keys (ต้อง 600) เปิดกว้างเกินไป",
+    "hint": "ตรวจทั้งฝั่งเรากับฝั่งปลายทางด้วย ssh -v",
+    "tags": ["ssh", "troubleshooting"],
+    "display_order": 7
+  },
+  {
+    "seed_key": "linux:08-remote-access:fc08",
+    "lesson_slug": "linux-remote-access",
+    "front_text": "ความแตกต่างระหว่าง scp กับ rsync -avz ในการโอนไฟล์",
+    "back_text": "• scp: คัดลอกไฟล์ทั้งหมดตั้งแต่ต้นใหม่ทุกครั้ง เหมาะกับไฟล์เดียวขนาดไม่ใหญ่\n• rsync -avz: เปรียบเทียบและส่งเฉพาะส่วนที่ต่างกัน บีบอัดข้อมูลระหว่างส่ง (-z) และต่อไฟล์ที่ค้างได้",
+    "hint": "rsync เหมาะกับโฟลเดอร์ใหญ่หรือการซิงก์ซ้ำ",
+    "tags": ["scp", "rsync"],
+    "display_order": 8
+  },
+  {
+    "seed_key": "linux:08-remote-access:fc09",
+    "lesson_slug": "linux-remote-access",
+    "front_text": "ตัวเลือก -a, -v, -z ในคำสั่ง rsync -avz หมายถึงอะไร?",
+    "back_text": "• -a (archive): คัดลอกทั้งโฟลเดอร์ย่อยพร้อมคงสิทธิ์ เจ้าของ และเวลาเดิม\n• -v (verbose): แสดงรายชื่อไฟล์ที่กำลังโอน\n• -z (compress): บีบอัดข้อมูลระหว่างส่งผ่านเครือข่าย",
+    "hint": "Archive, Verbose, Compress",
+    "tags": ["rsync", "remote-access"],
+    "display_order": 9
+  },
+  {
+    "seed_key": "linux:08-remote-access:fc10",
+    "lesson_slug": "linux-remote-access",
+    "front_text": "คำสั่งพื้นฐานของ tmux: สร้างเซสชันใหม่, ดูรายการเซสชัน และกลับเข้าเซสชันเดิม",
+    "back_text": "• สร้างเซสชัน: tmux new -s <ชื่อ>\n• ดูรายการเซสชัน: tmux ls\n• กลับเข้าเซสชันเดิม: tmux attach -t <ชื่อ> (หรือ tmux a -t <ชื่อ>)",
+    "hint": "new, ls, attach",
+    "tags": ["tmux", "remote-access"],
+    "display_order": 10
+  },
+  {
+    "seed_key": "linux:08-remote-access:fc11",
+    "lesson_slug": "linux-remote-access",
+    "front_text": "ปุ่มลัดสำหรับถอยออกจากหน้าจอ tmux (Detach) โดยปล่อยให้โปรแกรมทำงานต่อเบื้องหลัง",
+    "back_text": "กด Ctrl + b (แล้วปล่อยมือ) จากนั้นกดปุ่ม d",
+    "hint": "d ย่อมาจาก detach",
+    "tags": ["tmux", "remote-access"],
+    "display_order": 11
+  },
+  {
+    "seed_key": "linux:08-remote-access:fc12",
+    "lesson_slug": "linux-remote-access",
+    "front_text": "ชื่อบริการ SSH Daemon บน Ubuntu/Debian เทียบกับ RHEL/Rocky Linux",
+    "back_text": "• Ubuntu / Debian: systemctl status ssh\n• RHEL / Rocky Linux: systemctl status sshd",
+    "hint": "ssh กับ sshd",
+    "tags": ["ssh", "distro"],
+    "display_order": 12
+  }
+]

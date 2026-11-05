@@ -1,0 +1,114 @@
+[
+  {
+    "seed_key": "linux:03-file-system:q01",
+    "lesson_slug": "linux-file-system",
+    "question_text": "ตามมาตรฐานโครงสร้างไดเรกทอรีของ Linux (FHS) ไฟล์ตั้งค่าระบบ (System Configuration) และไฟล์บันทึกเหตุการณ์ (System Logs) จะถูกจัดเก็บไว้ที่ไดเรกทอรีใดตามลำดับ?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "ตามมาตรฐาน FHS ไดเรกทอรี `/etc` ใช้เก็บไฟล์ตั้งค่าระบบและบริการต่างๆ ส่วน `/var/log` ใช้เก็บไฟล์บันทึกเหตุการณ์ (Logs) ที่มีขนาดเปลี่ยนแปลงตลอดเวลา",
+    "tags": ["filesystem", "fhs", "directories"],
+    "choices": [
+      { "choice_text": "/etc และ /var/log", "is_correct": true, "explanation": "ถูกต้อง — /etc เก็บไฟล์คอนฟิก และ /var/log เก็บไฟล์ Log" },
+      { "choice_text": "/usr และ /tmp", "is_correct": false, "explanation": "/usr เก็บโปรแกรมและไลบรารี ส่วน /tmp เก็บไฟล์ชั่วคราว" },
+      { "choice_text": "/opt และ /home", "is_correct": false, "explanation": "/opt เก็บซอฟต์แวร์เสริม ส่วน /home เก็บโฟลเดอร์ส่วนตัวของผู้ใช้" },
+      { "choice_text": "/bin และ /sbin", "is_correct": false, "explanation": "/bin และ /sbin เก็บไฟล์คำสั่ง Binary ของระบบ" }
+    ]
+  },
+  {
+    "seed_key": "linux:03-file-system:q02",
+    "lesson_slug": "linux-file-system",
+    "question_text": "เมื่อได้รับแจ้งเตือนว่าพาร์ทิชัน `/var` กำลังจะเต็ม หากต้องการค้นหาเฉพาะไฟล์ธรรมดา (`-type f`) ใน `/var` ที่มีขนาดใหญ่กว่า 200 MB ต้องใช้คำสั่งใด?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "คำสั่ง `find /var -type f -size +200M` ใช้ค้นหาเฉพาะไฟล์ปกติ (`-type f`) ภายใน `/var` ที่มีขนาดมากกว่า (`+`) 200 เมกะไบต์ (`M`)",
+    "tags": ["find", "disk", "filesystem"],
+    "choices": [
+      { "choice_text": "find /var -type f -size +200M", "is_correct": true, "explanation": "ถูกต้อง — ระบุโฟลเดอร์ /var กรองเฉพาะไฟล์ด้วย -type f และขนาดเกิน 200M ด้วย -size +200M" },
+      { "choice_text": "find /var -type d -size -200M", "is_correct": false, "explanation": "-type d คือการหาโฟลเดอร์ และ -200M คือขนาดน้อยกว่า 200MB" },
+      { "choice_text": "du -sh /var +200M", "is_correct": false, "explanation": "du ไม่รองรับพารามิเตอร์กรองขนาดแบบ +200M" },
+      { "choice_text": "ls -lah /var --size=200M", "is_correct": false, "explanation": "ls ไม่ได้ค้นหาลงไปทุกโฟลเดอร์ย่อยและไม่มีตัวเลือกกรองขนาดแบบนี้" }
+    ]
+  },
+  {
+    "seed_key": "linux:03-file-system:q03",
+    "lesson_slug": "linux-file-system",
+    "question_text": "จากผลลัพธ์การตรวจสอบด้านล่าง สาเหตุที่แอปพลิเคชันไม่สามารถอ่านไฟล์คอนฟิกผ่าน `/opt/payment/current/config.yml` ได้คืออะไร?",
+    "scenario_text": "$ ls -l /opt/payment/current\nlrwxrwxrwx 1 deploy deploy 31 Nov  2 22:00 /opt/payment/current -> /opt/payment/releases/20261015\n\n$ file /opt/payment/current\n/opt/payment/current: broken symbolic link to /opt/payment/releases/20261015\n\n$ ls -l /opt/payment/releases/\ntotal 8\ndrwxr-xr-x 4 deploy deploy 4096 Nov  1 09:00 20261101\ndrwxr-xr-x 4 deploy deploy 4096 Nov  3 08:30 20261103",
+    "question_type": "scenario",
+    "difficulty": "medium",
+    "explanation": "จากผลของ `file /opt/payment/current` แจ้งชัดเจนว่าเป็น `broken symbolic link` เพราะชี้ไปยังโฟลเดอร์ `/opt/payment/releases/20261015` ซึ่งถูกลบออกไปแล้ว (ใน `releases/` เหลือเพียง `20261101` และ `20261103`) ต้องแจ้งทีมที่ดูแลทำการอัปเดต Symlink ให้ชี้ไปยัง Release ที่ถูกต้อง",
+    "tags": ["symlink", "file", "troubleshooting"],
+    "choices": [
+      { "choice_text": "Symbolic link `/opt/payment/current` ชี้ไปยังโฟลเดอร์ `/opt/payment/releases/20261015` ที่ถูกลบไปแล้ว (Broken link)", "is_correct": true, "explanation": "ถูกต้อง — ลิงก์ชี้ไปยังปลายทางที่ไม่มีอยู่จริงในโฟลเดอร์ releases/" },
+      { "choice_text": "สิทธิ์ของ `/opt/payment/current` เป็น `lrwxrwxrwx` (777) ระบบความปลอดภัยจึงบล็อกการเข้าถึง", "is_correct": false, "explanation": "สิทธิ์ของตัว Symbolic link จะแสดงเป็น lrwxrwxrwx เสมอตามปกติ โดยสิทธิ์จริงจะอิงตามไฟล์ปลายทาง" },
+      { "choice_text": "ผู้ใช้ deploy ไม่มีสิทธิ์อ่านโฟลเดอร์ `20261103`", "is_correct": false, "explanation": "ปัญหาไม่ได้อยู่ที่สิทธิ์ของ 20261103 แต่อยู่ที่ตัวลิงก์ current ยังชี้ไปที่ 20261015 ซึ่งไม่มีอยู่แล้ว" },
+      { "choice_text": "ฮาร์ดดิสก์พาร์ทิชัน `/opt` เสียหาย ต้องรัน fsck ทันที", "is_correct": false, "explanation": "เป็นเพียงปัญหา Symbolic link ชี้ผิดโฟลเดอร์หลังการลบ Release เก่า ไม่ใช่ดิสก์เสีย" }
+    ]
+  },
+  {
+    "seed_key": "linux:03-file-system:q04",
+    "lesson_slug": "linux-file-system",
+    "question_text": "แอปพลิเคชันบนเครื่อง `app-01` พยายามเชื่อมต่อฐานข้อมูลด้วยชื่อ `db-internal.corp` แต่กลับวิ่งไปยัง IP เก่า (`10.10.1.50`) ทั้งที่ทีม Network ยืนยันว่าอัปเดต DNS Server กลางเป็น IP ใหม่ (`10.10.2.99`) เรียบร้อยแล้ว ควรตรวจสอบไฟล์ใดบนเครื่อง `app-01` เป็นอันดับแรก?",
+    "scenario_text": "$ ping -c 1 db-internal.corp\nPING db-internal.corp (10.10.1.50) 56(84) bytes of data.",
+    "question_type": "scenario",
+    "difficulty": "medium",
+    "explanation": "โดยค่าเริ่มต้น Linux จะตรวจสอบการจับคู่ชื่อโฮสต์ในไฟล์ `/etc/hosts` ของเครื่องก่อนส่งคำถามไปที่ DNS Server ที่ระบุใน `/etc/resolv.conf` หากมีการผูก IP เก่าค้างไว้ใน `/etc/hosts` เครื่องจะใช้ IP นั้นทันที",
+    "tags": ["hosts", "dns", "etc", "troubleshooting"],
+    "choices": [
+      { "choice_text": "ตรวจสอบไฟล์ `/etc/hosts` ว่ามีการระบุ IP `10.10.1.50` คู่กับชื่อ `db-internal.corp` ค้างไว้หรือไม่", "is_correct": true, "explanation": "ถูกต้อง — ระบบจะอ่าน /etc/hosts ก่อนสอบถาม DNS Server เสมอ" },
+      { "choice_text": "ตรวจสอบไฟล์ `/etc/fstab` ว่ามีการตั้งค่า Network Drive ผิดหรือไม่", "is_correct": false, "explanation": "/etc/fstab ใช้สำหรับตั้งค่าการ Mount ระบบไฟล์และดิสก์ ไม่เกี่ยวกับการแปลงชื่อโดเมน" },
+      { "choice_text": "ตรวจสอบไฟล์ `/etc/hostname` เพราะชื่อเครื่องอาจซ้ำกับฐานข้อมูล", "is_correct": false, "explanation": "/etc/hostname เก็บเฉพาะชื่อของเครื่องตัวเอง ไม่ได้เก็บตารางแปลง IP ของปลายทางอื่น" },
+      { "choice_text": "ลบไฟล์ทั้งหมดใน `/tmp` เพื่อล้างแคชของระบบไฟล์", "is_correct": false, "explanation": "ไฟล์ใน /tmp ไม่ใช่ตาราง Host resolution ของระบบปฏิบัติการ" }
+    ]
+  },
+  {
+    "seed_key": "linux:03-file-system:q05",
+    "lesson_slug": "linux-file-system",
+    "question_text": "ระบบเกิดความผิดปกติเมื่อ 25 นาทีที่แล้ว หัวหน้าทีมต้องการทราบว่ามีไฟล์ใดใน `/etc/nginx` ถูกแก้ไขเนื้อหาในช่วง 30 นาทีที่ผ่านมาหรือไม่ ควรใช้คำสั่งใดตรวจสอบ?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "medium",
+    "explanation": "ในคำสั่ง `find` ตัวเลือก `-mmin -30` หมายถึงค้นหาไฟล์ที่มีการแก้ไขเนื้อหา (Modification time in minutes) น้อยกว่า 30 นาทีที่ผ่านมา (ส่วน `-mtime` จะนับเป็นหน่วยวัน/24 ชั่วโมง)",
+    "tags": ["find", "stat", "timestamp"],
+    "choices": [
+      { "choice_text": "find /etc/nginx -type f -mmin -30", "is_correct": true, "explanation": "ถูกต้อง — `-mmin -30` ค้นหาไฟล์ที่ถูกแก้ไขภายใน 30 นาทีล่าสุด" },
+      { "choice_text": "find /etc/nginx -type f -mtime +30", "is_correct": false, "explanation": "`-mtime +30` คือไฟล์ที่ถูกแก้ไขมานานกว่า 30 วันแล้ว" },
+      { "choice_text": "stat /etc/nginx --minutes 30", "is_correct": false, "explanation": "คำสั่ง stat ไม่มีพารามิเตอร์ --minutes สำหรับค้นหาไฟล์" },
+      { "choice_text": "du -sh /etc/nginx -m 30", "is_correct": false, "explanation": "du ใช้สำหรับคำนวณขนาดพื้นที่ดิสก์ ไม่ใช่การค้นหาไฟล์ตามเวลา" }
+    ]
+  },
+  {
+    "seed_key": "linux:03-file-system:q06",
+    "lesson_slug": "linux-file-system",
+    "question_text": "เมื่อใช้คำสั่ง `stat config.yml` จะเห็นเวลา 3 ค่า ได้แก่ Access, Modify และ Change ค่า `Modify` กับ `Change` ต่างกันอย่างไร?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "hard",
+    "explanation": "ในระบบไฟล์ Linux: `Modify` (mtime) คือเวลาที่เนื้อหาภายในไฟล์ถูกแก้ไขครั้งล่าสุด ส่วน `Change` (ctime) คือเวลาที่ข้อมูลกำกับไฟล์ (Metadata เช่น สิทธิ์ `chmod`, เจ้าของ `chown`, หรือจำนวนลิงก์) ถูกเปลี่ยนแปลง",
+    "tags": ["stat", "inode", "filesystem"],
+    "choices": [
+      { "choice_text": "Modify คือเวลาที่แก้ไขเนื้อหาภายในไฟล์ ส่วน Change คือเวลาที่แก้ไข Metadata เช่น สิทธิ์หรือเจ้าของไฟล์", "is_correct": true, "explanation": "ถูกต้อง — mtime เปลี่ยนเมื่อแก้เนื้อหาไฟล์ ส่วน ctime เปลี่ยนเมื่อแก้เนื้อหาหรือแก้สิทธิ์/เจ้าของ" },
+      { "choice_text": "Modify คือเวลาที่สร้างไฟล์ครั้งแรก ส่วน Change คือเวลาที่เปิดอ่านไฟล์ล่าสุด", "is_correct": false, "explanation": "เวลาเปิดอ่านคือ Access (atime) และเวลาสร้างไฟล์คือ Birth" },
+      { "choice_text": "Modify ใช้กับไฟล์ข้อความเท่านั้น ส่วน Change ใช้กับไฟล์ Binary เท่านั้น", "is_correct": false, "explanation": "ทั้งสองค่ามีอยู่ในทุกไฟล์บนระบบ Linux" },
+      { "choice_text": "ทั้งสองค่ามีความหมายเหมือนกันทุกประการ แสดงซ้ำเพื่อรองรับระบบเก่า", "is_correct": false, "explanation": "ทั้งสองค่าแยกกันชัดเจน เช่น การรัน chmod จะอัปเดตเฉพาะ Change แต่ไม่อัปเดต Modify" }
+    ]
+  },
+  {
+    "seed_key": "linux:03-file-system:q07",
+    "lesson_slug": "linux-file-system",
+    "question_text": "คำสั่ง `file report_2026.gz` มีประโยชน์อย่างไรในการตรวจสอบปัญหาหน้างาน?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "คำสั่ง `file` จะอ่านข้อมูลส่วนหัว (Magic bytes) ของไฟล์เพื่อบอกชนิดที่แท้จริงของไฟล์โดยไม่เชื่อแค่ชื่อนามสกุล ช่วยให้รู้ว่าไฟล์ `.gz` ที่แตกไม่ได้ แท้จริงแล้วเป็นไฟล์ข้อความธรรมดาหรือไฟล์ว่างหรือไม่",
+    "tags": ["file", "troubleshooting", "filesystem"],
+    "choices": [
+      { "choice_text": "ใช้ตรวจสอบชนิดที่แท้จริงของไฟล์จากข้อมูลภายใน โดยไม่ได้ดูแค่ชื่อนามสกุลไฟล์", "is_correct": true, "explanation": "ถูกต้อง — ช่วยจับผิดไฟล์ที่ตั้งนามสกุลไม่ตรงกับเนื้อหาจริง เช่น ไฟล์ดาวน์โหลดเสียที่ได้เนื้อหาเป็น HTML" },
+      { "choice_text": "ใช้แตกไฟล์บีบอัดตระกูล .gz ออกมาเป็นโฟลเดอร์", "is_correct": false, "explanation": "การแตกไฟล์ .gz ต้องใช้ gunzip หรือ tar ไม่ใช่คำสั่ง file" },
+      { "choice_text": "ใช้ซ่อมแซมไฟล์ที่เสียหายให้กลับมาเปิดได้ตามปกติ", "is_correct": false, "explanation": "คำสั่ง file เป็นการอ่านเพื่อระบุประเภทไฟล์เท่านั้น ไม่ได้ซ่อมแซมไฟล์" },
+      { "choice_text": "ใช้เปลี่ยนเจ้าของไฟล์ให้เป็นของผู้ใช้ปัจจุบัน", "is_correct": false, "explanation": "การเปลี่ยนเจ้าของไฟล์คือคำสั่ง chown" }
+    ]
+  }
+]

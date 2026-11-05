@@ -1,0 +1,42 @@
+[
+  {
+    "seed_key": "network:02-dns-resolution:fc01",
+    "lesson_slug": "network-dns-resolution",
+    "front_text": "ลำดับแรกที่ระบบปฏิบัติการ Linux ตรวจสอบเมื่อ Resolve โดเมนคือที่ใด?",
+    "back_text": "ไฟล์ Local Hosts (`/etc/hosts`)",
+    "hint": "/etc/hosts",
+    "display_order": 1
+  },
+  {
+    "seed_key": "network:02-dns-resolution:fc02",
+    "lesson_slug": "network-dns-resolution",
+    "front_text": "A Record กับ CNAME Record ต่างกันอย่างไร?",
+    "back_text": "A Record แมปชื่อโดเมนเข้ากับ IPv4 Address โดยตรง\nCNAME (Canonical Name) เป็นชื่อ Alias ที่ชี้ไปยังอีกชื่อโดเมนหนึ่ง",
+    "hint": "IP vs Alias domain",
+    "display_order": 2
+  },
+  {
+    "seed_key": "network:02-dns-resolution:fc03",
+    "lesson_slug": "network-dns-resolution",
+    "front_text": "คำสั่ง dig ใดใช้บังคับ query ไปยัง DNS 1.1.1.1 เพื่อดึงค่า A record แบบสั้น?",
+    "back_text": "dig @1.1.1.1 domain.com +short",
+    "hint": "dig @server +short",
+    "display_order": 3
+  },
+  {
+    "seed_key": "network:02-dns-resolution:fc04",
+    "lesson_slug": "network-dns-resolution",
+    "front_text": "DNS TTL (Time-To-Live) ส่งผลต่อการเปลี่ยน IP อย่างไร?",
+    "back_text": "Resolver จะจำ IP เดิมไว้จนกว่าเวลา TTL จะนับถอยหลังหมดลง จึงเกิดช่วงหน่วงที่เรียกว่า DNS Propagation Delay",
+    "hint": "Caching expiration time",
+    "display_order": 4
+  },
+  {
+    "seed_key": "network:02-dns-resolution:fc05",
+    "lesson_slug": "network-dns-resolution",
+    "front_text": "ไฟล์คอนฟิกใดบน Linux ที่เก็บรายชื่อ DNS Nameserver ของระบบ?",
+    "back_text": "/etc/resolv.conf (ระบุด้วยบรรทัด nameserver X.X.X.X)",
+    "hint": "/etc/resolv.conf",
+    "display_order": 5
+  }
+]

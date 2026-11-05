@@ -1,0 +1,66 @@
+[
+  {
+    "seed_key": "docker:02-troubleshooting-exit-codes:q01",
+    "lesson_slug": "docker-troubleshooting-exit-codes",
+    "question_text": "Container ตัวหนึ่งดับลงโดยแสดงสถานะ 'Exited (137)' และเมื่อ inspect ดูพบว่า OOMKilled เป็น true ข้อใดคือสาเหตุที่แท้จริง?",
+    "scenario_text": "บริการประมวลผลไฟล์ภาพขนาดใหญ่ดับลงกะทันหันในขณะที่มีผู้ใช้งานอัปโหลดไฟล์เข้ามาพร้อมกันเป็นจำนวนมาก",
+    "difficulty": "medium",
+    "question_type": "multiple_choice",
+    "explanation": "Exit Code 137 เท่ากับ 128 + 9 (SIGKILL) ซึ่งเกิดขึ้นเมื่อคอนเทนเนอร์ใช้งานหน่วยความจำ RAM เกินกว่าขีดจำกัด (Memory Limit) ที่กำหนดไว้ ทำให้ถูก Linux Kernel OOM (Out Of Memory) Killer ส่งสัญญาณสั่งฆ่าทันที",
+    "tags": ["docker", "exit-codes", "oomkilled", "memory"],
+    "choices": [
+      {
+        "choice_text": "คอนเทนเนอร์ใช้หน่วยความจำ RAM เกินขีดจำกัดที่ตั้งไว้ จนถูก Linux Kernel OOM Killer สั่งยุติการทำงานทันที",
+        "is_correct": true,
+        "explanation": "ถูกต้อง นี่คือนิยามและสาเหตุของ Exit code 137 OOMKilled"
+      },
+      {
+        "choice_text": "คอนเทนเนอร์ทำงานเสร็จสิ้นสมบูรณ์ตามปกติ",
+        "is_correct": false,
+        "explanation": "ทำงานเสร็จตามปกติคือ Exit Code 0"
+      },
+      {
+        "choice_text": "มีคนสั่งลบไดเรกทอรี root ของคอนเทนเนอร์",
+        "is_correct": false,
+        "explanation": "ไม่ใช่อาการของ OOMKilled"
+      },
+      {
+        "choice_text": "พอร์ตเครือข่ายมีคนใช้งานซ้ำซ้อน",
+        "is_correct": false,
+        "explanation": "พอร์ตชนกันจะเกิด Exit Code 1 ตอนเริ่มต้น ไม่ใช่ 137 ตอนกำลังรันงานหนัก"
+      }
+    ]
+  },
+  {
+    "seed_key": "docker:02-troubleshooting-exit-codes:q02",
+    "lesson_slug": "docker-troubleshooting-exit-codes",
+    "question_text": "Exit Code ใดใน Docker ที่บ่งบอกว่า Container ได้รับคำสั่งสั่งปิดการทำงานอย่างสุภาพ (Graceful Shutdown ด้วย SIGTERM)?",
+    "scenario_text": "คำถามสัมภาษณ์งานตำแหน่ง DevOps / Support Engineer",
+    "difficulty": "easy",
+    "question_type": "multiple_choice",
+    "explanation": "Exit Code 143 คำนวณมาจาก 128 + 15 (SIGTERM) ซึ่งเป็นสัญญาณที่ส่งเมื่อมีการสั่ง docker stop หรือระบบ Orchestrator สั่งยุติเพื่อทำการ Deploy เวอร์ชันใหม่",
+    "tags": ["docker", "exit-codes", "sigterm"],
+    "choices": [
+      {
+        "choice_text": "Exit Code 143",
+        "is_correct": true,
+        "explanation": "ถูกต้อง 128 + 15 (SIGTERM) = 143"
+      },
+      {
+        "choice_text": "Exit Code 0",
+        "is_correct": false,
+        "explanation": "0 คือโปรเซสทำงานจบด้วยตัวมันเองสำเร็จ"
+      },
+      {
+        "choice_text": "Exit Code 1",
+        "is_correct": false,
+        "explanation": "1 คือ Application Error ทั่วไป"
+      },
+      {
+        "choice_text": "Exit Code 255",
+        "is_correct": false,
+        "explanation": "255 มักเกิดจากข้อผิดพลาดร้ายแรงของ Entrypoint หรือ Docker Engine"
+      }
+    ]
+  }
+]

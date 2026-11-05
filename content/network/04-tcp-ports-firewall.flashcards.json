@@ -1,0 +1,42 @@
+[
+  {
+    "seed_key": "network:04-tcp-ports-firewall:fc01",
+    "lesson_slug": "network-tcp-ports-firewall",
+    "front_text": "ขั้นตอน 3 ลำดับของ TCP 3-Way Handshake มีอะไรบ้าง?",
+    "back_text": "1. Client ส่ง SYN\n2. Server ตอบ SYN-ACK\n3. Client ส่ง ACK ยืนยัน\n(จากนั้นเข้าสู่สถานะ ESTABLISHED)",
+    "hint": "SYN -> SYN-ACK -> ACK",
+    "display_order": 1
+  },
+  {
+    "seed_key": "network:04-tcp-ports-firewall:fc02",
+    "lesson_slug": "network-tcp-ports-firewall",
+    "front_text": "เมื่อใดที่เซิร์ฟเวอร์จะส่งแพ็กเก็ต TCP RST กลับมายัง Client?",
+    "back_text": "เมื่อมี Client พยายามเชื่อมต่อมาที่พอร์ตที่ไม่มีแอปพลิเคชันใดเปิดรับ (LISTEN) อยู่ ทำให้ Client ได้รับข้อความ Connection Refused",
+    "hint": "ไม่มีใครฟังพอร์ต หรือ Service ปลายทางดับ",
+    "display_order": 2
+  },
+  {
+    "seed_key": "network:04-tcp-ports-firewall:fc03",
+    "lesson_slug": "network-tcp-ports-firewall",
+    "front_text": "คำสั่งใดบน Linux ใช้ตรวจสอบพอร์ต TCP/UDP ที่เปิดฟังอยู่พร้อมระบุ Process Name?",
+    "back_text": "sudo ss -tulpn\n(-t: TCP, -u: UDP, -l: Listen, -p: Process, -n: Numeric)",
+    "hint": "ss -tulpn",
+    "display_order": 3
+  },
+  {
+    "seed_key": "network:04-tcp-ports-firewall:fc04",
+    "lesson_slug": "network-tcp-ports-firewall",
+    "front_text": "หากแอปพลิเคชัน bind อยู่ที่ 127.0.0.1 ต่างจาก 0.0.0.0 อย่างไร?",
+    "back_text": "127.0.0.1 รับการเชื่อมต่อเฉพาะภายในเครื่องตัวเอง (Localhost) เท่านั้น\n0.0.0.0 รับการเชื่อมต่อจากทุก Network Interface (เปิดให้ภายนอกเข้าถึงได้)",
+    "hint": "Localhost only vs All interfaces",
+    "display_order": 4
+  },
+  {
+    "seed_key": "network:04-tcp-ports-firewall:fc05",
+    "lesson_slug": "network-tcp-ports-firewall",
+    "front_text": "ทำไม Firewall ปลายทางแบบ DROP จึงทำให้เกิดอาการ Connection Timed Out?",
+    "back_text": "เพราะนโยบาย DROP จะทิ้งแพ็กเก็ต SYN เงียบๆ โดยไม่ส่งคำตอบใดๆ กลับมา ทำให้ Client ต้องรอจนกว่าจะหมดเวลา Timeout",
+    "hint": "DROP = Silent drop without reply",
+    "display_order": 5
+  }
+]

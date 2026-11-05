@@ -1,0 +1,162 @@
+[
+  {
+    "seed_key": "dc:fc:smf-vs-mmf",
+    "lesson_slug": "dc-cabling-and-fiber",
+    "front_text": "ความแตกต่างของสายไฟเบอร์ Single-Mode (OS2) กับ Multi-Mode (OM3/OM4)",
+    "back_text": "• Single-Mode (OS2): สายสีเหลือง, แกน 9µm, แสง 1310/1550nm, คู่กับหัว LR (ระยะไกล 2-40+ กม.)\n• Multi-Mode (OM3/OM4): สายสีฟ้า Aqua, แกน 50µm, แสง 850nm, คู่กับหัว SR (ระยะใกล้ในห้อง Data Hall 100-400 ม.)",
+    "hint": "จำจากสีปลอกสาย: เหลือง = ไกล (LR), ฟ้า Aqua = ใกล้ (SR)",
+    "display_order": 1
+  },
+  {
+    "seed_key": "dc:fc:sfp-qsfp-speeds",
+    "lesson_slug": "dc-cabling-and-fiber",
+    "front_text": "ความเร็วของหัว Transceiver: SFP, SFP+, SFP28, QSFP+, QSFP28",
+    "back_text": "• SFP = 1 Gbps\n• SFP+ = 10 Gbps\n• SFP28 = 25 Gbps\n• QSFP+ = 40 Gbps (4x10G)\n• QSFP28 = 100 Gbps (4x25G)",
+    "hint": "Q ย่อมาจาก Quad (4 ช่องสัญญาณรวมกัน)",
+    "display_order": 2
+  },
+  {
+    "seed_key": "dc:fc:rolling-fiber",
+    "lesson_slug": "dc-cabling-and-fiber",
+    "front_text": "การทำ Rolling Fiber (สลับสาย Tx/Rx) คืออะไร และทำเมื่อไหร่?",
+    "back_text": "คือการสลับตำแหน่งหัวสายไฟเบอร์ LC คู่ซ้าย-ขวาที่ปลายด้านใดด้านหนึ่ง\n\nทำเมื่อเสียบสายไฟเบอร์แล้วไฟ Link ไม่ติด (Link Down) เพราะขั้วส่งแสง (Tx) วิ่งไปชนกับขั้วส่งแสง (Tx) ของอีกฝั่ง แทนที่จะเข้าขั้วรับแสง (Rx)",
+    "hint": "Tx ต้องเข้า Rx เสมอ",
+    "display_order": 3
+  },
+  {
+    "seed_key": "dc:fc:bend-radius",
+    "lesson_slug": "dc-cabling-and-fiber",
+    "front_text": "Bend Radius ของสายไฟเบอร์คืออะไร และทำไมจึงนิยมใช้เทปตีนตุ๊กแก (Velcro) แทนเคเบิลไทร์?",
+    "back_text": "Bend Radius คือรัศมีการโค้งงอแคบสุดที่สายไฟเบอร์รับได้โดยแสงไม่รั่วออกนอกแกนแก้ว (Attenuation Loss) หรือแกนแก้วหัก\n\nการใช้เทป Velcro ช่วยไม่ให้รัดสายแน่นจนบีบปลอกสายและทำลายใยแก้วข้างในเหมือนพลาสติกเคเบิลไทร์",
+    "hint": "ห้ามพับสายหักศอก 90 องศา",
+    "display_order": 4
+  },
+  {
+    "seed_key": "dc:fc:t568b-color-code",
+    "lesson_slug": "dc-cabling-and-fiber",
+    "front_text": "ลำดับสีสายแลนมาตรฐาน T568B ทั้ง 8 พิน (พิน 1 ถึง 8)",
+    "back_text": "1. ขาว-ส้ม\n2. ส้ม\n3. ขาว-เขียว\n4. น้ำเงิน\n5. ขาว-น้ำเงิน\n6. เขียว\n7. ขาว-น้ำตาล\n8. น้ำตาล",
+    "hint": "ขึ้นต้นด้วยคู่ส้ม แล้วขาวเขียวคร่อมคู่น้ำเงิน",
+    "display_order": 5
+  },
+  {
+    "seed_key": "dc:fc:riser-hba",
+    "lesson_slug": "dc-server-hardware-oob",
+    "front_text": "หน้าที่ของ Riser Card และ HBA Card ในเครื่องเซิร์ฟเวอร์",
+    "back_text": "• Riser Card: แผงแปลงสล็อต PCIe จากแนวตั้งเป็นแนวนอน เพื่อให้ใส่การ์ดในเครื่อง 1U/2U เตี้ยๆ ได้\n• HBA (Host Bus Adapter): การ์ดเชื่อมต่อเซิร์ฟเวอร์เข้ากับระบบจัดเก็บข้อมูลภายนอก เช่น Fibre Channel SAN หรือ SAS Storage",
+    "hint": "Riser = ยกตะแคงแนวนอน, HBA = การ์ดต่อ Storage",
+    "display_order": 6
+  },
+  {
+    "seed_key": "dc:fc:ecc-dimm-rules",
+    "lesson_slug": "dc-server-hardware-oob",
+    "front_text": "ECC RAM คืออะไร และทำไมการใส่ RAM เซิร์ฟเวอร์ต้องเรียงตาม DIMM Population Rules?",
+    "back_text": "• ECC (Error-Correcting Code): แรมที่ตรวจจับและซ่อมบิตข้อมูลที่เพี้ยนเองได้ ป้องกันเครื่องแฮงค์\n• DIMM Population Rules: ลำดับช่องเสียบแรมที่ระบุบนฝาเครื่อง (เช่น A1, B1, A2...) เพื่อให้ Memory Controller ทุก Channel ทำงานสมดุลกันและบูตผ่าน",
+    "hint": "ดูผังลำดับช่องเสียบใต้ฝาเครื่องเสมอ",
+    "display_order": 7
+  },
+  {
+    "seed_key": "dc:fc:rack-unit-1u",
+    "lesson_slug": "dc-server-hardware-oob",
+    "front_text": "ขนาดความสูง 1U (Rack Unit) เท่ากับกี่นิ้ว และหลักการวางน้ำหนักในตู้แร็ค 42U คืออะไร?",
+    "back_text": "• 1U = 1.75 นิ้ว (4.445 ซม.)\n• อุปกรณ์ที่หนักที่สุด (เช่น ตู้แบตเตอรี่ UPS และ Storage Array) ต้องติดตั้งไว้ที่ด้านล่างสุดของตู้แร็คเสมอ เพื่อป้องกันตู้แร็คคว่ำขณะดึงรางสไลด์",
+    "hint": "ของหนักอยู่ล่างสุดเสมอ (Bottom-Heavy)",
+    "display_order": 8
+  },
+  {
+    "seed_key": "dc:fc:idrac-ilo-ipmi",
+    "lesson_slug": "dc-server-hardware-oob",
+    "front_text": "iDRAC, iLO, IPMI และ Redfish คืออะไร?",
+    "back_text": "ระบบจัดการฮาร์ดแวร์เซิร์ฟเวอร์ระยะไกล (Out-of-Band Management) ผ่านชิป BMC บนเมนบอร์ด:\n• iDRAC = Dell\n• iLO = HPE\n• IPMI = มาตรฐานคำสั่ง CLI ทั่วไป\n• Redfish = มาตรฐานยุคใหม่ผ่าน RESTful HTTPS/JSON",
+    "hint": "ทำงานได้แม้เครื่องปิดอยู่หรือ OS ค้างสนิท (ขอแค่เสียบปลั๊กไฟ)",
+    "display_order": 9
+  },
+  {
+    "seed_key": "dc:fc:uid-led",
+    "lesson_slug": "dc-server-hardware-oob",
+    "front_text": "ไฟ UID LED (Chassis Identify Light) สีฟ้าบนเซิร์ฟเวอร์มีประโยชน์อย่างไร?",
+    "back_text": "ใช้สั่งให้ไฟสีฟ้ากระพริบทั้งด้านหน้าและด้านหลังของเซิร์ฟเวอร์เครื่องเป้าหมาย เพื่อช่วยให้ช่างหน้าตู้แร็คระบุตำแหน่งเครื่องได้อย่างแม่นยำ ป้องกันการถอดสายไฟหรือดึงดิสก์ผิดเครื่อง",
+    "hint": "เปิดไฟสีฟ้าชี้เป้าก่อนเดินไปหลังตู้แร็คเสมอ",
+    "display_order": 10
+  },
+  {
+    "seed_key": "dc:fc:pxe-boot-flow",
+    "lesson_slug": "dc-network-boot-san-blade",
+    "front_text": "ลำดับการทำงานของ PXE Boot (การบูตติดตั้ง OS ผ่านสายแลน)",
+    "back_text": "1. การ์ดแลนส่ง DHCP Discover ขอ IP\n2. DHCP Server ตอบกลับพร้อม IP + Option 66 (TFTP Server) + Option 67 (Boot file)\n3. ดาวน์โหลด Bootloader และ Kernel ผ่าน TFTP (UDP 69)\n4. รันตัวติดตั้ง OS อัตโนมัติ (Kickstart / Preseed / WDS)",
+    "hint": "DHCP แจกทาง -> TFTP ส่งไฟล์บูต",
+    "display_order": 11
+  },
+  {
+    "seed_key": "dc:fc:san-wwpn-zoning",
+    "lesson_slug": "dc-network-boot-san-blade",
+    "front_text": "WWPN, LUN และ SAN Zoning คืออะไร?",
+    "back_text": "• WWPN (World Wide Port Name): เลขที่อยู่ 64-bit ประจำพอร์ต HBA และพอร์ต Storage (เหมือน MAC Address ของ Fibre Channel)\n• LUN: ก้อนดิสก์เสมือนที่แบ่งจากตู้ SAN ให้เซิร์ฟเวอร์ใช้งาน\n• Zoning: การจับคู่บน SAN Switch ว่า Initiator WWPN ใดมีสิทธิ์มองเห็น Target WWPN ใด",
+    "hint": "Single-Initiator Zoning ป้องกันเซิร์ฟเวอร์แย่งเขียนดิสก์ทับกัน",
+    "display_order": 12
+  },
+  {
+    "seed_key": "dc:fc:cisco-ucs-blade",
+    "lesson_slug": "dc-network-boot-san-blade",
+    "front_text": "จุดเด่นของ Blade Server (เช่น Cisco UCS และ HPE BladeSystem) คืออะไร?",
+    "back_text": "• รวมเซิร์ฟเวอร์หลายใบไว้ในโครง Chassis เดียว โดยแชร์ไฟ PSU, พัดลม และโมดูลสวิตช์ร่วมกัน\n• Cisco UCS มี Service Profile บน Fabric Interconnect ที่ย้ายค่า MAC, WWPN และการตั้งค่า BIOS ไปยังใบ Blade ใหม่ได้ทันทีเมื่อฮาร์ดแวร์เดิมเสีย",
+    "hint": "ลดสายไฟหลังตู้และเปลี่ยนเครื่องทดแทนได้ไวมาก",
+    "display_order": 13
+  },
+  {
+    "seed_key": "dc:fc:1phase-vs-3phase",
+    "lesson_slug": "dc-power-cooling-facilities",
+    "front_text": "ความแตกต่างของระบบไฟ 1 เฟส กับ 3 เฟส ใน Data Center",
+    "back_text": "• 1 เฟส (110V/220V): มีสาย Line 1 เส้น + N + G จ่ายเข้าตัว PSU ของเซิร์ฟเวอร์แต่ละเครื่อง\n• 3 เฟส (208V/380V/400V/480V): มีสาย Line 3 เส้น (L1, L2, L3) จ่ายเข้าตู้แร็ค PDU กำลังสูง โดยต้องกระจายโหลดทั้ง 3 เฟสให้สมดุลกัน",
+    "hint": "สูตรกำลังไฟ P = V x I",
+    "display_order": 14
+  },
+  {
+    "seed_key": "dc:fc:ups-ats-abfeed",
+    "lesson_slug": "dc-power-cooling-facilities",
+    "front_text": "บทบาทของ UPS, ATS และระบบไฟคู่ A/B Power Feed",
+    "back_text": "• UPS: จ่ายไฟจากแบตเตอรี่ทันที (0ms) ประคองไฟ 5-15 นาทีระหว่างรอเครื่องปั่นไฟ\n• ATS: สวิตช์สลับไฟอัตโนมัติจากไฟการไฟฟ้าไปยัง Generator\n• A/B Feed: เสียบสายไฟ PSU 1 เข้า PDU ฝั่ง A และ PSU 2 เข้า PDU ฝั่ง B โดยคุมโหลดฝั่งละไม่เกิน 40-45%",
+    "hint": "คุมโหลดไม่เกิน 45% ต่อฝั่ง เผื่อฝั่งหนึ่งดับอีกฝั่งจะรับโหลดรวมไม่เกิน 90%",
+    "display_order": 15
+  },
+  {
+    "seed_key": "dc:fc:power-sequence",
+    "lesson_slug": "dc-power-cooling-facilities",
+    "front_text": "ลำดับการปิด (Power-Down) และการเปิด (Power-Up) อุปกรณ์ทั้งตู้แร็ค",
+    "back_text": "• ตอนปิด: ปิด Server ก่อน -> ปิด Storage -> ปิด Network Switch หลังสุด\n• ตอนเปิด: เปิด Network/SAN Switch ก่อน -> เปิด Storage รอให้พร้อม -> ค่อยทยอยเปิด Server ทีละชุด (ป้องกันไฟกระชาก Inrush current)",
+    "hint": "Server ต้องเห็น Storage และ Network พร้อมก่อนเสมอตอนบูต",
+    "display_order": 16
+  },
+  {
+    "seed_key": "dc:fc:hot-cold-aisle",
+    "lesson_slug": "dc-power-cooling-facilities",
+    "front_text": "หลักการของ Hot Aisle / Cold Aisle และแผ่น Blanking Panel",
+    "back_text": "• Cold Aisle: หน้าตู้แร็คหันเข้าหากัน รับลมเย็นจากพื้นยกเข้าหน้าเครื่อง\n• Hot Aisle: หลังตู้แร็คหันชนกัน ระบายลมร้อนออกด้านหลังขึ้นเพดาน\n• Blanking Panel: แผ่นปิดช่อง U ที่ว่างหน้าตู้ เพื่อกั้นไม่ให้ลมร้อนไหลวนย้อนกลับมาด้านหน้า",
+    "hint": "ลมเย็นเข้าหน้า ลมร้อนออกหลัง",
+    "display_order": 17
+  },
+  {
+    "seed_key": "dc:fc:vesda-fm200",
+    "lesson_slug": "dc-power-cooling-facilities",
+    "front_text": "VESDA และสารดับเพลิง FM-200 / Novec 1230 คืออะไร?",
+    "back_text": "• VESDA: ระบบท่อดูดอากาศตรวจจับอนุภาคควันความไวสูงด้วยเลเซอร์ แจ้งเตือนตั้งแต่เริ่มมีกลิ่นไหม้\n• FM-200 / Novec 1230: แก๊สสารสะอาดดับเพลิง (Clean Agent) ที่ดับไฟโดยไม่นำไฟฟ้าและไม่ทำลายแผงวงจรเซิร์ฟเวอร์",
+    "hint": "ห้ามใช้น้ำหรือถังผงเคมีแห้งฉีดใส่เซิร์ฟเวอร์",
+    "display_order": 18
+  },
+  {
+    "seed_key": "dc:fc:interview-psu-spark",
+    "lesson_slug": "dc-interview-and-mindset",
+    "front_text": "[สัมภาษณ์] หากเห็นประกายไฟจาก PSU ลูกหนึ่งของเซิร์ฟเวอร์ ทำไมห้ามสับเบรกเกอร์ไฟหลักของทั้งตู้แร็ค?",
+    "back_text": "เพราะการสับไฟหลักของตู้แร็คจะทำให้เซิร์ฟเวอร์เครื่องอื่นอีก 20-40 เครื่องในตู้ดับทั้งหมด!\n\nสิ่งที่ต้องทำคือตั้งสติ ประเมินความปลอดภัย ตรวจสอบว่าเครื่องมี Redundant PSU ลูกที่ 2 รับโหลดอยู่ ถอดเฉพาะสายไฟของลูก PSU ที่ช็อต และแจ้งหัวหน้าทีม/NOC ทันที",
+    "hint": "ผู้จัดการต้องการเห็นสติและการจำกัดวงผลกระทบ (Blast Radius)",
+    "display_order": 19
+  },
+  {
+    "seed_key": "dc:fc:hosting-vs-colo",
+    "lesson_slug": "dc-interview-and-mindset",
+    "front_text": "[สัมภาษณ์] ความแตกต่างของคำถามสัมภาษณ์ระหว่างบริษัท Hosting กับ Colocation (เช่น Equinix)",
+    "back_text": "• บริษัท Hosting (มีเซิร์ฟเวอร์ตัวเอง): เน้นการลง OS (Linux/Windows), PXE boot, RAID, iDRAC/iLO และการแก้ปัญหาฮาร์ดแวร์/OS\n• บริษัท Colocation (ให้เช่าตู้และเชื่อมสาย): เน้นงาน Smart Hands, Cross-connect สายไฟเบอร์, ชนิดหัว SFP/QSFP, การสลับสาย Tx/Rx และมาตรฐานความปลอดภัยหน้าตู้ลูกค้า",
+    "hint": "Hosting เน้น Server+OS, Colocation เน้น Fiber+Cross-Connect+Smart Hands",
+    "display_order": 20
+  }
+]

@@ -1,0 +1,174 @@
+{
+  "slug": "disk-full",
+  "title": "Disk เต็มบนเซิร์ฟเวอร์แอป",
+  "topic": "linux",
+  "difficulty": "beginner",
+  "estimatedMinutes": 8,
+  "relatedLessons": ["linux-disk-memory-cpu"],
+  "ticket": {
+    "id": "INC-1042",
+    "severity": "P2",
+    "reporter": "ทีมแอปพลิเคชัน",
+    "summary": "แอปบันทึกข้อมูลไม่ได้ ขึ้น No space left on device",
+    "detail": "เริ่มเกิดประมาณ 09:30 บนเซิร์ฟเวอร์ app-01 ผู้ใช้แจ้งว่าอัปโหลดใบเสร็จไม่ผ่าน"
+  },
+  "runbook": [
+    "ตรวจพื้นที่ดิสก์ด้วย df -h",
+    "หาไดเรกทอรีที่ใช้พื้นที่มากสุดด้วย du -sh /var/log/*",
+    "ไฟล์ log ของแอปใน /var/log/app/app.log ล้างเนื้อหาได้ตามข้อกำหนดด้วย > /var/log/app/app.log (ห้ามลบไฟล์ทิ้งด้วย rm)",
+    "รัน df -h อีกครั้งเพื่อยืนยันว่าพื้นที่ว่างกลับมาปกติ"
+  ],
+  "host": {
+    "hostname": "app-01",
+    "user": "support",
+    "cwd": "/home/support"
+  },
+  "world": {
+    "fs": [
+      {
+        "path": "/home/support/README.txt",
+        "type": "file",
+        "content": "Ticket INC-1042: Check disk usage on / and truncate oversized application logs in /var/log/app.\n",
+        "mode": "0644",
+        "owner": "support",
+        "group": "support",
+        "mtime": "2026-11-04T09:31:00Z"
+      },
+      {
+        "path": "/var/log/syslog",
+        "type": "file",
+        "sizeBytes": 52428800,
+        "previewLines": [
+          "Nov  4 09:28:11 app-01 systemd[1]: Started Application Worker.",
+          "Nov  4 09:30:02 app-01 app-worker[1842]: ERROR: write /var/log/app/app.log: No space left on device",
+          "Nov  4 09:30:15 app-01 app-worker[1842]: ERROR: failed to persist upload buffer: ENOSPC"
+        ],
+        "mode": "0640",
+        "owner": "root",
+        "group": "adm",
+        "mtime": "2026-11-04T09:30:15Z"
+      },
+      {
+        "path": "/var/log/nginx/access.log",
+        "type": "file",
+        "sizeBytes": 125829120,
+        "previewLines": [
+          "10.0.1.12 - - [04/Nov/2026:09:29:50 +0700] \"POST /api/upload HTTP/1.1\" 500 84",
+          "10.0.1.15 - - [04/Nov/2026:09:30:04 +0700] \"POST /api/upload HTTP/1.1\" 500 84"
+        ],
+        "mode": "0644",
+        "owner": "www-data",
+        "group": "adm",
+        "mtime": "2026-11-04T09:30:04Z"
+      },
+      {
+        "path": "/var/log/app",
+        "type": "dir",
+        "mode": "0775",
+        "owner": "support",
+        "group": "support",
+        "mtime": "2026-11-04T09:30:00Z"
+      },
+      {
+        "path": "/var/log/app/app.log",
+        "type": "file",
+        "sizeBytes": 12884901888,
+        "previewLines": [
+          "2026-11-04T09:29:58.102Z [DEBUG] Payload dump iteration 994821...",
+          "2026-11-04T09:29:59.400Z [ERROR] Uncaught debug trace loop writing to disk",
+          "2026-11-04T09:30:00.011Z [FATAL] IOException: No space left on device"
+        ],
+        "mode": "0664",
+        "owner": "support",
+        "group": "support",
+        "mtime": "2026-11-04T09:30:00Z"
+      }
+    ],
+    "disks": [
+      {
+        "device": "/dev/sda1",
+        "mount": "/",
+        "sizeBytes": 53687091200,
+        "otherUsedBytes": 39800000000
+      }
+    ],
+    "memory": {
+      "totalMB": 7976,
+      "usedMB": 2140,
+      "freeMB": 3420,
+      "buffCacheMB": 2416
+    },
+    "processes": [
+      {
+        "pid": 1,
+        "user": "root",
+        "cpu": 0.1,
+        "mem": 0.2,
+        "command": "/sbin/init"
+      },
+      {
+        "pid": 1842,
+        "user": "support",
+        "cpu": 2.4,
+        "mem": 4.5,
+        "command": "/usr/bin/node /opt/app/server.js",
+        "service": "app-worker"
+      }
+    ],
+    "services": [
+      {
+        "name": "app-worker",
+        "description": "SupportHub Application Worker",
+        "state": "active",
+        "enabled": true,
+        "pid": 1842
+      }
+    ],
+    "network": {
+      "uptime": "09:32:10 up 42 days,  3:14,  1 user,  load average: 0.42, 0.38, 0.31"
+    }
+  },
+  "scripted": [],
+  "goals": [
+    {
+      "id": "g1",
+      "text": "ตรวจพื้นที่ดิสก์ด้วย df",
+      "check": {
+        "type": "commandMatched",
+        "pattern": "^df(\\s+-[a-zA-Z]+)*(\\s+/)?$"
+      }
+    },
+    {
+      "id": "g2",
+      "text": "สำรวจขนาดไดเรกทอรีใน /var/log ด้วย du",
+      "check": {
+        "type": "commandMatched",
+        "pattern": "^(sudo\\s+)?du\\s+.*(/var|/var/log|app)"
+      }
+    },
+    {
+      "id": "g3",
+      "text": "ล้างเนื้อหา /var/log/app/app.log โดยไม่ลบตัวไฟล์",
+      "check": {
+        "type": "fileSizeBelow",
+        "path": "/var/log/app/app.log",
+        "bytes": 1048576
+      }
+    },
+    {
+      "id": "g4",
+      "text": "พื้นที่ใช้งานของ / ลดลงต่ำกว่า 80%",
+      "check": {
+        "type": "stateEquals",
+        "path": "disks[0].usePercentBelow",
+        "value": 80
+      }
+    }
+  ],
+  "hints": [
+    "เริ่มจากดูภาพรวมว่า filesystem ไหนเต็มด้วยคำสั่ง df -h",
+    "ตรวจขนาดโฟลเดอร์ย่อยใน /var/log ด้วยคำสั่ง du -sh /var/log/*",
+    "ล้างเนื้อหาไฟล์โดยไม่ลบไฟล์ด้วยคำสั่ง > /var/log/app/app.log แล้วรัน df -h อีกครั้ง"
+  ],
+  "debrief": "สรุปบทเรียน: เมื่อโปรเซสกำลังเปิดไฟล์ log ค้างไว้ การลบไฟล์ด้วย rm อาจทำให้พื้นที่ดิสก์ไม่คืนทันทีจนกว่าจะ restart service (เพราะไฟล์ยังถูกถือครองโดย file descriptor) การใช้ > /var/log/app/app.log (truncate) จึงเป็นวิธีมาตรฐานที่ปลอดภัยใน Runbook ของงาน Support เพราะคืนพื้นที่ได้ทันทีโดยไม่ต้องหยุดแอป"
+}

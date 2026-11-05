@@ -1,0 +1,110 @@
+[
+  {
+    "seed_key": "linux:07-disk-memory-cpu:fc01",
+    "lesson_slug": "linux-disk-memory-cpu",
+    "front_text": "ความแตกต่างระหว่างคำสั่ง df -h กับ df -i",
+    "back_text": "• df -h : ตรวจสอบความจุพื้นที่ดิสก์ในหน่วย KB/MB/GB (Use%)\n• df -i : ตรวจสอบจำนวน Inode หรือสารบัญไฟล์ที่ใช้ไป (IUse%)",
+    "hint": "h = human-readable size, i = inodes",
+    "tags": ["df", "disk", "inode"],
+    "display_order": 1
+  },
+  {
+    "seed_key": "linux:07-disk-memory-cpu:fc02",
+    "lesson_slug": "linux-disk-memory-cpu",
+    "front_text": "ทำไมระบบถึงฟ้อง No space left on device ทั้งที่ df -h ยังมีพื้นที่ว่างเหลือหลาย GB?",
+    "back_text": "เพราะจำนวน Inode เต็ม 100% (ตรวจด้วย df -i) มักเกิดจากการมีไฟล์ขนาดเล็กจำนวนมหาศาลอยู่ในพาร์ทิชันนั้น",
+    "hint": "1 ไฟล์ต้องใช้ 1 Inode เสมอ",
+    "tags": ["inode", "disk"],
+    "display_order": 2
+  },
+  {
+    "seed_key": "linux:07-disk-memory-cpu:fc03",
+    "lesson_slug": "linux-disk-memory-cpu",
+    "front_text": "คำสั่งเรียงลำดับขนาดโฟลเดอร์ย่อยจากน้อยไปมากในหน่วยอ่านง่าย",
+    "back_text": "du -sh * | sort -h\n(-h ใน sort ช่วยให้เรียงลำดับหน่วย K, M, G ได้ถูกต้อง)",
+    "hint": "du -sh คู่กับ sort -h",
+    "tags": ["du", "sort", "disk"],
+    "display_order": 3
+  },
+  {
+    "seed_key": "linux:07-disk-memory-cpu:fc04",
+    "lesson_slug": "linux-disk-memory-cpu",
+    "front_text": "ลบไฟล์ Log ขนาดใหญ่ด้วย rm ไปแล้ว แต่ทำไม df -h พื้นที่ดิสก์ยังไม่คืน และเช็กอย่างไร?",
+    "back_text": "เพราะยังมีโปรเซสเปิดถือไฟล์นั้นค้างอยู่ (Held open)\nวิธีตรวจ: รัน lsof +L1 (หรือ lsof | grep deleted) เพื่อดูว่าโปรเซสใดถือไฟล์อยู่",
+    "hint": "List Open Files ที่มี link count < 1",
+    "tags": ["lsof", "disk"],
+    "display_order": 4
+  },
+  {
+    "seed_key": "linux:07-disk-memory-cpu:fc05",
+    "lesson_slug": "linux-disk-memory-cpu",
+    "front_text": "เวลาดูหน่วยความจำด้วยคำสั่ง free -h ควรดูที่คอลัมน์ใดเป็นหลัก?",
+    "back_text": "ดูที่คอลัมน์ available เป็นหลัก (ไม่ใช่คอลัมน์ free)\nเพราะ Linux นำ RAM ว่างไปทำ buff/cache ซึ่งพร้อมคืนให้แอปพลิเคชันได้ทันทีเมื่อจำเป็น",
+    "hint": "available = พร้อมให้แอปใช้งานจริง",
+    "tags": ["free", "memory"],
+    "display_order": 5
+  },
+  {
+    "seed_key": "linux:07-disk-memory-cpu:fc06",
+    "lesson_slug": "linux-disk-memory-cpu",
+    "front_text": "คำสั่งตรวจว่าเคยมีโปรเซสถูก OOM Killer ของ Kernel สั่งปิดเพราะ RAM หมดหรือไม่",
+    "back_text": "dmesg -T | grep -i oom\n(หรือ journalctl -k | grep -i oom)",
+    "hint": "ค้นหาคำว่า oom ใน Kernel log",
+    "tags": ["dmesg", "oom", "memory"],
+    "display_order": 6
+  },
+  {
+    "seed_key": "linux:07-disk-memory-cpu:fc07",
+    "lesson_slug": "linux-disk-memory-cpu",
+    "front_text": "ตัวเลข Load Average 3 ค่าจากคำสั่ง uptime แทนช่วงเวลาใด?",
+    "back_text": "ค่าเฉลี่ยโหลดย้อนหลัง 1 นาที, 5 นาที และ 15 นาที ตามลำดับ",
+    "hint": "1, 5, 15 นาที",
+    "tags": ["uptime", "load-average"],
+    "display_order": 7
+  },
+  {
+    "seed_key": "linux:07-disk-memory-cpu:fc08",
+    "lesson_slug": "linux-disk-memory-cpu",
+    "front_text": "คำสั่งแสดงจำนวน CPU Core ของเครื่องเพื่อนำมาเทียบกับค่า Load Average",
+    "back_text": "nproc\n(หาก Load Average สูงเกินค่าจาก nproc แสดงว่าเริ่มมีงานรอคิว)",
+    "hint": "Number of Processing Units",
+    "tags": ["nproc", "cpu"],
+    "display_order": 8
+  },
+  {
+    "seed_key": "linux:07-disk-memory-cpu:fc09",
+    "lesson_slug": "linux-disk-memory-cpu",
+    "front_text": "หาก Load Average สูงมาก แต่ดู CPU Usage แล้วต่ำมาก มักเกิดจากสาเหตุใด?",
+    "back_text": "เกิดจากปัญหา Disk I/O Wait สูง (%wa สูง และโปรเซสค้างในสถานะ D) เพราะ Linux นับโปรเซสที่รอ I/O รวมใน Load Average ด้วย",
+    "hint": "รอการอ่านเขียนดิสก์หรือ NFS",
+    "tags": ["iowait", "load-average"],
+    "display_order": 9
+  },
+  {
+    "seed_key": "linux:07-disk-memory-cpu:fc10",
+    "lesson_slug": "linux-disk-memory-cpu",
+    "front_text": "คอลัมน์ us, sy, id, wa ในคำสั่ง vmstat หรือ top หมายถึงอะไร?",
+    "back_text": "• us (user): CPU ที่ใช้รันโปรแกรมทั่วไป\n• sy (system): CPU ที่ใช้ทำงานระดับ Kernel\n• id (idle): CPU ที่ว่างอยู่\n• wa (iowait): เวลาที่ CPU รอการอ่านเขียนดิสก์/เครือข่าย",
+    "hint": "User, System, Idle, Wait",
+    "tags": ["vmstat", "top", "cpu"],
+    "display_order": 10
+  },
+  {
+    "seed_key": "linux:07-disk-memory-cpu:fc11",
+    "lesson_slug": "linux-disk-memory-cpu",
+    "front_text": "คำสั่งดูสถิติ Memory, Swap, I/O และ CPU ทุก 1 วินาที จำนวน 5 ครั้ง",
+    "back_text": "vmstat 1 5\n(บรรทัดแรกคือค่าเฉลี่ยตั้งแต่เปิดเครื่อง ให้ดูตั้งแต่บรรทัดที่ 2 เป็นต้นไป)",
+    "hint": "Virtual Memory Statistics",
+    "tags": ["vmstat", "monitoring"],
+    "display_order": 11
+  },
+  {
+    "seed_key": "linux:07-disk-memory-cpu:fc12",
+    "lesson_slug": "linux-disk-memory-cpu",
+    "front_text": "กฎเหล็กของ Tier 1 เมื่อตรวจพบว่าดิสก์เซิร์ฟเวอร์ Production เต็ม",
+    "back_text": "ห้ามลบไฟล์ด้วยตัวเองโดยไม่อยู่ใน Runbook ให้เก็บผลลัพธ์จาก df -h, df -i, du -sh และ lsof +L1 แล้วส่งต่อ (Escalate) ทันที",
+    "hint": "ตรวจและเก็บหลักฐาน ไม่ลบสุ่มสี่สุ่มห้า",
+    "tags": ["disk", "escalate"],
+    "display_order": 12
+  }
+]

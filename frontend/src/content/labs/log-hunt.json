@@ -1,0 +1,105 @@
+{
+  "slug": "log-hunt",
+  "title": "แกะรอย IP ต้นเหตุและนับ HTTP 500 จาก access.log",
+  "topic": "linux",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 12,
+  "relatedLessons": ["linux-text-tools", "linux-log-reading"],
+  "ticket": {
+    "id": "INC-1190",
+    "severity": "P2",
+    "reporter": "ศูนย์เฝ้าระวัง NOC",
+    "summary": "อัตรา HTTP 500 พุ่งสูงผิดปกติ ต้องหาจำนวน 500 ทั้งหมดและ IP ที่ยิงเข้ามามากที่สุด",
+    "detail": "ไฟล์บันทึกถูกคัดลอกมาไว้ที่ /home/support/access.log และ /var/log/nginx/access.log"
+  },
+  "runbook": [
+    "นับจำนวนบรรทัดที่เกิดสถานะ 500 ใน access.log ด้วย grep ' 500 ' access.log | wc -l",
+    "สกัดคอลัมน์ IP และจัดอันดับผู้เรียกสูงสุดด้วย awk '{print $1}' access.log | sort | uniq -c | sort -nr | head",
+    "ยืนยันว่าเห็นทั้งตัวเลขจำนวน error 500 และ IP อันดับหนึ่งในผลลัพธ์"
+  ],
+  "host": {
+    "hostname": "log-01",
+    "user": "support",
+    "cwd": "/home/support"
+  },
+  "world": {
+    "fs": [
+      {
+        "path": "/home/support/access.log",
+        "type": "file",
+        "content": "203.0.113.45 - - [04/Nov/2026:11:01:01 +0700] \"POST /api/login HTTP/1.1\" 500 142\n198.51.100.12 - - [04/Nov/2026:11:01:02 +0700] \"GET /api/products HTTP/1.1\" 200 1840\n203.0.113.45 - - [04/Nov/2026:11:01:03 +0700] \"POST /api/login HTTP/1.1\" 500 142\n203.0.113.45 - - [04/Nov/2026:11:01:04 +0700] \"POST /api/login HTTP/1.1\" 500 142\n192.0.2.88 - - [04/Nov/2026:11:01:05 +0700] \"GET /healthz HTTP/1.1\" 200 15\n203.0.113.45 - - [04/Nov/2026:11:01:06 +0700] \"POST /api/login HTTP/1.1\" 500 142\n198.51.100.12 - - [04/Nov/2026:11:01:07 +0700] \"GET /api/orders HTTP/1.1\" 200 920\n203.0.113.45 - - [04/Nov/2026:11:01:08 +0700] \"POST /api/login HTTP/1.1\" 500 142\n198.51.100.12 - - [04/Nov/2026:11:01:09 +0700] \"GET /api/profile HTTP/1.1\" 200 412\n203.0.113.45 - - [04/Nov/2026:11:01:10 +0700] \"POST /api/login HTTP/1.1\" 500 142\n192.0.2.88 - - [04/Nov/2026:11:01:11 +0700] \"GET /healthz HTTP/1.1\" 200 15\n203.0.113.45 - - [04/Nov/2026:11:01:12 +0700] \"GET /api/status HTTP/1.1\" 429 64\n",
+        "mode": "0644",
+        "owner": "support",
+        "group": "support",
+        "mtime": "2026-11-04T11:02:00Z"
+      },
+      {
+        "path": "/var/log/nginx/access.log",
+        "type": "file",
+        "content": "203.0.113.45 - - [04/Nov/2026:11:01:01 +0700] \"POST /api/login HTTP/1.1\" 500 142\n198.51.100.12 - - [04/Nov/2026:11:01:02 +0700] \"GET /api/products HTTP/1.1\" 200 1840\n203.0.113.45 - - [04/Nov/2026:11:01:03 +0700] \"POST /api/login HTTP/1.1\" 500 142\n203.0.113.45 - - [04/Nov/2026:11:01:04 +0700] \"POST /api/login HTTP/1.1\" 500 142\n192.0.2.88 - - [04/Nov/2026:11:01:05 +0700] \"GET /healthz HTTP/1.1\" 200 15\n203.0.113.45 - - [04/Nov/2026:11:01:06 +0700] \"POST /api/login HTTP/1.1\" 500 142\n198.51.100.12 - - [04/Nov/2026:11:01:07 +0700] \"GET /api/orders HTTP/1.1\" 200 920\n203.0.113.45 - - [04/Nov/2026:11:01:08 +0700] \"POST /api/login HTTP/1.1\" 500 142\n198.51.100.12 - - [04/Nov/2026:11:01:09 +0700] \"GET /api/profile HTTP/1.1\" 200 412\n203.0.113.45 - - [04/Nov/2026:11:01:10 +0700] \"POST /api/login HTTP/1.1\" 500 142\n192.0.2.88 - - [04/Nov/2026:11:01:11 +0700] \"GET /healthz HTTP/1.1\" 200 15\n203.0.113.45 - - [04/Nov/2026:11:01:12 +0700] \"GET /api/status HTTP/1.1\" 429 64\n",
+        "mode": "0644",
+        "owner": "www-data",
+        "group": "adm",
+        "mtime": "2026-11-04T11:02:00Z"
+      }
+    ],
+    "disks": [
+      {
+        "device": "/dev/sda1",
+        "mount": "/",
+        "sizeBytes": 32212254720,
+        "otherUsedBytes": 8589934592
+      }
+    ],
+    "memory": {
+      "totalMB": 3950,
+      "usedMB": 710,
+      "freeMB": 2240,
+      "buffCacheMB": 1000
+    },
+    "processes": [
+      {
+        "pid": 1,
+        "user": "root",
+        "cpu": 0.0,
+        "mem": 0.2,
+        "command": "/sbin/init"
+      }
+    ],
+    "services": [],
+    "network": {}
+  },
+  "scripted": [],
+  "goals": [
+    {
+      "id": "g1",
+      "text": "นับจำนวนบรรทัดที่มีรหัส 500 ด้วย grep และ wc -l",
+      "check": {
+        "type": "commandMatched",
+        "pattern": "grep.*500.*\\|\\s*wc\\s+-l"
+      }
+    },
+    {
+      "id": "g2",
+      "text": "จัดอันดับ IP ที่เรียกบ่อยสุดด้วย awk, sort และ uniq -c",
+      "check": {
+        "type": "commandMatched",
+        "pattern": "awk.*\\|\\s*sort.*\\|\\s*uniq\\s+-c"
+      }
+    },
+    {
+      "id": "g3",
+      "text": "พบสถิติของ IP 203.0.113.45 (7 ครั้ง) ในผลลัพธ์การจัดอันดับ",
+      "check": {
+        "type": "outputContains",
+        "substring": "7 203.0.113.45"
+      }
+    }
+  ],
+  "hints": [
+    "ใช้คำสั่ง grep ' 500 ' access.log | wc -l เพื่อนับบรรทัดที่เกิด HTTP 500",
+    "ดึงเฉพาะ IP คอลัมน์แรกด้วย awk '{print $1}' access.log",
+    "ต่อท่อ (pipe) เข้าด้วยกัน: awk '{print $1}' access.log | sort | uniq -c | sort -nr | head"
+  ],
+  "debrief": "สรุปบทเรียน: การต่อท่อคำสั่ง (Pipeline) ด้วย awk '{print $1}' | sort | uniq -c | sort -nr | head เป็นท่าไม้ตายสำคัญของสาย Support/NOC ในการหา Top Talker IP จากไฟล์ Access Log โดยไม่ต้องพึ่งเครื่องมือภายนอก"
+}

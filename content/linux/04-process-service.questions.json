@@ -1,0 +1,114 @@
+[
+  {
+    "seed_key": "linux:04-process-service:q01",
+    "lesson_slug": "linux-process-service",
+    "question_text": "คำสั่ง `kill 14520` กับคำสั่ง `kill -9 14520` มีความแตกต่างกันอย่างไรในแง่ของการจัดการโปรเซส?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "`kill <PID>` โดยไม่ระบุตัวเลขสัญญาณ จะส่งสัญญาณเริ่มต้นคือ `SIGTERM` (15) เพื่อขอให้โปรเซสปิดตัวเองอย่างสุภาพและบันทึกข้อมูลที่ค้างให้เรียบร้อย ส่วน `kill -9 <PID>` ส่งสัญญาณ `SIGKILL` (9) ซึ่งสั่งให้ Kernel ตัดการทำงานของโปรเซสทันทีโดยไม่ให้โอกาสเคลียร์งาน",
+    "tags": ["kill", "signals", "process"],
+    "choices": [
+      { "choice_text": "`kill 14520` ส่งสัญญาณ SIGTERM (15) ให้โปรเซสเคลียร์งานก่อนปิด ส่วน `kill -9 14520` ส่ง SIGKILL (9) บังคับตัดการทำงานทันที", "is_correct": true, "explanation": "ถูกต้อง — ควรเริ่มด้วย SIGTERM เสมอเพื่อป้องกันข้อมูลเสียหาย" },
+      { "choice_text": "`kill 14520` ใช้สำหรับหยุดชั่วคราว (Pause) ส่วน `kill -9 14520` ใช้สำหรับรีสตาร์ทโปรเซสใหม่", "is_correct": false, "explanation": "ทั้งสองคำสั่งใช้หยุดการทำงานของโปรเซส ไม่ใช่การรีสตาร์ท" },
+      { "choice_text": "`kill -9` จะรอให้โปรเซสทำงานเสร็จอีก 9 วินาทีก่อนปิด ส่วน `kill` ปิดทันที", "is_correct": false, "explanation": "เลข 9 คือรหัสสัญญาณ SIGKILL ไม่ใช่จำนวนวินาทีที่รอ" },
+      { "choice_text": "ไม่มีความแตกต่างกัน เป็นเพียงรูปแบบการเขียนแบบย่อและแบบเต็ม", "is_correct": false, "explanation": "ต่างกันอย่างชัดเจนระหว่างการปิดแบบ Graceful (SIGTERM) และการบังคับตัดทันที (SIGKILL)" }
+    ]
+  },
+  {
+    "seed_key": "linux:04-process-service:q02",
+    "lesson_slug": "linux-process-service",
+    "question_text": "จากผลลัพธ์ของคำสั่ง `systemctl status payment-worker.service` ด้านล่าง สาเหตุที่ทำให้บริการหยุดทำงานคืออะไร?",
+    "scenario_text": "× payment-worker.service - Payment Queue Worker\n     Loaded: loaded (/etc/systemd/system/payment-worker.service; enabled)\n     Active: failed (Result: oom-kill) since Tue 2026-11-03 13:45:02 +07; 3min ago\n    Process: 9412 ExecStart=/usr/bin/python3 /opt/payment/worker.py (code=killed, signal=KILL)\n   Main PID: 9412 (code=killed, signal=KILL)\n\nNov 03 13:45:02 app-02 systemd[1]: payment-worker.service: A process of this unit has been killed by the OOM killer.\nNov 03 13:45:02 app-02 systemd[1]: payment-worker.service: Failed with result 'oom-kill'.",
+    "question_type": "scenario",
+    "difficulty": "medium",
+    "explanation": "บรรทัด `Active: failed (Result: oom-kill)` และข้อความ `killed by the OOM killer` ระบุชัดเจนว่าเครื่องมีหน่วยความจำ (RAM) ไม่เพียงพอ จนระบบ Out-Of-Memory (OOM) Killer ของ Linux Kernel ต้องส่งสัญญาณ `SIGKILL` มาบังคับปิดโปรเซสนี้",
+    "tags": ["systemctl", "oom-kill", "troubleshooting"],
+    "choices": [
+      { "choice_text": "หน่วยความจำ (RAM) ของเครื่องไม่เพียงพอ ทำให้ระบบ OOM Killer ของ Kernel บังคับปิดโปรเซส", "is_correct": true, "explanation": "ถูกต้อง — Result: oom-kill บ่งชี้ว่าถูก Out-Of-Memory Killer ตัดการทำงาน" },
+      { "choice_text": "ไฟล์ `/opt/payment/worker.py` ถูกลบออกจากเครื่อง", "is_correct": false, "explanation": "หากไฟล์หายจะฟ้องตั้งแต่เริ่มรันด้วย exit-code ไม่ใช่ oom-kill" },
+      { "choice_text": "พอร์ตเครือข่ายของบริการชนกับโปรแกรมอื่น", "is_correct": false, "explanation": "พอร์ตชนจะจบการทำงานด้วย exit-code และฟ้อง Address already in use" },
+      { "choice_text": "ยังไม่ได้เปิดใช้งาน `systemctl enable` ให้กับบริการนี้", "is_correct": false, "explanation": "ในบรรทัด Loaded แสดงว่า enabled อยู่แล้ว และสาเหตุคือหน่วยความจำเต็ม" }
+    ]
+  },
+  {
+    "seed_key": "linux:04-process-service:q03",
+    "lesson_slug": "linux-process-service",
+    "question_text": "หากต้องการตรวจสอบรายชื่อบริการ (systemd units) ทั้งหมดบนเครื่องที่อยู่ในสถานะ `failed` ในคำสั่งเดียว ควรใช้คำสั่งใด?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "คำสั่ง `systemctl list-units --failed` (หรือ `systemctl --failed`) จะกรองและแสดงเฉพาะยูนิตบริการที่มีปัญหาอยู่ในสถานะ `failed` ทั้งหมด ช่วยให้ NOC Tier 1 ตรวจภาพรวมของเครื่องได้รวดเร็ว",
+    "tags": ["systemctl", "systemd", "service"],
+    "choices": [
+      { "choice_text": "systemctl list-units --failed", "is_correct": true, "explanation": "ถูกต้อง — แสดงเฉพาะบริการที่อยู่ในสถานะ failed ทั้งหมด" },
+      { "choice_text": "systemctl is-active --all", "is_correct": false, "explanation": "is-active ใช้ตรวจชื่อบริการที่ระบุ ไม่ใช่การแสดงรายการที่ล่มทั้งหมด" },
+      { "choice_text": "ps aux --failed", "is_correct": false, "explanation": "คำสั่ง ps aux แสดงโปรเซสที่ยังรันอยู่ ไม่มีตัวเลือก --failed" },
+      { "choice_text": "journalctl --list-failed", "is_correct": false, "explanation": "journalctl ใช้เปิดอ่าน Log ไม่มีตัวเลือก --list-failed" }
+    ]
+  },
+  {
+    "seed_key": "linux:04-process-service:q04",
+    "lesson_slug": "linux-process-service",
+    "question_text": "จากผลลัพธ์ของคำสั่ง `ps aux` ด้านล่าง โปรเซส PID `24109` ที่มีสถานะ `Z` และมีคำว่า `<defunct>` ต่อท้ายคืออะไร และเหตุใดการใช้ `kill -9 24109` จึงไม่ทำให้รายการนี้หายไป?",
+    "scenario_text": "$ ps aux | grep report\nappuser   24100  0.2  1.5 412800 31200 ?  Sl   09:00   0:14 /usr/bin/python3 /opt/app/scheduler.py\nappuser   24109  0.0  0.0      0     0 ?  Z    10:15   0:00 [report_gen.sh] <defunct>",
+    "question_type": "scenario",
+    "difficulty": "hard",
+    "explanation": "สถานะ `Z` (`<defunct>`) คือ **Zombie Process** ซึ่งเป็นโปรเซสที่ทำงานจบและคืนหน่วยความจำไปแล้ว แต่โปรเซสแม่ (PPID) ยังไม่ได้เรียก `wait()` เพื่ออ่านค่าสถานะจบงาน เนื่องจากมันจบการทำงานไปแล้ว จึงไม่สามารถฆ่าซ้ำด้วย `kill -9 24109` ได้ การเคลียร์ต้องให้โปรเซสแม่อ่านสถานะ หรือรีสตาร์ทโปรเซสแม่ตาม Runbook",
+    "tags": ["ps", "zombie", "process", "troubleshooting"],
+    "choices": [
+      { "choice_text": "คือ Zombie Process ที่ทำงานจบไปแล้วแต่โปรเซสแม่ยังไม่อ่านสถานะจบงาน จึงไม่สามารถใช้ kill -9 สั่งฆ่าตัวมันซ้ำได้", "is_correct": true, "explanation": "ถูกต้อง — Zombie ไม่มีโค้ดรันอยู่แล้ว เหลือเพียงรายการในตารางโปรเซสที่รอโปรเซสแม่มาเก็บกวาด" },
+      { "choice_text": "คือโปรเซสที่ถูกเข้ารหัสด้วยไวรัส ต้องใช้สิทธิ์ root รัน `pkill -f defunct` เท่านั้น", "is_correct": false, "explanation": "Zombie process เป็นกลไกปกติของตารางโปรเซสบน Linux ไม่ใช่ไวรัส" },
+      { "choice_text": "คือโปรเซสที่กำลังบีบอัดไฟล์แบบ Zip (Z) และห้ามขัดจังหวะจนกว่าจะบีบอัดเสร็จ", "is_correct": false, "explanation": "ตัวอักษร Z ในคอลัมน์ STAT หมายถึง Zombie ไม่ใช่การบีบอัดไฟล์" },
+      { "choice_text": "คือโปรเซสของ Kernel ที่ถูกล็อกด้วยฮาร์ดแวร์ ต้องถอดสายแลนออกก่อนจึงจะ kill ได้", "is_correct": false, "explanation": "ไม่เกี่ยวข้องกับสายแลนหรือการล็อกฮาร์ดแวร์" }
+    ]
+  },
+  {
+    "seed_key": "linux:04-process-service:q05",
+    "lesson_slug": "linux-process-service",
+    "question_text": "หากต้องการดู Log ของบริการ `nginx` ย้อนหลัง 100 บรรทัดล่าสุด และเปิดติดตามบรรทัดใหม่ที่เข้ามาแบบเรียลไทม์ (Real-time follow) ต้องใช้คำสั่งใด?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "`journalctl -u nginx` ระบุชื่อยูนิตบริการ, `-n 100` แสดงย้อนหลัง 100 บรรทัด, และ `-f` (follow) ติดตามข้อความใหม่แบบสด",
+    "tags": ["journalctl", "logs", "systemd"],
+    "choices": [
+      { "choice_text": "journalctl -u nginx -n 100 -f", "is_correct": true, "explanation": "ถูกต้อง — ระบุยูนิต (-u), จำนวนบรรทัด (-n 100) และติดตามสด (-f)" },
+      { "choice_text": "systemctl log nginx --tail 100", "is_correct": false, "explanation": "systemctl ไม่มีคำสั่งย่อย log" },
+      { "choice_text": "ps aux -u nginx -n 100", "is_correct": false, "explanation": "ps ใช้ดูรายการโปรเซส ไม่ใช่คำสั่งเปิดอ่าน Log ของ systemd" },
+      { "choice_text": "top -u nginx -f 100", "is_correct": false, "explanation": "top ใช้ดูการใช้ CPU/RAM ของโปรเซส ไม่ใช่การอ่าน Log" }
+    ]
+  },
+  {
+    "seed_key": "linux:04-process-service:q06",
+    "lesson_slug": "linux-process-service",
+    "question_text": "คำสั่ง `systemctl enable nginx` ทำหน้าที่อะไร?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "medium",
+    "explanation": "`systemctl enable <service>` เป็นการสร้าง Symbolic link เพื่อให้บริการนั้นเริ่มทำงานอัตโนมัติเมื่อเปิดเครื่อง (Boot) แต่ไม่ได้สั่งสตาร์ทบริการในทันที (หากต้องการสตาร์ททันทีด้วยต้องใช้ `systemctl start` หรือ `systemctl enable --now`)",
+    "tags": ["systemctl", "systemd", "boot"],
+    "choices": [
+      { "choice_text": "ตั้งค่าให้บริการ nginx เริ่มทำงานอัตโนมัติเมื่อบูตเครื่องเซิร์ฟเวอร์", "is_correct": true, "explanation": "ถูกต้อง — enable คือการผูกบริการเข้ากับเป้าหมายการบูตเครื่อง" },
+      { "choice_text": "สั่งรีสตาร์ทบริการ nginx ทันทีโดยไม่ตั้งค่าการบูต", "is_correct": false, "explanation": "การรีสตาร์ททันทีคือคำสั่ง systemctl restart nginx" },
+      { "choice_text": "เปิดพอร์ต 80 และ 443 บน Firewall ให้กับ nginx", "is_correct": false, "explanation": "systemctl enable จัดการเฉพาะ systemd unit ไม่ได้แก้กฎ Firewall" },
+      { "choice_text": "อัปเดตโปรแกรม nginx เป็นเวอร์ชันล่าสุด", "is_correct": false, "explanation": "การอัปเดตแพ็กเกจต้องใช้ apt หรือ dnf ไม่ใช่ systemctl" }
+    ]
+  },
+  {
+    "seed_key": "linux:04-process-service:q07",
+    "lesson_slug": "linux-process-service",
+    "question_text": "เมื่อเปิดโปรแกรม `top` เพื่อดูโปรเซสที่กำลังทำงานอยู่ หากต้องการเรียงลำดับโปรเซสตามปริมาณการใช้หน่วยความจำ (`%MEM`) จากมากไปน้อย ต้องกดปุ่มใดบนคีย์บอร์ด?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "medium",
+    "explanation": "ในหน้าจอโปรแกรม `top` การกดปุ่ม `M` (ตัวพิมพ์ใหญ่) จะเรียงลำดับตาม `%MEM` จากมากไปน้อย ส่วนการกดปุ่ม `P` (ตัวพิมพ์ใหญ่) จะเรียงตาม `%CPU` และการกด `q` คือออกจากโปรแกรม",
+    "tags": ["top", "memory", "process"],
+    "choices": [
+      { "choice_text": "กดปุ่ม M (พิมพ์ใหญ่)", "is_correct": true, "explanation": "ถูกต้อง — M रेียงตาม Memory, P เรียงตาม CPU" },
+      { "choice_text": "กดปุ่ม R (พิมพ์ใหญ่)", "is_correct": false, "explanation": "ปุ่ม r/R ใช้สำหรับเปลี่ยนค่า renice หรือสลับทิศทางการเรียง" },
+      { "choice_text": "กดปุ่ม K (พิมพ์ใหญ่)", "is_correct": false, "explanation": "ปุ่ม k ใช้สำหรับส่งสัญญาณ kill โปรเซส" },
+      { "choice_text": "กดปุ่ม Z (พิมพ์ใหญ่)", "is_correct": false, "explanation": "ปุ่ม Z ใช้ตั้งค่าสีการแสดงผลใน top" }
+    ]
+  }
+]

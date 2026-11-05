@@ -1,0 +1,26 @@
+[
+  {
+    "seed_key": "web-api:02-curl-api-testing:fc01",
+    "lesson_slug": "web-curl-api-testing",
+    "front_text": "แฟล็ก -i กับ -I ใน curl ต่างกันอย่างไร?",
+    "back_text": "-I (ตัวใหญ่): ส่ง HEAD request เพื่อแสดงเฉพาะ HTTP Response Header เท่านั้น\n-i (ตัวเล็ก): ส่ง request ปกติแต่ให้แสดงผลลัพธ์ทั้ง Headers และ Body",
+    "hint": "HEAD only vs Headers + Body",
+    "display_order": 1
+  },
+  {
+    "seed_key": "web-api:02-curl-api-testing:fc02",
+    "lesson_slug": "web-curl-api-testing",
+    "front_text": "แฟล็ก -k หรือ --insecure ใน curl มีประโยชน์อะไรและมีความเสี่ยงอย่างไร?",
+    "back_text": "ประโยชน์: สั่งให้ข้ามการตรวจสอบใบรับรอง SSL/TLS (ใช้ทดสอบ Self-signed cert ภายใน)\nความเสี่ยง: เสี่ยงต่อการถูกดักข้อมูลแบบ Man-in-the-Middle ห้ามใช้บน Production สคริปต์",
+    "hint": "Bypass SSL certificate check",
+    "display_order": 2
+  },
+  {
+    "seed_key": "web-api:02-curl-api-testing:fc03",
+    "lesson_slug": "web-curl-api-testing",
+    "front_text": "แฟล็ก -w ใน curl ใช้สำหรับทำอะไรในงาน Support?",
+    "back_text": "ใช้จัดรูปแบบแสดงค่า Latency Breakdown (เวลา Resolve DNS, เวลา TCP Handshake, เวลาต่อ SSL, และ Time to First Byte)",
+    "hint": "Latency & timing breakdown metrics",
+    "display_order": 3
+  }
+]

@@ -1,0 +1,66 @@
+[
+  {
+    "seed_key": "sql:02-aggregations-grouping:q01",
+    "lesson_slug": "sql-aggregations-grouping",
+    "question_text": "หากต้องการค้นหา IP Address ที่ส่งคำขอ Login Failed มากกว่า 10 ครั้ง ควรเขียนเงื่อนไขกรองจำนวนครั้งที่จุดใด?",
+    "scenario_text": "คุณกำลังตรวจสอบเหตุการณ์ Brute-force Attack ในฐานข้อมูลระบบยืนยันตัวตน",
+    "difficulty": "medium",
+    "question_type": "multiple_choice",
+    "explanation": "เงื่อนไขที่ตรวจสอบผลลัพธ์จากฟังก์ชันรวบรวมข้อมูล เช่น COUNT(*) > 10 จะต้องวางไว้ใน HAVING clause เท่านั้น ไม่สามารถวางใน WHERE clause ได้เพราะ WHERE ทำงานก่อนที่ข้อมูลจะถูกรวบกลุ่ม",
+    "tags": ["sql", "group-by", "having", "security"],
+    "choices": [
+      {
+        "choice_text": "ใช้ HAVING COUNT(*) > 10 หลังคำสั่ง GROUP BY ip_address",
+        "is_correct": true,
+        "explanation": "ถูกต้อง HAVING ใช้กรองเงื่อนไขของค่า Aggregate หลังจากจัดกลุ่มแล้ว"
+      },
+      {
+        "choice_text": "ใช้ WHERE COUNT(*) > 10 ก่อนคำสั่ง GROUP BY",
+        "is_correct": false,
+        "explanation": "จะเกิด Syntax error: aggregate functions are not allowed in WHERE"
+      },
+      {
+        "choice_text": "ใช้ ORDER BY COUNT(*) > 10",
+        "is_correct": false,
+        "explanation": "ORDER BY ใช้จัดลำดับ ไม่ได้กรองตัดแถวที่ไม่ต้องการออก"
+      },
+      {
+        "choice_text": "ใช้ LIMIT 10",
+        "is_correct": false,
+        "explanation": "LIMIT 10 เพียงแค่ตัดผลลัพธ์มาแสดง 10 แถวแรก ไม่ได้กรองตามเงื่อนไขจำนวนครั้ง"
+      }
+    ]
+  },
+  {
+    "seed_key": "sql:02-aggregations-grouping:q02",
+    "lesson_slug": "sql-aggregations-grouping",
+    "question_text": "ตาราง tickets มีทั้งหมด 100 แถว โดยมีคอลัมน์ resolved_by ที่มีค่าว่าง (NULL) อยู่ 20 แถว ผลลัพธ์ของ COUNT(*) และ COUNT(resolved_by) จะเป็นเท่าใดตามลำดับ?",
+    "scenario_text": "หัวหน้างานสอบถามยอดสรุป Ticket ทั้งหมด และ Ticket ที่แก้เสร็จแล้ว",
+    "difficulty": "easy",
+    "question_type": "multiple_choice",
+    "explanation": "COUNT(*) นับแถวทั้งหมดไม่ว่าจะมีค่า NULL หรือไม่ จึงได้ 100 ส่วน COUNT(column_name) จะละเว้นแถวที่เป็น NULL จึงนับเฉพาะแถวที่มีค่า คือ 100 - 20 = 80",
+    "tags": ["sql", "count", "null", "aggregates"],
+    "choices": [
+      {
+        "choice_text": "100 และ 80",
+        "is_correct": true,
+        "explanation": "ถูกต้อง COUNT(*) ได้ 100 แถว และ COUNT(resolved_by) ละเว้น 20 แถวที่เป็น NULL จึงได้ 80"
+      },
+      {
+        "choice_text": "100 และ 100",
+        "is_correct": false,
+        "explanation": "COUNT(column) จะไม่นับแถวที่เป็น NULL"
+      },
+      {
+        "choice_text": "80 และ 80",
+        "is_correct": false,
+        "explanation": "COUNT(*) จะนับแถวทั้งหมดเสมอ"
+      },
+      {
+        "choice_text": "100 และ 20",
+        "is_correct": false,
+        "explanation": "20 คือจำนวนแถวที่เป็น NULL ไม่ใช่จำนวนแถวที่มีค่า"
+      }
+    ]
+  }
+]

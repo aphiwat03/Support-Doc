@@ -1,0 +1,114 @@
+@import "tailwindcss";
+@import "highlight.js/styles/atom-one-dark.css";
+
+:root {
+  --color-bg: #0a0e14;
+  --color-surface: #11161f;
+  --color-surface-2: #171d29;
+  --color-border: #222b3a;
+  --color-text: #e6eaf2;
+  --color-text-muted: #9aa6b8;
+  --color-accent: #22d3ee;
+  --color-accent-hover: #67e8f9;
+  --color-warn: #f59e0b;
+  --color-warn-bg: rgba(245, 158, 11, 0.08);
+  --color-success: #10b981;
+  --color-error: #ef4444;
+
+  /* Category accent dots */
+  --topic-linux: #f59e0b;
+  --topic-network: #06b6d4;
+  --topic-sql: #10b981;
+  --topic-web-api: #8b5cf6;
+  --topic-docker: #0284c7;
+  --topic-troubleshooting: #f43f5e;
+  --topic-datacenter: #f97316;
+
+  /* Standard aliases across components & labs */
+  --border: var(--color-border);
+  --bg-primary: var(--color-bg);
+  --bg-card: var(--color-surface);
+  --bg-secondary: var(--color-surface-2);
+  --text-primary: var(--color-text);
+  --text-secondary: var(--color-text-muted);
+  --text-muted: var(--color-text-muted);
+  --accent: var(--color-accent);
+  --accent-hover: var(--color-accent-hover);
+  --success: var(--color-success);
+  --danger: var(--color-error);
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-2: var(--color-surface-2);
+  --color-border: var(--color-border);
+  --color-text: var(--color-text);
+  --color-text-muted: var(--color-text-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-warn: var(--color-warn);
+  --color-success: var(--color-success);
+  --color-error: var(--color-error);
+
+  --font-heading: var(--font-kanit), sans-serif;
+  --font-body: var(--font-ibm-plex-sans-thai), sans-serif;
+  --font-mono: var(--font-mono), monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  letter-spacing: 0;
+  line-height: 1.75;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  letter-spacing: 0;
+}
+
+h1 {
+  line-height: 1.35;
+}
+
+h2 {
+  line-height: 1.4;
+}
+
+h3 {
+  line-height: 1.45;
+}
+
+/* Thin and unobtrusive scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+/* Accessible and clean focus states */
+*:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,174 @@
+{
+  "slug": "service-port-conflict",
+  "title": "Nginx สตาร์ทไม่ขึ้นเพราะพอร์ต 80 ชน",
+  "topic": "linux",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 10,
+  "relatedLessons": ["linux-process-service", "linux-health-check"],
+  "ticket": {
+    "id": "INC-1089",
+    "severity": "P1",
+    "reporter": "ระบบ Monitoring (Alertmanager)",
+    "summary": "เว็บหลักเข้าไม่ได้หลังอัปเดตแพ็กเกจ — บริการ nginx อยู่ในสถานะ failed",
+    "detail": "เซิร์ฟเวอร์ web-01 แจ้งเตือน HTTP probe failed ที่พอร์ต 80 เมื่อเวลา 10:15"
+  },
+  "runbook": [
+    "ตรวจสอบสถานะของบริการด้วย systemctl status nginx",
+    "อ่านบันทึกข้อผิดพลาดด้วย journalctl -u nginx -n 20",
+    "ตรวจหาโปรเซสที่แย่งใช้พอร์ต 80 ด้วย ss -tulnp",
+    "หยุดบริการที่ชนพอร์ตด้วย systemctl stop <service> แล้วสั่ง systemctl start nginx",
+    "ทดสอบเรียกหน้าเว็บด้วย curl -I http://localhost"
+  ],
+  "host": {
+    "hostname": "web-01",
+    "user": "support",
+    "cwd": "/home/support"
+  },
+  "world": {
+    "fs": [
+      {
+        "path": "/etc/nginx/nginx.conf",
+        "type": "file",
+        "content": "user www-data;\nworker_processes auto;\nevents { worker_connections 1024; }\nhttp {\n  server {\n    listen 80;\n    server_name localhost;\n    root /var/www/html;\n  }\n}\n",
+        "mode": "0644",
+        "owner": "root",
+        "group": "root",
+        "mtime": "2026-11-04T10:00:00Z"
+      }
+    ],
+    "disks": [
+      {
+        "device": "/dev/sda1",
+        "mount": "/",
+        "sizeBytes": 42949672960,
+        "otherUsedBytes": 12884901888
+      }
+    ],
+    "memory": {
+      "totalMB": 3950,
+      "usedMB": 980,
+      "freeMB": 1850,
+      "buffCacheMB": 1120
+    },
+    "processes": [
+      {
+        "pid": 1,
+        "user": "root",
+        "cpu": 0.0,
+        "mem": 0.3,
+        "command": "/sbin/init"
+      },
+      {
+        "pid": 1142,
+        "user": "root",
+        "cpu": 0.4,
+        "mem": 1.8,
+        "command": "/usr/sbin/apache2 -k start",
+        "service": "apache2"
+      }
+    ],
+    "services": [
+      {
+        "name": "nginx",
+        "description": "A high performance web server and a reverse proxy server",
+        "state": "failed",
+        "enabled": true,
+        "ports": [80],
+        "dependsOnFreePorts": [80],
+        "journal": {
+          "failed": [
+            "Nov 04 10:15:01 web-01 systemd[1]: Starting A high performance web server and a reverse proxy server...",
+            "Nov 04 10:15:01 web-01 nginx[2041]: nginx: [emerg] bind() to 0.0.0.0:80 failed (98: Address already in use)",
+            "Nov 04 10:15:02 web-01 nginx[2041]: nginx: [emerg] still could not bind()",
+            "Nov 04 10:15:02 web-01 systemd[1]: nginx.service: Control process exited, code=exited, status=1/FAILURE",
+            "Nov 04 10:15:02 web-01 systemd[1]: Failed to start A high performance web server and a reverse proxy server."
+          ],
+          "active": [
+            "Nov 04 10:18:10 web-01 systemd[1]: Starting A high performance web server and a reverse proxy server...",
+            "Nov 04 10:18:10 web-01 systemd[1]: Started A high performance web server and a reverse proxy server."
+          ]
+        }
+      },
+      {
+        "name": "apache2",
+        "description": "The Apache HTTP Server",
+        "state": "active",
+        "enabled": true,
+        "pid": 1142,
+        "ports": [80],
+        "journal": {
+          "active": [
+            "Nov 04 10:14:22 web-01 systemd[1]: Started The Apache HTTP Server."
+          ],
+          "inactive": [
+            "Nov 04 10:17:55 web-01 systemd[1]: Stopping The Apache HTTP Server...",
+            "Nov 04 10:17:55 web-01 systemd[1]: apache2.service: Deactivated successfully.",
+            "Nov 04 10:17:55 web-01 systemd[1]: Stopped The Apache HTTP Server."
+          ]
+        }
+      }
+    ],
+    "network": {
+      "listening": [
+        {
+          "proto": "tcp",
+          "localAddr": "0.0.0.0",
+          "port": 22,
+          "pid": 512,
+          "process": "sshd",
+          "service": "ssh"
+        },
+        {
+          "proto": "tcp",
+          "localAddr": "0.0.0.0",
+          "port": 80,
+          "pid": 1142,
+          "process": "apache2",
+          "service": "apache2"
+        }
+      ]
+    }
+  },
+  "scripted": [],
+  "goals": [
+    {
+      "id": "g1",
+      "text": "ตรวจสถานะหรือ log ของ nginx จนพบข้อความ Address already in use",
+      "check": {
+        "type": "outputContains",
+        "substring": "Address already in use"
+      }
+    },
+    {
+      "id": "g2",
+      "text": "ตรวจพอร์ตที่เปิดอยู่ด้วยคำสั่ง ss -tulnp",
+      "check": {
+        "type": "commandMatched",
+        "pattern": "^(sudo\\s+)?ss\\s+-[a-zA-Z]*[tlunp]+"
+      }
+    },
+    {
+      "id": "g3",
+      "text": "หยุดบริการที่ชนพอร์ตและสตาร์ท nginx ให้เป็น active",
+      "check": {
+        "type": "stateEquals",
+        "path": "services.nginx.state",
+        "value": "active"
+      }
+    },
+    {
+      "id": "g4",
+      "text": "ยืนยันด้วย curl -I http://localhost ว่าเว็บตอบกลับ 200 OK",
+      "check": {
+        "type": "commandMatched",
+        "pattern": "^curl\\s+.*localhost"
+      }
+    }
+  ],
+  "hints": [
+    "ดูสาเหตุที่ nginx ล้มเหลวด้วย systemctl status nginx หรือ journalctl -u nginx -n 20",
+    "ใช้ ss -tulnp เพื่อดูว่าโปรเซสใดกำลัง LISTEN ที่พอร์ต :80",
+    "สั่ง systemctl stop apache2 แล้วตามด้วย systemctl start nginx จากนั้นทดสอบด้วย curl -I http://localhost"
+  ],
+  "debrief": "สรุปบทเรียน: ปัญหา bind() failed (98: Address already in use) เป็นเคสคลาสสิกเมื่อมีการติดตั้งแพ็กเกจที่มี Web Server พ่วงมาด้วยแล้วแย่งจับพอร์ต 80 การไล่ลำดับ systemctl status → journalctl -u → ss -tulnp ช่วยระบุโปรเซสต้นเหตุได้แม่นยำภายในไม่กี่วินาที"
+}

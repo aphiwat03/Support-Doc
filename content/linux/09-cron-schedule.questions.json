@@ -1,0 +1,114 @@
+[
+  {
+    "seed_key": "linux:09-cron-schedule:q01",
+    "lesson_slug": "linux-cron-schedule",
+    "question_text": "ในตาราง Crontab บรรทัดตั้งเวลา `30 3 * * 1-5 /opt/app/backup.sh` หมายถึงการสั่งรันสคริปต์ในเวลาใด?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "ฟิลด์ที่ 1 คือนาที (`30`), ฟิลด์ที่ 2 คือชั่วโมง (`3` = 03:30 น.), ฟิลด์ที่ 3 คือวันที่ (`*` = ทุกวันที่), ฟิลด์ที่ 4 คือเดือน (`*` = ทุกเดือน), และฟิลด์ที่ 5 คือวันในสัปดาห์ (`1-5` = วันจันทร์ถึงวันศุกร์) ดังนั้นหมายถึงรันเวลา 03:30 น. ของทุกวันจันทร์ถึงศุกร์",
+    "tags": ["cron", "crontab", "schedule"],
+    "choices": [
+      { "choice_text": "เวลา 03:30 น. ของทุกวันจันทร์ถึงวันศุกร์", "is_correct": true, "explanation": "ถูกต้อง — 30 = นาทีที่ 30, 3 = ชั่วโมงที่ 3, 1-5 = จันทร์ถึงศุกร์" },
+      { "choice_text": "ทุกๆ 30 นาที ในช่วงเวลา 01:00 น. ถึง 05:00 น.", "is_correct": false, "explanation": "ทุกๆ 30 นาทีต้องเขียนเป็น */30 ไม่ใช่ 30 เฉยๆ" },
+      { "choice_text": "เวลา 15:03 น. ของวันที่ 1 ถึงวันที่ 5 ของทุกเดือน", "is_correct": false, "explanation": "ฟิลด์แรกคือนาทีไม่ใช่ชั่วโมง และ 1-5 อยู่ในฟิลด์ที่ 5 (วันในสัปดาห์) ไม่ใช่ฟิลด์ที่ 3 (วันที่)" },
+      { "choice_text": "รันเพียง 3 ครั้งต่อเดือน ในเดือนมกราคมถึงพฤษภาคม", "is_correct": false, "explanation": "ฟิลด์เดือนคือฟิลด์ที่ 4 ซึ่งในที่นี้เป็น *" }
+    ]
+  },
+  {
+    "seed_key": "linux:09-cron-schedule:q02",
+    "lesson_slug": "linux-cron-schedule",
+    "question_text": "หากต้องการตรวจสอบรายการงานตั้งเวลา (Crontab) ของผู้ใช้ปัจจุบันโดยไม่เสี่ยงเผลอแก้ไขหรือลบข้อมูล ต้องใช้คำสั่งใด และควรระวังห้ามพิมพ์สลับกับคำสั่งใดมากที่สุด?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "`crontab -l` (list) ใช้แสดงรายการ Crontab ออกทางหน้าจออย่างปลอดภัย และต้องระวังห้ามพิมพ์ `crontab -r` (remove) เพราะจะลบตาราง Crontab ทั้งหมดทิ้งทันทีโดยไม่ถามยืนยัน",
+    "tags": ["crontab", "safety", "cron"],
+    "choices": [
+      { "choice_text": "ใช้ `crontab -l` เพื่อดูรายการ และห้ามพิมพ์ `crontab -r` เพราะจะลบตาราง Crontab ทั้งหมดทันที", "is_correct": true, "explanation": "ถูกต้อง — -l คือ list ส่วน -r คือ remove" },
+      { "choice_text": "ใช้ `crontab -r` เพื่ออ่านรายการ และห้ามพิมพ์ `crontab -l` เพราะจะล็อกตารางงาน", "is_correct": false, "explanation": "สลับกัน! การรัน crontab -r จะลบ Crontab หายทั้งหมดทันที" },
+      { "choice_text": "ใช้ `crontab -e` เพื่อดูอย่างเดียว และห้ามพิมพ์ `crontab -u`", "is_correct": false, "explanation": "-e คือเปิดแก้ไข (edit) ส่วน -u คือระบุชื่อผู้ใช้" },
+      { "choice_text": "ใช้ `cron --show` เพื่อดูรายการ", "is_correct": false, "explanation": "คำสั่งมาตรฐานในการจัดการตารางของผู้ใช้คือ crontab -l" }
+    ]
+  },
+  {
+    "seed_key": "linux:09-cron-schedule:q03",
+    "lesson_slug": "linux-cron-schedule",
+    "question_text": "นักพัฒนาแจ้งว่าเมื่อล็อกอินเข้าเครื่องแล้วรัน `/opt/report/gen.sh` ด้วยตนเอง สคริปต์ทำงานสำเร็จปกติ แต่เมื่อตั้งเวลาใน Crontab ให้รันตอนเที่ยงคืนกลับล้มเหลวและพบข้อความในไฟล์ Log ดังด้านล่าง สาเหตุเกิดจากอะไร?",
+    "scenario_text": "$ sudo crontab -u appuser -l\n0 0 * * * /opt/report/gen.sh >> /var/log/report.log 2>&1\n\n$ tail -n 3 /var/log/report.log\nStarting daily report generation...\n/opt/report/gen.sh: line 14: node: command not found\nReport generation failed with exit code 127.",
+    "question_type": "scenario",
+    "difficulty": "medium",
+    "explanation": "เมื่อ Cron สั่งรันงาน จะใช้สภาพแวดล้อม (Environment) พื้นฐานที่มีค่าตัวแปร `PATH` สั้นมาก (เช่น `/usr/bin:/bin`) ต่างจากตอนล็อกอินผ่าน Shell ปกติ หากโปรแกรม `node` ติดตั้งอยู่ที่ `/usr/local/bin/node` หรือในโฟลเดอร์ของ `nvm` ตัวสคริปต์ที่เรียกแค่ `node` เฉยๆ จึงหาคำสั่งไม่เจอ (`command not found`, exit code 127) ต้องแก้ไขโดยระบุ Absolute Path เต็มของคำสั่งหรือกำหนด `PATH` ในสคริปต์",
+    "tags": ["cron", "path", "troubleshooting"],
+    "choices": [
+      { "choice_text": "สภาพแวดล้อมของ Cron มีค่า PATH จำกัดกว่า Shell ปกติ ทำให้หาคำสั่ง `node` ไม่เจอ ต้องระบุพาธเต็มเช่น `/usr/local/bin/node`", "is_correct": true, "explanation": "ถูกต้อง — เป็นสาเหตุอันดับ 1 ที่สคริปต์รันมือผ่านแต่รันใน Cron แล้วขึ้น command not found" },
+      { "choice_text": "โปรแกรม Node.js ไม่สามารถทำงานในช่วงเวลาเที่ยงคืน (00:00) ได้", "is_correct": false, "explanation": "Node.js ทำงานได้ทุกเวลา แต่ติดที่หาไฟล์คำสั่ง node ไม่เจอจากตัวแปร PATH" },
+      { "choice_text": "บริการ Cron อนุญาตให้รันเฉพาะคำสั่งภาษา Python เท่านั้น", "is_correct": false, "explanation": "Cron สามารถรันโปรแกรมและสคริปต์ได้ทุกภาษาหากระบุพาธถูกต้อง" },
+      { "choice_text": "ไฟล์ `/var/log/report.log` ถูกล็อกทำให้คำสั่ง node ถูกลบออกจากเครื่อง", "is_correct": false, "explanation": "ไฟล์ Log บันทึกข้อความได้ตามปกติ แต่ฟ้องว่าหาคำสั่ง node ไม่พบในบรรทัดที่ 14" }
+    ]
+  },
+  {
+    "seed_key": "linux:09-cron-schedule:q04",
+    "lesson_slug": "linux-cron-schedule",
+    "question_text": "จากบรรทัด Crontab และบันทึกใน `/var/log/syslog` ด้านล่าง เหตุใดคำสั่งสำรองไฟล์จึงล้มเหลวและเห็นคำสั่งถูกตัดจบแค่คำว่า `backup_`?",
+    "scenario_text": "$ crontab -l\n0 1 * * * cp /opt/app/config.yml /opt/backup/config_$(date +%Y%m%d).yml\n\n$ grep CRON /var/log/syslog | tail -n 1\nNov  3 01:00:01 app-01 CRON[19022]: (support) CMD (cp /opt/app/config.yml /opt/backup/config_$(date +)",
+    "question_type": "scenario",
+    "difficulty": "hard",
+    "explanation": "ในไฟล์ Crontab เครื่องหมายเปอร์เซ็นต์ (`%`) มีความหมายพิเศษคือถูกแปลงเป็น **การขึ้นบรรทัดใหม่ (Newline)** และข้อความหลัง `%` ตัวแรกจะถูกส่งเป็น Standard Input แทนที่จะเป็นส่วนหนึ่งของคำสั่ง ดังนั้นหากต้องใช้ `%` ในบรรทัด Crontab (เช่นใน `date +\\%Y\\%m\\%d`) ต้องใส่เครื่องหมาย Backslash (`\\`) นำหน้า `%` ทุกตัว หรือย้ายคำสั่งไปไว้ในไฟล์สคริปต์ `.sh`",
+    "tags": ["crontab", "percent", "troubleshooting"],
+    "choices": [
+      { "choice_text": "ใน Crontab เครื่องหมาย `%` จะถูกตีความเป็นการตัดขึ้นบรรทัดใหม่ ต้องใส่ Backslash นำหน้าเป็น `\\%` หรือย้ายคำสั่งเข้าไฟล์สคริปต์", "is_correct": true, "explanation": "ถูกต้อง — สังเกตจาก Log ของ CRON ที่คำสั่งถูกตัดจบตรงเครื่องหมาย % ตัวแรกพอดี" },
+      { "choice_text": "คำสั่ง `cp` ไม่สามารถทำงานร่วมกับคำสั่ง `date` บน Linux ได้", "is_correct": false, "explanation": "บน Shell ปกติรันได้ แต่ในไฟล์ Crontab ติดกฎพิเศษของเครื่องหมาย %" },
+      { "choice_text": "บริการ Cron ห้ามตั้งเวลาทำงานตอนตี 1 (01:00 น.)", "is_correct": false, "explanation": "Cron สั่งรันงานตอน 01:00:01 แล้วตามที่ปรากฏใน syslog" },
+      { "choice_text": "ชื่อไฟล์ใน Linux ห้ามมีตัวเลขปี ค.ศ. อยู่ในชื่อไฟล์", "is_correct": false, "explanation": "ชื่อไฟล์ใส่ตัวเลขวันที่ได้ตามปกติ" }
+    ]
+  },
+  {
+    "seed_key": "linux:09-cron-schedule:q05",
+    "lesson_slug": "linux-cron-schedule",
+    "question_text": "หากต้องการตรวจสอบว่าบริการ Cron ได้สั่งปลุกงานตามเวลาที่ตั้งไว้จริงหรือไม่ บนเซิร์ฟเวอร์ **Ubuntu/Debian** เทียบกับ **RHEL/Rocky Linux** ต้องตรวจสอบที่ไฟล์ Log ใดตามลำดับ?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "medium",
+    "explanation": "บน Ubuntu/Debian บันทึกการทำงานของบริการ `cron` จะถูกรวมอยู่ใน `/var/log/syslog` (ใช้ `grep CRON /var/log/syslog`) ส่วนบน RHEL/Rocky Linux บริการ `crond` จะแยกไฟล์ Log เฉพาะไว้ที่ `/var/log/cron`",
+    "tags": ["cron", "logs", "ubuntu", "rhel"],
+    "choices": [
+      { "choice_text": "`/var/log/syslog` (Ubuntu/Debian) และ `/var/log/cron` (RHEL/Rocky)", "is_correct": true, "explanation": "ถูกต้อง — เป็นตำแหน่งมาตรฐานของบันทึกการทำงาน Cron ในแต่ละค่าย" },
+      { "choice_text": "`/var/log/auth.log` (Ubuntu/Debian) และ `/var/log/secure` (RHEL/Rocky)", "is_correct": false, "explanation": "auth.log และ secure เก็บเรื่องการล็อกอินและสิทธิ์เป็นหลัก (แม้จะมี session ของ pam_unix บ้าง แต่รายการคำสั่ง CMD ของ RHEL อยู่ที่ /var/log/cron)" },
+      { "choice_text": "`/etc/crontab` ทั้งสองตระกูล", "is_correct": false, "explanation": "/etc/crontab คือไฟล์ตั้งค่าตารางงาน ไม่ใช่ไฟล์บันทึกผลการทำงาน (Log)" },
+      { "choice_text": "`/var/log/dmesg` ทั้งสองตระกูล", "is_correct": false, "explanation": "dmesg เป็นบันทึกของ Kernel ไม่ได้เก็บประวัติการรัน Cron job" }
+    ]
+  },
+  {
+    "seed_key": "linux:09-cron-schedule:q06",
+    "lesson_slug": "linux-cron-schedule",
+    "question_text": "ความแตกต่างทางโครงสร้างบรรทัดระหว่างการตั้งเวลาใน User Crontab (`crontab -e`) กับการตั้งเวลาในไฟล์ภายใต้ `/etc/cron.d/` คืออะไร?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "medium",
+    "explanation": "ไฟล์ตารางงานระดับระบบใน `/etc/crontab` และ `/etc/cron.d/` จะต้องระบุ **ชื่อบัญชีผู้ใช้ (username)** แทรกเป็นฟิลด์ที่ 6 (หลังฟิลด์เวลา 5 ตัว และก่อนตัวคำสั่ง) เพื่อบอกว่าจะให้รันคำสั่งนั้นภายใต้สิทธิ์ของใคร ส่วนใน `crontab -e` เป็นของใครของมันอยู่แล้วจึงไม่มีฟิลด์ชื่อผู้ใช้",
+    "tags": ["crontab", "cron.d", "system"],
+    "choices": [
+      { "choice_text": "ไฟล์ใน `/etc/cron.d/` ต้องระบุชื่อผู้ใช้ (username) แทรกเป็นคอลัมน์ที่ 6 ก่อนคำสั่ง ส่วน User Crontab ไม่ต้องระบุชื่อผู้ใช้", "is_correct": true, "explanation": "ถูกต้อง — หากลืมใส่ชื่อผู้ใช้ในไฟล์ภายใต้ /etc/cron.d/ งานนั้นจะรันไม่ทำงานเพราะถือว่าชื่อคำสั่งผิด" },
+      { "choice_text": "ไฟล์ใน `/etc/cron.d/` มีฟิลด์เวลาเพียง 3 ฟิลด์ ส่วน User Crontab มี 5 ฟิลด์", "is_correct": false, "explanation": "ทั้งสองแบบใช้ฟิลด์เวลา 5 ฟิลด์เหมือนกัน" },
+      { "choice_text": "User Crontab รันได้เฉพาะวันจันทร์ถึงศุกร์ ส่วน `/etc/cron.d/` รันได้ทุกวัน", "is_correct": false, "explanation": "ทั้งสองแบบตั้งเวลารันได้ทุกวันเหมือนกัน" },
+      { "choice_text": "ไม่มีความแตกต่างกัน สามารถคัดลอกบรรทัดวางสลับกันได้ทันที", "is_correct": false, "explanation": "วางสลับกันตรงๆ ไม่ได้ เพราะต่างกันที่คอลัมน์ระบุชื่อผู้ใช้ (User field)" }
+    ]
+  },
+  {
+    "seed_key": "linux:09-cron-schedule:q07",
+    "lesson_slug": "linux-cron-schedule",
+    "question_text": "บนเซิร์ฟเวอร์ Linux สมัยใหม่ หากตรวจสอบทั้ง `crontab -l` และ `/etc/cron*` แล้วไม่พบงานตั้งเวลาที่ตามหา แต่ยังมีงานรันอัตโนมัติตามรอบเวลาอยู่ ควรใช้คำสั่งใดเพื่อตรวจสอบกลไกตั้งเวลาของ `systemd`?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "นอกเหนือจาก Cron แล้ว ระบบที่ใช้ `systemd` สามารถตั้งเวลางานด้วย **systemd timer** ได้ โดยตรวจสอบรายการทั้งหมดพร้อมเวลาที่จะรันรอบถัดไปและรอบล่าสุดได้ด้วยคำสั่ง `systemctl list-timers` (หรือ `systemctl list-timers --all`)",
+    "tags": ["systemd", "timers", "cron"],
+    "choices": [
+      { "choice_text": "systemctl list-timers", "is_correct": true, "explanation": "ถูกต้อง — แสดงรายการ systemd timers ทั้งหมดพร้อมเวลารันครั้งล่าสุดและครั้งถัดไป" },
+      { "choice_text": "systemctl list-sockets", "is_correct": false, "explanation": "list-sockets ใช้ดูรายการ Socket units ไม่ใช่การตั้งเวลา" },
+      { "choice_text": "ps aux --timers", "is_correct": false, "explanation": "คำสั่ง ps aux ไม่มีตัวเลือก --timers" },
+      { "choice_text": "dmesg --cron", "is_correct": false, "explanation": "dmesg ไม่มีตัวเลือก --cron" }
+    ]
+  }
+]

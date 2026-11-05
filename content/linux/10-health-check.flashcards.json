@@ -1,0 +1,98 @@
+[
+  {
+    "seed_key": "linux:10-health-check:fc01",
+    "lesson_slug": "linux-health-check",
+    "front_text": "ลำดับตรวจเมื่อระบบเข้าไม่ได้",
+    "back_text": "1. Service รันไหม: systemctl is-active\n2. Port ฟังไหม: ss -tulpn\n3. ต่อจากภายนอกได้ไหม: nc -zv\n4. HTTP ตอบไหม: curl -I",
+    "hint": "ล่างขึ้นบน หยุดที่ชั้นแรกที่ผิด",
+    "display_order": 1
+  },
+  {
+    "seed_key": "linux:10-health-check:fc02",
+    "lesson_slug": "linux-health-check",
+    "front_text": "systemctl is-active กับ is-enabled ต่างกันอย่างไร",
+    "back_text": "• is-active: ตอนนี้รันอยู่ไหม (active/inactive/failed)\n• is-enabled: เริ่มอัตโนมัติตอนบูตไหม (enabled/disabled)",
+    "hint": "ตอนนี้ เทียบกับ ตอนบูต",
+    "display_order": 2
+  },
+  {
+    "seed_key": "linux:10-health-check:fc03",
+    "lesson_slug": "linux-health-check",
+    "front_text": "คำสั่งดูทุก Port ที่ฟังอยู่พร้อมชื่อ Process",
+    "back_text": "sudo ss -tulpn\n\nt TCP, u UDP, l Listening, p Process, n ตัวเลข",
+    "hint": "จำคำว่า tulpn",
+    "display_order": 3
+  },
+  {
+    "seed_key": "linux:10-health-check:fc04",
+    "lesson_slug": "linux-health-check",
+    "front_text": "คำสั่งกรองเฉพาะ Port 8080 ที่ฟังอยู่",
+    "back_text": "sudo ss -ltnp 'sport = :8080'",
+    "hint": "ใช้ตัวกรอง sport",
+    "display_order": 4
+  },
+  {
+    "seed_key": "linux:10-health-check:fc05",
+    "lesson_slug": "linux-health-check",
+    "front_text": "Local Address 127.0.0.1:8080 กับ 0.0.0.0:8080 ต่างกันอย่างไร",
+    "back_text": "• 127.0.0.1:8080: รับเฉพาะการเชื่อมต่อในเครื่องตัวเอง\n• 0.0.0.0:8080: ฟังทุก Interface เครื่องอื่นต่อเข้ามาได้ (ถ้า Firewall ไม่บล็อก)",
+    "hint": "ดูว่ารับจากใคร",
+    "display_order": 5
+  },
+  {
+    "seed_key": "linux:10-health-check:fc06",
+    "lesson_slug": "linux-health-check",
+    "front_text": "คำสั่งหาว่า Process ไหนใช้ Port 8080",
+    "back_text": "sudo lsof -i :8080\n(หรือ sudo ss -ltnp 'sport = :8080')",
+    "hint": "List Open Files แบบ Network",
+    "display_order": 6
+  },
+  {
+    "seed_key": "linux:10-health-check:fc07",
+    "lesson_slug": "linux-health-check",
+    "front_text": "คำสั่งทดสอบต่อ TCP Port ปลายทางโดยไม่ส่งข้อมูล",
+    "back_text": "nc -zv <host> <port>\n\nz = สแกนเฉยๆ, v = แสดงผล",
+    "hint": "netcat",
+    "display_order": 7
+  },
+  {
+    "seed_key": "linux:10-health-check:fc08",
+    "lesson_slug": "linux-health-check",
+    "front_text": "ถ้าไม่มี nc จะทดสอบต่อ Port ได้อย่างไร",
+    "back_text": "timeout 3 bash -c '</dev/tcp/<host>/<port>' && echo open",
+    "hint": "ใช้ bash ต่อ TCP เอง",
+    "display_order": 8
+  },
+  {
+    "seed_key": "linux:10-health-check:fc09",
+    "lesson_slug": "linux-health-check",
+    "front_text": "curl พิมพ์เฉพาะ Status Code กับเวลาที่ใช้",
+    "back_text": "curl -sS -o /dev/null -w \"%{http_code} %{time_total}s\\n\" --max-time 10 <URL>",
+    "hint": "-w กำหนดรูปแบบผลลัพธ์",
+    "display_order": 9
+  },
+  {
+    "seed_key": "linux:10-health-check:fc10",
+    "lesson_slug": "linux-health-check",
+    "front_text": "curl exit code 6, 7, 28 และ 60 หมายถึงอะไร",
+    "back_text": "• 6: Resolve host ไม่ได้ (DNS)\n• 7: Connect ไม่ได้ (refused)\n• 28: Timeout\n• 60: ปัญหาใบรับรอง SSL",
+    "hint": "DNS, Connect, Timeout, Cert",
+    "display_order": 10
+  },
+  {
+    "seed_key": "linux:10-health-check:fc11",
+    "lesson_slug": "linux-health-check",
+    "front_text": "HTTP 502, 503 และ 504 ต่างกันอย่างไร",
+    "back_text": "• 502: Backend ตอบไม่ถูกต้องหรือต่อไม่ได้\n• 503: Service ไม่พร้อม (ล้น/ปิดปรับปรุง)\n• 504: Backend ตอบช้าจนเกิน Timeout",
+    "hint": "Bad Gateway, Unavailable, Gateway Timeout",
+    "display_order": 11
+  },
+  {
+    "seed_key": "linux:10-health-check:fc12",
+    "lesson_slug": "linux-health-check",
+    "front_text": "ข้อควรระวังเรื่อง curl -k และการใส่ข้อมูลลับในคำสั่ง",
+    "back_text": "• -k ข้ามการตรวจใบรับรอง ใช้แยกปัญหาเท่านั้น และต้องบอกใน Ticket\n• ห้ามใส่ Token หรือรหัสผ่านจริงในคำสั่งที่จะแปะ Ticket",
+    "hint": "ความปลอดภัยก่อนความสะดวก",
+    "display_order": 12
+  }
+]

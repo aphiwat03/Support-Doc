@@ -1,0 +1,42 @@
+[
+  {
+    "seed_key": "web-api:01-http-status-codes:fc01",
+    "lesson_slug": "web-http-status-codes",
+    "front_text": "ความแตกต่างระหว่าง HTTP Status Code หมวด 4xx และ 5xx คืออะไร?",
+    "back_text": "4xx: Client Error (ความผิดพลาดจากฝั่งผู้เรียก เช่น ส่งข้อมูลผิด, ไม่ได้ล็อกอิน)\n5xx: Server Error (ความผิดพลาดจากฝั่งระบบ/เซิร์ฟเวอร์ เช่น แอปแครช, DB ล่ม, Proxy Timeout)",
+    "hint": "Client Error vs Server Error",
+    "display_order": 1
+  },
+  {
+    "seed_key": "web-api:01-http-status-codes:fc02",
+    "lesson_slug": "web-http-status-codes",
+    "front_text": "502 Bad Gateway เกิดขึ้นจากสาเหตุใดในระบบที่มี Reverse Proxy?",
+    "back_text": "Reverse Proxy (เช่น Nginx) ไม่สามารถเชื่อมต่อกับ Upstream Backend ได้ เนื่องจาก Backend แครชล่ม, ดับอยู่ หรือพอร์ตไม่ตรง (Connection Refused)",
+    "hint": "Upstream Backend ตายหรือไม่เปิดพอร์ต",
+    "display_order": 2
+  },
+  {
+    "seed_key": "web-api:01-http-status-codes:fc03",
+    "lesson_slug": "web-http-status-codes",
+    "front_text": "504 Gateway Timeout ต่างจาก 502 Bad Gateway อย่างไร?",
+    "back_text": "502: Backend ดับ/ตายสนิทเชื่อมต่อไม่ติดทันที\n504: Backend ยังรันอยู่ แต่ประมวลผลนานเกินกำหนด (มักติด Slow Query ใน Database) จน Proxy ตัดการเชื่อมต่อไปก่อน",
+    "hint": "ตายสนิท vs ตอบกลับช้าจนเกินเวลา",
+    "display_order": 3
+  },
+  {
+    "seed_key": "web-api:01-http-status-codes:fc04",
+    "lesson_slug": "web-http-status-codes",
+    "front_text": "401 Unauthorized กับ 403 Forbidden ต่างกันอย่างไร?",
+    "back_text": "401: ไม่พบข้อมูลยืนยันตัวตน (ยังไม่ได้ Login หรือ Token ผิด/หมดอายุ)\n403: ยืนยันตัวตนแล้วแต่ไม่มีสิทธิ์เข้าถึงทรัพยากรนั้น (Permission Denied)",
+    "hint": "Authentication vs Authorization",
+    "display_order": 4
+  },
+  {
+    "seed_key": "web-api:01-http-status-codes:fc05",
+    "lesson_slug": "web-http-status-codes",
+    "front_text": "HTTP Status Code 429 มีความหมายว่าอย่างไร?",
+    "back_text": "Too Many Requests (ผู้ใช้ส่ง Request ถี่เกินโควตาที่กำหนดและโดน Rate Limiter บล็อกไว้)",
+    "hint": "Rate limit exceeded",
+    "display_order": 5
+  }
+]

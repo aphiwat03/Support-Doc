@@ -1,0 +1,130 @@
+[
+  {
+    "seed_key": "network:01-ip-subnetting:q01",
+    "lesson_slug": "network-ip-subnetting",
+    "question_text": "Subnet ขนาด /28 มีจำนวน IP Address ที่สามารถนำไปกำหนดให้กับ Host ใช้งานได้จริงกี่ IP?",
+    "scenario_text": "ทีม Network แจ้งว่าได้จัดสรรวง Subnet 192.168.10.64/28 ให้กับเซิร์ฟเวอร์ชุดใหม่ใน DMZ",
+    "difficulty": "medium",
+    "question_type": "multiple_choice",
+    "explanation": "/28 มีบิตเหลือสำหรับ Host คือ 32 - 28 = 4 บิต จำนวน IP ทั้งหมดคือ 2^4 = 16 IP แต่ต้องหัก Network ID (ตัวแรก) และ Broadcast ID (ตัวสุดท้าย) ออก 2 ค่าเสมอ จึงเหลือ Host ใช้งานได้จริง 14 IP",
+    "tags": ["network", "subnetting", "cidr"],
+    "choices": [
+      {
+        "choice_text": "14 IP",
+        "is_correct": true,
+        "explanation": "ถูกต้อง /28 มี 16 IP ลบ 2 (Network + Broadcast) = 14 IP"
+      },
+      {
+        "choice_text": "16 IP",
+        "is_correct": false,
+        "explanation": "16 คือจำนวน IP ทั้งหมด แต่ยังไม่ได้หัก Network และ Broadcast IP"
+      },
+      {
+        "choice_text": "30 IP",
+        "is_correct": false,
+        "explanation": "30 IP คือจำนวนของ /27"
+      },
+      {
+        "choice_text": "6 IP",
+        "is_correct": false,
+        "explanation": "6 IP คือจำนวนของ /29"
+      }
+    ]
+  },
+  {
+    "seed_key": "network:01-ip-subnetting:q02",
+    "lesson_slug": "network-ip-subnetting",
+    "question_text": "หากเครื่องเซิร์ฟเวอร์เปิดขึ้นมาแล้วรัน ip addr พบว่าได้รับ IP เป็น 169.254.12.34 ปัญหาน่าจะเกิดจากอะไร?",
+    "scenario_text": "ได้รับแจ้งจากลูกค้าว่าตู้ Kiosk ไม่สามารถเชื่อมต่อกับ Backend API ได้ ตรวจสอบพบ IP 169.254.x.x",
+    "difficulty": "easy",
+    "question_type": "multiple_choice",
+    "explanation": "IP ในช่วง 169.254.0.0/16 คือ APIPA (Automatic Private IP Addressing) ซึ่งระบบปฏิบัติการจะกำหนดขึ้นเองเมื่อไม่สามารถขอ IP จาก DHCP Server ได้ หรือสาย LAN หลุด/ไม่เชื่อมต่อ",
+    "tags": ["network", "ip", "dhcp", "troubleshooting"],
+    "choices": [
+      {
+        "choice_text": "เครื่องไม่ได้รับ IP จาก DHCP Server หรือการเชื่อมต่อระดับสาย LAN มีปัญหา",
+        "is_correct": true,
+        "explanation": "ถูกต้อง ช่วง 169.254.x.x บ่งชี้ว่า DHCP Request ล้มเหลว"
+      },
+      {
+        "choice_text": "DNS Server ตอบกลับช้า ทำให้ได้ IP สำรอง",
+        "is_correct": false,
+        "explanation": "DNS มีหน้าที่แปลงชื่อโดเมน ไม่ได้จ่าย IP ให้เครื่อง"
+      },
+      {
+        "choice_text": "เป็น Public IP ปกติที่ออกเน็ตได้โดยตรง",
+        "is_correct": false,
+        "explanation": "169.254.x.x เป็น Link-Local IP ไม่สามารถออกเน็ตได้"
+      },
+      {
+        "choice_text": "เกิด IP ชนกัน (IP Conflict) บน Switch",
+        "is_correct": false,
+        "explanation": "IP ชนกันเครื่องมักจะตัดการเชื่อมต่อหรือขึ้น Warning IP conflict แต่จะไม่เปลี่ยนเป็น 169.254 โดยอัตโนมัติ"
+      }
+    ]
+  },
+  {
+    "seed_key": "network:01-ip-subnetting:q03",
+    "lesson_slug": "network-ip-subnetting",
+    "question_text": "IP Address ใดต่อไปนี้จัดเป็น Public IP ที่สามารถวิ่งบน Public Internet ได้จริง?",
+    "scenario_text": "คุณต้องตรวจสอบ Whitelist ใน Firewall ของลูกค้าว่าไอพีที่เข้ามาเป็น Private IP หรือ Public IP",
+    "difficulty": "easy",
+    "question_type": "multiple_choice",
+    "explanation": "Private IP ตาม RFC 1918 คือ 10.0.0.0/8, 172.16.0.0/12 (172.16-172.31), 192.168.0.0/16 ดังนั้น 172.32.1.1 จึงอยู่นอกช่วง Private และเป็น Public IP",
+    "tags": ["network", "ip", "rfc1918"],
+    "choices": [
+      {
+        "choice_text": "172.32.1.1",
+        "is_correct": true,
+        "explanation": "ถูกต้อง Private Class B สิ้นสุดที่ 172.31.255.255 ดังนั้น 172.32.1.1 คือ Public IP"
+      },
+      {
+        "choice_text": "10.240.1.5",
+        "is_correct": false,
+        "explanation": "10.0.0.0/8 เป็น Private IP Class A"
+      },
+      {
+        "choice_text": "172.20.10.5",
+        "is_correct": false,
+        "explanation": "172.16.0.0 - 172.31.255.255 เป็น Private IP Class B"
+      },
+      {
+        "choice_text": "192.168.100.1",
+        "is_correct": false,
+        "explanation": "192.168.0.0/16 เป็น Private IP Class C"
+      }
+    ]
+  },
+  {
+    "seed_key": "network:01-ip-subnetting:q04",
+    "lesson_slug": "network-ip-subnetting",
+    "question_text": "เมื่อสั่ง ip route show แล้วไม่พบข้อความ 'default via ...' ผลกระทบที่จะเกิดขึ้นกับเซิร์ฟเวอร์คือข้อใด?",
+    "scenario_text": "เครื่องเซิร์ฟเวอร์เพิ่งถูกแก้ไขคอนฟิกเน็ตเวิร์ก หลังจากรีสตาร์ทสามารถ ping เครื่องข้างเคียงในวงเดียวกันเจอ แต่ออกเน็ตไม่ได้",
+    "difficulty": "medium",
+    "question_type": "multiple_choice",
+    "explanation": "default via ระบุ Default Gateway หากไม่มี จะทำให้เซิร์ฟเวอร์คุยได้เฉพาะเครื่องใน Local Subnet เดียวกันเท่านั้น แต่ไม่สามารถส่ง Packet ข้ามวงหรือออกอินเทอร์เน็ตได้",
+    "tags": ["network", "routing", "gateway"],
+    "choices": [
+      {
+        "choice_text": "เครื่องสื่อสารได้เฉพาะภายใน Subnet เดียวกัน แต่ออกนอกวงหรือออกอินเทอร์เน็ตไม่ได้",
+        "is_correct": true,
+        "explanation": "ถูกต้อง ขาด Default Gateway ทำให้ไม่รู้จะส่ง Packet ออกนอกวงไปที่ใด"
+      },
+      {
+        "choice_text": "เครื่องจะตัดการเชื่อมต่อเครือข่ายทั้งหมด แม้แต่วงเดียวกันก็คุยไม่ได้",
+        "is_correct": false,
+        "explanation": "ในวงเดียวกันคุยผ่าน ARP และ Switch Layer 2 ได้โดยตรงโดยไม่ต้องพึ่ง Gateway"
+      },
+      {
+        "choice_text": "บริการ SSH จะหยุดทำงานทันที",
+        "is_correct": false,
+        "explanation": "SSH ยังเปิดรับการเชื่อมต่อจากเครื่องใน Subnet เดียวกันได้"
+      },
+      {
+        "choice_text": "เครื่องจะสลับไปใช้ IP 127.0.0.1 อัตโนมัติ",
+        "is_correct": false,
+        "explanation": "Loopback 127.0.0.1 ทำงานแยกกัน ไม่เกี่ยวกับ Default Gateway"
+      }
+    ]
+  }
+]

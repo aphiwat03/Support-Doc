@@ -1,0 +1,114 @@
+[
+  {
+    "seed_key": "linux:02-basics:q01",
+    "lesson_slug": "linux-basics",
+    "question_text": "เจ้าหน้าที่ Support รีโมตเข้าเครื่องเซิร์ฟเวอร์แล้วต้องการตรวจสอบว่าขณะนี้ตนเองกำลังยืนอยู่ที่โฟลเดอร์ใดแบบเส้นทางเต็ม (Absolute Path) ควรใช้คำสั่งใด?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "คำสั่ง `pwd` (Print Working Directory) ใช้แสดงเส้นทางเต็มของโฟลเดอร์ปัจจุบันตั้งแต่ราก (`/`) ช่วยป้องกันความผิดพลาดก่อนรันคำสั่งจัดการไฟล์",
+    "tags": ["pwd", "basics", "navigation"],
+    "choices": [
+      { "choice_text": "pwd", "is_correct": true, "explanation": "ถูกต้อง — แสดงเส้นทางเต็มของโฟลเดอร์ที่กำลังทำงานอยู่ปัจจุบัน" },
+      { "choice_text": "cd", "is_correct": false, "explanation": "cd ใช้สำหรับเปลี่ยนโฟลเดอร์ หากพิมพ์ cd เปล่าๆ จะพากลับไปยัง Home directory" },
+      { "choice_text": "whoami", "is_correct": false, "explanation": "whoami ใช้แสดงชื่อบัญชีผู้ใช้ปัจจุบัน ไม่ใช่ตำแหน่งโฟลเดอร์" },
+      { "choice_text": "ls -a", "is_correct": false, "explanation": "ls -a ใช้แสดงรายชื่อไฟล์ในโฟลเดอร์ปัจจุบัน ไม่ได้แสดงเส้นทางเต็ม" }
+    ]
+  },
+  {
+    "seed_key": "linux:02-basics:q02",
+    "lesson_slug": "linux-basics",
+    "question_text": "หากต้องการดูรายการไฟล์ทั้งหมดในโฟลเดอร์ รวมถึงไฟล์ซ่อนที่ขึ้นต้นด้วยจุด (`.`) พร้อมแสดงสิทธิ์และขนาดไฟล์ในหน่วยที่อ่านง่าย (KB, MB, GB) ควรใช้คำสั่งใด?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "ตัวเลือก `-l` แสดงรายละเอียดแบบยาว, `-a` แสดงไฟล์ทั้งหมดรวมไฟล์ซ่อน (dotfiles), และ `-h` แปลงหน่วยขนาดไฟล์ให้อ่านง่าย (human-readable) เมื่อรวมกันคือ `ls -lah`",
+    "tags": ["ls", "basics", "files"],
+    "choices": [
+      { "choice_text": "ls -lah", "is_correct": true, "explanation": "ถูกต้อง — รวมตัวเลือกดูรายละเอียด (-l), ไฟล์ซ่อน (-a) และหน่วยอ่านง่าย (-h)" },
+      { "choice_text": "ls -l", "is_correct": false, "explanation": "แสดงรายละเอียดแต่ไม่แสดงไฟล์ซ่อนที่ขึ้นต้นด้วยจุด และขนาดไฟล์ยังเป็นหน่วยไบต์" },
+      { "choice_text": "ls -r", "is_correct": false, "explanation": "ls -r เป็นการเรียงลำดับรายชื่อไฟล์แบบย้อนกลับ (reverse)" },
+      { "choice_text": "cat -n *", "is_correct": false, "explanation": "cat เป็นคำสั่งเปิดอ่านเนื้อหาภายในไฟล์ ไม่ใช่การแสดงรายการไฟล์ในโฟลเดอร์" }
+    ]
+  },
+  {
+    "seed_key": "linux:02-basics:q03",
+    "lesson_slug": "linux-basics",
+    "question_text": "จากผลลัพธ์บนหน้าจอ Terminal ด้านล่าง ทำไมคำสั่ง `tail -n 20 error.log` จึงแจ้งว่า `No such file or directory` และควรแก้ไขอย่างไร?",
+    "scenario_text": "support@web-01:/var/log/nginx$ ls -l\ntotal 48\n-rw-r----- 1 www-data adm 38420 Nov  3 11:00 access.log\n-rw-r----- 1 www-data adm  8192 Nov  3 10:55 Error.log\nsupport@web-01:/var/log/nginx$ tail -n 20 error.log\ntail: cannot open 'error.log' for reading: No such file or directory",
+    "question_type": "scenario",
+    "difficulty": "easy",
+    "explanation": "ระบบไฟล์บน Linux แยกแยะตัวพิมพ์เล็กและตัวพิมพ์ใหญ่ (Case-sensitive) จากผลของ `ls -l` ชื่อไฟล์จริงคือ `Error.log` (ตัว E พิมพ์ใหญ่) ดังนั้นการพิมพ์ `error.log` จึงถือเป็นคนละไฟล์ วิธีป้องกันคือใช้ปุ่ม Tab ช่วยเติมชื่อไฟล์",
+    "tags": ["case-sensitive", "tail", "troubleshooting"],
+    "choices": [
+      { "choice_text": "ชื่อไฟล์บน Linux แยกตัวพิมพ์เล็ก-ใหญ่ ต้องระบุเป็น `tail -n 20 Error.log` ให้ตรงกับชื่อไฟล์จริง", "is_correct": true, "explanation": "ถูกต้อง — Error.log กับ error.log คือคนละชื่อไฟล์บน Linux" },
+      { "choice_text": "คำสั่ง tail ไม่สามารถอ่านไฟล์ขนาดต่ำกว่า 10KB ได้ ต้องใช้คำสั่ง less แทน", "is_correct": false, "explanation": "tail สามารถอ่านไฟล์ข้อความทุกขนาดได้" },
+      { "choice_text": "ต้องใส่เครื่องหมาย `/` นำหน้าชื่อไฟล์เป็น `/error.log` เสมอ", "is_correct": false, "explanation": "การใส่ `/error.log` จะกลายเป็นอ้างอิงไฟล์ที่รากสุดของระบบ (`/`) ซึ่งผิดตำแหน่ง" },
+      { "choice_text": "ไฟล์ถูกบีบอัดอยู่ ต้องแตกไฟล์ด้วย gunzip ก่อนเปิดอ่าน", "is_correct": false, "explanation": "ไฟล์ไม่ได้มีนามสกุล .gz และสาเหตุเกิดจากการสะกดตัวพิมพ์ใหญ่-เล็กไม่ตรงกัน" }
+    ]
+  },
+  {
+    "seed_key": "linux:02-basics:q04",
+    "lesson_slug": "linux-basics",
+    "question_text": "เมื่อต้องตรวจสอบไฟล์ `application.log` ที่มีขนาดใหญ่ถึง 2.5 GB บนเซิร์ฟเวอร์ Production เหตุใดจึงไม่ควรใช้คำสั่ง `cat application.log`?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "medium",
+    "explanation": "`cat` จะอ่านและพิมพ์เนื้อหาทั้งไฟล์ออกทางหน้าจอรวดเดียว สำหรับไฟล์ขนาดหลาย GB จะทำให้หน้าจอค้าง สิ้นเปลือง I/O และแบนด์วิดท์ของเซสชัน SSH ควรใช้ `less` (อ่านทีละหน้า) หรือ `tail` (ดูเฉพาะท้ายไฟล์) แทน",
+    "tags": ["cat", "less", "tail", "logs"],
+    "choices": [
+      { "choice_text": "เพราะ cat จะเทเนื้อหาทั้งหมดออกหน้าจอรวดเดียว ทำให้เปลืองทรัพยากรและอ่านข้อมูลลำบาก ควรใช้ less หรือ tail แทน", "is_correct": true, "explanation": "ถูกต้อง — less และ tail ออกแบบมาให้อ่านเฉพาะส่วนที่ต้องการโดยไม่โหลดทั้งไฟล์ลงหน้าจอ" },
+      { "choice_text": "เพราะคำสั่ง cat จะทำการล็อกไฟล์ (File lock) ทำให้แอปพลิเคชันเขียน Log ต่อไม่ได้จนระบบล่ม", "is_correct": false, "explanation": "cat ไม่ได้ล็อกไฟล์ไม่ให้โปรเซสอื่นเขียนต่อ แต่ปัญหาคือการอ่านและแสดงผลรวดเดียวทั้งหมด" },
+      { "choice_text": "เพราะ cat จะลบเนื้อหาเก่าในไฟล์ทิ้งหลังจากแสดงผลเสร็จ", "is_correct": false, "explanation": "cat เป็นคำสั่งอ่านอย่างเดียว ไม่ได้ลบเนื้อหาในไฟล์" },
+      { "choice_text": "เพราะ cat รองรับเฉพาะไฟล์ที่มีขนาดไม่เกิน 1 MB เท่านั้นตามข้อจำกัดของ Kernel", "is_correct": false, "explanation": "cat ไม่มีข้อจำกัดที่ 1 MB แต่ไม่เหมาะกับการเปิดอ่านไฟล์ใหญ่โต้ตอบบนหน้าจอ" }
+    ]
+  },
+  {
+    "seed_key": "linux:02-basics:q05",
+    "lesson_slug": "linux-basics",
+    "question_text": "จากเหตุการณ์ในหน้าจอ Terminal ด้านล่าง หากผู้ใช้งานกด Enter เพื่อรันคำสั่งดังกล่าว จะเกิดผลกระทบอย่างไร?",
+    "scenario_text": "root@app-prod-01:/var/www/html# pwd\n/var/www/html\nroot@app-prod-01:/var/www/html# rm -rf / tmp/cache/*",
+    "question_type": "scenario",
+    "difficulty": "hard",
+    "explanation": "สังเกตช่องว่างระหว่าง `/` กับ `tmp/cache/*` คำสั่ง `rm -rf / tmp/cache/*` จะถูก Shell ตีความว่าให้ลบ 2 เป้าหมาย คือ `/` (รากของระบบทั้งหมด) และ `tmp/cache/*` ซึ่งอันตรายร้ายแรงมากในสิทธิ์ root (แม้ว่าระบบสมัยใหม่จะมี `--preserve-root` ป้องกันระดับหนึ่ง แต่หากเผลอพิมพ์เว้นวรรคผิดกับพาธสำคัญอื่น เช่น `/var/www/ html` ก็จะลบทั้ง `/var/www/` ทันที)",
+    "tags": ["rm", "wildcard", "safety", "troubleshooting"],
+    "choices": [
+      { "choice_text": "มีช่องว่างหลังเครื่องหมาย `/` ทำให้คำสั่งถูกตีความว่าสั่งลบตั้งแต่ Root (`/`) และตามด้วย `tmp/cache/*` ซึ่งเสี่ยงทำให้ระบบเสียหายร้ายแรง", "is_correct": true, "explanation": "ถูกต้อง — การเว้นวรรคผิดในคำสั่ง rm -rf ทำให้อาร์กิวเมนต์แยกออกเป็น 2 พาธ" },
+      { "choice_text": "ระบบจะลบเฉพาะไฟล์ใน `/tmp/cache/*` ได้ตามปกติ เพราะ Shell จะตัดช่องว่างออกให้อัตโนมัติ", "is_correct": false, "explanation": "Shell ใช้ช่องว่างเป็นตัวคั่นอาร์กิวเมนต์ ไม่ได้ตัดช่องว่างรวมเข้าด้วยกัน" },
+      { "choice_text": "คำสั่งจะไม่ทำงานเพราะตัวเลือก `-rf` ไม่สามารถใช้ร่วมกับเครื่องหมาย `*` ได้", "is_correct": false, "explanation": "-rf ใช้ร่วมกับ wildcard * ได้ และนั่นคือสาเหตุที่ทำให้เกิดความเสียหายได้ง่าย" },
+      { "choice_text": "ระบบจะย้ายไฟล์ทั้งหมดไปไว้ในถังขยะ `~/.Trash` ซึ่งสามารถกู้คืนได้ภายหลัง", "is_correct": false, "explanation": "คำสั่ง rm บน Linux CLI จะลบไฟล์ออกจากไดเรกทอรีโดยตรง ไม่ได้ย้ายไปถังขยะ" }
+    ]
+  },
+  {
+    "seed_key": "linux:02-basics:q06",
+    "lesson_slug": "linux-basics",
+    "question_text": "ขณะยืนอยู่ที่โฟลเดอร์ `/var/log/nginx` หากต้องการเปลี่ยนโฟลเดอร์ไปยัง `/var/log` โดยใช้เส้นทางแบบ Relative Path ควรพิมพ์คำสั่งใด?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "สัญลักษณ์ `..` หมายถึงโฟลเดอร์แม่ (Parent Directory) ที่อยู่สูงขึ้นไป 1 ระดับ ดังนั้นเมื่อยืนอยู่ที่ `/var/log/nginx` การรัน `cd ..` จะพาไปยัง `/var/log`",
+    "tags": ["cd", "path", "navigation"],
+    "choices": [
+      { "choice_text": "cd ..", "is_correct": true, "explanation": "ถูกต้อง — `..` แทนโฟลเดอร์แม่ 1 ชั้น" },
+      { "choice_text": "cd .", "is_correct": false, "explanation": "`.` หมายถึงโฟลเดอร์ปัจจุบัน การรัน `cd .` จึงยังคงอยู่ที่เดิม" },
+      { "choice_text": "cd ~", "is_correct": false, "explanation": "`~` หมายถึง Home directory ของผู้ใช้ เช่น `/home/support`" },
+      { "choice_text": "cd /", "is_correct": false, "explanation": "`cd /` คือการย้ายไปยังรากสุดของระบบ (Root directory) และเป็น Absolute Path" }
+    ]
+  },
+  {
+    "seed_key": "linux:02-basics:q07",
+    "lesson_slug": "linux-basics",
+    "question_text": "หากต้องการสำรองไฟล์คอนฟิก `app.conf` เป็น `app.conf.bak` โดยยังคงรักษาค่าเวลาแก้ไขเดิม (Timestamp) และสิทธิ์เจ้าของไฟล์เดิมไว้ทั้งหมด เพื่อใช้เปรียบเทียบภายหลัง ควรใช้คำสั่งใด?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "medium",
+    "explanation": "คำสั่ง `cp -p` (`--preserve=mode,ownership,timestamps`) จะคัดลอกไฟล์พร้อมเก็บรักษาสิทธิ์ เจ้าของ และเวลาแก้ไขเดิมของไฟล์ต้นฉบับไว้ ซึ่งมีประโยชน์มากในงาน Support เมื่อต้องเก็บหลักฐานเวลาแก้ไขไฟล์",
+    "tags": ["cp", "backup", "basics"],
+    "choices": [
+      { "choice_text": "cp -p app.conf app.conf.bak", "is_correct": true, "explanation": "ถูกต้อง — `-p` ช่วยคงค่า mode, ownership และ timestamps เดิมไว้" },
+      { "choice_text": "mv app.conf app.conf.bak", "is_correct": false, "explanation": "mv เป็นการย้ายหรือเปลี่ยนชื่อไฟล์ จะทำให้ไฟล์ต้นฉบับ `app.conf` หายไปและกระทบแอปพลิเคชัน" },
+      { "choice_text": "touch app.conf.bak", "is_correct": false, "explanation": "touch จะสร้างเพียงไฟล์เปล่าที่ไม่มีเนื้อหาข้างใน" },
+      { "choice_text": "mkdir app.conf.bak", "is_correct": false, "explanation": "mkdir เป็นคำสั่งสร้างโฟลเดอร์ ไม่ใช่การคัดลอกไฟล์" }
+    ]
+  }
+]

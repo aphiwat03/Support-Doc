@@ -1,0 +1,66 @@
+[
+  {
+    "seed_key": "troubleshooting:02-root-cause-escalation:q01",
+    "lesson_slug": "troubleshooting-root-cause-escalation",
+    "question_text": "ข้อมูลใดต่อไปนี้มีความจำเป็นและช่วยให้ทีมผู้พัฒนา (Developer) สามารถสืบสวนและแก้ไขปัญหาที่ส่งต่อมาได้อย่างรวดเร็วที่สุด?",
+    "scenario_text": "ในฐานะ Tier 1 Support คุณกำลังเขียน Ticket ส่งต่อปัญหา (Escalation) ไปยังทีม Dev",
+    "difficulty": "easy",
+    "question_type": "multiple_choice",
+    "explanation": "Ticket ที่มีคุณภาพต้องระบุ Request/Response หรือ Error Log ที่ชัดเจน, Transaction/Order ID ที่เกิดปัญหา, เวลาที่เริ่มพบปัญหา และสิ่งที่ทีม Support ได้ทำการทดสอบคัดกรองไปแล้ว เพื่อที่ Dev จะได้ไม่ต้องเสียเวลาเริ่มต้นถามใหม่ตั้งแต่ศูนย์",
+    "tags": ["troubleshooting", "escalation", "support-skills"],
+    "choices": [
+      {
+        "choice_text": "Log ข้อความ Error พร้อม Transaction ID ที่เจาะจง, ช่วงเวลาที่เริ่มเป็น และสิ่งที่ Support ได้ทดสอบคัดกรองเบื้องต้นไปแล้ว",
+        "is_correct": true,
+        "explanation": "ถูกต้อง นี่คือข้อมูลจำเป็นสำหรับการสืบสวนต่ออย่างมีประสิทธิภาพ"
+      },
+      {
+        "choice_text": "เขียนสั้นๆ เพียงว่า 'ระบบช้า รบกวนช่วยดูด่วน'",
+        "is_correct": false,
+        "explanation": "ข้อมูลไม่เพียงพอ ทำให้ต้องเสียเวลาถามตอบไปมา"
+      },
+      {
+        "choice_text": "แนบเฉพาะสเปกฮาร์ดแวร์ของเครื่องคอมพิวเตอร์ลูกค้า",
+        "is_correct": false,
+        "explanation": "สเปกเครื่องลูกข่ายไม่ช่วยบอกสาเหตุของปัญหาฝั่งแอปพลิเคชัน"
+      },
+      {
+        "choice_text": "ส่งภาพหน้าต่างสีฟ้าโดยไม่ระบุรายละเอียด",
+        "is_correct": false,
+        "explanation": "ไม่ช่วยให้ผู้พัฒนาวิเคราะห์โค้ดได้"
+      }
+    ]
+  },
+  {
+    "seed_key": "troubleshooting:02-root-cause-escalation:q02",
+    "lesson_slug": "troubleshooting-root-cause-escalation",
+    "question_text": "หัวใจหลักของแนวคิด 'Blameless Post-Mortem' ในกระบวนการ RCA หลังเกิดระบบล่มคืออะไร?",
+    "scenario_text": "การประชุมสรุปบทเรียนหลังจากเหตุการณ์ระบบล่มครั้งใหญ่",
+    "difficulty": "easy",
+    "question_type": "multiple_choice",
+    "explanation": "Blameless Post-Mortem เชื่อว่ามนุษย์ทุกคนมีโอกาสผิดพลาดได้ หัวใจสำคัญไม่ใช่การหาตัวคนผิดมาลงโทษ แต่เป็นการปรับปรุงกระบวนการและสร้างระบบป้องกันที่ทำให้ความผิดพลาดของมนุษย์ไม่สามารถพังระบบได้",
+    "tags": ["troubleshooting", "rca", "blameless", "culture"],
+    "choices": [
+      {
+        "choice_text": "มุ่งเน้นการปรับปรุงระบบและกระบวนการทำงานเพื่อป้องกันไม่ให้เกิดปัญหาซ้ำ โดยไม่กล่าวโทษหรือลงโทษตัวบุคคล",
+        "is_correct": true,
+        "explanation": "ถูกต้อง มุ่งแก้ที่ระบบและกระบวนการ ไม่ใช่ลงโทษคน"
+      },
+      {
+        "choice_text": "การปกปิดความผิดพลาดไม่ให้ผู้บริหารรับรู้",
+        "is_correct": false,
+        "explanation": "ผิดหลักความโปร่งใสและตรวจสอบได้"
+      },
+      {
+        "choice_text": "การตัดโบนัสพนักงานทุกคนที่อยู่ในกะที่ระบบล่ม",
+        "is_correct": false,
+        "explanation": "ตรงข้ามกับแนวคิด Blameless โดยสิ้นเชิง"
+      },
+      {
+        "choice_text": "การโยนความผิดให้ผู้ให้บริการคลาวด์ภายนอกเสมอ",
+        "is_correct": false,
+        "explanation": "ไม่ใช่แนวทางวิเคราะห์ที่สร้างสรรค์"
+      }
+    ]
+  }
+]

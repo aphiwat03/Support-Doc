@@ -1,0 +1,8 @@
+{
+  "slug": "troubleshooting",
+  "title": "Incident & Troubleshooting",
+  "description": "ขั้นตอนวิเคราะห์ Root Cause, วิธีการไล่ปัญหาอย่างเป็นระบบ (Methodology) และ ITIL",
+  "icon": "Wrench",
+  "color": "from-rose-500 to-pink-600",
+  "display_order": 6
+}

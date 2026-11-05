@@ -1,0 +1,110 @@
+[
+  {
+    "seed_key": "linux:04-process-service:fc01",
+    "lesson_slug": "linux-process-service",
+    "front_text": "ความแตกต่างระหว่างสัญญาณ SIGTERM (15) กับ SIGKILL (9)",
+    "back_text": "• SIGTERM (kill <PID> หรือ kill -15): ขอให้โปรเซสปิดตัวเองอย่างสุภาพ มีเวลาเคลียร์งานและบันทึกข้อมูล\n• SIGKILL (kill -9 <PID>): บังคับตัดการทำงานทันทีที่ระดับ Kernel โปรเซสไม่มีโอกาสเคลียร์งาน",
+    "hint": "ควรเริ่มจาก 15 ก่อนใช้ 9 เสมอ",
+    "tags": ["kill", "signals"],
+    "display_order": 1
+  },
+  {
+    "seed_key": "linux:04-process-service:fc02",
+    "lesson_slug": "linux-process-service",
+    "front_text": "คำสั่งแสดงโปรเซสทั้งหมดที่กำลังทำงานอยู่ในเครื่องพร้อม %CPU, %MEM และ PID",
+    "back_text": "ps aux\n(มักใช้คู่กับ grep เช่น ps aux | grep nginx)",
+    "hint": "Process Status",
+    "tags": ["ps", "process"],
+    "display_order": 2
+  },
+  {
+    "seed_key": "linux:04-process-service:fc03",
+    "lesson_slug": "linux-process-service",
+    "front_text": "ปุ่มลัดในโปรแกรม top สำหรับเรียงตามการใช้ CPU และเรียงตามการใช้ RAM",
+    "back_text": "• กด P (พิมพ์ใหญ่): เรียงตาม %CPU จากมากไปน้อย\n• กด M (พิมพ์ใหญ่): เรียงตาม %MEM จากมากไปน้อย\n• กด q: ออกจากโปรแกรม top",
+    "hint": "P = Processor, M = Memory",
+    "tags": ["top", "process"],
+    "display_order": 3
+  },
+  {
+    "seed_key": "linux:04-process-service:fc04",
+    "lesson_slug": "linux-process-service",
+    "front_text": "รหัสสถานะโปรเซส R, S, D, Z ในคอลัมน์ STAT ของ ps aux หมายถึงอะไร?",
+    "back_text": "• R (Running): กำลังทำงานบน CPU\n• S (Sleeping): รอเหตุการณ์หรือคำขอ\n• D (Uninterruptible sleep): รอ Disk/Network I/O\n• Z (Zombie): โปรเซสจบแล้วแต่โปรเซสแม่ยังไม่อ่าน exit status",
+    "hint": "ระวังสถานะ D (I/O ค้าง) และ Z (Zombie)",
+    "tags": ["ps", "process"],
+    "display_order": 4
+  },
+  {
+    "seed_key": "linux:04-process-service:fc05",
+    "lesson_slug": "linux-process-service",
+    "front_text": "ทำไม Zombie Process (สถานะ Z / <defunct>) จึงฆ่าด้วย kill -9 ไม่ได้?",
+    "back_text": "เพราะโปรเซสนั้นทำงานจบและคืนหน่วยความจำไปแล้ว เหลือเพียงรายการ PID ในตารางที่รอโปรเซสแม่ (PPID) มาอ่านสถานะจบงาน",
+    "hint": "สิ่งที่ตายไปแล้วฆ่าซ้ำไม่ได้",
+    "tags": ["zombie", "process"],
+    "display_order": 5
+  },
+  {
+    "seed_key": "linux:04-process-service:fc06",
+    "lesson_slug": "linux-process-service",
+    "front_text": "คำสั่งตรวจรายชื่อบริการ systemd ทั้งหมดที่อยู่ในสถานะ failed",
+    "back_text": "systemctl list-units --failed\n(หรือย่อว่า systemctl --failed)",
+    "hint": "ใช้ดูภาพรวมว่ามีบริการใดล่มอยู่บ้าง",
+    "tags": ["systemctl", "systemd"],
+    "display_order": 6
+  },
+  {
+    "seed_key": "linux:04-process-service:fc07",
+    "lesson_slug": "linux-process-service",
+    "front_text": "คำสั่งตรวจสถานะละเอียด และคำสั่งเช็กสถานะแบบสั้นของบริการ systemd",
+    "back_text": "• ดูสถานะละเอียด: systemctl status <service>\n• เช็กสั้นๆ (active/failed): systemctl is-active <service>",
+    "hint": "status เทียบกับ is-active",
+    "tags": ["systemctl", "systemd"],
+    "display_order": 7
+  },
+  {
+    "seed_key": "linux:04-process-service:fc08",
+    "lesson_slug": "linux-process-service",
+    "front_text": "ความแตกต่างระหว่าง systemctl start กับ systemctl enable",
+    "back_text": "• systemctl start <service>: สั่งให้เริ่มทำงานทันทีในตอนนี้\n• systemctl enable <service>: ตั้งค่าให้เริ่มทำงานอัตโนมัติเมื่อเปิดเครื่อง (Boot)",
+    "hint": "รันตอนนี้ เทียบกับ รันตอนบูต",
+    "tags": ["systemctl", "systemd"],
+    "display_order": 8
+  },
+  {
+    "seed_key": "linux:04-process-service:fc09",
+    "lesson_slug": "linux-process-service",
+    "front_text": "คำสั่งดู Log ของบริการ nginx ย้อนหลัง 100 บรรทัด และติดตามแบบเรียลไทม์",
+    "back_text": "journalctl -u nginx -n 100 -f\n\n-u: ระบุชื่อ unit บริการ\n-n 100: ย้อนหลัง 100 บรรทัด\n-f: ติดตามสด (follow)",
+    "hint": "ใช้ journalctl คู่กับ -u, -n, -f",
+    "tags": ["journalctl", "logs"],
+    "display_order": 9
+  },
+  {
+    "seed_key": "linux:04-process-service:fc10",
+    "lesson_slug": "linux-process-service",
+    "front_text": "คำสั่งดู Log ของบริการเฉพาะช่วงเวลา 30 นาทีล่าสุดด้วย journalctl",
+    "back_text": "journalctl -u <service> --since \"30 minutes ago\"",
+    "hint": "ใช้ออปชัน --since",
+    "tags": ["journalctl", "logs"],
+    "display_order": 10
+  },
+  {
+    "seed_key": "linux:04-process-service:fc11",
+    "lesson_slug": "linux-process-service",
+    "front_text": "ชื่อบริการ Apache Web Server บน Ubuntu/Debian ต่างจาก RHEL/Rocky อย่างไร?",
+    "back_text": "• Ubuntu / Debian: apache2\n• RHEL / Rocky Linux: httpd",
+    "hint": "จำว่าตระกูล Red Hat เรียกตามชื่อ daemon",
+    "tags": ["systemd", "distro"],
+    "display_order": 11
+  },
+  {
+    "seed_key": "linux:04-process-service:fc12",
+    "lesson_slug": "linux-process-service",
+    "front_text": "คำสั่งส่งสัญญาณปิดโปรเซสโดยระบุจากชื่อโปรแกรมแทนเลข PID",
+    "back_text": "pkill <ชื่อโปรเซส>\n(ก่อนรันควรตรวจด้วย pgrep -l <ชื่อโปรเซส> ก่อนเสมอว่าตรงกับตัวไหนบ้าง)",
+    "hint": "Process Kill by name",
+    "tags": ["pkill", "process"],
+    "display_order": 12
+  }
+]

@@ -1,0 +1,66 @@
+[
+  {
+    "seed_key": "troubleshooting:01-incident-triage-methodology:q01",
+    "lesson_slug": "troubleshooting-incident-triage-methodology",
+    "question_text": "เมื่อเกิดเหตุการณ์ระบบชำระเงินล่มทั้งระบบ (Sev 1 Critical Incident) เป้าหมายสูงสุดข้อแรกของทีม Incident Management คืออะไร?",
+    "scenario_text": "ระบบตัดบัตรเครดิตล่มในวันแคมเปญ 11.11 ทำให้ลูกค้าสั่งซื้อไม่ได้",
+    "difficulty": "easy",
+    "question_type": "multiple_choice",
+    "explanation": "ตามมาตรฐาน ITIL และ SRE เป้าหมายอันดับหนึ่งของ Incident Management คือการกู้คืนระบบให้กลับมาให้บริการได้เร็วที่สุด (Restore Service / ลด MTTR) เช่น การ Rollback หรือ Failover ส่วนการหาสาเหตุที่แท้จริงจะทำในกระบวนการ Problem Management หลังจากระบบออนไลน์แล้ว",
+    "tags": ["troubleshooting", "itil", "incident-management", "sev1"],
+    "choices": [
+      {
+        "choice_text": "กู้คืนระบบให้กลับมาใช้งานได้โดยเร็วที่สุด (Restore Service / ลด MTTR) แม้จะต้องใช้ทางเลี่ยงชั่วคราวหรือสั่ง Rollback",
+        "is_correct": true,
+        "explanation": "ถูกต้อง เป้าหมายคือหยุดความเสียหายต่อธุรกิจให้เร็วที่สุด"
+      },
+      {
+        "choice_text": "นั่งไล่อ่านโค้ดทุกบรรทัดเพื่อหาบั๊กที่ทำให้เกิดปัญหาก่อนเปิดระบบ",
+        "is_correct": false,
+        "explanation": "การมัวแต่อ่านโค้ดโดยไม่ Rollback จะทำให้ธุรกิจเสียหายอย่างหนัก"
+      },
+      {
+        "choice_text": "ประชุมเพื่อหาตัวคนผิดที่รับผิดชอบการดีพลอย",
+        "is_correct": false,
+        "explanation": "การกล่าวโทษ (Blame) ผิดหลักการ Blameless Post-Mortem"
+      },
+      {
+        "choice_text": "ปิดระบบทั้งองค์กรเพื่อความปลอดภัย",
+        "is_correct": false,
+        "explanation": "ไม่ใช่แนวทางที่ถูกต้องสำหรับ Incident Management"
+      }
+    ]
+  },
+  {
+    "seed_key": "troubleshooting:01-incident-triage-methodology:q02",
+    "lesson_slug": "troubleshooting-incident-triage-methodology",
+    "question_text": "ในการ Triage ปัญหาทางเทคนิค คำถามใดต่อไปนี้ถือเป็น 'คำถามทองคำ' ที่มักนำไปสู่ต้นตอของปัญหาได้เร็วที่สุด?",
+    "scenario_text": "ระบบที่เคยทำงานได้ตามปกติมาตลอด 6 เดือน จู่ๆ วันนี้เริ่มแสดงข้อผิดพลาด",
+    "difficulty": "easy",
+    "question_type": "multiple_choice",
+    "explanation": "ระบบคอมพิวเตอร์ที่เคยทำงานได้ปกติมักไม่พังขึ้นมาเองโดยไม่มีเหตุผล กว่า 80-90% ของ Incident เกิดจากการเปลี่ยนแปลง (Change) เช่น การดีพลอยโค้ดใหม่, แก้ไขคอนฟิก, เปลี่ยนใบรับรอง, หรืออัปเดตแพตช์ OS",
+    "tags": ["troubleshooting", "methodology", "triage"],
+    "choices": [
+      {
+        "choice_text": "มีอะไรเปลี่ยนแปลงไปในระบบก่อนหน้าที่ปัญหาจะเริ่มเกิดขึ้นหรือไม่? (What Changed?)",
+        "is_correct": true,
+        "explanation": "ถูกต้อง การสืบค้น Change Logs มักไขข้อข้องใจได้ตรงจุดที่สุด"
+      },
+      {
+        "choice_text": "เครื่องเซิร์ฟเวอร์ซื้อมาปีไหน?",
+        "is_correct": false,
+        "explanation": "อายุเครื่องไม่ใช่คำถามแรกในการ Triage"
+      },
+      {
+        "choice_text": "ใครเป็นคนเขียนโค้ดบรรทัดแรกของโปรเจกต์?",
+        "is_correct": false,
+        "explanation": "ไม่เกี่ยวข้องกับการแก้ปัญหาเฉพาะหน้า"
+      },
+      {
+        "choice_text": "ดาต้าเบสรองรับภาษาอะไรบ้าง?",
+        "is_correct": false,
+        "explanation": "ไม่ใช่คำถามวิเคราะห์ต้นตอ"
+      }
+    ]
+  }
+]

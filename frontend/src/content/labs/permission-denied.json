@@ -1,0 +1,106 @@
+{
+  "slug": "permission-denied",
+  "title": "รันสคริปต์ deploy.sh ไม่ได้ (Permission denied)",
+  "topic": "linux",
+  "difficulty": "beginner",
+  "estimatedMinutes": 6,
+  "relatedLessons": ["linux-permissions"],
+  "ticket": {
+    "id": "INC-1105",
+    "severity": "P3",
+    "reporter": "ทีม Release Engineering",
+    "summary": "รันสคริปต์ ./deploy.sh ในโฮมไดเรกทอรีไม่ได้ ขึ้น Permission denied",
+    "detail": "สคริปต์เพิ่งถูกคัดลอกมาจากคลังเก็บไฟล์ลงเครื่อง deploy-01 แต่ยังตั้งสิทธิ์ไม่ถูกต้อง"
+  },
+  "runbook": [
+    "ตรวจสอบสิทธิ์ปัจจุบันของไฟล์ด้วย ls -l deploy.sh",
+    "เพิ่มสิทธิ์รัน (execute) ให้เจ้าของไฟล์ด้วย chmod u+x deploy.sh หรือ chmod 755 deploy.sh (ห้ามใช้ 777 เพราะเปิดสิทธิ์เขียนให้ทุกคน)",
+    "ทดสอบรัน ./deploy.sh เพื่อยืนยันว่าทำงานสำเร็จ"
+  ],
+  "host": {
+    "hostname": "deploy-01",
+    "user": "support",
+    "cwd": "/home/support"
+  },
+  "world": {
+    "fs": [
+      {
+        "path": "/home/support/deploy.sh",
+        "type": "file",
+        "content": "#!/usr/bin/env bash\necho \"[DEPLOY] Verifying release package checksum... OK\"\necho \"[DEPLOY] Reloading application workers... OK\"\necho \"[DEPLOY] Release v2.4.1 deployed successfully.\"\n",
+        "mode": "0644",
+        "owner": "support",
+        "group": "support",
+        "mtime": "2026-11-04T11:00:00Z"
+      },
+      {
+        "path": "/home/support/release.conf",
+        "type": "file",
+        "content": "APP_VERSION=2.4.1\nTARGET_ENV=production\n",
+        "mode": "0644",
+        "owner": "support",
+        "group": "support",
+        "mtime": "2026-11-04T10:58:00Z"
+      }
+    ],
+    "disks": [
+      {
+        "device": "/dev/sda1",
+        "mount": "/",
+        "sizeBytes": 21474836480,
+        "otherUsedBytes": 6442450944
+      }
+    ],
+    "memory": {
+      "totalMB": 3950,
+      "usedMB": 620,
+      "freeMB": 2410,
+      "buffCacheMB": 920
+    },
+    "processes": [
+      {
+        "pid": 1,
+        "user": "root",
+        "cpu": 0.0,
+        "mem": 0.2,
+        "command": "/sbin/init"
+      }
+    ],
+    "services": [],
+    "network": {}
+  },
+  "scripted": [],
+  "goals": [
+    {
+      "id": "g1",
+      "text": "ตรวจสอบสิทธิ์ของไฟล์ด้วย ls -l",
+      "check": {
+        "type": "commandMatched",
+        "pattern": "^ls\\s+-[a-zA-Z]*l"
+      }
+    },
+    {
+      "id": "g2",
+      "text": "ตั้งสิทธิ์รันให้ deploy.sh อย่างปลอดภัย (ห้ามใช้ 777)",
+      "check": {
+        "type": "stateEquals",
+        "path": "fs[/home/support/deploy.sh].safeExecutable",
+        "value": true
+      }
+    },
+    {
+      "id": "g3",
+      "text": "รัน ./deploy.sh จนแสดงข้อความสำเร็จ",
+      "check": {
+        "type": "outputContains",
+        "substring": "Release v2.4.1 deployed successfully."
+      }
+    }
+  ],
+  "hints": [
+    "ดูสิทธิ์ของไฟล์ในโฟลเดอร์ปัจจุบันด้วย ls -l deploy.sh",
+    "เพิ่มสิทธิ์ execute ให้เจ้าของไฟล์ด้วยคำสั่ง chmod u+x deploy.sh (ระวังอย่าใช้ chmod 777)",
+    "สั่งรันสคริปต์ด้วย ./deploy.sh"
+  ],
+  "debrief": "สรุปบทเรียน: ไฟล์สคริปต์ที่สร้างหรือคัดลอกมาใหม่มักมีสิทธิ์เริ่มต้นเป็น 0644 (-rw-r--r--) ซึ่งไม่มีบิต x (execute) การใช้ chmod u+x หรือ chmod 755 จะให้สิทธิ์รันโดยไม่เปิดช่องโหว่ให้ผู้ใช้อื่นแก้ไขไฟล์ได้ ต่างจาก chmod 777 ที่เปิดสิทธิ์เขียนให้ทุกคนในระบบและถือเป็นความเสี่ยงด้านความปลอดภัยที่ต้องหลีกเลี่ยง"
+}

@@ -1,0 +1,8 @@
+{
+  "slug": "network",
+  "title": "Network Troubleshooting",
+  "description": "TCP/IP, IP/Subnet, DNS, Routing, Port, Firewall และเครื่องมือวิเคราะห์เครือข่าย",
+  "icon": "Network",
+  "color": "from-blue-500 to-cyan-600",
+  "display_order": 2
+}

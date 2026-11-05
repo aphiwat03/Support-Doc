@@ -1,0 +1,114 @@
+[
+  {
+    "seed_key": "linux:06-log-reading:q01",
+    "lesson_slug": "linux-log-reading",
+    "question_text": "หากต้องการตรวจสอบประวัติการล็อกอิน SSH และการใช้คำสั่ง `sudo` บนเซิร์ฟเวอร์ตระกูล Ubuntu/Debian เทียบกับตระกูล RHEL/Rocky Linux ต้องเปิดดูที่ไฟล์ใดตามลำดับ?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "บนระบบ Ubuntu/Debian บันทึกเกี่ยวกับการพิสูจน์ตัวตน (Authentication, SSH, sudo) จะอยู่ที่ `/var/log/auth.log` ส่วนบนระบบ RHEL/Rocky/AlmaLinux จะเก็บไว้ที่ `/var/log/secure`",
+    "tags": ["logs", "auth", "ubuntu", "rhel"],
+    "choices": [
+      { "choice_text": "`/var/log/auth.log` (Ubuntu/Debian) และ `/var/log/secure` (RHEL/Rocky)", "is_correct": true, "explanation": "ถูกต้อง — เป็นไฟล์มาตรฐานสำหรับตรวจประวัติ SSH และ sudo ของแต่ละค่าย" },
+      { "choice_text": "`/var/log/syslog` (Ubuntu/Debian) และ `/var/log/httpd` (RHEL/Rocky)", "is_correct": false, "explanation": "syslog เป็น log ทั่วไป ส่วน httpd เป็นโฟลเดอร์ log ของ Apache Web Server" },
+      { "choice_text": "`/etc/passwd` (Ubuntu/Debian) และ `/etc/shadow` (RHEL/Rocky)", "is_correct": false, "explanation": "/etc/passwd และ /etc/shadow เป็นไฟล์เก็บข้อมูลบัญชีผู้ใช้ ไม่ใช่ไฟล์ Log" },
+      { "choice_text": "`/var/log/dmesg` ทั้งสองตระกูล", "is_correct": false, "explanation": "dmesg เก็บข้อความจาก Kernel และฮาร์ดแวร์ ไม่ใช่ประวัติการล็อกอิน SSH" }
+    ]
+  },
+  {
+    "seed_key": "linux:06-log-reading:q02",
+    "lesson_slug": "linux-log-reading",
+    "question_text": "เมื่อต้องการค้นหาคำว่า `ORA-12170` ในไฟล์ Log ของเมื่อวานซึ่งถูก `logrotate` บีบอัดเป็นไฟล์ `/var/log/app/worker.log.1.gz` ไปแล้ว วิธีใดเหมาะสมและปลอดภัยที่สุดบนเครื่อง Production?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "คำสั่ง `zgrep` สามารถค้นหาข้อความภายในไฟล์ที่ถูกบีบอัดด้วย gzip (`.gz`) ได้โดยตรงในหน่วยความจำ โดยไม่ต้องแตกไฟล์ออกมาเขียนลงดิสก์ จึงไม่เสี่ยงทำให้พาร์ทิชัน `/var/log` เต็ม",
+    "tags": ["zgrep", "logrotate", "logs"],
+    "choices": [
+      { "choice_text": "ใช้คำสั่ง `zgrep \"ORA-12170\" /var/log/app/worker.log.1.gz` เพื่อค้นหาโดยไม่ต้องแตกไฟล์ลงดิสก์", "is_correct": true, "explanation": "ถูกต้อง — รวดเร็วและไม่ใช้พื้นที่ดิสก์เพิ่ม" },
+      { "choice_text": "รัน `gunzip /var/log/app/worker.log.1.gz` เพื่อแตกไฟล์ออกมาก่อนทุกครั้ง", "is_correct": false, "explanation": "การแตกไฟล์ใหญ่ลงใน /var/log อาจทำให้ดิสก์เต็มทันทีและทำให้ไฟล์ .gz เดิมหายไป" },
+      { "choice_text": "เปลี่ยนชื่อไฟล์โดยลบ `.gz` ออกด้วยคำสั่ง `mv` แล้วใช้ `cat` เปิดอ่าน", "is_correct": false, "explanation": "การเปลี่ยนแค่ชื่อไฟล์ไม่ได้คลายการบีบอัด เนื้อหาข้างในยังเป็นข้อมูลไบนารีที่อ่านไม่ได้" },
+      { "choice_text": "ลบไฟล์ `.gz` ทิ้งแล้วสั่งให้แอปพลิเคชันสร้าง Log ของเมื่อวานขึ้นมาใหม่", "is_correct": false, "explanation": "Log เป็นข้อมูลเหตุการณ์ที่ผ่านไปแล้ว หากลบทิ้งจะไม่สามารถสร้างย้อนหลังได้" }
+    ]
+  },
+  {
+    "seed_key": "linux:06-log-reading:q03",
+    "lesson_slug": "linux-log-reading",
+    "question_text": "ลูกค้าแจ้งว่าทำรายการโอนเงินไม่สำเร็จเมื่อเวลา **15:20 น. (ตามเวลาประเทศไทย)** เมื่อคุณรีโมตเข้าเซิร์ฟเวอร์และรันคำสั่งด้านล่าง คุณควรระบุช่วงเวลาค้นหาใน `journalctl` อย่างไรจึงจะตรงกับเหตุการณ์ที่ลูกค้าแจ้ง?",
+    "scenario_text": "$ timedatectl\n               Local time: Tue 2026-11-03 08:45:10 UTC\n           Universal time: Tue 2026-11-03 08:45:10 UTC\n                Time zone: Etc/UTC (UTC, +0000)",
+    "question_type": "scenario",
+    "difficulty": "medium",
+    "explanation": "จากผลลัพธ์ของ `timedatectl` เครื่องเซิร์ฟเวอร์ตั้งค่า Timezone เป็น **UTC (+0000)** ซึ่งช้ากว่าเวลาประเทศไทย (GMT+7) อยู่ 7 ชั่วโมง ดังนั้นเวลา 15:20 น. ของไทย จึงตรงกับเวลา **08:20 UTC** บนเครื่องเซิร์ฟเวอร์",
+    "tags": ["timezone", "journalctl", "timedatectl", "troubleshooting"],
+    "choices": [
+      { "choice_text": "ค้นหาช่วงเวลาประมาณ 08:15 ถึง 08:25 (เนื่องจากเครื่องใช้เวลา UTC ซึ่งช้ากว่าเวลาไทย 7 ชั่วโมง)", "is_correct": true, "explanation": "ถูกต้อง — 15:20 (GMT+7) ลบ 7 ชั่วโมง = 08:20 UTC" },
+      { "choice_text": "ค้นหาช่วงเวลา 15:15 ถึง 15:25 ได้ทันที เพราะ journalctl จะแปลงเป็นเวลาไทยให้อัตโนมัติเสมอ", "is_correct": false, "explanation": "journalctl อ้างอิงตาม Local time ของเครื่องเซิร์ฟเวอร์ ซึ่งในที่นี้ตั้งเป็น UTC" },
+      { "choice_text": "ค้นหาช่วงเวลา 22:15 ถึง 22:25 (บวกเพิ่มไปอีก 7 ชั่วโมง)", "is_correct": false, "explanation": "UTC ช้ากว่าเวลาไทย ต้องนำเวลาไทยลบออก 7 ชั่วโมง ไม่ใช่บวกเพิ่ม" },
+      { "choice_text": "เปลี่ยน Timezone ของเซิร์ฟเวอร์ Production ทันทีด้วย `timedatectl set-timezone` ก่อนค้นหา", "is_correct": false, "explanation": "ห้ามเปลี่ยน Timezone ของเครื่อง Production โดยพลการเพราะจะกระทบแอปพลิเคชันและ Cron job ทั้งระบบ" }
+    ]
+  },
+  {
+    "seed_key": "linux:06-log-reading:q04",
+    "lesson_slug": "linux-log-reading",
+    "question_text": "จากผลลัพธ์ของคำสั่ง `dmesg -T` ด้านล่าง เกิดอะไรขึ้นกับโปรเซส `java` (PID 11204) และควรดำเนินการอย่างไร?",
+    "scenario_text": "$ dmesg -T | tail -n 3\n[Tue Nov  3 11:02:14 2026] Out of memory: Killed process 11204 (java) total-vm:8421040kB, anon-rss:3812400kB, file-rss:0kB\n[Tue Nov  3 11:02:14 2026] oom_reaper: reaped process 11204 (java), now anon-rss:0kB, file-rss:0kB",
+    "question_type": "scenario",
+    "difficulty": "medium",
+    "explanation": "ข้อความจาก Kernel Ring Buffer (`dmesg -T`) ระบุว่าเกิดภาวะหน่วยความจำของระบบหมด (`Out of memory`) ทำให้ Kernel สั่งฆ่าโปรเซส `java` (PID 11204) ที่ใช้หน่วยความจำจริง (`anon-rss`) ไปราว 3.8 GB ในฐานะ Tier 1 ต้องเก็บบรรทัด Log นี้พร้อมผล `free -h` และสถานะบริการเพื่อส่งต่อ (Escalate) ให้ทีมตรวจสอบปัญหา Memory leak หรือการตั้งค่า JVM Heap",
+    "tags": ["dmesg", "oom", "kernel", "logs"],
+    "choices": [
+      { "choice_text": "โปรเซส java ถูก Kernel OOM Killer บังคับปิดเพราะ RAM ไม่พอ ให้เก็บบรรทัด Log นี้พร้อมสถานะหน่วยความจำเพื่อส่งต่อตาม Runbook", "is_correct": true, "explanation": "ถูกต้อง — dmesg -T เป็นหลักฐานสำคัญที่สุดเมื่อโปรเซสดับจาก OOM โดยไม่มี Error ใน application log" },
+      { "choice_text": "การ์ดเครือข่ายของเครื่องหลุดการเชื่อมต่อ ต้องรีสตาร์ทระบบเครือข่าย", "is_correct": false, "explanation": "ข้อความระบุชัดเจนว่าเป็น Out of memory ไม่ใช่ปัญหาเครือข่าย" },
+      { "choice_text": "พื้นที่ฮาร์ดดิสก์เต็ม 100% ต้องลบไฟล์โปรแกรม java ทิ้ง", "is_correct": false, "explanation": "Out of memory หมายถึงหน่วยความจำหลัก (RAM/Swap) ไม่พอ ไม่ใช่พื้นที่ดิสก์" },
+      { "choice_text": "ผู้ดูแลระบบคนอื่นสั่งรันคำสั่ง `systemctl stop` ตามปกติ", "is_correct": false, "explanation": "การหยุดปกติจะไม่ขึ้นข้อความ Out of memory: Killed process ใน dmesg" }
+    ]
+  },
+  {
+    "seed_key": "linux:06-log-reading:q05",
+    "lesson_slug": "linux-log-reading",
+    "question_text": "คำสั่ง `journalctl -u api-gateway --since \"2026-11-03 09:00:00\" --until \"2026-11-03 09:30:00\" -p err` จะแสดงผลลัพธ์อย่างไร?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "medium",
+    "explanation": "ตัวเลือก `-u api-gateway` กรองเฉพาะบริการนั้น, `--since` และ `--until` กำหนดกรอบเวลา 09:00 ถึง 09:30 และ `-p err` กรองเฉพาะข้อความที่มีระดับความรุนแรงตั้งแต่ Error ขึ้นไป (`err`, `crit`, `alert`, `emerg`)",
+    "tags": ["journalctl", "systemd", "logs"],
+    "choices": [
+      { "choice_text": "แสดง Log ของบริการ api-gateway ในช่วงเวลา 09:00 ถึง 09:30 เฉพาะระดับ Error ขึ้นไปเท่านั้น", "is_correct": true, "explanation": "ถูกต้อง — ช่วยจำกัดวงค้นหาเฉพาะช่วงเกิดเหตุและตัดข้อความ INFO/DEBUG ออก" },
+      { "choice_text": "ลบ Log ของบริการ api-gateway ในช่วงเวลา 09:00 ถึง 09:30 ทิ้งทั้งหมด", "is_correct": false, "explanation": "เป็นคำสั่งเปิดอ่านและกรองข้อมูล ไม่ได้ลบ Log" },
+      { "choice_text": "แสดง Log ทุกบริการในเครื่องยกเว้น api-gateway", "is_correct": false, "explanation": "-u เป็นการเลือกเฉพาะยูนิตที่ระบุ ไม่ใช่การยกเว้น" },
+      { "choice_text": "แสดงเฉพาะ Log ระดับ INFO และ DEBUG เท่านั้น", "is_correct": false, "explanation": "-p err จะกรองเอาเฉพาะระดับ error, crit, alert และ emerg" }
+    ]
+  },
+  {
+    "seed_key": "linux:06-log-reading:q06",
+    "lesson_slug": "linux-log-reading",
+    "question_text": "ตัวเลือก `-T` ในคำสั่ง `dmesg -T` ช่วยให้การอ่าน Log ของเจ้าหน้าที่ Support ง่ายขึ้นอย่างไร?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "โดยค่าเริ่มต้น `dmesg` จะแสดงเวลาเป็นตัวเลขวินาทีนับจากตอนเปิดเครื่อง (เช่น `[14250.120411]`) ซึ่งเทียบกับเวลาที่เกิดเหตุจริงได้ยาก การใส่ `-T` (`--ctime`) จะแปลงเป็นวันที่และเวลาที่มนุษย์อ่านเข้าใจได้ง่าย (เช่น `[Tue Nov 3 11:02:14 2026]`)",
+    "tags": ["dmesg", "timestamp", "logs"],
+    "choices": [
+      { "choice_text": "แปลงเวลานับจากตอนบูตเครื่อง (วินาที) ให้เป็นรูปแบบวันที่และเวลาปกติที่อ่านเข้าใจง่าย", "is_correct": true, "explanation": "ถูกต้อง — ช่วยให้เทียบเวลาเกิดเหตุกับ Log อื่นๆ ได้ทันที (แม้เวลาจาก dmesg -T อาจคลาดเคลื่อนเล็กน้อยหากเครื่องเคย suspend)" },
+      { "choice_text": "แปลข้อความภาษาอังกฤษใน Kernel ให้เป็นภาษาไทยทั้งหมด", "is_correct": false, "explanation": "-T ย่อมาจาก human-readable timestamp ไม่ใช่การแปลภาษา" },
+      { "choice_text": "ส่งข้อความ Log ไปยังโปรแกรม Telegram อัตโนมัติ", "is_correct": false, "explanation": "dmesg ไม่มีฟีเจอร์ส่งแจ้งเตือนออกภายนอก" },
+      { "choice_text": "กรองเฉพาะข้อความที่เกี่ยวกับโปรโตคอล TCP เท่านั้น", "is_correct": false, "explanation": "-T เกี่ยวกับการแสดงผลเวลา ไม่ใช่การกรองโปรโตคอล" }
+    ]
+  },
+  {
+    "seed_key": "linux:06-log-reading:q07",
+    "lesson_slug": "linux-log-reading",
+    "question_text": "เมื่อต้องรวบรวมข้อมูล Log ส่งต่อ (Escalate) ให้ทีม Tier 2 หรือทีมนักพัฒนา ข้อมูลชุดใดครบถ้วนและมีประโยชน์มากที่สุด?",
+    "scenario_text": null,
+    "question_type": "multiple_choice",
+    "difficulty": "easy",
+    "explanation": "การส่งต่อ Ticket ที่มีคุณภาพควรระบุชื่อเครื่อง (Hostname), พาธของไฟล์ Log, ช่วงเวลาที่เกิดเหตุพร้อมระบุ Timezone ของเครื่อง (เช่น UTC หรือ +07), ข้อความ Error พร้อมบรรทัดบริบทรอบข้าง (`grep -C`) และรหัสรายการ (Transaction/Request ID) หากมี",
+    "tags": ["escalate", "troubleshooting", "logs"],
+    "choices": [
+      { "choice_text": "ชื่อเครื่อง, พาธไฟล์ Log, ช่วงเวลาพร้อม Timezone, บรรทัด Error พร้อมบริบทรอบข้าง และ Request/Transaction ID", "is_correct": true, "explanation": "ถูกต้อง — ช่วยให้ทีม Tier 2 วิเคราะห์ต่อได้ทันทีโดยไม่ต้องกลับมานั่งไล่หาพื้นฐานใหม่" },
+      { "choice_text": "แคปภาพหน้าจอเฉพาะคำว่า Error คำเดียวโดยตัดเวลาและชื่อเครื่องออก", "is_correct": false, "explanation": "ภาพแคปที่ไม่มีเวลา ชื่อเครื่อง และบริบทรอบข้างทำให้ตรวจสอบต่อไม่ได้" },
+      { "choice_text": "คัดลอกไฟล์ Log ขนาด 5 GB ทั้งไฟล์วางลงในช่องแชต", "is_correct": false, "explanation": "ไฟล์ใหญ่เกินไปและไม่ได้คัดกรองช่วงเวลาที่เกิดเหตุ" },
+      { "choice_text": "แจ้งแค่ว่า 'ระบบเสีย รบกวนเช็กให้ด้วย' โดยไม่แนบ Log ใดๆ", "is_correct": false, "explanation": "ขาดข้อมูลหลักฐานเบื้องต้นที่ Tier 1 ต้องตรวจสอบก่อนส่งต่อ" }
+    ]
+  }
+]

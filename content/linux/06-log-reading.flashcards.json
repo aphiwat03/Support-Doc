@@ -1,0 +1,110 @@
+[
+  {
+    "seed_key": "linux:06-log-reading:fc01",
+    "lesson_slug": "linux-log-reading",
+    "front_text": "ไฟล์ System Log หลักของ Ubuntu/Debian เทียบกับ RHEL/Rocky Linux",
+    "back_text": "• Ubuntu / Debian: /var/log/syslog\n• RHEL / Rocky Linux: /var/log/messages",
+    "hint": "syslog กับ messages",
+    "tags": ["logs", "distro"],
+    "display_order": 1
+  },
+  {
+    "seed_key": "linux:06-log-reading:fc02",
+    "lesson_slug": "linux-log-reading",
+    "front_text": "ไฟล์เก็บประวัติการล็อกอิน SSH และ sudo ของ Ubuntu เทียบกับ RHEL",
+    "back_text": "• Ubuntu / Debian: /var/log/auth.log\n• RHEL / Rocky Linux: /var/log/secure",
+    "hint": "auth.log กับ secure",
+    "tags": ["logs", "ssh", "distro"],
+    "display_order": 2
+  },
+  {
+    "seed_key": "linux:06-log-reading:fc03",
+    "lesson_slug": "linux-log-reading",
+    "front_text": "คำสั่งกรอง Log ของบริการด้วย journalctl เฉพาะช่วงเวลาที่กำหนด",
+    "back_text": "journalctl -u <service> --since \"2026-11-03 10:00:00\" --until \"2026-11-03 10:30:00\"",
+    "hint": "ใช้ --since และ --until",
+    "tags": ["journalctl", "logs"],
+    "display_order": 3
+  },
+  {
+    "seed_key": "linux:06-log-reading:fc04",
+    "lesson_slug": "linux-log-reading",
+    "front_text": "คำสั่งดูเฉพาะ Log ระดับ Error ขึ้นไปของรอบการบูตปัจจุบันด้วย journalctl",
+    "back_text": "journalctl -p err -b\n(-p err จะแสดงระดับ err, crit, alert, emerg)",
+    "hint": "-p ย่อมาจาก priority, -b ย่อมาจาก boot",
+    "tags": ["journalctl", "logs"],
+    "display_order": 4
+  },
+  {
+    "seed_key": "linux:06-log-reading:fc05",
+    "lesson_slug": "linux-log-reading",
+    "front_text": "คำสั่งดูบันทึกของ Kernel (เช่น OOM Killer หรือ Disk Error) พร้อมแสดงเวลาที่อ่านง่าย",
+    "back_text": "dmesg -T\n(หรือกรองด้วย dmesg -T | grep -iE \"oom|error\")",
+    "hint": "-T แปลงเวลาวินาทีเป็นวันที่และเวลา",
+    "tags": ["dmesg", "kernel"],
+    "display_order": 5
+  },
+  {
+    "seed_key": "linux:06-log-reading:fc06",
+    "lesson_slug": "linux-log-reading",
+    "front_text": "คำสั่งค้นหาข้อความและเปิดอ่านไฟล์ Log ที่ถูกบีบอัดเป็น .gz โดยไม่ต้องแตกไฟล์",
+    "back_text": "• ค้นหาข้อความ: zgrep \"ERROR\" /var/log/app.log.1.gz\n• เปิดอ่านทีละหน้า: zless /var/log/app.log.1.gz\n• แสดงเนื้อหา: zcat /var/log/app.log.1.gz",
+    "hint": "เติมตัว z นำหน้าคำสั่งปกติ",
+    "tags": ["zgrep", "logrotate"],
+    "display_order": 6
+  },
+  {
+    "seed_key": "linux:06-log-reading:fc07",
+    "lesson_slug": "linux-log-reading",
+    "front_text": "logrotate ทำหน้าที่อะไรในระบบ Linux?",
+    "back_text": "ตัดรอบไฟล์ Log เก่าตามเวลาหรือขนาดที่กำหนด เปลี่ยนชื่อต่อท้าย และบีบอัดเป็น .gz พร้อมลบไฟล์เก่าเกินกำหนดเพื่อป้องกันดิสก์เต็ม",
+    "hint": "ป้องกันไม่ให้ไฟล์ Log ไฟล์เดียวโตจนดิสก์เต็ม",
+    "tags": ["logrotate", "logs"],
+    "display_order": 7
+  },
+  {
+    "seed_key": "linux:06-log-reading:fc08",
+    "lesson_slug": "linux-log-reading",
+    "front_text": "คำสั่งตรวจสอบเวลาปัจจุบันและ Timezone ของเครื่องเซิร์ฟเวอร์",
+    "back_text": "timedatectl หรือ date",
+    "hint": "ต้องเช็กเสมอก่อนเทียบเวลา Log กับเวลาที่ผู้ใช้แจ้ง",
+    "tags": ["timezone", "timedatectl"],
+    "display_order": 8
+  },
+  {
+    "seed_key": "linux:06-log-reading:fc09",
+    "lesson_slug": "linux-log-reading",
+    "front_text": "หากเครื่องเซิร์ฟเวอร์ตั้งเวลาเป็น UTC แล้วผู้ใช้แจ้งว่าเกิดปัญหาเวลา 14:00 น. (เวลาไทย) ต้องดู Log เวลาใด?",
+    "back_text": "เวลา 07:00 UTC\n(เวลาไทย GMT+7 เร็วกว่า UTC 7 ชั่วโมง ดังนั้นต้องลบออก 7 ชั่วโมง)",
+    "hint": "UTC + 7 = เวลาไทย",
+    "tags": ["timezone", "logs"],
+    "display_order": 9
+  },
+  {
+    "seed_key": "linux:06-log-reading:fc10",
+    "lesson_slug": "linux-log-reading",
+    "front_text": "ไฟล์ access.log กับ error.log ของ Web Server (เช่น Nginx) เก็บข้อมูลต่างกันอย่างไร?",
+    "back_text": "• access.log: บันทึกทุก HTTP Request ที่เรียกเข้ามา (IP, URL, HTTP Status 200/404/500, เวลาตอบสนอง)\n• error.log: บันทึกข้อผิดพลาดของตัว Web Server หรือการเชื่อมต่อ Upstream ไม่สำเร็จ",
+    "hint": "ประวัติการเข้าชม เทียบกับ ข้อผิดพลาดของระบบ",
+    "tags": ["nginx", "logs"],
+    "display_order": 10
+  },
+  {
+    "seed_key": "linux:06-log-reading:fc11",
+    "lesson_slug": "linux-log-reading",
+    "front_text": "หากโปรเซสฐานข้อมูลดับไปเองโดยไม่มี Error ในไฟล์ Log ของแอปเลย ควรตรวจที่ไหน?",
+    "back_text": "ตรวจ Kernel Log ด้วยคำสั่ง:\ndmesg -T | grep -iE \"oom|killed\"\nเพราะอาจถูก Kernel OOM Killer ส่ง SIGKILL ตัดการทำงานกะทันหัน",
+    "hint": "โปรเซสไม่มีโอกาสเขียน Log ของตัวเองเพราะถูก Kernel ตัดทันที",
+    "tags": ["dmesg", "oom"],
+    "display_order": 11
+  },
+  {
+    "seed_key": "linux:06-log-reading:fc12",
+    "lesson_slug": "linux-log-reading",
+    "front_text": "สิ่งที่ต้องแนบเมื่อส่งต่อ (Escalate) ปัญหาจาก Log ให้ทีม Tier 2",
+    "back_text": "1. ชื่อเครื่อง (Hostname) และพาธไฟล์ Log\n2. ช่วงเวลาที่เกิดเหตุพร้อมระบุ Timezone (เช่น UTC หรือ +07)\n3. ข้อความ Error พร้อมบริบทรอบข้าง (grep -C)\n4. Request ID / Transaction ID ที่เกี่ยวข้อง",
+    "hint": "ครบ 4 องค์ประกอบหลัก",
+    "tags": ["escalate", "logs"],
+    "display_order": 12
+  }
+]

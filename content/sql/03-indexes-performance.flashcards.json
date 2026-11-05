@@ -1,0 +1,34 @@
+[
+  {
+    "seed_key": "sql:03-indexes-performance:fc01",
+    "lesson_slug": "sql-indexes-performance",
+    "front_text": "Sequential Scan กับ Index Scan ต่างกันอย่างไร?",
+    "back_text": "Sequential Scan: กวาดอ่านข้อมูลทุกแถวตั้งแต่ต้นจนจบตาราง (ช้ามากบนตารางใหญ่)\nIndex Scan: ใช้ B-Tree ค้นหาตำแหน่งแถวที่ต้องการอย่างรวดเร็ว (ความเร็วระดับ O(log N))",
+    "hint": "Full table scan vs Binary search tree",
+    "display_order": 1
+  },
+  {
+    "seed_key": "sql:03-indexes-performance:fc02",
+    "lesson_slug": "sql-indexes-performance",
+    "front_text": "คำสั่ง EXPLAIN กับ EXPLAIN ANALYZE ต่างกันอย่างไร?",
+    "back_text": "EXPLAIN แสดงเฉพาะแผนการทำงาน (Estimate cost/rows) โดยไม่ได้รันคำสั่งจริง\nEXPLAIN ANALYZE จะสั่งรันคำสั่งจริงและแสดงเวลาการทำงานจริง (Actual time) ของแต่ละขั้นตอน",
+    "hint": "Estimate plan vs Actually execute & measure time",
+    "display_order": 2
+  },
+  {
+    "seed_key": "sql:03-indexes-performance:fc03",
+    "lesson_slug": "sql-indexes-performance",
+    "front_text": "คำสั่งใดใน PostgreSQL ใช้ตรวจสอบ Query ที่กำลังรันอยู่แบบ Real-time?",
+    "back_text": "SELECT * FROM pg_stat_activity WHERE state != 'idle';",
+    "hint": "pg_stat_activity",
+    "display_order": 3
+  },
+  {
+    "seed_key": "sql:03-indexes-performance:fc04",
+    "lesson_slug": "sql-indexes-performance",
+    "front_text": "ความแตกต่างระหว่าง pg_cancel_backend() กับ pg_terminate_backend() คืออะไร?",
+    "back_text": "pg_cancel_backend(pid): พยายามยกเลิกเฉพาะ Query ที่กำลังรันอยู่ แต่ยังคง Session การเชื่อมต่อไว้\npg_terminate_backend(pid): บังคับตัดการเชื่อมต่อของ Client ทิ้งทันที (Kill connection)",
+    "hint": "Cancel current query vs Terminate entire connection",
+    "display_order": 4
+  }
+]

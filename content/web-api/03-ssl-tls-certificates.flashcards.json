@@ -1,0 +1,26 @@
+[
+  {
+    "seed_key": "web-api:03-ssl-tls-certificates:fc01",
+    "lesson_slug": "web-ssl-tls-certificates",
+    "front_text": "ห่วงโซ่ความเชื่อถือ (Chain of Trust) ของ SSL/TLS ประกอบด้วยอะไรบ้าง?",
+    "back_text": "1. Root CA (ฝังอยู่ใน OS/เบราว์เซอร์)\n2. Intermediate CA (ผู้ออกใบรับรองระดับกลาง)\n3. Server / Leaf Certificate (ใบรับรองของเว็บไซต์เรา)",
+    "hint": "Root -> Intermediate -> Leaf",
+    "display_order": 1
+  },
+  {
+    "seed_key": "web-api:03-ssl-tls-certificates:fc02",
+    "lesson_slug": "web-ssl-tls-certificates",
+    "front_text": "ทำไมเบราว์เซอร์จึงขึ้นเตือน 'unable to get local issuer certificate'?",
+    "back_text": "เกิดจากเว็บเซิร์ฟเวอร์ส่งเฉพาะ Leaf Cert แต่ไม่ได้ใส่ไฟล์ Intermediate CA Bundle ลงไปด้วย ทำให้เบราว์เซอร์ต่อสายโซ่กลับไปยัง Root CA ไม่ได้",
+    "hint": "Missing intermediate CA bundle (Fullchain)",
+    "display_order": 2
+  },
+  {
+    "seed_key": "web-api:03-ssl-tls-certificates:fc03",
+    "lesson_slug": "web-ssl-tls-certificates",
+    "front_text": "หลังเปลี่ยนไฟล์ SSL Certificate บน Nginx หรือ Apache ต้องทำสิ่งใดเป็นขั้นตอนสุดท้ายเสมอ?",
+    "back_text": "สั่ง Reload หรือ Restart เว็บเซิร์ฟเวอร์ (เช่น sudo systemctl reload nginx) เพื่อให้อ่านไฟล์ใบรับรองใหม่เข้า RAM",
+    "hint": "systemctl reload nginx",
+    "display_order": 3
+  }
+]
