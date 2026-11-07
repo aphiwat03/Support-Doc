@@ -282,7 +282,7 @@ d:\Projects\Support Applications\
    * `XX-lesson-name.flashcards.json`: แฟลชการ์ดพร้อม `seed_key` (เช่น `"linux:fc:ssh-keygen"`)
 2. **รันคำสั่ง Sync เข้าฐานข้อมูล**:
    ```bash
-   npm run db:seed
+   pnpm db:seed
    ```
 3. **กลไกการทำงานของ `seed-content.mjs`**:
    * เปิด Database Transaction (`BEGIN ... COMMIT`)
@@ -310,11 +310,11 @@ d:\Projects\Support Applications\
 
 | คำสั่ง (รันที่ Root Folder) | หน้าที่การทำงาน |
 |---|---|
-| `npm run db:up` | สั่งเปิด Container `postgres` บน Docker |
-| `npm run db:down` | สั่งปิด Container บน Docker |
-| `npm run db:init` | สร้างตารางทั้งหมดใหม่จาก `01-init.sql` และลงข้อมูลตั้งต้นจาก `02-seed.sql` |
-| `npm run db:seed` | ซิงค์เนื้อหาจากโฟลเดอร์ `content/` เข้าสู่ฐานข้อมูลแบบ Idempotent (ไม่ลบข้อมูลเดิม) |
-| `npm run dev:backend` | รัน NestJS Backend แบบ Watch Mode ที่ `http://localhost:4000/api` (Swagger: `/api/docs`) |
-| `npm run dev:frontend` | รัน Next.js Frontend ที่ `http://localhost:3000` |
-| `npm run build:backend` | ทดสอบ Build โค้ด Backend TypeScript |
-| `npm run build:frontend` | ทดสอบ Build โค้ด Frontend Next.js |
+| `pnpm db:up` | สั่งเปิด Container `postgres` บน Docker |
+| `pnpm db:down` | สั่งปิด Container บน Docker |
+| `pnpm db:init` | สร้างตารางทั้งหมดใหม่จาก `01-init.sql` และลงข้อมูลตั้งต้นจาก `02-seed.sql` |
+| `pnpm db:seed` | ซิงค์เนื้อหาจากโฟลเดอร์ `content/` เข้าสู่ฐานข้อมูลแบบ Idempotent (ไม่ลบข้อมูลเดิม) |
+| `pnpm dev:backend` | รัน NestJS Backend แบบ Watch Mode ที่ `http://localhost:4000/api` (Swagger: `/api/docs`) |
+| `pnpm dev:frontend` | รัน Next.js Frontend ที่ `http://localhost:3000` |
+| `pnpm build:backend` | ทดสอบ Build โค้ด Backend TypeScript |
+| `pnpm build:frontend` | ทดสอบ Build โค้ด Frontend Next.js |
