@@ -74,6 +74,9 @@ async function runSeed() {
     let totalQuestions = 0;
     let totalFlashcards = 0;
 
+    // Ensure topics_id_seq is synchronized with current max(id)
+    await client.query("SELECT setval('topics_id_seq', COALESCE((SELECT MAX(id) FROM topics), 1));");
+
     for (const folder of topicFolders) {
       const folderPath = path.join(contentDir, folder);
       const topicJsonPath = path.join(folderPath, '_topic.json');

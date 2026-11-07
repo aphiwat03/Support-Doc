@@ -478,3 +478,6 @@ INSERT INTO flashcards (id, seed_key, topic_id, lesson_id, front_text, back_text
  'มีคีย์เวิร์ด 2 คำขึ้นต้น', 2)
 ON CONFLICT (seed_key) DO UPDATE 
 SET front_text = EXCLUDED.front_text, back_text = EXCLUDED.back_text, hint = EXCLUDED.hint, updated_at = CURRENT_TIMESTAMP;
+
+-- Synchronize sequence
+SELECT setval('topics_id_seq', (SELECT MAX(id) FROM topics));
