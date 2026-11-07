@@ -10,6 +10,7 @@
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:init": "node backend/scripts/init-db.mjs",
-    "db:seed": "node backend/scripts/seed-content.mjs"
+    "db:seed": "node backend/scripts/seed-content.mjs",
+    "db:dump": "node backend/scripts/generate-sql-dump.mjs"
   }
 }

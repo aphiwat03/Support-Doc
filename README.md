@@ -22,7 +22,31 @@ Support Applications/
 └── package.json          # Root scripts
 ```
 
-## คำสั่งเริ่มต้น (Quick Start)
-- **Database**: `npm run db:up` (หรือ `docker compose up -d postgres`)
-- **Frontend Dev**: `npm run dev:frontend`
-- **Backend Dev**: `npm run dev:backend`
+## คำสั่งเริ่มต้น (Quick Start สำหรับเครื่องใหม่ที่เพิ่ง Clone)
+
+### 1. ตั้งค่า Environment Variables
+ไฟล์ `.env` จะถูกละเว้นไม่ขึ้น Git ให้สร้างจากตัวอย่าง:
+```bash
+cp .env.example .env
+```
+
+### 2. เริ่มต้น Database และข้อมูล (มีให้เลือก 2 วิธี)
+* **วิธีที่ 1 (แนะนำ ผ่าน Docker)**: 
+  ```bash
+  npm run db:up
+  ```
+  *(เมื่อ Container สร้างเสร็จ ระบบจะนำเข้า Schema และ Seed ข้อมูลทั้งหมดจาก `db/init/` ให้แบบอัตโนมัติทันที)*
+* **วิธีที่ 2 (ผ่าน Local PostgreSQL หรือต้องการโหลดข้อมูลซ้ำ)**:
+  ```bash
+  npm run db:init
+  ```
+  *(หรือใช้ไฟล์ Full Dump ได้ที่ `db/dump.sql`)*
+
+### 3. รันระบบ Dev
+* **Terminal 1 (Backend)**: `npm run dev:backend`
+* **Terminal 2 (Frontend)**: `npm run dev:frontend`
+* เปิดบราวเซอร์ที่: `http://localhost:3000`
+
+### 4. คำสั่งจัดการ Database เพิ่มเติม
+* `npm run db:dump`: สแกนเนื้อหาใน `content/` ทั้งหมดแล้วอัปเดตไฟล์ Dump/Seed SQL (`db/dump.sql` และ `db/init/02-seed.sql`)
+* `npm run db:seed`: ซิงค์เนื้อหาจาก `content/` เข้า Database โดยตรง (ไม่ต้องเริ่ม DB ใหม่)
