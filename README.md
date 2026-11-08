@@ -14,8 +14,13 @@ Support Applications/
 ├── frontend/             # Next.js + React + Tailwind + Zustand
 ├── backend/              # NestJS + Swagger + Raw SQL (pg)
 ├── db/
+│   ├── dumps/
+│   │   ├── support_knowledge_db_full.sql  # Full Database Dump (Schema + Data)
+│   │   └── support_knowledge_db_data.sql  # Data-only Dump
 │   └── init/
-│       └── 01-init.sql   # Raw SQL schema & seed script
+│       ├── 01-init.sql                    # Raw SQL DDL schema
+│       ├── 02-seed.sql                    # Complete initial seed data
+│       └── 03-progress-streak.sql         # Progress & streak tables
 ├── docker-compose.yml    # PostgreSQL container service
 ├── .env.example          # Environment variables template
 ├── .env                  # Local environment configuration
@@ -40,7 +45,7 @@ cp .env.example .env
   ```bash
   npm run db:init
   ```
-  *(หรือใช้ไฟล์ Full Dump ได้ที่ `db/dump.sql`)*
+  *(หรือใช้ไฟล์ Full Dump ได้ที่ `db/dumps/support_knowledge_db_full.sql`)*
 
 ### 3. รันระบบ Dev
 * **Terminal 1 (Backend)**: `npm run dev:backend`
@@ -48,5 +53,5 @@ cp .env.example .env
 * เปิดบราวเซอร์ที่: `http://localhost:3000`
 
 ### 4. คำสั่งจัดการ Database เพิ่มเติม
-* `npm run db:dump`: สแกนเนื้อหาใน `content/` ทั้งหมดแล้วอัปเดตไฟล์ Dump/Seed SQL (`db/dump.sql` และ `db/init/02-seed.sql`)
+* `npm run db:dump`: ตรวจสอบและทำความสะอาดไฟล์ Dump/Seed SQL (`db/dumps/` และ `db/init/02-seed.sql`)
 * `npm run db:seed`: ซิงค์เนื้อหาจาก `content/` เข้า Database โดยตรง (ไม่ต้องเริ่ม DB ใหม่)

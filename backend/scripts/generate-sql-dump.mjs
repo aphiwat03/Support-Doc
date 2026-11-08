@@ -6,6 +6,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '../../');
 const dbDir = path.join(rootDir, 'db');
+const dumpsDir = path.join(dbDir, 'dumps');
+
+if (!fs.existsSync(dumpsDir)) {
+  fs.mkdirSync(dumpsDir, { recursive: true });
+}
 
 function cleanPgDump(sql, isDataOnly = false) {
   let cleaned = sql
@@ -17,7 +22,7 @@ function cleanPgDump(sql, isDataOnly = false) {
       "SELECT pg_catalog.set_config('search_path', 'public', false);"
     );
 
-  if (isDataOnly) {
+  if (isDataOnly && !cleaned.includes('TRUNCATE TABLE')) {
     const truncateStmt = `
 -- Clean existing rows before inserting full dump seed
 TRUNCATE TABLE
@@ -42,19 +47,20 @@ RESTART IDENTITY CASCADE;
   return cleaned;
 }
 
-const dumpPath = path.join(dbDir, 'dump.sql');
-const dataOnlyPath = path.join(dbDir, 'data_only_seed.sql');
+const fullDumpPath = path.join(dumpsDir, 'support_knowledge_db_full.sql');
+const dataOnlyPath = path.join(dumpsDir, 'support_knowledge_db_data.sql');
 const initSeedPath = path.join(dbDir, 'init', '02-seed.sql');
 
-if (fs.existsSync(dumpPath)) {
-  const rawDump = fs.readFileSync(dumpPath, 'utf8');
-  fs.writeFileSync(dumpPath, cleanPgDump(rawDump, false), 'utf8');
-  console.log('Cleaned db/dump.sql (Full Schema + Data Dump)');
+if (fs.existsSync(fullDumpPath)) {
+  const rawDump = fs.readFileSync(fullDumpPath, 'utf8');
+  fs.writeFileSync(fullDumpPath, cleanPgDump(rawDump, false), 'utf8');
+  console.log('Verified db/dumps/support_knowledge_db_full.sql');
 }
 
 if (fs.existsSync(dataOnlyPath)) {
   const rawSeed = fs.readFileSync(dataOnlyPath, 'utf8');
-  fs.writeFileSync(initSeedPath, cleanPgDump(rawSeed, true), 'utf8');
-  fs.unlinkSync(dataOnlyPath);
-  console.log('Cleaned and updated db/init/02-seed.sql (Data-only Seed with TRUNCATE)');
+  const cleanedSeed = cleanPgDump(rawSeed, true);
+  fs.writeFileSync(dataOnlyPath, cleanedSeed, 'utf8');
+  fs.writeFileSync(initSeedPath, cleanedSeed, 'utf8');
+  console.log('Verified db/dumps/support_knowledge_db_data.sql and db/init/02-seed.sql');
 }
