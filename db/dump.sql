@@ -1,1701 +1,1266 @@
--- ====================================================================
--- FULL DATABASE DUMP: Support Knowledge Review Application
--- Contains DDL Schema + All Topics, Lessons, Questions, and Flashcards
--- Generated at: 2026-11-07T16:07:09.234Z
--- ====================================================================
+--
+-- PostgreSQL database dump
+--
 
--- ====================================================================
--- Database Schema for Support Knowledge Review Application
--- Raw PostgreSQL DDL (No ORM) - Enhanced with Natural Keys & Integrity
--- ====================================================================
 
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+-- Dumped from database version 16.15
+-- Dumped by pg_dump version 16.15
 
--- Drop existing tables in reverse dependency order if resetting
-DROP TABLE IF EXISTS study_activity CASCADE;
-DROP TABLE IF EXISTS lesson_progress CASCADE;
-DROP TABLE IF EXISTS bookmarks CASCADE;
-DROP TABLE IF EXISTS quiz_session_answers CASCADE;
-DROP TABLE IF EXISTS quiz_sessions CASCADE;
-DROP TABLE IF EXISTS flashcards CASCADE;
-DROP TABLE IF EXISTS choices CASCADE;
-DROP TABLE IF EXISTS questions CASCADE;
-DROP TABLE IF EXISTS lessons CASCADE;
-DROP TABLE IF EXISTS topics CASCADE;
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', 'public', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
 
--- --------------------------------------------------------------------
--- 1. TOPICS (หมวดหมู่หลัก)
--- --------------------------------------------------------------------
-CREATE TABLE topics (
-    id SERIAL PRIMARY KEY,
-    slug VARCHAR(50) UNIQUE NOT NULL,
-    title VARCHAR(100) NOT NULL,
-    description TEXT,
-    icon VARCHAR(50) DEFAULT 'Terminal',
-    color VARCHAR(50) DEFAULT 'from-blue-500 to-indigo-600',
-    display_order INT DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+ALTER TABLE IF EXISTS ONLY public.quiz_sessions DROP CONSTRAINT IF EXISTS quiz_sessions_topic_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.quiz_session_answers DROP CONSTRAINT IF EXISTS quiz_session_answers_session_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.quiz_session_answers DROP CONSTRAINT IF EXISTS quiz_session_answers_selected_choice_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.quiz_session_answers DROP CONSTRAINT IF EXISTS quiz_session_answers_question_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.questions DROP CONSTRAINT IF EXISTS questions_topic_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.questions DROP CONSTRAINT IF EXISTS questions_lesson_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.lessons DROP CONSTRAINT IF EXISTS lessons_topic_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.lesson_progress DROP CONSTRAINT IF EXISTS lesson_progress_lesson_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.flashcards DROP CONSTRAINT IF EXISTS flashcards_topic_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.flashcards DROP CONSTRAINT IF EXISTS flashcards_lesson_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.choices DROP CONSTRAINT IF EXISTS choices_question_id_fkey;
+DROP INDEX IF EXISTS public.uq_choices_one_correct;
+DROP INDEX IF EXISTS public.idx_topics_slug;
+DROP INDEX IF EXISTS public.idx_study_activity_date;
+DROP INDEX IF EXISTS public.idx_quiz_sessions_topic;
+DROP INDEX IF EXISTS public.idx_quiz_answers_session;
+DROP INDEX IF EXISTS public.idx_quiz_answers_question;
+DROP INDEX IF EXISTS public.idx_questions_topic_diff;
+DROP INDEX IF EXISTS public.idx_questions_tags;
+DROP INDEX IF EXISTS public.idx_questions_lesson;
+DROP INDEX IF EXISTS public.idx_lessons_topic_order;
+DROP INDEX IF EXISTS public.idx_lesson_progress_completed;
+DROP INDEX IF EXISTS public.idx_flashcards_topic;
+DROP INDEX IF EXISTS public.idx_flashcards_lesson;
+DROP INDEX IF EXISTS public.idx_choices_question;
+ALTER TABLE IF EXISTS ONLY public.lessons DROP CONSTRAINT IF EXISTS uq_topic_lesson_slug;
+ALTER TABLE IF EXISTS ONLY public.bookmarks DROP CONSTRAINT IF EXISTS uq_bookmarks_item;
+ALTER TABLE IF EXISTS ONLY public.topics DROP CONSTRAINT IF EXISTS topics_slug_key;
+ALTER TABLE IF EXISTS ONLY public.topics DROP CONSTRAINT IF EXISTS topics_pkey;
+ALTER TABLE IF EXISTS ONLY public.study_activity DROP CONSTRAINT IF EXISTS study_activity_pkey;
+ALTER TABLE IF EXISTS ONLY public.quiz_sessions DROP CONSTRAINT IF EXISTS quiz_sessions_pkey;
+ALTER TABLE IF EXISTS ONLY public.quiz_session_answers DROP CONSTRAINT IF EXISTS quiz_session_answers_pkey;
+ALTER TABLE IF EXISTS ONLY public.questions DROP CONSTRAINT IF EXISTS questions_seed_key_key;
+ALTER TABLE IF EXISTS ONLY public.questions DROP CONSTRAINT IF EXISTS questions_pkey;
+ALTER TABLE IF EXISTS ONLY public.lessons DROP CONSTRAINT IF EXISTS lessons_pkey;
+ALTER TABLE IF EXISTS ONLY public.lesson_progress DROP CONSTRAINT IF EXISTS lesson_progress_pkey;
+ALTER TABLE IF EXISTS ONLY public.flashcards DROP CONSTRAINT IF EXISTS flashcards_seed_key_key;
+ALTER TABLE IF EXISTS ONLY public.flashcards DROP CONSTRAINT IF EXISTS flashcards_pkey;
+ALTER TABLE IF EXISTS ONLY public.choices DROP CONSTRAINT IF EXISTS choices_pkey;
+ALTER TABLE IF EXISTS ONLY public.bookmarks DROP CONSTRAINT IF EXISTS bookmarks_pkey;
+ALTER TABLE IF EXISTS public.topics ALTER COLUMN id DROP DEFAULT;
+DROP SEQUENCE IF EXISTS public.topics_id_seq;
+DROP TABLE IF EXISTS public.topics;
+DROP TABLE IF EXISTS public.study_activity;
+DROP TABLE IF EXISTS public.quiz_sessions;
+DROP TABLE IF EXISTS public.quiz_session_answers;
+DROP TABLE IF EXISTS public.questions;
+DROP TABLE IF EXISTS public.lessons;
+DROP TABLE IF EXISTS public.lesson_progress;
+DROP TABLE IF EXISTS public.flashcards;
+DROP TABLE IF EXISTS public.choices;
+DROP TABLE IF EXISTS public.bookmarks;
+DROP EXTENSION IF EXISTS pgcrypto;
+--
+-- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: bookmarks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.bookmarks (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    item_type character varying(20) NOT NULL,
+    item_id uuid NOT NULL,
+    notes text,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT ck_bookmarks_type CHECK (((item_type)::text = ANY ((ARRAY['question'::character varying, 'lesson'::character varying, 'flashcard'::character varying])::text[])))
 );
 
--- --------------------------------------------------------------------
--- 2. LESSONS (บทเรียนเนื้อหาสำหรับอ่านทบทวน)
--- --------------------------------------------------------------------
-CREATE TABLE lessons (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    topic_id INT NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
-    slug VARCHAR(100) NOT NULL,
-    title VARCHAR(200) NOT NULL,
-    summary TEXT,
-    content_md TEXT NOT NULL,
-    read_time_minutes INT DEFAULT 5,
-    difficulty VARCHAR(20) DEFAULT 'beginner' 
-        CONSTRAINT ck_lessons_difficulty CHECK (difficulty IN ('beginner', 'intermediate', 'advanced')),
-    display_order INT DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uq_topic_lesson_slug UNIQUE (topic_id, slug)
+
+--
+-- Name: choices; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.choices (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    question_id uuid NOT NULL,
+    choice_text text NOT NULL,
+    is_correct boolean DEFAULT false NOT NULL,
+    explanation text,
+    display_order integer DEFAULT 0
 );
 
--- --------------------------------------------------------------------
--- 3. QUESTIONS (คลังโจทย์คำถาม - มี seed_key ป้องกันข้อมูลซ้ำ)
--- --------------------------------------------------------------------
-CREATE TABLE questions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    seed_key VARCHAR(120) UNIQUE, -- Natural key สำหรับ idempotent seeding เช่น 'linux:permissions:q01'
-    topic_id INT NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
-    lesson_id UUID REFERENCES lessons(id) ON DELETE SET NULL,
-    question_text TEXT NOT NULL,
-    scenario_text TEXT, -- สำหรับโจทย์สถานการณ์ปัญหาจริง หรือ Log output
-    difficulty VARCHAR(20) NOT NULL DEFAULT 'medium'
-        CONSTRAINT ck_questions_difficulty CHECK (difficulty IN ('easy', 'medium', 'hard')),
-    question_type VARCHAR(30) NOT NULL DEFAULT 'multiple_choice'
-        CONSTRAINT ck_questions_type CHECK (question_type IN ('multiple_choice', 'scenario', 'true_false')),
-    explanation TEXT NOT NULL, -- คำอธิบายเฉลยละเอียดและเหตุผลวิเคราะห์สำหรับ Support
-    tags TEXT[] DEFAULT ARRAY[]::TEXT[],
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+
+--
+-- Name: flashcards; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.flashcards (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    seed_key character varying(120),
+    topic_id integer NOT NULL,
+    lesson_id uuid,
+    front_text text NOT NULL,
+    back_text text NOT NULL,
+    hint text,
+    display_order integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
--- --------------------------------------------------------------------
--- 4. CHOICES (ตัวเลือกคำตอบ)
--- --------------------------------------------------------------------
-CREATE TABLE choices (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    question_id UUID NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
-    choice_text TEXT NOT NULL,
-    is_correct BOOLEAN NOT NULL DEFAULT FALSE,
-    explanation TEXT, -- คำอธิบายเฉพาะตัวเลือกนี้
-    display_order INT DEFAULT 0
+
+--
+-- Name: lesson_progress; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lesson_progress (
+    lesson_id uuid NOT NULL,
+    completed_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
--- ป้องกันไม่ให้ 1 ข้อสอบมีคำตอบที่ถูกเกิน 1 ข้อ (สำหรับข้อสอบแบบ Single-Choice)
-CREATE UNIQUE INDEX uq_choices_one_correct 
-    ON choices(question_id) WHERE is_correct;
 
--- --------------------------------------------------------------------
--- 5. FLASHCARDS (การ์ดทบทวนความรู้ด่วน - มี seed_key ป้องกันข้อมูลซ้ำ)
--- --------------------------------------------------------------------
-CREATE TABLE flashcards (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    seed_key VARCHAR(120) UNIQUE, -- Natural key สำหรับ idempotent seeding เช่น 'linux:fc:ss-listen'
-    topic_id INT NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
-    lesson_id UUID REFERENCES lessons(id) ON DELETE SET NULL,
-    front_text TEXT NOT NULL, -- คำถาม / คำสั่ง / ปัญหา
-    back_text TEXT NOT NULL,  -- คำตอบ / ไวยากรณ์ / วิธีแก้ไข
-    hint TEXT,
-    display_order INT DEFAULT 0,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+--
+-- Name: lessons; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lessons (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    topic_id integer NOT NULL,
+    slug character varying(100) NOT NULL,
+    title character varying(200) NOT NULL,
+    summary text,
+    content_md text NOT NULL,
+    read_time_minutes integer DEFAULT 5,
+    difficulty character varying(20) DEFAULT 'beginner'::character varying,
+    display_order integer DEFAULT 0,
+    is_active boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT ck_lessons_difficulty CHECK (((difficulty)::text = ANY ((ARRAY['beginner'::character varying, 'intermediate'::character varying, 'advanced'::character varying])::text[])))
 );
 
--- --------------------------------------------------------------------
--- 6. QUIZ SESSIONS (ประวัติรอบการทำข้อสอบ)
--- --------------------------------------------------------------------
-CREATE TABLE quiz_sessions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    topic_id INT REFERENCES topics(id) ON DELETE SET NULL,
-    difficulty VARCHAR(20) DEFAULT 'all',
-    total_questions INT NOT NULL,
-    score INT DEFAULT 0,
-    percentage NUMERIC(5, 2) DEFAULT 0.00,
-    time_spent_seconds INT DEFAULT 0,
-    is_completed BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    completed_at TIMESTAMPTZ
+
+--
+-- Name: questions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.questions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    seed_key character varying(120),
+    topic_id integer NOT NULL,
+    lesson_id uuid,
+    question_text text NOT NULL,
+    scenario_text text,
+    difficulty character varying(20) DEFAULT 'medium'::character varying NOT NULL,
+    question_type character varying(30) DEFAULT 'multiple_choice'::character varying NOT NULL,
+    explanation text NOT NULL,
+    tags text[] DEFAULT ARRAY[]::text[],
+    is_active boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT ck_questions_difficulty CHECK (((difficulty)::text = ANY ((ARRAY['easy'::character varying, 'medium'::character varying, 'hard'::character varying])::text[]))),
+    CONSTRAINT ck_questions_type CHECK (((question_type)::text = ANY ((ARRAY['multiple_choice'::character varying, 'scenario'::character varying, 'true_false'::character varying])::text[])))
 );
 
--- --------------------------------------------------------------------
--- 7. QUIZ SESSION ANSWERS (บันทึกคำตอบแต่ละข้อในรอบสอบ)
--- --------------------------------------------------------------------
-CREATE TABLE quiz_session_answers (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    session_id UUID NOT NULL REFERENCES quiz_sessions(id) ON DELETE CASCADE,
-    question_id UUID NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
-    selected_choice_id UUID REFERENCES choices(id) ON DELETE SET NULL,
-    is_correct BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+
+--
+-- Name: quiz_session_answers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.quiz_session_answers (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    session_id uuid NOT NULL,
+    question_id uuid NOT NULL,
+    selected_choice_id uuid,
+    is_correct boolean DEFAULT false NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
--- --------------------------------------------------------------------
--- 8. BOOKMARKS (บุ๊กมาร์กสำหรับทบทวน)
--- --------------------------------------------------------------------
-CREATE TABLE bookmarks (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    item_type VARCHAR(20) NOT NULL 
-        CONSTRAINT ck_bookmarks_type CHECK (item_type IN ('question', 'lesson', 'flashcard')),
-    item_id UUID NOT NULL,
-    notes TEXT,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uq_bookmarks_item UNIQUE (item_type, item_id)
+
+--
+-- Name: quiz_sessions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.quiz_sessions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    topic_id integer,
+    difficulty character varying(20) DEFAULT 'all'::character varying,
+    total_questions integer NOT NULL,
+    score integer DEFAULT 0,
+    percentage numeric(5,2) DEFAULT 0.00,
+    time_spent_seconds integer DEFAULT 0,
+    is_completed boolean DEFAULT false,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    completed_at timestamp with time zone
 );
 
--- --------------------------------------------------------------------
--- 9. LESSON PROGRESS (ความคืบหน้าการอ่านบทเรียน)
--- --------------------------------------------------------------------
-CREATE TABLE lesson_progress (
-    lesson_id UUID PRIMARY KEY REFERENCES lessons(id) ON DELETE CASCADE,
-    completed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+
+--
+-- Name: study_activity; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.study_activity (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    activity_type character varying(20) NOT NULL,
+    item_id uuid,
+    activity_date date DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Bangkok'::text))::date NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT ck_activity_type CHECK (((activity_type)::text = ANY ((ARRAY['lesson'::character varying, 'quiz'::character varying, 'flashcard'::character varying])::text[])))
 );
 
--- --------------------------------------------------------------------
--- 10. STUDY ACTIVITY & STREAK (บันทึกกิจกรรมการเรียนรู้รายวัน)
--- --------------------------------------------------------------------
-CREATE TABLE study_activity (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    activity_type VARCHAR(20) NOT NULL 
-        CONSTRAINT ck_activity_type CHECK (activity_type IN ('lesson', 'quiz', 'flashcard')),
-    item_id UUID,
-    activity_date DATE NOT NULL DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Bangkok')::date,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+
+--
+-- Name: topics; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.topics (
+    id integer NOT NULL,
+    slug character varying(50) NOT NULL,
+    title character varying(100) NOT NULL,
+    description text,
+    icon character varying(50) DEFAULT 'Terminal'::character varying,
+    color character varying(50) DEFAULT 'from-blue-500 to-indigo-600'::character varying,
+    display_order integer DEFAULT 0,
+    is_active boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
--- --------------------------------------------------------------------
--- INDEXES สำหรับเร่งความเร็ว Query (Performance Tuning)
--- --------------------------------------------------------------------
-CREATE INDEX idx_topics_slug ON topics(slug);
-CREATE INDEX idx_lessons_topic_order ON lessons(topic_id, display_order);
-CREATE INDEX idx_questions_topic_diff ON questions(topic_id, difficulty);
-CREATE INDEX idx_questions_lesson ON questions(lesson_id);
-CREATE INDEX idx_questions_tags ON questions USING GIN(tags);
-CREATE INDEX idx_choices_question ON choices(question_id);
-CREATE INDEX idx_flashcards_topic ON flashcards(topic_id);
-CREATE INDEX idx_flashcards_lesson ON flashcards(lesson_id);
-CREATE INDEX idx_quiz_sessions_topic ON quiz_sessions(topic_id);
-CREATE INDEX idx_quiz_answers_session ON quiz_session_answers(session_id);
-CREATE INDEX idx_quiz_answers_question ON quiz_session_answers(question_id);
-CREATE INDEX idx_lesson_progress_completed ON lesson_progress(completed_at);
-CREATE INDEX idx_study_activity_date ON study_activity(activity_date);
 
-
--- ====================================================================
--- Migration: Add lesson_progress and study_activity for Streak & Progress
--- ====================================================================
-
-CREATE TABLE IF NOT EXISTS lesson_progress (
-    lesson_id UUID PRIMARY KEY REFERENCES lessons(id) ON DELETE CASCADE,
-    completed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS study_activity (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    activity_type VARCHAR(20) NOT NULL 
-        CONSTRAINT ck_activity_type CHECK (activity_type IN ('lesson', 'quiz', 'flashcard')),
-    item_id UUID,
-    activity_date DATE NOT NULL DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Bangkok')::date,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_lesson_progress_completed ON lesson_progress(completed_at);
-CREATE INDEX IF NOT EXISTS idx_study_activity_date ON study_activity(activity_date);
-
-
--- ====================================================================
--- Complete Seed Data for Support Knowledge Review Application
--- Generated automatically from content directory
--- Topics, Lessons, Questions, Choices, and Flashcards
--- ====================================================================
-
-BEGIN;
-
--- --------------------------------------------------------------------
--- TOPIC: Data Center & Hardware Ops (datacenter)
--- --------------------------------------------------------------------
-INSERT INTO topics (slug, title, description, icon, color, display_order)
-VALUES ('datacenter', 'Data Center & Hardware Ops', 'สายสัญญาณ Fiber/Copper, ฮาร์ดแวร์เซิร์ฟเวอร์, iDRAC/iLO, SAN Zoning, ระบบไฟ UPS/ATS, Hot/Cold Aisle และเทคนิคสัมภาษณ์ DC', 'Server', 'from-orange-500 to-amber-600', 7)
-ON CONFLICT (slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  description = EXCLUDED.description,
-  icon = EXCLUDED.icon,
-  color = EXCLUDED.color,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'datacenter'), 'dc-cabling-and-fiber', 'ระบบสายสัญญาณ ไฟเบอร์ออปติก และ Transceiver (Cabling, Fiber & Optics)', 'ความแตกต่างของสาย Single-mode vs Multi-mode, หัวแปลงสัญญาณ SFP/QSFP (SR/LR), การสลับขั้วสายไฟเบอร์ Tx/Rx, รัศมีการโค้งงอ และการเข้าหัวสายแลนมาตรฐาน T568B', '
-# ระบบสายสัญญาณ ไฟเบอร์ออปติก และ Transceiver ใน Data Center
-
-ไม่ว่าคุณจะทำงานในบริษัท **Colocation** (เช่น Equinix, NTT, STT GDC) หรือดูแลตู้เซิร์ฟเวอร์ของบริษัท **Hosting** ทักษะพื้นฐานที่ถูกใช้งานทุกวันและถูกถามในการสัมภาษณ์เสมอคือเรื่อง **สายสัญญาณ (Cabling)** ทั้งฝั่งใยแก้วนำแสง (Fiber Optic) และสายทองแดง (Copper UTP)
-
----
-
-## 1. สายไฟเบอร์ออปติก: Single-Mode (SMF) vs Multi-Mode (MMF)
-
-สายไฟเบอร์ออปติกส่งข้อมูลด้วยแสงผ่านแกนกลางแก้ว (Core) แบ่งออกเป็น 2 ตระกูลหลักที่ช่าง Data Center ต้องแยกให้ออกทันทีจาก **สีของสาย (Jacket Color)** และรหัสมาตรฐาน:
-
-![เปรียบเทียบสายไฟเบอร์ Single-mode (OS2 สีเหลือง) กับ Multi-mode (OM3/OM4 สีฟ้า Aqua)](/images/datacenter/fiber-smf-vs-mmf.png)
-
-| คุณสมบัติ | Single-Mode Fiber (SMF) | Multi-Mode Fiber (MMF) |
-|---|---|---|
-| **รหัสมาตรฐาน** | **OS1 / OS2** | **OM1 / OM2 / OM3 / OM4 / OM5** |
-| **สีปลอกสายมาตรฐาน** | **สีเหลือง (Yellow)** | **สีฟ้าอมเขียว (Aqua)** สำหรับ OM3/OM4, **สีส้ม (Orange)** สำหรับ OM1/OM2, **สีเขียวตอง (Lime Green)** สำหรับ OM5 |
-| **ขนาดแกนกลาง (Core)** | เล็กมาก **9 µm** (ไมครอน) — แสงวิ่งเป็นเส้นตรงเส้นเดียว | ใหญ่กว่า **50 µm** (หรือ 62.5 µm ในรุ่นเก่า) — แสงสะท้อนหลายมุม |
-| **แหล่งกำเนิดแสง** | Laser (ความยาวคลื่น **1310 nm** หรือ **1550 nm**) | LED / VCSEL (ความยาวคลื่น **850 nm**) |
-| **ระยะทางใช้งาน** | **ระยะไกล** (ตั้งแต่ 2 กม., 10 กม. ไปจนถึง 40–80 กม. ระหว่างอาคารหรือข้ามศูนย์ข้อมูล) | **ระยะใกล้ภายในห้อง Data Hall** (ประมาณ 100–400 เมตร ขึ้นกับความเร็ว) |
-| **คู่หัว Transceiver** | คู่กับรหัส **LR** (Long Reach), **ER**, **ZR** | คู่กับรหัส **SR** (Short Reach) |
-
-> **Support Tip**: ห้ามนำสาย **Single-mode (สีเหลือง)** ไปเสียบเข้ากับหัวโมดูล **SR (850nm)** หรือเอาสาย **Multi-mode (สีฟ้า)** ไปเสียบโมดูล **LR (1310nm)** เพราะขนาดแกนแสงและความยาวคลื่นไม่ตรงกัน จะทำให้สัญญาณดรอปหรือลิงก์ไม่ขึ้น
-
----
-
-## 2. ชนิดของหัว Transceiver (SFP / SFP+ / QSFP) และรหัส SR vs LR
-
-โมดูลแปลงสัญญาณแสงเป็นไฟฟ้าที่เสียบเข้าพอร์ตของ Switch หรือการ์ดเครือข่าย (NIC) มีชื่อเรียกตามขนาดและความเร็วดังนี้:
-
-![ชนิดของหัว Transceiver SFP, SFP+, QSFP28 และหัวสายไฟเบอร์แบบ LC Duplex](/images/datacenter/sfp-qsfp-transceivers.png)
-
-### มาตรฐานฟอร์มแฟกเตอร์และความเร็ว
-- **SFP (Small Form-factor Pluggable)**: ความเร็ว **1 Gbps**
-- **SFP+ (Enhanced SFP)**: ขนาดเท่า SFP เดิม แต่รองรับความเร็ว **10 Gbps** (พบเยอะที่สุดในเซิร์ฟเวอร์ทั่วไป)
-- **SFP28**: ขนาดเท่า SFP+ แต่รองรับความเร็ว **25 Gbps**
-- **QSFP+ (Quad SFP+)**: มี 4 ช่องสัญญาณรวมกัน รองรับความเร็ว **40 Gbps** ($4 \times 10\text{G}$)
-- **QSFP28**: มี 4 ช่องสัญญาณ รองรับความเร็ว **100 Gbps** ($4 \times 25\text{G}$)
-
-### รหัสระยะทางยอดนิยม
-- **SR (Short Reach)**: ใช้แสง `850 nm` คู่กับสาย **Multi-mode (OM3/OM4)** ระยะทางไม่เกิน 300–400 เมตร
-- **LR (Long Reach)**: ใช้แสง `1310 nm` คู่กับสาย **Single-mode (OS2)** ระยะทางสูงสุดประมาณ 10 กิโลเมตร
-- **DAC (Direct Attach Copper)**: สายทองแดงที่มีหัว SFP+/QSFP ติดตายตัวมาจากโรงงาน ใช้เสียบเชื่อมระหว่างเซิร์ฟเวอร์กับ Top-of-Rack (ToR) Switch ในตู้เดียวกัน (ระยะสั้น 1–5 เมตร ราคาประหยัดและกินไฟน้อย)
-
----
-
-## 3. การสลับขั้วสายไฟเบอร์ (Rolling Fiber: Tx / Rx)
-
-สายไฟเบอร์แบบ Duplex (2 เส้นคู่กัน มีหัวเสียบแบบ **LC connector**) จะประกอบด้วย:
-- **Tx (Transmit)**: ขาส่งแสงออก (มักมีแสงสีแดงหรืออินฟราเรดพุ่งออกมา)
-- **Rx (Receive)**: ขารับแสงเข้า
-
-หลักการเชื่อมต่อที่ถูกต้องคือ **Tx ของฝั่ง A ต้องวิ่งไปเข้า Rx ของฝั่ง B** และ **Rx ของฝั่ง A ต้องรับมาจาก Tx ของฝั่ง B** (ไขว้กันแบบ Crossover)
-
-![แผนภาพการสลับขั้วสายไฟเบอร์ Tx เข้า Rx (Rolling Fiber)](/images/datacenter/fiber-tx-rx-roll.png)
-
-### อาการเมื่อเสียบสายผิดขั้ว (Tx ชน Tx / Rx ชน Rx)
-เมื่อเสียบสายไฟเบอร์ผ่าน Patch Panel หลายทอด แล้วพบว่า **ไฟสถานะพอร์ตบน Switch ไม่ติด (Link Down)** ทั้งที่โมดูลทั้งสองฝั่งทำงานปกติ:
-1. สาเหตุอันดับหนึ่งคือ **ขั้วสายไม่ได้ไขว้กัน (Polarity Mismatch)** คือ Tx วิ่งไปชน Tx
-2. **วิธีแก้ (Rolling the Fiber)**: ถอดหัวสาย LC ฝั่งหนึ่งออกมา แล้ว **แกะคลิปล็อกสลับตำแหน่งหัวสายคู่ซ้าย-ขวา (สลับขา A กับขา B)** จากนั้นเสียบกลับเข้าไปใหม่ หากไฟ Link กระพริบขึ้นมา แปลว่าแก้ถูกจุดทันที!
-
-> ⚠️ **คำเตือนความปลอดภัยทางสายตา**: ห้ามใช้ตาเปล่าส่องดูปลายสายไฟเบอร์ออปติกโดยตรงเด็ดขาด! แสงเลเซอร์ของโมดูล Single-mode (`1310nm`/`1550nm`) เป็นแสงอินฟราเรดที่ตาคนมองไม่เห็นแต่สามารถทำลายจอประสาทตาได้อย่างถาวร ให้ใช้ **Optical Power Meter** หรือใช้กล้องมือถือส่องตรวจแสงของหัว Multi-mode เท่านั้น
-
----
-
-## 4. รัศมีการโค้งงอ (Bend Radius) และการทำความสะอาดหัวสาย
-
-1. **Bend Radius (รัศมีการโค้งงอต่ำสุด)**:
-   - แกนในของสายไฟเบอร์ทำจากแก้ว หากพับสายหักศอก รัดสายด้วยเคเบิลไทร์แน่นเกินไป หรือดึงสายตึงเกินรัศมีโค้งงอ (ปกติไม่ควรโค้งแคบกว่าวงกลมเส้นผ่านศูนย์กลาง 3–5 ซม.) แสงจะรั่วออกนอกแกนกลาง (Micro/Macro-bending loss) ทำให้ค่าสัญญาณตก (High Attenuation / dB loss) หรือแกนแก้วหักในทันที
-   - ในตู้แร็คจึงนิยมใช้ **เทปตีนตุ๊กแก (Velcro Strap)** แทนการรัดด้วยพลาสติกเคเบิลไทร์
-2. **การทำความสะอาดหัวไฟเบอร์ (Inspect & Clean)**:
-   - ฝุ่นขนาดเพียงไมครอนเดียวที่ปลายหัวフェอร์รูล (Ferrule) สามารถบังลำแสงและทำให้เกิด **CRC Error** หรือลิงก์หลุดๆ ติดๆ (Flapping) ได้
-   - ก่อนเสียบสายไฟเบอร์เข้า Transceiver หรือ Patch Panel ทุกครั้ง ต้องใช้ **ปากกาทำความสะอาดหัวไฟเบอร์ (One-Click Fiber Cleaner)** กดทำความสะอาดปลายหัว LC/SC เสมอ
-
----
-
-## 5. สายทองแดง (Copper UTP) และการเข้าหัว RJ45 มาตรฐาน T568B
-
-สำหรับพอร์ตจัดการระยะไกล (OOB Management เช่น iDRAC/iLO) หรือการเชื่อมต่อความเร็ว 1G/10GBASE-T จะใช้สายทองแดงตีเกลียว (Twisted Pair: Cat5e, Cat6, Cat6A) เข้าหัว **RJ45**
-
-ในการสัมภาษณ์งานช่างเทคนิค Data Center มักถูกถามการเรียงสีสายมาตรฐาน **T568B** (ซึ่งเป็นมาตรฐานหลักที่ใช้ในองค์กรเกือบทั้งหมด):
-
-![ผังการเรียงสีสายแลนมาตรฐาน T568B ทั้ง 8 พิน](/images/datacenter/rj45-t568b-pinout.png)
-
-### ลำดับสีสายมาตรฐาน T568B (เรียงจากพิน 1 ซ้ายมือ ไปถึงพิน 8 ขวามือ เมื่อหันด้านเขี้ยวล็อกลงล่าง)
-1. **ขาว-ส้ม** (White/Orange) — `Tx+`
-2. **ส้ม** (Orange) — `Tx-`
-3. **ขาว-เขียว** (White/Green) — `Rx+`
-4. **น้ำเงิน** (Blue)
-5. **ขาว-น้ำเงิน** (White/Blue)
-6. **เขียว** (Green) — `Rx-`
-7. **ขาว-น้ำตาล** (White/Brown)
-8. **น้ำตาล** (Brown)
-
-> **Support Tip**: สำหรับความเร็ว **1 Gbps (1000BASE-T)** และ **10 Gbps (10GBASE-T)** จะใช้สายทองแดงครบทั้ง **8 เส้น (4 คู่สาย)** หากเข้าหัวไม่แน่นหรือสายขาดไปเพียง 1 เส้น ความเร็วของพอร์ตจะตกลงมาเหลือแค่ **100 Mbps** (เพราะ 100Mbps ใช้แค่พิน `1, 2, 3, 6`) นี่คือจุดสังเกตสำคัญเวลาเจอปัญหาเครือข่ายช้าผิดปกติ
-', 9, 'beginner', 1)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'datacenter'), 'dc-server-hardware-oob', 'ฮาร์ดแวร์เซิร์ฟเวอร์ การเข้าตู้แร็ค และระบบจัดการระยะไกล (Server Hardware & OOB)', 'โครงสร้างชิ้นส่วนเซิร์ฟเวอร์ (CPU, DIMM, HBA, Riser, CMOS), มาตรฐานตู้ Rack 42U, การตั้งค่า BIOS/BMC และการใช้ iDRAC, iLO, IPMI, Redfish', '
-# ฮาร์ดแวร์เซิร์ฟเวอร์ การเข้าตู้แร็ค และระบบจัดการระยะไกล (OOB)
-
-งานหลักของวิศวกรและช่างเทคนิคประจำศูนย์ข้อมูล (Data Center Operations) คือการติดตั้ง ซ่อมบำรุง อัปเกรดชิ้นส่วนฮาร์ดแวร์ และตรวจสอบอาการเสียผ่านระบบจัดการระยะไกลโดยไม่กระทบต่อเสถียรภาพของระบบ
-
----
-
-## 1. กายวิภาคและชิ้นส่วนภายในเครื่อง Rack Server
-
-เมื่อเปิดฝาเครื่องเซิร์ฟเวอร์ระดับองค์กร (เช่น Dell PowerEdge, HPE ProLiant, Lenovo ThinkSystem, Supermicro) คุณจะพบชิ้นส่วนสำคัญที่ออกแบบมาเพื่อการทำงานต่อเนื่อง 24/7 ดังนี้:
-
-![โครงสร้างชิ้นส่วนภายในเครื่อง Rack Server ระดับองค์กร](/images/datacenter/server-internals-anatomy.png)
-
-### ชิ้นส่วนสำคัญที่ต้องรู้จักและถอดประกอบได้
-1. **CPU (Processor) & Heatsink**:
-   - เซิร์ฟเวอร์มักมี 1 หรือ 2 ซ็อกเก็ต (Dual-Socket: `CPU1`, `CPU2`)
-   - ก่อนถอดเปลี่ยน CPU ต้องทาซิลิโคนระบายความร้อน (Thermal Paste) ในปริมาณที่เหมาะสม และขันน็อต Heatsink ตามลำดับทแยงมุม (Torque sequence) ที่ระบุบนซ็อกเก็ตเพื่อให้น้ำหนักกดทับหน้าสัมผัสเท่ากันทุกพิน
-2. **RAM / DIMM (ECC Memory)**:
-   - เซิร์ฟเวอร์ใช้แรมแบบ **ECC (Error-Correcting Code)** เช่น RDIMM หรือ LRDIMM ซึ่งสามารถตรวจจับและแก้ไขบิตข้อมูลที่เพี้ยนเองได้ ป้องกันเครื่องจอฟ้าหรือ Kernel Panic
-   - **กฎการเสียบแรม (DIMM Population Rules)**: ห้ามเสียบแรมมั่วช่องเด็ดขาด! ต้องเรียงตามคู่มือบนฝาเครื่องเสมอ (เช่น เริ่มจากช่องสีขาว `A1, B1, A2, B2...` เพื่อให้ทำงานแบบ Multi-Channel เต็มประสิทธิภาพ หากเสียบผิดลำดับ เครื่องอาจไม่บูตหรือร้องเตือน Memory Configuration Error)
-3. **Riser Card (การ์ดแปลงสล็อตแนวตั้งเป็นแนวนอน)**:
-   - เนื่องจากตัวเครื่องเซิร์ฟเวอร์แบบ 1U หรือ 2U มีความสูงจำกัด จึงไม่สามารถเสียบการ์ด PCIe แนวตั้งตรงๆ ได้ ต้องเสียบการ์ดลงบน **Riser Card** เพื่อวางการ์ดในแนวนอนขนานกับเมนบอร์ด
-4. **HBA Card (Host Bus Adapter) & RAID Controller**:
-   - **HBA Card**: การ์ดเชื่อมต่อระบบจัดเก็บข้อมูลภายนอก เช่น **Fibre Channel HBA** (มีพอร์ตไฟเบอร์เชื่อมเข้า SAN Switch) หรือ **SAS HBA**
-   - **RAID Controller (เช่น Dell PERC, HPE Smart Array)**: การ์ดควบคุมฮาร์ดดิสก์ด้านหน้าเครื่องเพื่อรวมดิสก์เป็น RAID 1, RAID 5, RAID 6 หรือ RAID 10 พร้อมแบตเตอรี่สำรองแคช (BBU / Supercap)
-5. **พัดลมระบายความร้อนแบบถอดเปลี่ยนได้ทันที (Hot-Swap Fan Modules)**:
-   - เรียงเป็นแถวกลางเครื่อง (Fan Wall) หากพัดลมตัวใดเสีย 1 ตัว พัดลมที่เหลือจะเร่งรอบขึ้นสูงสุด (เสียงดังมาก) และเราสามารถดึงสลักสีส้ม/ม่วงเพื่อเปลี่ยนตัวใหม่ได้ทันทีโดยไม่ต้องปิดเครื่อง
-6. **ถ่านเซิร์ฟเวอร์ (CMOS Battery - CR2032)**:
-   - เก็บค่าเวลา (RTC) และการตั้งค่า BIOS เบื้องต้น หากถ่านหมดหรือต้องการเคลียร์ค่า BIOS ที่ค้าง (NVRAM Clear) จะใช้วิธีถอดปลั๊กไฟ ถอดถ่าน CMOS หรือสลับจัมเปอร์ `NVRAM_CLR` บนเมนบอร์ด
-
-> ⚠️ **ความปลอดภัยด้านไฟฟ้าสถิต (ESD Protection)**: ก่อนสัมผัสเมนบอร์ด แรม หรือการ์ดใดๆ ต้องสวม **สายรัดข้อมือป้องกันไฟฟ้าสถิต (ESD Wrist Strap)** แล้วหนีบสายกราวด์เข้ากับโครงโลหะของตู้แร็คเสมอ และจับการ์ดหรือแรมที่ขอบแผ่นปริ้นท์เท่านั้น ห้ามนิ้วแตะพินทองเหลืองโดยตรง
-
----
-
-## 2. การนำเครื่องเข้าตู้แร็ค (Racking & Stacking)
-
-มาตรฐานความสูงของตู้และอุปกรณ์ใน Data Center วัดเป็นหน่วย **U (Rack Unit)**:
-- **1U** = **1.75 นิ้ว** (ประมาณ 4.445 เซนติเมตร)
-- ตู้แร็คมาตรฐานใน Data Center มักมีความสูง **42U** หรือ **48U** และกว้าง 19 นิ้ว
-
-![มาตรฐานตู้แร็ค 42U รางสไลด์และการจัดวางอุปกรณ์](/images/datacenter/rack-units-racking.png)
-
-### หลักการติดตั้งเครื่องเข้าตู้แร็คอย่างปลอดภัย
-1. **วางของหนักไว้ด้านล่างสุดเสมอ (Bottom-Heavy Rule)**:
-   - อุปกรณ์ที่มีน้ำหนักมากที่สุด เช่น ตู้แบตเตอรี่ **UPS**, ตู้ **Storage Disk Array (JBOD/SAN)** หรือเซิร์ฟเวอร์ขนาด 4U ต้องติดตั้งไว้ที่ระยะ U ล่างสุดของตู้ เพื่อลดจุดศูนย์ถ่วง ป้องกันตู้แร็คคว่ำขณะดึงเครื่องออกมาซ่อม
-2. **การติด Cage Nuts และรางสไลด์ (Sliding Rails)**:
-   - อ่านตัวเลข U ที่เสาหน้าซ้าย-ขวา และเสาหลังซ้าย-ขวาให้ตรงกันเป๊ะ (ระวังใส่เหลื่อมรูจนเครื่องเอียง)
-   - ใช้เครื่องมือใส่ **Cage Nut** เข้าจากด้านในของเสาสี่เหลี่ยม
-   - เมื่อยกเซิร์ฟเวอร์เข้าสวมราง หากเครื่องหนักเกิน 20 กิโลกรัม ต้องใช้คนยกช่วยกันอย่างน้อย 2 คน หรือใช้รถยกเซิร์ฟเวอร์ (**Server Lift**)
-3. **การจัดสายด้านหลัง (Cable Management)**:
-   - แยกสายไฟ (Power Cords) ไว้ฝั่งหนึ่งของเสาตู้ และสายสัญญาณ (Fiber/UTP) ไว้อีกฝั่งหนึ่ง เพื่อลดสัญญาณรบกวนและให้ถอดเปลี่ยน PSU ได้ง่าย
-   - หากใช้แขนจัดสาย (**CMA - Cable Management Arm**) ต้องตรวจสอบว่าสายมีความยาวเผื่อให้ดึงเซิร์ฟเวอร์สไลด์ออกมาข้างหน้าได้สุดรางโดยสายไม่หลุด แต่ต้องระวังไม่ให้แขน CMA ไปบังทางระบายลมร้อนหลังเครื่อง
-
----
-
-## 3. ระบบจัดการเซิร์ฟเวอร์ระยะไกล (Out-of-Band Management: iDRAC / iLO / IPMI / Redfish)
-
-ในเซิร์ฟเวอร์ระดับองค์กรจะมีชิปคอมพิวเตอร์ขนาดเล็กแยกอิสระอยู่บนเมนบอร์ด เรียกว่า **BMC (Baseboard Management Controller)** ซึ่งทำงานทันทีที่มีการเสียบสายไฟเข้าเครื่อง แม้ว่าเครื่องเซิร์ฟเวอร์นั้นจะยังไม่ได้เปิดสวิตช์ หรือระบบปฏิบัติการ (Linux/Windows) จะค้างสนิทไปแล้วก็ตาม!
-
-![หน้าจอจัดการระยะไกลผ่าน iDRAC / iLO และการตรวจสอบสถานะฮาร์ดแวร์](/images/datacenter/idrac-ilo-oob-console.png)
-
-### ชื่อเรียกตามยี่ห้อเซิร์ฟเวอร์
-- **Dell**: **iDRAC** (Integrated Dell Remote Access Controller)
-- **HPE (HP)**: **iLO** (Integrated Lights-Out)
-- **Supermicro / ทั่วไป**: **IPMI** (Intelligent Platform Management Interface)
-- **มาตรฐานยุคใหม่ (RESTful API)**: **Redfish** (ใช้สั่งการผ่าน HTTPS/JSON แทน IPMI แบบเก่า)
-
-### งานที่ใช้ iDRAC / iLO / IPMI ในชีวิตจริงของทีม Support & DC
-1. **เช็กว่าชิ้นส่วนไหนเสียจาก System Event Log (SEL)**:
-   - เมื่อไฟหน้าเครื่องเปลี่ยนจากสีเขียว/ฟ้า เป็น **สีส้มกระพริบ (Amber Blinking)** แทนที่จะเดาสุ่ม เราสามารถล็อกอินเข้าหน้าเว็บ iDRAC/iLO เพื่ออ่านบันทึกฮาร์ดแวร์ได้ทันที เช่น:
-     - `"Correctable memory error rate exceeded for DIMM_A2"` → รู้ทันทีว่าต้องเปลี่ยนแรมช่อง `A2`
-     - `"Drive 0 in Bay 3 is in Predictive Failure state"` → เตรียมดิสก์ลูกใหม่ไป Hot-swap ที่ช่อง 3
-2. **เปิดหน้าจอเสมือน (Virtual Console / HTML5 KVM)**:
-   - ดูหน้าจอบูต BIOS, แก้ไข GRUB, หรือดูหน้าจอ Kernel Panic เหมือนเอาสายจอและคีย์บอร์ดไปเสียบหน้าตู้จริง
-3. **Mount ไฟล์ติดตั้ง OS ระยะไกล (Virtual Media)**:
-   - แนบไฟล์ `.iso` ของ Ubuntu หรือ Windows Server จากเครื่องคอมพิวเตอร์ของเราเข้าเป็นไดรฟ์จำลองให้เซิร์ฟเวอร์บูตติดตั้ง OS ใหม่ได้จากระยะไกล
-4. **สั่งเปิด/ปิด/รีเซ็ตไฟเลี้ยงเครื่องด้วยคำสั่ง `ipmitool`**:
-   ```bash
-   # เช็กสถานะไฟเลี้ยงของเครื่องระยะไกล
-   ipmitool -I lanplus -H 10.100.1.50 -U admin -P SecretPass chassis power status
-
-   # สั่งบังคับรีบูตเครื่องที่ค้างสนิท (Hard Reset)
-   ipmitool -I lanplus -H 10.100.1.50 -U admin -P SecretPass chassis power reset
-
-   # อ่านรายการแจ้งเตือนฮาร์ดแวร์ (System Event Log)
-   ipmitool -I lanplus -H 10.100.1.50 -U admin -P SecretPass sel elist
-
-   # สั่งเปิดไฟกระพริบสีฟ้า (UID LED / Chassis Identify) เพื่อช่วยช่างหน้าตู้หาเครื่องให้เจอ
-   ipmitool -I lanplus -H 10.100.1.50 -U admin -P SecretPass chassis identify 60
-   ```
-
-> **Support Tip**: ฟีเจอร์ **UID LED (Unit Identification Light - ไฟสีฟ้าหน้าและหลังเครื่อง)** สำคัญมากในห้อง Data Center ที่มีเซิร์ฟเวอร์หน้าตาเหมือนกันเรียงกันเป็นพันเครื่อง ก่อนลงไปถอดสายหรือเปลี่ยนอะไหล่ ให้สั่งเปิดไฟ UID สีฟ้าผ่าน iDRAC/iLO หรือกดปุ่มหน้าเครื่องก่อนเดินไปหลังตู้เสมอ เพื่อป้องกันการถอดสายผิดเครื่อง!
-', 10, 'intermediate', 2)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'datacenter'), 'dc-network-boot-san-blade', 'เครือข่าย OOB, กระบวนการ PXE Boot, ระบบ SAN Zoning และ Blade Server', 'การแยกวงแลน Out-of-Band (OOB), ขั้นตอนการบูตผ่านเครือข่าย PXE (DHCP + TFTP), พื้นฐาน SAN Fibre Channel & Zoning, Blade Server (Cisco UCS / HPE) และ Hypervisor', '
-# เครือข่าย OOB, กระบวนการ PXE Boot, ระบบ SAN Zoning และ Blade Server
-
-นอกจากการประกอบฮาร์ดแวร์แล้ว วิศวกรปฏิบัติการ Data Center ต้องเข้าใจว่าเซิร์ฟเวอร์เครื่องเปล่าที่เพิ่งแกะกล่องเข้าตู้แร็ค เชื่อมต่อกับเครือข่ายจัดการระยะไกล โหลดระบบปฏิบัติการอัตโนมัติ และมองเห็นพื้นที่จัดเก็บข้อมูลส่วนกลาง (SAN Storage) ได้อย่างไร
-
----
-
-## 1. เครือข่าย Out-of-Band (OOB Management Network)
-
-ในสถาปัตยกรรม Data Center มาตรฐาน เครือข่ายจะถูกแยกออกเป็น 2 วงที่แยกจากกันอย่างเด็ดขาด:
-
-![แผนผังการแยกวงเครือข่าย Production (In-Band) และ Out-of-Band (OOB Management)](/images/datacenter/oob-management-topology.png)
-
-1. **In-Band (Production Network)**:
-   - พอร์ตไฟเบอร์ความเร็วสูง (10G / 25G / 100G) บนการ์ด NIC ที่เชื่อมต่อเข้ากับ Top-of-Rack Switch สำหรับรับส่งทราฟฟิกของแอปพลิเคชันและผู้ใช้งานจริง
-2. **Out-of-Band (OOB Management Network)**:
-   - พอร์ตสายแลนทองแดง RJ45 ความเร็ว 1Gbps ที่เขียนว่า `iDRAC`, `iLO`, หรือ `IPMI Mgmt` หลังเครื่องเซิร์ฟเวอร์ รวมกับพอร์ต Console ของ Switch/Router
-   - เชื่อมต่อเข้ากับ **Management Switch แยกต่างหาก** และเข้าถึงได้เฉพาะวิศวกรที่ต่อ **VPN / Bastion Jump Host** เท่านั้น
-   - **ทำไมต้องแยกวง OOB?** เพราะหากวันใดเกิดเหตุการณ์ตั้งค่า Firewall ผิดพลาดบน OS หรือ Production Switch ล่มจน SSH เข้าเซิร์ฟเวอร์ไม่ได้ วิศวกรยังสามารถเข้าทางวง OOB เพื่อเปิดหน้าจอ Console เข้าไปแก้ไขและกู้คืนระบบได้เสมอ
-
-### การตั้งค่าและตรวจเช็ก OOB เบื้องต้น
-- ตั้งค่า IP ของ BMC (iDRAC/iLO) ได้ 2 วิธี: ตั้งผ่านหน้าจอ **BIOS Setup (F2 / F9)** ตอนบูตเครื่อง หรือตั้งค่าให้รับ IP จาก **DHCP (พร้อมผูก MAC Reservation)**
-- หากปิง IP ของ iDRAC/iLO ไม่เจอ ให้ตรวจ:
-  1. โหมดพอร์ตใน BIOS ตั้งเป็น **Dedicated NIC** (ใช้พอร์ตแยกเฉพาะ) หรือ **Shared LOM** (แชร์พอร์ตเดียวกับการ์ดแลนหลัก)
-  2. ไฟสถานะ Link/Act ที่พอร์ต RJ45 หลังเครื่องติดหรือไม่
-  3. ค่า Subnet Mask, Default Gateway และ VLAN บนพอร์ต Management Switch ตรงกับวง OOB หรือไม่
-
----
-
-## 2. กระบวนการบูตของระบบ และ PXE Boot (Preboot Execution Environment)
-
-ในบริษัท Hosting หรือ Cloud ที่มีเซิร์ฟเวอร์หลายพันเครื่อง เราจะไม่เดินถือแฟลชไดรฟ์ไปเสียบลง Linux/Windows ทีละเครื่อง แต่จะใช้การบูตติดตั้งผ่านสายแลนที่เรียกว่า **PXE Boot (อ่านว่า "พิกซี่บูต")**
-
-![ลำดับการทำงานของ PXE Boot ผ่าน DHCP และ TFTP Server](/images/datacenter/pxe-boot-sequence.png)
-
-### ลำดับขั้นตอนการบูตของเครื่องเซิร์ฟเวอร์ตั้งแต่กดปุ่ม Power
-1. **Power-On & BMC Initialization**: จ่ายไฟเข้าเมนบอร์ด ชิป BMC ตื่นขึ้นมาตรวจเซนเซอร์ไฟและพัดลม
-2. **POST (Power-On Self-Test)**: BIOS/UEFI ตรวจสอบ CPU, นับจำนวน RAM (DIMM), และสแกนหาการ์ด PCIe / HBA / RAID
-3. **Boot Device Selection**: BIOS/UEFI มองหาอุปกรณ์บูตตามลำดับที่ตั้งไว้ (เช่น Disk ในเครื่อง หรือ Network PXE)
-4. **ขั้นตอน PXE Boot (กรณีบูตผ่านเครือข่ายเพื่อลง OS ใหม่)**:
-   - **ขั้นที่ 4.1 (DHCP Discover / Offer)**: การ์ดแลนส่งแพ็กเก็ต广播 (Broadcast) ขอ IP Address จาก DHCP Server
-   - **ขั้นที่ 4.2 (DHCP Options 66 & 67)**: DHCP Server ตอบกลับพร้อมมอบ IP Address และแจ้งข้อมูลสำคัญ 2 ค่า คือ **Option 66 (Next-Server / IP ของ TFTP Server)** และ **Option 67 (Boot Filename เช่น `pxelinux.0` หรือ `grubx64.efi`)**
-   - **ขั้นที่ 4.3 (TFTP Download)**: การ์ดแลนเชื่อมต่อไปยัง **TFTP Server** (ใช้พอร์ต `UDP 69`) เพื่อดาวน์โหลดไฟล์ Bootloader, Linux Kernel (`vmlinuz`), และ `initrd` ลงมาไว้ใน RAM
-   - **ขั้นที่ 4.4 (Automated Installer)**: บูตเข้าสู่ตัวติดตั้งอัตโนมัติ (เช่น Kickstart สำหรับ RHEL/CentOS, Preseed/Cloud-init สำหรับ Ubuntu, หรือ WDS สำหรับ Windows) ดึงไฟล์ระบบปฏิบัติการผ่าน HTTP/NFS จนติดตั้งเสร็จสมบูรณ์
-5. **OS Bootloader & Init**: เมื่อมี OS ในดิสก์แล้ว ครั้งต่อไปเครื่องจะบูตเข้า **GRUB2** → โหลด **Linux Kernel** → สตาร์ทโปรเซสหมายเลข 1 คือ **`systemd` (PID 1)** เพื่อเปิดบริการต่างๆ จนขึ้นหน้า Login
-
----
-
-## 3. พื้นฐานระบบ SAN (Storage Area Network) และการทำ Zoning
-
-ในระบบองค์กรขนาดใหญ่ พื้นที่เก็บข้อมูลสำคัญจะไม่วางไว้แค่ในฮาร์ดดิสก์หน้าเครื่องเซิร์ฟเวอร์ (DAS - Direct Attached Storage) แต่จะเชื่อมต่อผ่านเครือข่ายความเร็วสูงเฉพาะทางที่เรียกว่า **SAN (Storage Area Network)**
-
-![สถาปัตยกรรม Fibre Channel SAN (Fabric A/B) และการทำ WWN Zoning](/images/datacenter/san-fabric-zoning.png)
-
-### คำศัพท์สำคัญของระบบ Fibre Channel SAN ที่ต้องรู้
-- **Initiator (ฝั่งผู้ขอใช้ดิสก์)**: คือการ์ด **HBA (Host Bus Adapter)** ที่เสียบอยู่ในเครื่องเซิร์ฟเวอร์
-- **Target (ฝั่งผู้ให้บริการดิสก์)**: คือพอร์ตของตู้ **Storage Array** (เช่น NetApp, Dell EMC PowerStore, Pure Storage, Hitachi)
-- **WWNN / WWPN (World Wide Node/Port Name)**:
-  - เปรียบเสมือน **MAC Address ของโลก Fibre Channel** เป็นตัวเลขฐานสิบหกขนาด 64-bit (เช่น `50:06:0b:00:00:c2:62:01`) ที่ระบุตัวตนของพอร์ต HBA และพอร์ต Storage
-- **LUN (Logical Unit Number)**:
-  - ก้อนพื้นที่ดิสก์เสมือนที่แบ่งมาจากตู้ Storage Array แล้วส่งมาให้เซิร์ฟเวอร์มองเห็นเหมือนเป็นฮาร์ดดิสก์ลูกหนึ่ง (เช่น `/dev/sdb`)
-- **SAN Zoning (การแบ่งโซนบน SAN Switch)**:
-  - ทำบน Fibre Channel Switch (เช่น Brocade หรือ Cisco MDS) เพื่อกำหนดสิทธิ์ว่า **พอร์ต HBA ของเซิร์ฟเวอร์เครื่องไหน (Initiator WWPN) มีสิทธิ์มองเห็นพอร์ตของตู้ Storage ตัวไหน (Target WWPN)**
-  - กฎมาตรฐานคือ **Single-Initiator Zoning** (1 โซน มีเซิร์ฟเวอร์ 1 พอร์ต จับคู่กับ Storage) เพื่อป้องกันไม่ให้เซิร์ฟเวอร์อื่นมองเห็นหรือเผลอเขียนข้อมูลทับ LUN ของกันและกัน
-- **Multipathing (Fabric A & Fabric B)**:
-  - เซิร์ฟเวอร์แต่ละเครื่องจะมีพอร์ต HBA 2 พอร์ต แยกต่อเข้า **SAN Switch A** และ **SAN Switch B** หากสวิตช์ตัวใดตัวหนึ่งดับ เซิร์ฟเวอร์ยังอ่านเขียนข้อมูลผ่านอีกเส้นทางได้ต่อเนื่องโดยไม่ล่ม (`multipathd`)
-
----
-
-## 4. ระบบเบลดเซิร์ฟเวอร์ (Blade Server: Cisco UCS & HPE BladeSystem)
-
-นอกจากเซิร์ฟเวอร์แบบกล่อง 1U/2U (Rack Server) แล้ว ใน Data Center ยังมีเซิร์ฟเวอร์แบบ **Blade Server** ที่นำแผ่นเซิร์ฟเวอร์หลายๆ ใบเสียบรวมกันในโครงตู้เดียว (**Blade Chassis** ขนาด 6U หรือ 10U):
-
-![โครงสร้างตู้ Blade Server Chassis (Cisco UCS / HPE ProLiant Blade)](/images/datacenter/cisco-ucs-hp-blade.png)
-
-- **ข้อดีของ Blade Server**: ใช้ภาคจ่ายไฟ (PSU), พัดลมระบายความร้อน, และโมดูลสวิตช์ด้านหลังร่วมกันทั้งตู้ ช่วยลดจำนวนสายไฟและสายแลนที่ต้องเดินหลังตู้ลงได้มหาศาล
-- **Cisco UCS (Unified Computing System)**:
-  - มีจุดเด่นคือ **Fabric Interconnect (FI)** และระบบ **Service Profile** ซึ่งเก็บค่าตัวตนของเซิร์ฟเวอร์ (MAC Address, WWPN, การตั้งค่า BIOS, ลำดับการบูต) ไว้เป็นโปรไฟล์ซอฟต์แวร์ หากใบ Blade ใบไหนเมนบอร์ดพัง ช่างสามารถเสียบใบ Blade เปล่าใบใหม่เข้าไป แล้วโยน Service Profile เดิมใส่ เครื่องจะกลับมาทำงานพร้อม MAC และ WWPN เดิมทันทีภายในไม่กี่นาที
-- **HPE ProLiant c-Class / HPE Synergy**:
-  - ใช้โมดูลจัดการกลางที่เรียกว่า **Onboard Administrator (OA)** หรือ **HPE OneView** ในการควบคุมไฟ พัดลม และ Virtual Connect ทั้ง Chassis
-
----
-
-## 5. ความรู้พื้นฐานเรื่อง Hypervisor และ Container สำหรับช่าง Data Center
-
-แม้ช่าง Data Center จะดูแลฮาร์ดแวร์เป็นหลัก แต่ในชีวิตจริงเครื่องเซิร์ฟเวอร์เกือบทุกเครื่องทำหน้าที่เป็นโฮสต์รันระบบจำลองเสมือน:
-
-| เทคโนโลยี | ตัวอย่างซอฟต์แวร์ | บทบาทที่เกี่ยวข้องกับงาน Data Center Operations |
-|---|---|---|
-| **Type-1 Hypervisor (Bare-Metal)** | **VMware ESXi**, **KVM (Proxmox / OpenStack)**, **Citrix XenServer**, **Microsoft Hyper-V** | ติดตั้งลงบนฮาร์ดแวร์เซิร์ฟเวอร์โดยตรงเพื่อแบ่งทรัพยากรเป็นหลาย **VM (Virtual Machine)** ก่อนที่ช่าง DC จะปิดเครื่องโฮสต์เพื่อเปลี่ยนแรมหรือเมนบอร์ด ต้องประสานให้ทีมระบบสั่งเข้า **Maintenance Mode** เพื่อย้าย VM หนีไปยังโฮสต์อื่นก่อนเสมอ (เช่น **VMware vMotion** หรือ **Live Migration**) |
-| **Containers** | **Docker**, **containerd**, **Kubernetes (K8s) Worker Nodes** | รันแอปพลิเคชันแบบแยกส่วนโดยแชร์ Linux Kernel เดียวกัน หากโฮสต์ที่เป็น K8s Node ต้องซ่อมฮาร์ดแวร์ ทีมระบบจะสั่ง `kubectl drain <node>` เพื่อย้าย Pod ออกจากเครื่องก่อนให้ช่าง DC ปิดเครื่อง |
-', 10, 'intermediate', 3)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'datacenter'), 'dc-power-cooling-facilities', 'ระบบไฟฟ้า 1/3 เฟส, UPS/ATS, การจัดการลมร้อน-ลมเย็น และระบบดับเพลิง DC', 'ความแตกต่างของไฟ 1 เฟส vs 3 เฟส, การทำงานของ UPS และ ATS, ระบบไฟคู่ A/B Feed, ลำดับการเปิด-ปิดไฟตู้แร็ค, Hot/Cold Aisle และสารดับเพลิงสะอาด FM-200 / Novec 1230', '
-# ระบบไฟฟ้า (Power), การระบายความร้อน (Cooling) และระบบดับเพลิงใน Data Center
-
-หัวใจสูงสุดของ Data Center คือ **ความพร้อมใช้งานอย่างต่อเนื่อง (Uptime & Availability)** แม้ไฟฟ้าจากการไฟฟ้านครหลวง/ภูมิภาคจะดับ หรือเครื่องปรับอากาศเสียตัวหนึ่ง เซิร์ฟเวอร์ภายในศูนย์ข้อมูลจะต้องไม่ดับตาม นี่คือความรู้ด้านระบบประกอบอาคาร (Facilities: Power & Mechanical) ที่ผู้สัมภาษณ์มักถามเสมอ
-
----
-
-## 1. ระบบไฟฟ้า 1 เฟส vs 3 เฟส และแรงดันไฟฟ้าใน Data Center
-
-ในการคำนวณโหลดไฟของตู้แร็ค เราใช้สูตรพื้นฐานทางไฟฟ้าคือ:
-
-$$\text{Power (Watts)} = \text{Voltage (V)} \times \text{Current (Amps)}$$
-
-(สำหรับไฟฟ้ากระแสสลับ 3 เฟสที่คำนึงถึง Power Factor จะคำนวณจาก $P = \sqrt{3} \times V \times I \times \text{PF}$)
-
-### ตารางเปรียบเทียบระบบไฟ 1 เฟส (Single-Phase) และ 3 เฟส (Three-Phase)
-
-| คุณสมบัติ | ระบบไฟ 1 เฟส (Single-Phase) | ระบบไฟ 3 เฟส (Three-Phase) |
-|---|---|---|
-| **โครงสร้างสายไฟ** | 3 เส้น: **Line (L) 1 เส้น** + Neutral (N) + Ground (G) | 4 หรือ 5 เส้น: **Line 3 เส้น (L1, L2, L3)** + Neutral (N) + Ground (G) |
-| **แรงดันไฟฟ้าที่พบบ่อย** | **110V–120V** (อเมริกา/ญี่ปุ่น) หรือ **220V–240V** (ไทย/ยุโรป/เอเชีย) | **208V** (อเมริกา) หรือ **380V / 400V / 415V** (ไทย/สากล) และ **480V** ในระดับหม้อแปลงหลักของอาคาร |
-| **การใช้งานใน Data Center** | เข้าสู่ภาคจ่ายไฟ (PSU) ของเซิร์ฟเวอร์แต่ละเครื่อง (ส่วนใหญ่รับไฟ `200V–240V AC` ผ่านหัวปลั๊กมาตรฐาน **IEC C13/C14** หรือ **C19/C20**) | จ่ายไฟจากตู้ MDB/PDU หลักเข้าสู่ **Rack PDU (รางปลั๊กไฟอัจฉริยะประจำตู้แร็ค)** เพื่อให้รองรับโหลดไฟสูงระดับ 11kW – 22kW ต่อตู้ และต้องบาลานซ์โหลดทั้ง 3 เฟส (`L1, L2, L3`) ให้ใกล้เคียงกัน |
-
----
-
-## 2. สายโซ่ระบบไฟฟ้าสำรอง: Utility → Generator → ATS → UPS → A/B PDU
-
-ทำไมเมื่อไฟดับ เซิร์ฟเวอร์ใน Data Center ถึงไม่ดับแม้แต่วินาทีเดียว? เพราะมีสถาปัตยกรรมสำรองไฟหลายชั้นดังนี้:
-
-![ผังระบบไฟฟ้าสำรองใน Data Center: Utility, Generator, ATS, UPS และ A/B Power Feed](/images/datacenter/dc-power-chain-ups-ats.png)
-
-1. **UPS (Uninterruptible Power Supply)**:
-   - ทำหน้าที่ **จ่ายไฟสำรองจากแบตเตอรี่ทันทีแบบไร้รอยต่อ (0 มิลลิวินาที)** เมื่อไฟจากการไฟฟ้า (Utility Grid) ตกหรือดับ พร้อมกรองกระแสไฟให้เรียบสม่ำเสมอ (Online Double-Conversion)
-   - แบตเตอรี่ของ UPS ใน Data Center ไม่ได้มีไว้รันเซิร์ฟเวอร์ทั้งวัน แต่มีไว้ **ประคองไฟเป็นเวลา 5–15 นาที** เพื่อให้เครื่องปั่นไฟดีเซลสตาร์ทติดและรับช่วงต่อได้ทัน
-2. **Generator (เครื่องปั่นไฟดีเซลสำรอง)**:
-   - เมื่อไฟหลักดับเกินไม่กี่วินาที เครื่องปั่นไฟขนาดใหญ่จะสตาร์ทอัตโนมัติและเดินเครื่องจนกว่ากระแสไฟจะนิ่ง (ใช้เวลาประมาณ 10–30 วินาที) จากนั้นสามารถจ่ายไฟเลี้ยงทั้งศูนย์ข้อมูลได้นานหลายวันตราบใดที่มีน้ำมันเชื้อเพลิง
-3. **ATS (Automatic Transfer Switch)**:
-   - สวิตช์สลับแหล่งจ่ายไฟอัตโนมัติ ทำหน้าที่ตรวจจับเมื่อไฟจากการไฟฟ้าดับ แล้วสั่งสตาร์ท Generator พอไฟจาก Generator นิ่งปุ๊บ **ATS จะสลับแหล่งจ่ายไฟจาก Grid ไปยัง Generator อัตโนมัติ** และสลับกลับเมื่อไฟการไฟฟ้ากลับมาปกติ
-   - *(ในตู้แร็คบางแห่งที่มีอุปกรณ์ที่มีสายไฟเส้นเดียว เช่น Switch รุ่นเล็ก จะใช้ **Rack ATS** เสียบรับไฟจากทั้งฝั่ง A และฝั่ง B เพื่อแปลงออกเป็นสายเดียวเลี้ยงอุปกรณ์นั้น)*
-4. **ระบบจ่ายไฟคู่ (Dual Power Feed: A-Feed & B-Feed)**:
-   - เซิร์ฟเวอร์ทุกเครื่องจะมี **PSU 2 ลูก (PSU 1 และ PSU 2)**
-   - **กฎเหล็ก**: ห้ามเสียบสายไฟทั้ง 2 เส้นของเซิร์ฟเวอร์เข้าที่รางปลั๊ก PDU ตัวเดียวกันเด็ดขาด! ต้องเสียบ **PSU 1 เข้ากับ PDU ฝั่ง A (A-Feed)** และเสียบ **PSU 2 เข้ากับ PDU ฝั่ง B (B-Feed)** ซึ่งรับไฟมาจาก UPS และเบรกเกอร์คนละชุดกัน
-   - **กฎการใช้โหลดไม่เกิน 40%–45% ต่อฝั่ง**: บนรางปลั๊ก PDU แต่ละฝั่ง (A และ B) เราจะใช้กระแสไฟไม่เกิน **40%–45% ของพิกัดเบรกเกอร์** เท่านั้น เพราะหากวันใดไฟฝั่ง B ดับทั้งเส้น โหลดทั้งหมด 100% ของตู้จะเทไปอยู่ที่ฝั่ง A ทันที ($45\% + 45\% = 90\%$) เบรกเกอร์ฝั่ง A จะได้ไม่ทริปตัดไฟตามไป!
-
----
-
-## 3. ลำดับการเปิดและปิดไฟของตู้แร็ค (Rack Power-Up & Power-Down Sequence)
-
-คำถามสัมภาษณ์ยอดฮิต: *"หากจำเป็นต้องปิดระบบทั้งตู้แร็คเพื่อบำรุงรักษาใหญ่ (Planned Maintenance) และเปิดกลับมาใหม่ คุณจะเรียงลำดับปิดและเปิดอะไรก่อน-หลัง?"*
-
-### ลำดับการปิดระบบ (Power-Down Sequence)
-1. **ขั้นที่ 1: ปิด Application & Compute Servers ก่อน** — สั่ง Shutdown ระบบปฏิบัติการของเซิร์ฟเวอร์และ VM ทั้งหมดอย่างถูกวิธี เพื่อให้หยุดเขียนข้อมูลลงดิสก์
-2. **ขั้นที่ 2: ปิดตู้ Storage (SAN / NAS / Disk Array)** — เมื่อแน่ใจว่าไม่มีเซิร์ฟเวอร์ใดอ่าน-เขียนข้อมูลแล้ว จึงสั่งปิดตู้ Storage เพื่อป้องกันข้อมูลเสียหาย (Data Corruption)
-3. **ขั้นที่ 3: ปิดอุปกรณ์ Network Switches / Routers หลังสุด** — ปิดสวิตช์เป็นลำดับสุดท้าย แล้วจึงสับเบรกเกอร์ของ PDU
-
-### ลำดับการเปิดระบบ (Power-Up Sequence — ย้อนกลับ!)
-1. **ขั้นที่ 1: เปิดอุปกรณ์ Network Switches & SAN Switches ก่อน** — รอให้สวิตช์บูตเสร็จและพอร์ตทั้งหมดพร้อมเชื่อมต่อ
-2. **ขั้นที่ 2: เปิดตู้ Storage (SAN / NAS / Disk Array)** — รอให้ดิสก์ทั้งหมดหมุนขึ้นและพร้อมให้บริการ LUN
-3. **ขั้นที่ 3: ค่อยทยอยเปิด Compute Servers ทีละกลุ่ม (Staggered Power-On)** — เมื่อเซิร์ฟเวอร์บูตขึ้นมาจะสามารถต่อเครือข่ายและมองเห็นก้อน Storage ได้ทันที นอกจากนี้การทยอยเปิดเซิร์ฟเวอร์ทีละชุดยังช่วยป้องกัน **กระแสไฟกระชากตอนสตาร์ท (Inrush Current)** ไม่ให้สูงเกินจนเบรกเกอร์ตู้ทริป!
-
----
-
-## 4. การจัดการทิศทางลมร้อน-ลมเย็น (Hot Aisle / Cold Aisle Containment)
-
-เซิร์ฟเวอร์ทุกเครื่องถูกออกแบบทิศทางพัดลมเป็นมาตรฐานเดียวกันคือ **"ดูดลมเย็นเข้าทางด้านหน้าเครื่อง (Front Intake) และเป่าลมร้อนออกทางด้านหลังเครื่อง (Rear Exhaust)"**
-
-![การจัดวางตู้แร็คแบบ Hot Aisle / Cold Aisle Containment](/images/datacenter/hot-cold-aisle-containment.png)
-
-- **Cold Aisle (ช่องทางเดินลมเย็น)**:
-  - จัดวางตู้แร็คสองแถวให้ **หันด้านหน้าเข้าหากัน** โดยพื้นยก (Raised Floor) ในช่องทางเดินนี้จะเป็นแผ่นพื้นเจาะรู (Perforated Tiles) ให้ลมเย็นจากเครื่องปรับอากาศ **CRAC / CRAH** เป่าขึ้นมาเข้าหน้าเครื่องเซิร์ฟเวอร์โดยตรง
-- **Hot Aisle (ช่องทางเดินลมร้อน)**:
-  - ด้านหลังของตู้แร็คสองแถวจะหันชนกัน ลมร้อนที่เป่าออกจากท้ายเซิร์ฟเวอร์จะรวมกันอยู่ในช่องนี้และถูกดูดกลับขึ้นเพดานไปเข้าเครื่องทำความเย็น โดยไม่ปะปนกับลมเย็น
-- **ความสำคัญของแผ่นปิดช่องว่าง (Blanking Panels)**:
-  - หากในตู้แร็คมีช่อง U ที่ว่างอยู่ (ไม่ได้ใส่เครื่อง) ต้องติดแผ่นพลาสติกทึบที่เรียกว่า **Blanking Panel** ปิดไว้เสมอ เพื่อป้องกันไม่ให้ลมร้อนจากด้านหลังตู้ไหลวนย้อนกลับมาเข้าหน้าเครื่องเซิร์ฟเวอร์ตัวข้างๆ (Hot Air Recirculation)
-
----
-
-## 5. ระบบดับเพลิงใน Data Center (Clean Agent Fire Suppression)
-
-ในห้องเซิร์ฟเวอร์ **ห้ามใช้น้ำเปล่าหรือถังดับเพลิงชนิดผงเคมีแห้ง** ฉีดใส่ตู้เซิร์ฟเวอร์ เพราะจะทำให้แผงวงจรอิเล็กทรอนิกส์ทั้งหมดพังเสียหายถาวร
-
-![ระบบตรวจจับควันความไวสูง VESDA และถังสารสะอาดดับเพลิง FM-200 / Novec 1230](/images/datacenter/dc-fire-suppression.png)
-
-1. **ระบบตรวจจับควันความไวสูง (VESDA - Very Early Smoke Detection Apparatus)**:
-   - ใช้ท่อดูดอากาศในห้องไปตรวจวัดอนุภาคควันด้วยเลเซอร์ตลอดเวลา สามารถแจ้งเตือนตั้งแต่สายไฟเริ่มร้อนจนมีกลิ่นไหม้จางๆ ก่อนที่จะเกิดเปลวไฟจริง
-2. **สารสะอาดดับเพลิง (Clean Agent Gas: FM-200 / Novec 1230 / Inergen)**:
-   - เมื่อระบบยืนยันเหตุเพลิงไหม้ (Cross-zone detection) และนับถอยหลัง 30–60 วินาทีให้คนออกจากห้อง ระบบจะฉีดแก๊สสารสะอาด เช่น **FM-200 (HFC-227ea)** หรือ **3M Novec 1230** ออกมาดูดซับความร้อนและตัดปฏิกิริยาการเผาไหม้จนไฟดับทันที
-   - **จุดเด่น**: ไม่นำไฟฟ้า ไม่ทิ้งคราบสกปรก และเซิร์ฟเวอร์ยังสามารถทำงานต่อไปได้โดยไม่เสียหาย
-   - บริเวณประตูทางออกจะมีปุ่มสีเหลือง **Emergency Abort / Hold Button** สำหรับกดหน่วงเวลาปล่อยแก๊สหากเจ้าหน้าที่ตรวจสอบแล้วพบว่าเป็นสัญญาณเตือนผิดพลาด (False Alarm)
-', 9, 'intermediate', 4)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'datacenter'), 'dc-interview-and-mindset', 'ทัศนคติ ความปลอดภัย และเทคนิคพิชิตสัมภาษณ์งาน Data Center (Hosting vs Colocation)', 'วิธีคิดเรื่องความปลอดภัยและสติเมื่อเกิดเหตุฉุกเฉิน, ความซื่อสัตย์ในการตอบสัมภาษณ์, ความต่างของบริษัท Hosting vs Colocation และแนวคำตอบ STAR Method', '
-# ทัศนคติ ความปลอดภัย และเทคนิคพิชิตสัมภาษณ์งาน Data Center
-
-ในการสัมภาษณ์งานสาย **Data Center Technician / Data Center Operations (DC Ops)** สิ่งที่ผู้จัดการทีม (Hiring Manager) ให้ความสำคัญมากที่สุด **ไม่ใช่แค่ว่าคุณท่องจำคำสั่งได้มากแค่ไหน** แต่คือ **"คุณเป็นคนที่ไว้ใจให้ถือบัตรผ่านเข้าไปเดินในห้องที่มีเซิร์ฟเวอร์มูลค่าหลายร้อยล้านบาทโดยไม่ทำระบบล่มได้หรือไม่?"**
-
----
-
-## 1. ทัศนคติหลักที่ผู้สัมภาษณ์มองหา (Mindset & Safety First)
-
-### 1.1 ความรอบคอบ มีสติ และไม่ตื่นตระหนกเมื่อเกิดวิกฤต (Calmness Under Pressure)
-ผู้จัดการกังวลเรื่อง **Human Error (ความผิดพลาดจากความประมาทหรือความตกใจของคน)** มากที่สุด เพราะการกดปุ่มผิดหรือสับเบรกเกอร์ผิดเพียงครั้งเดียวอาจทำให้ระบบธนาคารหรืออีคอมเมิร์ซล่มทั้งประเทศ
-
-#### กรณีศึกษาคำถามวัดใจในห้องสัมภาษณ์:
-> **คำถาม**: *"สมมติคุณเดินตรวจความเรียบร้อยใน Data Hall แล้วเห็นประกายไฟช็อตสั้นๆ หรือได้กลิ่นไหม้มาจาก Power Supply (PSU) ลูกหนึ่งของเซิร์ฟเวอร์เครื่องหนึ่งในตู้แร็ค คุณจะวิ่งไปสับเบรกเกอร์ไฟหลักของทั้งตู้แร็คลงทันทีเลยไหม?"*
-
-- **คำตอบที่ผิด (ตกสัมภาษณ์ทันที)**: *"รีบวิ่งไปสับเบรกเกอร์ไฟหลักของตู้แร็คหรือกดปุ่ม EPO (Emergency Power Off) ทันทีครับ เพื่อความปลอดภัย"*
-  - **ทำไมถึงผิด?** เพราะในตู้แร็ค 1 ตู้ มีเซิร์ฟเวอร์ของลูกค้าหรือระบบ Production อื่นที่ไม่ได้เกี่ยวข้องด้วยอีก 20–40 เครื่อง การสับไฟหลักของตู้แร็คจะทำให้อุปกรณ์ที่เหลือดับตามไปด้วย (Outage วงกว้างโดยไม่จำเป็น)
-- **แนวทางคำตอบที่ถูกต้องและแสดงถึงสติระดับมืออาชีพ**:
-  1. **ตั้งสติและประเมินสถานการณ์ทันที (Assess without Panic)**: ดูว่ามีเปลวไฟลุกไหม้ต่อเนื่องที่เป็นอันตรายต่อชีวิตหรือไม่ หากเป็นเพียงอาการช็อตภายในตัวลูก PSU ของเซิร์ฟเวอร์เครื่องเดียว (ซึ่งปกติมีวงจรตัดไฟตัวมันเองและมีลูกที่สองเป็น Redundant PSU รับช่วงต่ออยู่) **จะไม่ไปสับเบรกเกอร์หลักของทั้งตู้แร็คเด็ดขาด**
-  2. **ตรวจสอบและจำกัดวงความเสียหาย (Isolate the Fault)**: ตรวจสอบหมายเลขเครื่อง/ตำแหน่ง U และดูสถานะไฟของ PSU ลูกที่มีปัญหา หากปลอดภัยที่จะทำได้ ให้ถอดเฉพาะสายไฟเส้นที่จ่ายเข้า PSU ลูกที่ช็อตออก (เพื่อให้เครื่องรันต่อด้วย PSU อีกลูกบนอีก Feed หนึ่ง)
-  3. **แจ้งเตือนตามลำดับขั้น (Escalate & Document)**: รีบแจ้งหัวหน้ากะ (Shift Lead), ทีม NOC และทีม Facilities ทันทีเพื่อตรวจสอบค่ากระแสไฟบน PDU และวางแผนเปลี่ยนอะไหล่ PSU ตัวใหม่ตามขั้นตอนมาตรฐาน (MOP/SOP)
-
----
-
-### 1.2 ความซื่อสัตย์ (Integrity & Honesty)
-ในสายงานโครงสร้างพื้นฐาน **การโกหกหรือแสร้งทำเป็นรู้ในสิ่งที่ตัวเองทำไม่เป็น คือสัญญาณอันตรายร้ายแรงที่สุด**
-
-- หากผู้สัมภาษณ์ถามทักษะเฉพาะทางที่คุณยังไม่เคยทำจริง เช่น:
-  - *"คุณเข้าหัวสายไฟเบอร์ด้วยการเชื่อมต่อใยแก้ว (Fusion Fiber Splicing) เป็นไหม?"*
-  - *"คุณเคยตั้งค่า Zoning บนสวิตช์ Brocade Fibre Channel ด้วยตัวเองไหม?"*
-- **วิธีตอบที่ได้คะแนนความน่าเชื่อถือสูงสุด**:
-  > *"สำหรับการใช้เครื่อง Fusion Splicer เชื่อมสายไฟเบอร์โดยตรง ผมยังไม่เคยลงมือทำหน้างานจริงครับ แต่ผมเข้าใจหลักการแยกชนิดสาย Single-mode/Multi-mode การทำความสะอาดหัวสายด้วย One-Click Cleaner และการวัดค่าการสูญเสียแสงด้วย Optical Power Meter ครับ ซึ่งผมเป็นคนเรียนรู้เครื่องมือใหม่ได้เร็วและพร้อมฝึกปฏิบัติตามมาตรฐานของทีมทันทีครับ"*
-- **ทำไมคำตอบนี้ถึงชนะใจผู้สัมภาษณ์?**
-  1. แสดงความซื่อสัตย์ ไม่เสี่ยงไปทำอุปกรณ์ราคาแพงพังหน้างานเพราะไม่กล้าถาม
-  2. แสดงให้เห็นว่ามีความรู้พื้นฐานที่เกี่ยวข้อง และมีความกระตือรือร้นที่จะเรียนรู้ต่อยอด
-
----
-
-## 2. เข้าใจธรรมชาติของบริษัทที่ไปสัมภาษณ์: Hosting vs Colocation
-
-ก่อนเข้าห้องสัมภาษณ์ ให้ตรวจสอบว่าบริษัทนั้นทำธุรกิจหลักรูปแบบใด เพื่อเน้นจุดแข็งให้ตรงเป้า:
-
-| รูปแบบบริษัท | ลักษณะงานหลัก | หัวข้อที่จะถูกถามเจาะลึก |
-|---|---|---|
-| **1. บริษัท Hosting / Cloud / Enterprise DC ของตัวเอง**<br>*(มีเซิร์ฟเวอร์เป็นของบริษัทเองหลายพันเครื่อง)* | ดูแลตั้งแต่ฮาร์ดแวร์ไปจนถึงการลง OS และแก้ปัญหาให้ระบบกลับมาออนไลน์ | • การติดตั้งและแก้ปัญหา **Linux / Windows Server**<br>• กระบวนการบูตเครื่อง, **PXE Boot**, การตั้งค่า RAID<br>• การใช้ **iDRAC / iLO / IPMI** ดู Log ฮาร์ดแวร์และเปลี่ยน CPU, RAM, Disk<br>• คำสั่งตรวจเช็กเครือข่าย (`ip`, `ping`, `traceroute`, `ss`, `ethtool`) |
-| **2. บริษัท Colocation Data Center**<br>*(เช่น Equinix, NTT, STT GDC, Telehouse — ให้เช่าพื้นที่ตู้แร็ค ไฟ และ Cross-Connect)* | งานบริการลูกค้าหน้าตู้ (**Smart Hands**) และการเดินสายเชื่อมต่อระหว่างตู้ (**Cross-Connect**) โดยไม่ได้ล็อกอินเข้า OS ของลูกค้า | • ความแม่นยำเรื่อง **Cabling & Fiber** (SMF vs MMF, SC/LC/MPO, SR/LR)<br>• การไล่สายบน **Patch Panel**, การสลับขั้วสายไฟเบอร์ (**Rolling Fiber Tx/Rx**)<br>• การใช้เครื่องมือวัดสาย (**Fluke Tester, Visual Fault Locator, Optical Power Meter**)<br>• ระบบไฟ **A/B Feed**, **Hot/Cold Aisle**, และระเบียบความปลอดภัยในการเข้าพื้นที่ลูกค้า |
-
----
-
-## 3. เทคนิคการตอบคำถามเชิงพฤติกรรม (Behavioral Questions) ด้วย STAR Method
-
-ในการสัมภาษณ์เกือบทุกที่ จะมีคำถามแนวเล่าประสบการณ์จริงที่ขึ้นต้นด้วย **"จงเล่าเหตุการณ์ตอนที่คุณต้องรับมือกับ..."** (*"Tell me about a time when..."*)
-
-ให้จัดระเบียบคำตอบเป็น 4 ส่วนตามโครงสร้าง **STAR Method** เสมอ เพื่อให้เรื่องเล่ากระชับ ชัดเจน และเห็นผลลัพธ์:
-
-- **S — Situation (สถานการณ์)**: เหตุการณ์เกิดขึ้นที่ไหน เมื่อไหร่ และบริบทคืออะไร (เล่าสั้นๆ 1–2 ประโยค)
-- **T — Task (ภารกิจ/โจทย์ที่ต้องแก้)**: ปัญหาหรือความท้าทายที่คุณรับผิดชอบในตอนนั้นคืออะไร
-- **A — Action (สิ่งที่คุณลงมือทำอย่างเป็นระบบ)**: ขั้นตอนการตรวจสอบ การใช้สติ การสื่อสารกับทีม และการป้องกันไม่ให้กระทบส่วนอื่น
-- **R — Result (ผลลัพธ์ที่ได้และบทเรียน)**: แก้ปัญหาสำเร็จอย่างไร ใช้เวลาเท่าไหร่ และได้ปรับปรุงคู่มือ (Runbook) อย่างไรเพื่อไม่ให้เกิดซ้ำ
-
----
-
-### ตัวอย่างคำถามและแนวคำตอบแบบ STAR Method
-
-#### คำถามที่ 1: "จงเล่าเหตุการณ์ตอนที่คุณต้องทำงานภายใต้ความกดดัน หรือเจอปัญหาหน้างานที่ไม่เคยเจอมาก่อน"
-- **Situation**: *"ในการฝึกซ้อมแล็บจำลองเหตุการณ์วิกฤต (Incident P1) เซิร์ฟเวอร์เว็บหลักไม่สามารถสตาร์ทบริการ Nginx ขึ้นมาได้หลังการอัปเดตระบบ"*
-- **Task**: *"ผมต้องหาสาเหตุที่แท้จริงและทำให้บริการเว็บกลับมาออนไลน์ให้เร็วที่สุดโดยไม่ทำข้อมูลหรือการตั้งค่าเดิมเสียหาย"*
-- **Action**: *"แทนที่จะสุ่มรีบูตเครื่องซ้ำๆ ผมตั้งสติและไล่ตามขั้นตอนมาตรฐาน เริ่มจากเช็ก `systemctl status nginx` และอ่าน Log ด้วย `journalctl -u nginx` จนพบ Error ว่า `Address already in use` บนพอร์ต 80 จากนั้นใช้ `ss -tulnp` ตรวจสอบจนเจอว่ามีบริการ `apache2` แอบรันขึ้นมาแย่งพอร์ต 80 อยู่ จึงสั่งหยุด `apache2` แล้วสตาร์ท `nginx` ใหม่ พร้อมทดสอบด้วย `curl -I http://localhost`"*
-- **Result**: *"ระบบเว็บกลับมาตอบกลับ `200 OK` ได้ภายในเวลาไม่ถึง 5 นาทีโดยไม่ต้องรีบูตเซิร์ฟเวอร์ และผมได้บันทึกขั้นตอนการเช็กพอร์ตชนไว้ใน Runbook เพื่อเป็นแนวทางให้ทีมต่อไปครับ"*
-
-#### คำถามที่ 2: "คุณมีวิธีป้องกันความผิดพลาด (Human Error) เวลาต้องถอดสายหรือปิดเครื่องเซิร์ฟเวอร์ในตู้แร็คอย่างไร?"
-- **แนวคำตอบ**:
-  1. **ตรวจสอบใบงาน (Change Ticket / Work Order)** ให้ตรงกันอย่างน้อย 3 จุดเสมอ: **หมายเลขตู้ (Rack ID) → ตำแหน่งความสูง (U Position) → หมายเลขเครื่อง/Serial Number (Service Tag)**
-  2. สั่งเปิด **ไฟกระพริบสีฟ้า (UID / Chassis Identify LED)** จากระบบ iDRAC/iLO ก่อนเดินไปหลังตู้แร็ค เพื่อให้เห็นเครื่องเป้าหมายชัดเจนทั้งด้านหน้าและด้านหลัง
-  3. ตรวจสอบป้ายกำกับสาย (**Cable Label**) ทั้งฝั่งต้นทางและปลายทาง และยืนยันกับทีม NOC ในสายโทรศัพท์หรือแชตก่อนดึงสายออกจริงทุกครั้ง (**Measure twice, cut once**)
-', 8, 'beginner', 5)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('dc:fiber:q01', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-cabling-and-fiber' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'สายไฟเบอร์ออปติกสีเหลือง (OS2) และสีฟ้าอมเขียว Aqua (OM3/OM4) แตกต่างกันอย่างไร และควรจับคู่กับหัว Transceiver รหัสใด?', NULL, 'easy', 'multiple_choice', 'สายสีเหลืองคือ Single-mode (OS2, แกน 9µm) สำหรับระยะไกล ใช้คู่กับหัวรหัส LR (1310nm) ส่วนสายสีฟ้า Aqua คือ Multi-mode (OM3/OM4, แกน 50µm) สำหรับระยะใกล้ในห้อง Data Hall ใช้คู่กับหัวรหัส SR (850nm)', ARRAY['fiber', 'smf', 'mmf', 'transceiver', 'datacenter']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'dc:fiber:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:fiber:q01'), 'สีเหลืองคือ Single-mode (OS2) คู่กับหัว LR ระยะไกล ส่วนสีฟ้า Aqua คือ Multi-mode (OM3/OM4) คู่กับหัว SR ระยะใกล้', TRUE, 'ถูกต้องตามมาตรฐาน TIA-598 และการใช้งานจริงใน Data Center', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:fiber:q01'), 'สีเหลืองคือ Multi-mode คู่กับหัว SR ส่วนสีฟ้าคือ Single-mode คู่กับหัว LR', FALSE, 'สลับชนิดกัน', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:fiber:q01'), 'ทั้งสองสีเป็นสายชนิดเดียวกัน ต่างกันแค่ยี่ห้อผู้ผลิต สามารถเสียบแทนกันได้ทั้งหมด', FALSE, 'แกนแสงต่างกัน (9µm vs 50µm) ห้ามเสียบข้ามชนิดกัน', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:fiber:q01'), 'สีเหลืองใช้สำหรับสายไฟแรงสูง ส่วนสีฟ้าใช้สำหรับสายแลนทองแดง Cat6', FALSE, 'ทั้งคู่เป็นรหัสสีของสาย Fiber Optic', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('dc:fiber:q02', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-cabling-and-fiber' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'เมื่อคุณเดินสายไฟเบอร์ Duplex LC เชื่อมต่อระหว่าง Switch A กับ Switch B ผ่าน Patch Panel เสร็จแล้ว พบว่าไฟสถานะพอร์ตไม่ติด (Link Down) ทั้งที่เช็กแล้วว่าหัว SFP+ ทั้งสองฝั่งปกติ สาเหตุที่พบบ่อยที่สุดและวิธีแก้ไขเบื้องต้นคืออะไร?', 'Switch-A (TenGigabitEthernet1/0/1) <---> Patch Panel <---> Switch-B (TenGigabitEthernet1/0/1)
-Status: notconnect (Link Down), Transceiver Tx Power: -2.1 dBm, Rx Power: -40.0 dBm (LOS)', 'medium', 'scenario', 'เมื่อค่า Tx Power ปกติแต่ Rx Power เป็น -40 dBm (Loss of Signal) หลังเดินสายผ่าน Patch Panel มักเกิดจากขั้วสายไฟเบอร์ไม่ได้ไขว้กัน (Tx วิ่งไปชน Tx และ Rx ชน Rx) วิธีแก้คือการทำ Rolling Fiber (สลับขั้วหัวสาย LC คู่ซ้าย-ขวาที่ปลายด้านใดด้านหนึ่ง) เพื่อให้ Tx ของฝั่งหนึ่งตรงกับ Rx ของอีกฝั่ง', ARRAY['fiber', 'rolling-fiber', 'tx-rx', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'dc:fiber:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:fiber:q02'), 'ขั้วสายไฟเบอร์ Tx/Rx ไม่ตรงกัน (Tx ชน Tx) ให้ถอดหัว LC ฝั่งหนึ่งมาสลับขั้วสายคู่ซ้าย-ขวา (Rolling the fiber) แล้วเสียบใหม่', TRUE, 'ถูกต้อง การสลับขั้ว Tx/Rx (Roll fiber) เป็นวิธีแก้พื้นฐานที่สุดเมื่อต่อสายไฟเบอร์แล้วไฟ Link ไม่ขึ้น', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:fiber:q02'), 'ใช้สายตาเปล่าส่องเข้าไปในรูหัว SFP+ ทันทีเพื่อดูว่ามีแสงเลเซอร์สีแดงออกมาหรือไม่', FALSE, 'ห้ามใช้ตาเปล่าส่องปลายสายไฟเบอร์หรือหัว Transceiver เด็ดขาดเพราะแสงเลเซอร์อาจทำลายจอประสาทตา', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:fiber:q02'), 'พับสายไฟเบอร์ให้หักเป็นมุมฉาก 90 องศาเพื่อเร่งความเร็วการสะท้อนของแสง', FALSE, 'การพับสายเกิน Bend radius จะทำให้แกนแก้วหักหรือแสงรั่วออกนอกสาย', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:fiber:q02'), 'สั่งรีบูต Switch ทั้งสองตัวพร้อมกันทันที', FALSE, 'ห้ามรีบูต Production Switch จากปัญหาแค่พอร์ตเดียวไม่ขึ้น', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('dc:cabling:q03', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-cabling-and-fiber' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'หัว Transceiver ชนิดใดที่รองรับความเร็ว 10 Gbps และชนิดใดรองรับ 100 Gbps ตามลำดับ?', NULL, 'easy', 'multiple_choice', 'SFP = 1G, SFP+ = 10G, SFP28 = 25G, QSFP+ = 40G และ QSFP28 = 100G (4 ช่องสัญญาณ x 25G)', ARRAY['sfp', 'qsfp', 'transceiver', 'datacenter']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'dc:cabling:q03');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:cabling:q03'), 'SFP+ (10 Gbps) และ QSFP28 (100 Gbps)', TRUE, 'ถูกต้อง', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:cabling:q03'), 'SFP (10 Gbps) และ SFP+ (100 Gbps)', FALSE, 'SFP รองรับ 1 Gbps และ SFP+ รองรับ 10 Gbps', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:cabling:q03'), 'RJ45 (10 Gbps) และ SC (100 Gbps)', FALSE, 'RJ45 และ SC เป็นชื่อหัวคอนเน็กเตอร์สาย ไม่ใช่ชนิดของฟอร์มแฟกเตอร์ Transceiver', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:cabling:q03'), 'QSFP+ (10 Gbps) และ SFP (100 Gbps)', FALSE, 'QSFP+ คือ 40 Gbps และ SFP คือ 1 Gbps', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('dc:cabling:q04', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-cabling-and-fiber' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'ในการเข้าหัวสายแลนทองแดง RJ45 ตามมาตรฐาน T568B ลำดับสีสายตั้งแต่พิน 1 ถึงพิน 8 ข้อใดถูกต้อง?', NULL, 'medium', 'multiple_choice', 'มาตรฐาน T568B เรียงลำดับจากพิน 1 ถึง 8 คือ: (1) ขาวส้ม (2) ส้ม (3) ขาวเขียว (4) น้ำเงิน (5) ขาวน้ำเงิน (6) เขียว (7) ขาวน้ำตาล (8) น้ำตาล', ARRAY['t568b', 'rj45', 'cabling', 'utp']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'dc:cabling:q04');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:cabling:q04'), 'ขาวส้ม, ส้ม, ขาวเขียว, น้ำเงิน, ขาวน้ำเงิน, เขียว, ขาวน้ำตาล, น้ำตาล', TRUE, 'ถูกต้องตามมาตรฐาน T568B', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:cabling:q04'), 'ขาวเขียว, เขียว, ขาวส้ม, น้ำเงิน, ขาวน้ำเงิน, ส้ม, ขาวน้ำตาล, น้ำตาล', FALSE, 'ลำดับนี้คือมาตรฐาน T568A', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:cabling:q04'), 'ขาวส้ม, ส้ม, ขาวเขียว, เขียว, ขาวน้ำเงิน, น้ำเงิน, ขาวน้ำตาล, น้ำตาล', FALSE, 'พิน 3-6 ไม่ได้เรียงคู่เขียวติดกัน เพราะต้องคร่อมคู่สีน้ำเงินเพื่อลดสัญญาณรบกวน (Crosstalk)', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:cabling:q04'), 'น้ำตาล, ขาวน้ำตาล, เขียว, ขาวเขียว, น้ำเงิน, ขาวน้ำเงิน, ส้ม, ขาวส้ม', FALSE, 'เรียงลำดับผิด', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('dc:hardware:q05', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-server-hardware-oob' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'อุปกรณ์ใดในเครื่อง Rack Server ขนาด 1U/2U ที่ทำหน้าที่แปลงสล็อต PCIe บนเมนบอร์ดให้สามารถเสียบการ์ด HBA หรือการ์ด NIC ในแนวนอนขนานกับตัวเครื่องได้?', NULL, 'easy', 'multiple_choice', 'Riser Card เป็นแผงวงจรรูปตัว L ที่เสียบลงบนเมนบอร์ดเพื่อหันสล็อต PCIe ให้อยู่ในแนวนอน ทำให้สามารถติดตั้งการ์ด PCIe ในตัวถังเซิร์ฟเวอร์ที่มีความสูงจำกัด (1U/2U) ได้', ARRAY['hardware', 'riser-card', 'pcie', 'server']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'dc:hardware:q05');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:hardware:q05'), 'Riser Card', TRUE, 'ถูกต้อง', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:hardware:q05'), 'BMC (Baseboard Management Controller)', FALSE, 'BMC คือชิปควบคุมระบบจัดการระยะไกล (เช่น iDRAC/iLO)', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:hardware:q05'), 'Blanking Panel', FALSE, 'Blanking Panel คือแผ่นปิดช่องว่างหน้าตู้แร็คเพื่อกั้นลมร้อน', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:hardware:q05'), 'SFP+ Transceiver', FALSE, 'SFP+ คือหัวแปลงสัญญาณแสงที่เสียบเข้าพอร์ตของการ์ดเครือข่าย', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('dc:hardware:q06', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-server-hardware-oob' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'ในการนำอุปกรณ์เข้าติดตั้งในตู้แร็คขนาด 42U (Racking & Stacking) ข้อใดคือแนวปฏิบัติที่ถูกต้องที่สุดเพื่อความปลอดภัยและเสถียรภาพ?', NULL, 'easy', 'multiple_choice', 'การติดตั้งอุปกรณ์ที่มีน้ำหนักมากที่สุด (เช่น UPS หรือตู้ Storage Array) ไว้ที่ด้านล่างสุดของตู้แร็คจะช่วยรักษาจุดศูนย์ถ่วงให้อยู่ต่ำ ป้องกันไม่ให้ตู้แร็คกระดกหรือล้มคว่ำเมื่อดึงรางสไลด์เซิร์ฟเวอร์ออกมา', ARRAY['racking', 'rack-unit', 'safety', 'datacenter']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'dc:hardware:q06');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:hardware:q06'), 'ติดตั้งอุปกรณ์ที่หนักที่สุด (เช่น UPS และ Storage Array) ไว้ที่ระยะ U ด้านล่างสุดของตู้แร็คเสมอ', TRUE, 'ถูกต้อง ช่วยถ่วงน้ำหนักไม่ให้ตู้แร็คคว่ำ', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:hardware:q06'), 'ติดตั้ง UPS ไว้ที่ชั้นบนสุด (U40-U42) เพื่อให้ง่ายต่อการมองเห็นหน้าจอสถานะ', FALSE, 'อันตรายมากทั้งตอนยกขึ้นและเสี่ยงทำให้ตู้แร็คเสียสมดุลล้มคว่ำ', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:hardware:q06'), 'เสียบสายไฟของเซิร์ฟเวอร์ทั้งสองเส้นเข้าที่รางปลั๊ก PDU เส้นเดียวกันเพื่อประหยัดช่องเสียบ', FALSE, 'ผิดหลัก Redundancy ต้องแยกเสียบเข้า PDU ฝั่ง A และฝั่ง B', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:hardware:q06'), 'ถอดแผ่นปิดช่องว่าง (Blanking Panel) ออกทั้งหมดเพื่อให้ลมร้อนไหลวนกลับมาด้านหน้าตู้ได้สะดวก', FALSE, 'ต้องใส่ Blanking Panel เพื่อป้องกันลมร้อนไหลย้อนกลับมาด้านหน้า', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('dc:oob:q07', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-server-hardware-oob' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'เซิร์ฟเวอร์ Dell PowerEdge เครื่องหนึ่งใน Data Center เกิดอาการค้างสนิทจน SSH เข้าไม่ได้ และมีไฟแจ้งเตือนสีส้มกระพริบหน้าเครื่อง วิศวกรควรใช้ระบบใดในการตรวจเช็ก System Event Log (SEL) และเปิดดูหน้าจอ Console จากระยะไกล?', NULL, 'easy', 'multiple_choice', 'สำหรับเซิร์ฟเวอร์ Dell ระบบ Out-of-Band Management ประจำเครื่องคือ iDRAC (ส่วน HPE คือ iLO) ซึ่งทำงานแยกอิสระจาก OS ช่วยให้อ่านฮาร์ดแวร์ Log (SEL), เปิดหน้าจอ Virtual KVM และสั่ง Power Cycle ได้แม้ OS จะค้างไปแล้ว', ARRAY['idrac', 'ilo', 'ipmi', 'oob']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'dc:oob:q07');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:oob:q07'), 'เชื่อมต่อผ่านระบบ Out-of-Band เช่น iDRAC (หรือ IPMI / Redfish) เพื่ออ่าน System Event Log และเปิด Virtual Console', TRUE, 'ถูกต้อง', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:oob:q07'), 'รอจนกว่าเครื่องจะหายค้างเอง เพราะเมื่อ SSH ไม่ได้จะไม่มีวิธีอื่นในการตรวจสอบ', FALSE, 'ระบบ OOB ถูกออกแบบมาเพื่อแก้ปัญหากรณี SSH/OS ค้างโดยเฉพาะ', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:oob:q07'), 'เดินไปถอดแรมออกทีละแถวในขณะที่เครื่องยังเปิดไฟทำงานอยู่', FALSE, 'แรมไม่ได้เป็นอุปกรณ์ Hot-swap ห้ามถอดขณะเปิดเครื่องเด็ดขาด', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:oob:q07'), 'สับเบรกเกอร์ไฟหลักของทั้งห้อง Data Hall ลงแล้วเปิดใหม่', FALSE, 'ห้ามแตะต้องไฟหลักของห้องเพราะจะทำให้เครื่องอื่นดับทั้งหมด', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('dc:pxe:q08', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-network-boot-san-blade' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'ในกระบวนการบูตเครื่องผ่านเครือข่าย (PXE Boot) เพื่อติดตั้งระบบปฏิบัติการอัตโนมัติ โปรโตคอลคู่ใดที่ทำงานร่วมกันเพื่อแจกเลข IP และส่งไฟล์บูตอิมเมจเริ่มต้นให้กับการ์ดแลนของเซิร์ฟเวอร์?', NULL, 'medium', 'multiple_choice', 'PXE Boot อาศัย DHCP (ในการแจก IP พร้อมระบุ Next-Server Option 66 และ Boot Filename Option 67) และ TFTP (UDP พอร์ต 69) ในการดาวน์โหลดไฟล์ Bootloader และ Kernel ลงมาบูตในหน่วยความจำ', ARRAY['pxe', 'dhcp', 'tftp', 'boot']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'dc:pxe:q08');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:pxe:q08'), 'DHCP (แจก IP และชี้ตำแหน่งเซิร์ฟเวอร์) คู่กับ TFTP (ดาวน์โหลดไฟล์ Bootloader และ Kernel)', TRUE, 'ถูกต้อง', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:pxe:q08'), 'SMTP คู่กับ POP3', FALSE, 'SMTP และ POP3 เป็นโปรโตคอลรับส่งอีเมล', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:pxe:q08'), 'BGP คู่กับ OSPF', FALSE, 'BGP และ OSPF เป็นโปรโตคอล Routing', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:pxe:q08'), 'SNMP คู่กับ NTP', FALSE, 'SNMP ใช้มอนิเตอร์อุปกรณ์ และ NTP ใช้ซิงก์เวลา', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('dc:san:q09', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-network-boot-san-blade' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'ในระบบเครือข่ายพื้นที่จัดเก็บข้อมูล Fibre Channel SAN การทำ ''Zoning'' บน SAN Switch ใช้หมายเลขประจำพอร์ตชนิดใดในการกำหนดสิทธิ์ให้ HBA ของเซิร์ฟเวอร์มองเห็นพอร์ตของตู้ Storage?', NULL, 'medium', 'multiple_choice', 'ในโลกของ Fibre Channel SAN จะใช้หมายเลข WWPN (World Wide Port Name) ขนาด 64-bit ของการ์ด HBA (Initiator) และพอร์ต Storage (Target) ในการตั้งค่า सॉफ्टแวร์ Zoning บน SAN Switch', ARRAY['san', 'zoning', 'wwpn', 'hba', 'storage']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'dc:san:q09');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:san:q09'), 'WWPN (World Wide Port Name) ของการ์ด HBA และพอร์ตของตู้ Storage', TRUE, 'ถูกต้อง WWPN ทำหน้าที่คล้าย MAC Address ในระบบ Fibre Channel', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:san:q09'), 'หมายเลขพอร์ต TCP 80 และ 443', FALSE, 'TCP 80/443 เป็นพอร์ตของ HTTP/HTTPS', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:san:q09'), 'ชื่อโดเมนเว็บไซต์ในไฟล์ /etc/resolv.conf', FALSE, 'ไม่เกี่ยวข้องกับ Fibre Channel Zoning', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:san:q09'), 'หมายเลข Serial Number ของพัดลมระบายความร้อน', FALSE, 'ไม่เกี่ยวข้องกับระบบ SAN', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('dc:power:q10', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-power-cooling-facilities' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'หน้าที่ของ UPS (Uninterruptible Power Supply) และ ATS (Automatic Transfer Switch) ในศูนย์ข้อมูล Data Center แตกต่างกันอย่างไร?', NULL, 'medium', 'multiple_choice', 'UPS ใช้แบตเตอรี่จ่ายไฟสำรองทันทีแบบไร้รอยต่อเมื่อไฟตก/ไฟดับและกรองไฟให้นิ่งในช่วงสั้นๆ (5-15 นาที) ส่วน ATS ทำหน้าที่เป็นสวิตช์สลับแหล่งจ่ายไฟอัตโนมัติจากไฟการไฟฟ้า (Utility Grid) ไปยังเครื่องปั่นไฟสำรอง (Generator) เมื่อเครื่องปั่นไฟสตาร์ทติดและกระแสไฟนิ่งแล้ว', ARRAY['ups', 'ats', 'power', 'generator', 'datacenter']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'dc:power:q10');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:power:q10'), 'UPS จ่ายไฟจากแบตเตอรี่ทันทีเพื่อประคองระบบช่วงสั้นๆ ส่วน ATS ทำหน้าที่สลับแหล่งจ่ายไฟระหว่างไฟการไฟฟ้ากับเครื่องปั่นไฟ (Generator) อัตโนมัติ', TRUE, 'ถูกต้อง', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:power:q10'), 'UPS ใช้ดับเพลิงเมื่อเกิดไฟไหม้ ส่วน ATS ใช้ทำความเย็นให้ตู้แร็ค', FALSE, 'ทั้งคู่เป็นอุปกรณ์ในระบบไฟฟ้ากำลัง', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:power:q10'), 'ATS คือแบตเตอรี่สำรองไฟ ส่วน UPS คือเครื่องปั่นไฟดีเซล', FALSE, 'สลับความหมายและหน้าที่กัน', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:power:q10'), 'UPS ใช้เฉพาะกับไฟ 110V เท่านั้น ส่วน ATS ใช้เฉพาะสายไฟเบอร์ออปติก', FALSE, 'ไม่ถูกต้อง', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('dc:power:q11', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-power-cooling-facilities' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'หากต้องเปิดระบบทั้งหมดในตู้แร็คขึ้นมาใหม่หลังจากปิดบำรุงรักษาระบบไฟฟ้า (Rack Power-Up Sequence) ลำดับการเปิดอุปกรณ์ในข้อใดถูกต้องที่สุด?', NULL, 'medium', 'multiple_choice', 'เวลาเปิดระบบกลับขึ้นมา ต้องเปิด Network/SAN Switch ก่อน → ตามด้วยตู้ Storage (รอให้ดิสก์และ LUN พร้อมใช้งาน) → แล้วจึงทยอยเปิดเครื่อง Compute Server ทีละกลุ่ม เพื่อให้เซิร์ฟเวอร์บูตขึ้นมาเจอก้อน Storage และเครือข่ายได้ทันที และลดไฟกระชาก (Inrush current)', ARRAY['power-sequence', 'rack', 'storage', 'datacenter']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'dc:power:q11');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:power:q11'), '1. เปิด Network/SAN Switches -> 2. เปิดตู้ Storage Array -> 3. ทยอยเปิดเครื่องเซิร์ฟเวอร์ (Compute Servers)', TRUE, 'ถูกต้อง ช่วยให้เซิร์ฟเวอร์มองเห็นเครือข่ายและดิสก์ทันทีที่บูตขึ้น และป้องกันไฟกระชาก', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:power:q11'), '1. เปิดเครื่องเซิร์ฟเวอร์ทั้งหมดพร้อมกัน -> 2. เปิด Storage -> 3. เปิด Switch หลังสุด', FALSE, 'จะทำให้เซิร์ฟเวอร์บูตขึ้นมาไม่เจอ Storage (Mount ล้มเหลว) และเกิดไฟกระชากสูง', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:power:q11'), 'สับเบรกเกอร์เปิดและปิดสลับกันเร็วๆ 3 ครั้งเพื่อเป็นการอุ่นเครื่อง', FALSE, 'จะทำให้ภาคจ่ายไฟและฮาร์ดดิสก์พังเสียหาย', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:power:q11'), 'เปิดเฉพาะ PSU ฝั่ง A ทิ้งไว้ 24 ชั่วโมงแล้วค่อยเสียบสายแลน', FALSE, 'ไม่ถูกต้อง', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('dc:cooling:q12', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-power-cooling-facilities' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'การจัดเรียงตู้แร็คแบบ Hot Aisle / Cold Aisle ในห้อง Data Center มีหลักการอย่างไร และทำไมจึงต้องติดแผ่น Blanking Panel ในช่อง U ที่ว่าง?', NULL, 'easy', 'multiple_choice', 'การจัดแบบ Hot/Cold Aisle คือการหันด้านหน้าตู้แร็คเข้าหากันในช่องลมเย็น (Cold Aisle) เพื่อดูดแอร์เข้าหน้าเครื่อง และหันด้านหลังตู้ชนกันในช่องลมร้อน (Hot Aisle) ส่วนการติดแผ่น Blanking Panel ปิดช่อง U ที่ว่างช่วยป้องกันไม่ให้ลมร้อนจากหลังตู้ไหลวนย้อนกลับมาเข้าหน้าเครื่อง', ARRAY['cooling', 'hot-aisle', 'cold-aisle', 'blanking-panel']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'dc:cooling:q12');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:cooling:q12'), 'หันหน้าตู้เข้าหากันเพื่อรับลมเย็น (Cold Aisle) หันหลังตู้ชนกันเพื่อระบายลมร้อน (Hot Aisle) และติด Blanking Panel เพื่อกั้นไม่ให้ลมร้อนไหลย้อนกลับมาด้านหน้า', TRUE, 'ถูกต้องตามมาตรฐานการจัดการการไหลเวียนอากาศใน Data Center', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:cooling:q12'), 'หันหน้าตู้สลับกับหลังตู้ในแถวเดียวกันเพื่อให้ลมร้อนและลมเย็นผสมกันให้อุณหภูมิเท่ากันทั้งห้อง', FALSE, 'การผสมลมร้อนกับลมเย็นทำให้ประสิทธิภาพการระบายความร้อนแย่ลงและเซิร์ฟเวอร์ร้อนจัด', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:cooling:q12'), 'เป่าลมเย็นเข้าทางด้านหลังเครื่อง PSU และดูดลมร้อนออกทางด้านหน้าฮาร์ดดิสก์', FALSE, 'เซิร์ฟเวอร์มาตรฐานดูดลมเย็นเข้าด้านหน้า (Front Intake) และเป่าออกด้านหลัง (Rear Exhaust)', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:cooling:q12'), 'ติด Blanking Panel เพื่อเพิ่มน้ำหนักให้ตู้แร็คไม่สั่นสะเทือน', FALSE, 'Blanking Panel เบามาก มีไว้เพื่อกั้นทิศทางลม ไม่ใช่ถ่วงน้ำหนัก', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('dc:fire:q13', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-power-cooling-facilities' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'ระบบดับเพลิงในห้องเซิร์ฟเวอร์ของ Data Center มาตรฐานนิยมใช้สารชนิดใดในการดับไฟเพื่อไม่ให้ทำลายแผงวงจรอิเล็กทรอนิกส์?', NULL, 'easy', 'multiple_choice', 'ห้อง Data Hall จะใช้สารสะอาดดับเพลิงชนิดแก๊ส (Clean Agent Fire Suppression) เช่น FM-200 (HFC-227ea), Novec 1230 หรือแก๊สเฉื่อย Inergen ซึ่งไม่นำไฟฟ้าและไม่ทิ้งคราบสกปรกไว้บนเซิร์ฟเวอร์', ARRAY['fire-suppression', 'fm200', 'novec1230', 'safety']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'dc:fire:q13');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:fire:q13'), 'แก๊สสารสะอาดดับเพลิง (Clean Agent เช่น FM-200, Novec 1230 หรือ Inergen) คู่กับระบบตรวจจับควันความไวสูง VESDA', TRUE, 'ถูกต้อง ดับไฟได้โดยเซิร์ฟเวอร์ยังทำงานต่อได้และไม่เกิดความเสียหายจากน้ำหรือผงเคมี', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:fire:q13'), 'หัวฉีดน้ำสปริงเกอร์แรงดันสูงที่ฉีดน้ำท่วมตู้แร็คทันทีเมื่อมีกลิ่นเหม็น', FALSE, 'น้ำจะทำให้ไฟฟ้าลัดวงจรและอุปกรณ์ทั้งหมดเสียหาย', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:fire:q13'), 'ถังดับเพลิงชนิดผงเคมีแห้งสีแดงฉีดพ่นเข้าไปในพัดลมเซิร์ฟเวอร์', FALSE, 'ผงเคมีแห้งมีความเป็นกรดและกัดกร่อนแผงวงจรเมนบอร์ดทุกเครื่องในห้องจนพัง', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:fire:q13'), 'โฟมเคมีผสมน้ำเกลือ', FALSE, 'นำไฟฟ้าอย่างรุนแรง ห้ามใช้กับอุปกรณ์ไฟฟ้า', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('dc:interview:q14', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-interview-and-mindset' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), '[คำถามสัมภาษณ์สถานการณ์จริง] หากคุณกำลังเดินตรวจในห้อง Data Hall แล้วเห็นประกายไฟช็อตสั้นๆ ที่ลูก Power Supply (PSU 1) ของเซิร์ฟเวอร์เครื่องหนึ่ง (ซึ่งมี Redundant PSU 2 ลูก) คุณควรตัดสินใจทำอย่างไร?', NULL, 'medium', 'scenario', 'ผู้จัดการกังวลเรื่องความตื่นตระหนกจนไปสับเบรกเกอร์หลักของทั้งตู้แร็ค (ซึ่งจะทำให้เซิร์ฟเวอร์อีก 30 เครื่องในตู้ดับทั้งหมด) วิธีที่ถูกต้องคือตั้งสติ ประเมินว่ามีไฟลุกไหม้หรือไม่ ตรวจสอบว่า PSU ลูกที่ 2 ยังจ่ายไฟเลี้ยงเครื่องอยู่ ถอดเฉพาะสายไฟเส้นที่เข้า PSU ลูกที่มีปัญหาออกอย่างปลอดภัย และรีบแจ้งหัวหน้าทีม/NOC เพื่อเปลี่ยนอะไหล่ตามขั้นตอน', ARRAY['interview', 'mindset', 'psu', 'safety', 'incident']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'dc:interview:q14');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:interview:q14'), 'ตั้งสติ ไม่สับเบรกเกอร์หลักของทั้งตู้แร็ค ประเมินความปลอดภัย ตรวจสอบสถานะ Redundant PSU ถอดเฉพาะสายไฟของลูก PSU ที่มีปัญหา และแจ้งหัวหน้าทีม/NOC ทันที', TRUE, 'ถูกต้อง แสดงถึงความรอบคอบ มีสติ และเข้าใจผลกระทบต่อระบบส่วนรวม (Blast radius)', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:interview:q14'), 'รีบวิ่งไปสับเบรกเกอร์ไฟหลักของทั้งตู้แร็คลงทันทีโดยไม่ต้องแจ้งใคร', FALSE, 'จะทำให้เซิร์ฟเวอร์เครื่องอื่นทั้งตู้แร็คดับทั้งหมดโดยไม่จำเป็น', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:interview:q14'), 'ทุบกระจกกดปุ่ม EPO (Emergency Power Off) เพื่อตัดไฟทั้งอาคาร Data Center ทันที', FALSE, 'ปุ่ม EPO ใช้เฉพาะกรณีเกิดภัยพิบัติร้ายแรงถึงชีวิตเท่านั้น การกดโดยไม่จำเป็นจะทำให้ทั้งศูนย์ข้อมูลล่ม', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:interview:q14'), 'เพิกเฉยและเดินผ่านไปเหมือนไม่มีอะไรเกิดขึ้นเพราะเห็นว่าเซิร์ฟเวอร์ยังไม่ดับ', FALSE, 'ขาดความรับผิดชอบ ต้องตรวจสอบและรายงานเพื่อเปลี่ยน PSU ลูกที่เสีย', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('dc:interview:q15', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-interview-and-mindset' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), '[คำถามสัมภาษณ์ทัศนคติ] หากผู้สัมภาษณ์ถามว่า ''คุณเชื่อมสายไฟเบอร์ด้วยเครื่อง Fusion Splicer เป็นหรือไม่?'' แต่คุณยังไม่เคยทำมาก่อน คำตอบใดเหมาะสมและสร้างความประทับใจมากที่สุด?', NULL, 'easy', 'multiple_choice', 'ความซื่อสัตย์ (Integrity) เป็นสิ่งสำคัญมากในการทำงาน Data Center หากทำไม่เป็นต้องตอบตามตรงว่ายังไม่เคยทำจริง แต่อธิบายความรู้พื้นฐานที่เกี่ยวข้อง (เช่น ชนิดสายไฟเบอร์ การทำความสะอาดหัวสาย) และแสดงความพร้อมที่จะเรียนรู้เพิ่มเติมอย่างรวดเร็ว', ARRAY['interview', 'honesty', 'mindset', 'fiber']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'dc:interview:q15');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:interview:q15'), 'ตอบตามตรงว่ายังไม่เคยใช้เครื่องเชื่อมสายจริง แต่อธิบายความเข้าใจเรื่องชนิดสายไฟเบอร์ การดูแลรักษาหัวสาย และแสดงความพร้อมที่จะเรียนรู้ฝึกฝนอย่างรวดเร็ว', TRUE, 'ถูกต้อง ซื่อสัตย์และแสดงศักยภาพในการเรียนรู้', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:interview:q15'), 'โกหกว่าทำเป็นชำนาญมากเพื่อให้ได้งานก่อน แล้วค่อยไปแอบดูวิธีทำทีหลัง', FALSE, 'ผู้สัมภาษณ์มักจะถามจี้รายละเอียดขั้นตอนทันที หากตอบไม่ได้จะเสียคะแนนความน่าเชื่อถือทั้งหมด', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:interview:q15'), 'ตอบว่าไม่รู้และไม่อยากทำเพราะเป็นงานของช่างเดินสายเท่านั้น', FALSE, 'แสดงทัศนคติปิดกั้นการเรียนรู้', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'dc:interview:q15'), 'เปลี่ยนเรื่องคุยไปพูดเรื่องการเขียนโปรแกรมแทนโดยไม่ตอบคำถาม', FALSE, 'ไม่ตรงคำถาม', 4);
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:smf-vs-mmf', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-cabling-and-fiber' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'ความแตกต่างของสายไฟเบอร์ Single-Mode (OS2) กับ Multi-Mode (OM3/OM4)', '• Single-Mode (OS2): สายสีเหลือง, แกน 9µm, แสง 1310/1550nm, คู่กับหัว LR (ระยะไกล 2-40+ กม.)
-• Multi-Mode (OM3/OM4): สายสีฟ้า Aqua, แกน 50µm, แสง 850nm, คู่กับหัว SR (ระยะใกล้ในห้อง Data Hall 100-400 ม.)', 'จำจากสีปลอกสาย: เหลือง = ไกล (LR), ฟ้า Aqua = ใกล้ (SR)', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:sfp-qsfp-speeds', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-cabling-and-fiber' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'ความเร็วของหัว Transceiver: SFP, SFP+, SFP28, QSFP+, QSFP28', '• SFP = 1 Gbps
+--
+-- Name: topics_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.topics_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: topics_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.topics_id_seq OWNED BY public.topics.id;
+
+
+--
+-- Name: topics id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.topics ALTER COLUMN id SET DEFAULT nextval('public.topics_id_seq'::regclass);
+
+
+--
+-- Data for Name: bookmarks; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- Data for Name: choices; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.choices VALUES ('375b1883-d9b3-43a3-a52a-66c436aa5d4f', 'c1a10001-0000-0000-0000-000000000002', 'รัน `nginx -t` เพื่อตรวจสอบ Syntax คอนฟิก และตรวจ `journalctl -xeu nginx.service`', true, NULL, 1);
+INSERT INTO public.choices VALUES ('2ca9e2be-160b-4026-b8c9-0efc7973cbf8', 'c1a10001-0000-0000-0000-000000000002', 'รีบูตเซิร์ฟเวอร์ทันทีด้วยคำสั่ง `reboot`', false, NULL, 2);
+INSERT INTO public.choices VALUES ('cad6c3f3-e140-4412-b13e-0bf0b8e129e1', 'c1a10001-0000-0000-0000-000000000002', 'ลบโฟลเดอร์ `/etc/nginx` แล้วติดตั้งใหม่', false, NULL, 3);
+INSERT INTO public.choices VALUES ('94cc0c34-4a10-43e3-ab05-9b1827b88c0e', 'c1a10001-0000-0000-0000-000000000002', 'เปลี่ยนสิทธิ์ทั้งระบบเป็น `chmod 777 -R /`', false, NULL, 4);
+INSERT INTO public.choices VALUES ('b8870a3e-f926-41fa-91ef-fce4cf238b65', 'c1a10001-0000-0000-0000-000000000006', 'ยังมีโปรเซสเปิดไฟล์นั้นค้างอยู่ ให้รัน `lsof | grep deleted` และรีสตาร์ทโปรเซสนั้นเพื่อปล่อยพื้นที่', true, NULL, 1);
+INSERT INTO public.choices VALUES ('e2829e2a-3830-4bbb-8c7e-b87c3575ac46', 'c1a10001-0000-0000-0000-000000000006', 'Linux ติดไวรัส Ransomware ต้องฟอร์แมตดิสก์', false, NULL, 2);
+INSERT INTO public.choices VALUES ('67a82cdf-2d73-4914-8ed6-73967678a3b5', 'c1a10001-0000-0000-0000-000000000006', 'คำสั่ง rm ใช้งานไม่ได้บนไดรฟ์ประเภท ext4', false, NULL, 3);
+INSERT INTO public.choices VALUES ('e79a5953-f615-49ba-9f3a-d5bbe50064cf', 'c1a10001-0000-0000-0000-000000000006', 'ต้องรอครบ 24 ชั่วโมง Linux จึงจะรัน Garbage Collection', false, NULL, 4);
+INSERT INTO public.choices VALUES ('5077b771-c4d8-4133-aa8a-035b32b864da', 'c1a10001-0000-0000-0000-000000000003', 'เครื่องปลายทางไม่ได้เปิดโปรแกรมหรือ Service รับการเชื่อมต่อที่พอร์ต 8080', true, NULL, 1);
+INSERT INTO public.choices VALUES ('88d254f3-b2c3-4ed6-a798-60b0bec45639', 'c1a10001-0000-0000-0000-000000000003', 'สาย LAN ขาด หรือสัญญาณ Wi-Fi หลุด', false, NULL, 2);
+INSERT INTO public.choices VALUES ('16592b2c-366e-4158-a33a-a6661fffc822', 'c1a10001-0000-0000-0000-000000000003', 'Domain Name หมดอายุ', false, NULL, 3);
+INSERT INTO public.choices VALUES ('20e45227-5d3f-4230-a5c3-cb497cea5398', 'c1a10001-0000-0000-0000-000000000003', 'RAM ของเครื่องลูกข่ายไม่เพียงพอ', false, NULL, 4);
+INSERT INTO public.choices VALUES ('cf5e2537-beb6-41df-b902-d3134e90edc2', 'c1a10001-0000-0000-0000-000000000007', 'Backend / Upstream Server ทำงานช้าจนหมดเวลา timeout ไม่ยอมส่งคำตอบกลับมายัง Proxy', true, NULL, 1);
+INSERT INTO public.choices VALUES ('d16340db-8b31-45ca-8d2e-bf0c65e393fa', 'c1a10001-0000-0000-0000-000000000007', 'ผู้ใช้พิมพ์ URL ผิด หน้าเว็บไม่มีอยู่จริง', false, NULL, 2);
+INSERT INTO public.choices VALUES ('26dd6b8b-c8e9-4538-a8e5-01561b16e538', 'c1a10001-0000-0000-0000-000000000007', 'ผู้ใช้ใส่รหัสผ่านผิดระบบจึงไม่อนุญาต', false, NULL, 3);
+INSERT INTO public.choices VALUES ('e49f552c-cce0-46d9-ab08-cfa052e65154', 'c1a10001-0000-0000-0000-000000000007', 'ใบรับรอง SSL/TLS ของเว็บไซต์หมดอายุ', false, NULL, 4);
+INSERT INTO public.choices VALUES ('9bd1ee5a-7fcb-4b89-a379-452595550cb0', 'c1a10001-0000-0000-0000-000000000004', 'SELECT e.name, d.dept_name FROM employees e LEFT JOIN departments d ON e.dept_id = d.id', true, NULL, 1);
+INSERT INTO public.choices VALUES ('10a87cf5-821f-4e65-bf88-451da5e362b3', 'c1a10001-0000-0000-0000-000000000004', 'SELECT e.name, d.dept_name FROM employees e INNER JOIN departments d ON e.dept_id = d.id', false, NULL, 2);
+INSERT INTO public.choices VALUES ('577961b1-9516-448e-8fa8-353799d7a15d', 'c1a10001-0000-0000-0000-000000000004', 'SELECT e.name, d.dept_name FROM employees e RIGHT JOIN departments d ON e.dept_id = d.id', false, NULL, 3);
+INSERT INTO public.choices VALUES ('9ab63674-6fea-4031-b301-325754b40cdf', 'c1a10001-0000-0000-0000-000000000004', 'SELECT e.name, d.dept_name FROM employees e CROSS JOIN departments d', false, NULL, 4);
+INSERT INTO public.choices VALUES ('7fd97d9c-9ce4-4100-9921-771bd12e13b9', 'c1a10001-0000-0000-0000-000000000005', 'EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 45000 AND status = ''PENDING'';', true, NULL, 1);
+INSERT INTO public.choices VALUES ('49fc0340-3878-4e8e-8e95-089a56ecac0a', 'c1a10001-0000-0000-0000-000000000005', 'OPTIMIZE TABLE orders;', false, NULL, 2);
+INSERT INTO public.choices VALUES ('438f2f82-db85-413e-b867-c42618a4b3bc', 'c1a10001-0000-0000-0000-000000000005', 'SHOW PROFILE FOR QUERY 1;', false, NULL, 3);
+INSERT INTO public.choices VALUES ('5544dddb-517e-4851-9d7d-16217f20f8f4', 'c1a10001-0000-0000-0000-000000000005', 'REINDEX DATABASE postgres;', false, NULL, 4);
+INSERT INTO public.choices VALUES ('f544c9df-702e-4322-9033-daab06807065', '48ef625d-f83d-4e25-9661-d28975cfb48c', '100 และ 80', true, 'ถูกต้อง COUNT(*) ได้ 100 แถว และ COUNT(resolved_by) ละเว้น 20 แถวที่เป็น NULL จึงได้ 80', 1);
+INSERT INTO public.choices VALUES ('e9ab2a4c-cac8-403c-a62b-238ad5d0a094', '48ef625d-f83d-4e25-9661-d28975cfb48c', '100 และ 100', false, 'COUNT(column) จะไม่นับแถวที่เป็น NULL', 2);
+INSERT INTO public.choices VALUES ('70cacd63-b386-4a7e-bc6e-91fa92b3b3c0', '48ef625d-f83d-4e25-9661-d28975cfb48c', '80 และ 80', false, 'COUNT(*) จะนับแถวทั้งหมดเสมอ', 3);
+INSERT INTO public.choices VALUES ('0a7c7239-ac60-4ae0-aab8-93a107256beb', 'fed5a2b0-f7b7-4585-869c-d21e36063fab', 'สีเหลืองคือ Single-mode (OS2) คู่กับหัว LR ระยะไกล ส่วนสีฟ้า Aqua คือ Multi-mode (OM3/OM4) คู่กับหัว SR ระยะใกล้', true, 'ถูกต้องตามมาตรฐาน TIA-598 และการใช้งานจริงใน Data Center', 1);
+INSERT INTO public.choices VALUES ('d455a08d-784a-40f3-bf20-5d0cf1a8708b', 'fed5a2b0-f7b7-4585-869c-d21e36063fab', 'สีเหลืองคือ Multi-mode คู่กับหัว SR ส่วนสีฟ้าคือ Single-mode คู่กับหัว LR', false, 'สลับชนิดกัน', 2);
+INSERT INTO public.choices VALUES ('55e9f2d5-5366-4a90-ad3c-9f05c7187342', 'fed5a2b0-f7b7-4585-869c-d21e36063fab', 'ทั้งสองสีเป็นสายชนิดเดียวกัน ต่างกันแค่ยี่ห้อผู้ผลิต สามารถเสียบแทนกันได้ทั้งหมด', false, 'แกนแสงต่างกัน (9µm vs 50µm) ห้ามเสียบข้ามชนิดกัน', 3);
+INSERT INTO public.choices VALUES ('197187d2-5a49-4bc4-8b92-2f3aaaa79c44', 'fed5a2b0-f7b7-4585-869c-d21e36063fab', 'สีเหลืองใช้สำหรับสายไฟแรงสูง ส่วนสีฟ้าใช้สำหรับสายแลนทองแดง Cat6', false, 'ทั้งคู่เป็นรหัสสีของสาย Fiber Optic', 4);
+INSERT INTO public.choices VALUES ('3e060ac7-888f-455b-9c59-8a43e36848e9', 'cf23fcf6-0d35-4d10-9843-e5cd963707d1', 'ขั้วสายไฟเบอร์ Tx/Rx ไม่ตรงกัน (Tx ชน Tx) ให้ถอดหัว LC ฝั่งหนึ่งมาสลับขั้วสายคู่ซ้าย-ขวา (Rolling the fiber) แล้วเสียบใหม่', true, 'ถูกต้อง การสลับขั้ว Tx/Rx (Roll fiber) เป็นวิธีแก้พื้นฐานที่สุดเมื่อต่อสายไฟเบอร์แล้วไฟ Link ไม่ขึ้น', 1);
+INSERT INTO public.choices VALUES ('e6532020-1317-44e3-9cff-31a7aecb5853', 'cf23fcf6-0d35-4d10-9843-e5cd963707d1', 'ใช้สายตาเปล่าส่องเข้าไปในรูหัว SFP+ ทันทีเพื่อดูว่ามีแสงเลเซอร์สีแดงออกมาหรือไม่', false, 'ห้ามใช้ตาเปล่าส่องปลายสายไฟเบอร์หรือหัว Transceiver เด็ดขาดเพราะแสงเลเซอร์อาจทำลายจอประสาทตา', 2);
+INSERT INTO public.choices VALUES ('bdf33064-4997-47dd-8e0d-a5250b25bf0d', 'cf23fcf6-0d35-4d10-9843-e5cd963707d1', 'พับสายไฟเบอร์ให้หักเป็นมุมฉาก 90 องศาเพื่อเร่งความเร็วการสะท้อนของแสง', false, 'การพับสายเกิน Bend radius จะทำให้แกนแก้วหักหรือแสงรั่วออกนอกสาย', 3);
+INSERT INTO public.choices VALUES ('4890bc6c-a953-4e3c-ada9-7aceac5fffa4', 'cf23fcf6-0d35-4d10-9843-e5cd963707d1', 'สั่งรีบูต Switch ทั้งสองตัวพร้อมกันทันที', false, 'ห้ามรีบูต Production Switch จากปัญหาแค่พอร์ตเดียวไม่ขึ้น', 4);
+INSERT INTO public.choices VALUES ('e0dd1342-b4e4-4f19-a1a3-3457e262debf', '60d9f418-713b-4218-bba9-7763e3ec1077', 'SFP+ (10 Gbps) และ QSFP28 (100 Gbps)', true, 'ถูกต้อง', 1);
+INSERT INTO public.choices VALUES ('a4705471-b4a3-4985-9639-181139f652ee', '60d9f418-713b-4218-bba9-7763e3ec1077', 'SFP (10 Gbps) และ SFP+ (100 Gbps)', false, 'SFP รองรับ 1 Gbps และ SFP+ รองรับ 10 Gbps', 2);
+INSERT INTO public.choices VALUES ('1316db4e-748e-4ffb-a765-fbc05ae0aa08', '60d9f418-713b-4218-bba9-7763e3ec1077', 'RJ45 (10 Gbps) และ SC (100 Gbps)', false, 'RJ45 และ SC เป็นชื่อหัวคอนเน็กเตอร์สาย ไม่ใช่ชนิดของฟอร์มแฟกเตอร์ Transceiver', 3);
+INSERT INTO public.choices VALUES ('f6b63598-6f98-46b3-847f-3956cd924ab4', '60d9f418-713b-4218-bba9-7763e3ec1077', 'QSFP+ (10 Gbps) และ SFP (100 Gbps)', false, 'QSFP+ คือ 40 Gbps และ SFP คือ 1 Gbps', 4);
+INSERT INTO public.choices VALUES ('9130a987-db2d-455b-a81d-c61f333996cf', '31507ab1-5704-4dca-adbb-845cb298008c', 'ขาวส้ม, ส้ม, ขาวเขียว, น้ำเงิน, ขาวน้ำเงิน, เขียว, ขาวน้ำตาล, น้ำตาล', true, 'ถูกต้องตามมาตรฐาน T568B', 1);
+INSERT INTO public.choices VALUES ('1496bdc3-a377-4b39-b3da-2a31dd2e1acf', '31507ab1-5704-4dca-adbb-845cb298008c', 'ขาวเขียว, เขียว, ขาวส้ม, น้ำเงิน, ขาวน้ำเงิน, ส้ม, ขาวน้ำตาล, น้ำตาล', false, 'ลำดับนี้คือมาตรฐาน T568A', 2);
+INSERT INTO public.choices VALUES ('b425418d-4db9-46bb-be03-9dff23a8971e', '31507ab1-5704-4dca-adbb-845cb298008c', 'ขาวส้ม, ส้ม, ขาวเขียว, เขียว, ขาวน้ำเงิน, น้ำเงิน, ขาวน้ำตาล, น้ำตาล', false, 'พิน 3-6 ไม่ได้เรียงคู่เขียวติดกัน เพราะต้องคร่อมคู่สีน้ำเงินเพื่อลดสัญญาณรบกวน (Crosstalk)', 3);
+INSERT INTO public.choices VALUES ('3729eb0c-73e2-4a88-b21e-c4ca54ecbf29', '31507ab1-5704-4dca-adbb-845cb298008c', 'น้ำตาล, ขาวน้ำตาล, เขียว, ขาวเขียว, น้ำเงิน, ขาวน้ำเงิน, ส้ม, ขาวส้ม', false, 'เรียงลำดับผิด', 4);
+INSERT INTO public.choices VALUES ('44571d68-53b4-4162-a807-a900c288e449', '9d9f0119-30e0-4f74-a490-6f63150858f8', 'Riser Card', true, 'ถูกต้อง', 1);
+INSERT INTO public.choices VALUES ('3b47e161-a22c-4c75-82e6-e8d206ee544f', '9d9f0119-30e0-4f74-a490-6f63150858f8', 'BMC (Baseboard Management Controller)', false, 'BMC คือชิปควบคุมระบบจัดการระยะไกล (เช่น iDRAC/iLO)', 2);
+INSERT INTO public.choices VALUES ('d80bc617-194e-482c-a7ae-7ab7091d8897', '9d9f0119-30e0-4f74-a490-6f63150858f8', 'Blanking Panel', false, 'Blanking Panel คือแผ่นปิดช่องว่างหน้าตู้แร็คเพื่อกั้นลมร้อน', 3);
+INSERT INTO public.choices VALUES ('5d043525-51b1-4ba3-81cb-ca690cbdf090', '9d9f0119-30e0-4f74-a490-6f63150858f8', 'SFP+ Transceiver', false, 'SFP+ คือหัวแปลงสัญญาณแสงที่เสียบเข้าพอร์ตของการ์ดเครือข่าย', 4);
+INSERT INTO public.choices VALUES ('1159beb5-fa2f-4b26-9bae-efa2df6553e6', '9600ac8c-a971-4c6f-96be-42e68bba2936', 'ติดตั้งอุปกรณ์ที่หนักที่สุด (เช่น UPS และ Storage Array) ไว้ที่ระยะ U ด้านล่างสุดของตู้แร็คเสมอ', true, 'ถูกต้อง ช่วยถ่วงน้ำหนักไม่ให้ตู้แร็คคว่ำ', 1);
+INSERT INTO public.choices VALUES ('fb5d5c73-728a-4f09-a57b-dae3871dad5c', '9600ac8c-a971-4c6f-96be-42e68bba2936', 'ติดตั้ง UPS ไว้ที่ชั้นบนสุด (U40-U42) เพื่อให้ง่ายต่อการมองเห็นหน้าจอสถานะ', false, 'อันตรายมากทั้งตอนยกขึ้นและเสี่ยงทำให้ตู้แร็คเสียสมดุลล้มคว่ำ', 2);
+INSERT INTO public.choices VALUES ('0812c6c7-bbb6-42e2-bd58-24d61af49499', '9600ac8c-a971-4c6f-96be-42e68bba2936', 'เสียบสายไฟของเซิร์ฟเวอร์ทั้งสองเส้นเข้าที่รางปลั๊ก PDU เส้นเดียวกันเพื่อประหยัดช่องเสียบ', false, 'ผิดหลัก Redundancy ต้องแยกเสียบเข้า PDU ฝั่ง A และฝั่ง B', 3);
+INSERT INTO public.choices VALUES ('90d8fa7e-4454-49f5-8ef4-2c856b4abe7e', '9600ac8c-a971-4c6f-96be-42e68bba2936', 'ถอดแผ่นปิดช่องว่าง (Blanking Panel) ออกทั้งหมดเพื่อให้ลมร้อนไหลวนกลับมาด้านหน้าตู้ได้สะดวก', false, 'ต้องใส่ Blanking Panel เพื่อป้องกันลมร้อนไหลย้อนกลับมาด้านหน้า', 4);
+INSERT INTO public.choices VALUES ('2e7ce4f1-f068-41e5-a528-8f78b832323f', '8cca4bdc-4664-4c04-8b68-ba8cd1c3c87e', 'เชื่อมต่อผ่านระบบ Out-of-Band เช่น iDRAC (หรือ IPMI / Redfish) เพื่ออ่าน System Event Log และเปิด Virtual Console', true, 'ถูกต้อง', 1);
+INSERT INTO public.choices VALUES ('73b3a3dc-cf92-46dd-a0b4-f0470ac067d5', '8cca4bdc-4664-4c04-8b68-ba8cd1c3c87e', 'รอจนกว่าเครื่องจะหายค้างเอง เพราะเมื่อ SSH ไม่ได้จะไม่มีวิธีอื่นในการตรวจสอบ', false, 'ระบบ OOB ถูกออกแบบมาเพื่อแก้ปัญหากรณี SSH/OS ค้างโดยเฉพาะ', 2);
+INSERT INTO public.choices VALUES ('764b8e74-b75b-4f03-8dde-368acfcd73a3', '8cca4bdc-4664-4c04-8b68-ba8cd1c3c87e', 'เดินไปถอดแรมออกทีละแถวในขณะที่เครื่องยังเปิดไฟทำงานอยู่', false, 'แรมไม่ได้เป็นอุปกรณ์ Hot-swap ห้ามถอดขณะเปิดเครื่องเด็ดขาด', 3);
+INSERT INTO public.choices VALUES ('14d13a57-431a-4c74-9a86-14d675f6137e', '8cca4bdc-4664-4c04-8b68-ba8cd1c3c87e', 'สับเบรกเกอร์ไฟหลักของทั้งห้อง Data Hall ลงแล้วเปิดใหม่', false, 'ห้ามแตะต้องไฟหลักของห้องเพราะจะทำให้เครื่องอื่นดับทั้งหมด', 4);
+INSERT INTO public.choices VALUES ('08956aa6-7313-4ed3-802f-26adf1d34edf', '322d8847-058b-4e2b-aaf5-b73a6f99c8db', 'DHCP (แจก IP และชี้ตำแหน่งเซิร์ฟเวอร์) คู่กับ TFTP (ดาวน์โหลดไฟล์ Bootloader และ Kernel)', true, 'ถูกต้อง', 1);
+INSERT INTO public.choices VALUES ('296cf77a-b561-4cc8-8eb8-83af8140120c', '322d8847-058b-4e2b-aaf5-b73a6f99c8db', 'SMTP คู่กับ POP3', false, 'SMTP และ POP3 เป็นโปรโตคอลรับส่งอีเมล', 2);
+INSERT INTO public.choices VALUES ('6a10428c-da78-4a57-be6e-121e9fe5bd33', '322d8847-058b-4e2b-aaf5-b73a6f99c8db', 'BGP คู่กับ OSPF', false, 'BGP และ OSPF เป็นโปรโตคอล Routing', 3);
+INSERT INTO public.choices VALUES ('9a984cc3-3fee-444d-baff-0f93338c71f7', '322d8847-058b-4e2b-aaf5-b73a6f99c8db', 'SNMP คู่กับ NTP', false, 'SNMP ใช้มอนิเตอร์อุปกรณ์ และ NTP ใช้ซิงก์เวลา', 4);
+INSERT INTO public.choices VALUES ('66b8d85e-4c32-4a54-8ede-59cadd26bb73', '7dc94aeb-fbb7-495c-b1a6-e0e7a616e571', 'WWPN (World Wide Port Name) ของการ์ด HBA และพอร์ตของตู้ Storage', true, 'ถูกต้อง WWPN ทำหน้าที่คล้าย MAC Address ในระบบ Fibre Channel', 1);
+INSERT INTO public.choices VALUES ('73b75a06-c32b-4b43-8d34-e79a7f9eb9ae', '7dc94aeb-fbb7-495c-b1a6-e0e7a616e571', 'หมายเลขพอร์ต TCP 80 และ 443', false, 'TCP 80/443 เป็นพอร์ตของ HTTP/HTTPS', 2);
+INSERT INTO public.choices VALUES ('f194ccdb-2eff-4ceb-beff-e2fed80b67b1', '7dc94aeb-fbb7-495c-b1a6-e0e7a616e571', 'ชื่อโดเมนเว็บไซต์ในไฟล์ /etc/resolv.conf', false, 'ไม่เกี่ยวข้องกับ Fibre Channel Zoning', 3);
+INSERT INTO public.choices VALUES ('5a10fcc5-5c39-4dd7-beca-8274b30c5e4f', '7dc94aeb-fbb7-495c-b1a6-e0e7a616e571', 'หมายเลข Serial Number ของพัดลมระบายความร้อน', false, 'ไม่เกี่ยวข้องกับระบบ SAN', 4);
+INSERT INTO public.choices VALUES ('0c34e859-6396-4277-bdc5-2988451fbd01', 'a917b677-c0d8-4beb-9d74-003d1ecba5d7', 'UPS จ่ายไฟจากแบตเตอรี่ทันทีเพื่อประคองระบบช่วงสั้นๆ ส่วน ATS ทำหน้าที่สลับแหล่งจ่ายไฟระหว่างไฟการไฟฟ้ากับเครื่องปั่นไฟ (Generator) อัตโนมัติ', true, 'ถูกต้อง', 1);
+INSERT INTO public.choices VALUES ('9e56322a-c562-46fe-b850-b75a845c0082', 'a917b677-c0d8-4beb-9d74-003d1ecba5d7', 'UPS ใช้ดับเพลิงเมื่อเกิดไฟไหม้ ส่วน ATS ใช้ทำความเย็นให้ตู้แร็ค', false, 'ทั้งคู่เป็นอุปกรณ์ในระบบไฟฟ้ากำลัง', 2);
+INSERT INTO public.choices VALUES ('20b50d60-e7f2-4c85-ba14-ff1fa4c68ba4', 'a917b677-c0d8-4beb-9d74-003d1ecba5d7', 'ATS คือแบตเตอรี่สำรองไฟ ส่วน UPS คือเครื่องปั่นไฟดีเซล', false, 'สลับความหมายและหน้าที่กัน', 3);
+INSERT INTO public.choices VALUES ('7ffe2cc6-cfc7-4b31-aabd-997e6ad5ad3b', 'a917b677-c0d8-4beb-9d74-003d1ecba5d7', 'UPS ใช้เฉพาะกับไฟ 110V เท่านั้น ส่วน ATS ใช้เฉพาะสายไฟเบอร์ออปติก', false, 'ไม่ถูกต้อง', 4);
+INSERT INTO public.choices VALUES ('a4776ee2-187c-4105-b26d-f5dfc3b83088', '7196c4c2-9d55-4195-b076-2fd1f73327e3', '1. เปิด Network/SAN Switches -> 2. เปิดตู้ Storage Array -> 3. ทยอยเปิดเครื่องเซิร์ฟเวอร์ (Compute Servers)', true, 'ถูกต้อง ช่วยให้เซิร์ฟเวอร์มองเห็นเครือข่ายและดิสก์ทันทีที่บูตขึ้น และป้องกันไฟกระชาก', 1);
+INSERT INTO public.choices VALUES ('fcd5326f-405e-4a1a-b975-b6c3c9c62685', '7196c4c2-9d55-4195-b076-2fd1f73327e3', '1. เปิดเครื่องเซิร์ฟเวอร์ทั้งหมดพร้อมกัน -> 2. เปิด Storage -> 3. เปิด Switch หลังสุด', false, 'จะทำให้เซิร์ฟเวอร์บูตขึ้นมาไม่เจอ Storage (Mount ล้มเหลว) และเกิดไฟกระชากสูง', 2);
+INSERT INTO public.choices VALUES ('eec2cc39-7f47-4c7d-b3b8-3febbf492c1c', '7196c4c2-9d55-4195-b076-2fd1f73327e3', 'สับเบรกเกอร์เปิดและปิดสลับกันเร็วๆ 3 ครั้งเพื่อเป็นการอุ่นเครื่อง', false, 'จะทำให้ภาคจ่ายไฟและฮาร์ดดิสก์พังเสียหาย', 3);
+INSERT INTO public.choices VALUES ('ebcb5af8-94d1-4d19-9750-efaa31a5d1a3', '7196c4c2-9d55-4195-b076-2fd1f73327e3', 'เปิดเฉพาะ PSU ฝั่ง A ทิ้งไว้ 24 ชั่วโมงแล้วค่อยเสียบสายแลน', false, 'ไม่ถูกต้อง', 4);
+INSERT INTO public.choices VALUES ('914ecdbe-7ecf-470b-97de-51b872426d89', '05515d73-1a5e-475d-b40b-94ce12001fab', 'ssh-keygen -R 10.20.1.88', true, 'ถูกต้อง — ลบเฉพาะรายการ Host key ของ 10.20.1.88 ออกจาก ~/.ssh/known_hosts อย่างปลอดภัย', 1);
+INSERT INTO public.choices VALUES ('e66dae09-0252-4cab-b5ff-a24b228b49f1', '48ef625d-f83d-4e25-9661-d28975cfb48c', '100 และ 20', false, '20 คือจำนวนแถวที่เป็น NULL ไม่ใช่จำนวนแถวที่มีค่า', 4);
+INSERT INTO public.choices VALUES ('a8814cf4-3035-4da3-8baf-a1b1ed304f67', '933dfdc8-419d-4b12-9ccc-1a634e095c13', 'หันหน้าตู้เข้าหากันเพื่อรับลมเย็น (Cold Aisle) หันหลังตู้ชนกันเพื่อระบายลมร้อน (Hot Aisle) และติด Blanking Panel เพื่อกั้นไม่ให้ลมร้อนไหลย้อนกลับมาด้านหน้า', true, 'ถูกต้องตามมาตรฐานการจัดการการไหลเวียนอากาศใน Data Center', 1);
+INSERT INTO public.choices VALUES ('ad6a1b86-0e33-4b8a-b689-d19caab70d34', '933dfdc8-419d-4b12-9ccc-1a634e095c13', 'หันหน้าตู้สลับกับหลังตู้ในแถวเดียวกันเพื่อให้ลมร้อนและลมเย็นผสมกันให้อุณหภูมิเท่ากันทั้งห้อง', false, 'การผสมลมร้อนกับลมเย็นทำให้ประสิทธิภาพการระบายความร้อนแย่ลงและเซิร์ฟเวอร์ร้อนจัด', 2);
+INSERT INTO public.choices VALUES ('e7a9f5bf-47ef-41ac-b0a3-8058f66f54f1', '933dfdc8-419d-4b12-9ccc-1a634e095c13', 'เป่าลมเย็นเข้าทางด้านหลังเครื่อง PSU และดูดลมร้อนออกทางด้านหน้าฮาร์ดดิสก์', false, 'เซิร์ฟเวอร์มาตรฐานดูดลมเย็นเข้าด้านหน้า (Front Intake) และเป่าออกด้านหลัง (Rear Exhaust)', 3);
+INSERT INTO public.choices VALUES ('24b49473-e7f3-4141-b992-e1bc0fb732bc', '933dfdc8-419d-4b12-9ccc-1a634e095c13', 'ติด Blanking Panel เพื่อเพิ่มน้ำหนักให้ตู้แร็คไม่สั่นสะเทือน', false, 'Blanking Panel เบามาก มีไว้เพื่อกั้นทิศทางลม ไม่ใช่ถ่วงน้ำหนัก', 4);
+INSERT INTO public.choices VALUES ('f7d0c72d-880a-4e61-91ca-e8246ad46e4d', '6f372fdb-946b-43aa-a8a4-868bc32651ea', 'แก๊สสารสะอาดดับเพลิง (Clean Agent เช่น FM-200, Novec 1230 หรือ Inergen) คู่กับระบบตรวจจับควันความไวสูง VESDA', true, 'ถูกต้อง ดับไฟได้โดยเซิร์ฟเวอร์ยังทำงานต่อได้และไม่เกิดความเสียหายจากน้ำหรือผงเคมี', 1);
+INSERT INTO public.choices VALUES ('080d7a79-ce4a-4b73-aef9-7bc6afa0823f', '6f372fdb-946b-43aa-a8a4-868bc32651ea', 'หัวฉีดน้ำสปริงเกอร์แรงดันสูงที่ฉีดน้ำท่วมตู้แร็คทันทีเมื่อมีกลิ่นเหม็น', false, 'น้ำจะทำให้ไฟฟ้าลัดวงจรและอุปกรณ์ทั้งหมดเสียหาย', 2);
+INSERT INTO public.choices VALUES ('5ba1e7ab-e087-482c-90d6-ddbda7ef0325', '6f372fdb-946b-43aa-a8a4-868bc32651ea', 'ถังดับเพลิงชนิดผงเคมีแห้งสีแดงฉีดพ่นเข้าไปในพัดลมเซิร์ฟเวอร์', false, 'ผงเคมีแห้งมีความเป็นกรดและกัดกร่อนแผงวงจรเมนบอร์ดทุกเครื่องในห้องจนพัง', 3);
+INSERT INTO public.choices VALUES ('71ca36fa-4985-436c-96d7-577dd67ba353', '6f372fdb-946b-43aa-a8a4-868bc32651ea', 'โฟมเคมีผสมน้ำเกลือ', false, 'นำไฟฟ้าอย่างรุนแรง ห้ามใช้กับอุปกรณ์ไฟฟ้า', 4);
+INSERT INTO public.choices VALUES ('ccaa39fd-3003-488c-bfae-ac99ae8a0758', '583a1f9b-0196-4bd5-b6ca-18b2fd163774', 'ตั้งสติ ไม่สับเบรกเกอร์หลักของทั้งตู้แร็ค ประเมินความปลอดภัย ตรวจสอบสถานะ Redundant PSU ถอดเฉพาะสายไฟของลูก PSU ที่มีปัญหา และแจ้งหัวหน้าทีม/NOC ทันที', true, 'ถูกต้อง แสดงถึงความรอบคอบ มีสติ และเข้าใจผลกระทบต่อระบบส่วนรวม (Blast radius)', 1);
+INSERT INTO public.choices VALUES ('5f13781e-84fe-458f-8a78-65d0b019463d', '583a1f9b-0196-4bd5-b6ca-18b2fd163774', 'รีบวิ่งไปสับเบรกเกอร์ไฟหลักของทั้งตู้แร็คลงทันทีโดยไม่ต้องแจ้งใคร', false, 'จะทำให้เซิร์ฟเวอร์เครื่องอื่นทั้งตู้แร็คดับทั้งหมดโดยไม่จำเป็น', 2);
+INSERT INTO public.choices VALUES ('5c3adc1f-9305-4f90-a15e-69cf86bea955', '583a1f9b-0196-4bd5-b6ca-18b2fd163774', 'ทุบกระจกกดปุ่ม EPO (Emergency Power Off) เพื่อตัดไฟทั้งอาคาร Data Center ทันที', false, 'ปุ่ม EPO ใช้เฉพาะกรณีเกิดภัยพิบัติร้ายแรงถึงชีวิตเท่านั้น การกดโดยไม่จำเป็นจะทำให้ทั้งศูนย์ข้อมูลล่ม', 3);
+INSERT INTO public.choices VALUES ('340bc71b-0648-4774-a937-787628ab7aca', '583a1f9b-0196-4bd5-b6ca-18b2fd163774', 'เพิกเฉยและเดินผ่านไปเหมือนไม่มีอะไรเกิดขึ้นเพราะเห็นว่าเซิร์ฟเวอร์ยังไม่ดับ', false, 'ขาดความรับผิดชอบ ต้องตรวจสอบและรายงานเพื่อเปลี่ยน PSU ลูกที่เสีย', 4);
+INSERT INTO public.choices VALUES ('b0008d02-95ad-49d4-9d28-1e1621396653', '30e66b8d-6030-4b13-8c81-97a7a8358886', 'ตอบตามตรงว่ายังไม่เคยใช้เครื่องเชื่อมสายจริง แต่อธิบายความเข้าใจเรื่องชนิดสายไฟเบอร์ การดูแลรักษาหัวสาย และแสดงความพร้อมที่จะเรียนรู้ฝึกฝนอย่างรวดเร็ว', true, 'ถูกต้อง ซื่อสัตย์และแสดงศักยภาพในการเรียนรู้', 1);
+INSERT INTO public.choices VALUES ('bf664cac-2684-4a6f-bc58-9125e153545b', '30e66b8d-6030-4b13-8c81-97a7a8358886', 'โกหกว่าทำเป็นชำนาญมากเพื่อให้ได้งานก่อน แล้วค่อยไปแอบดูวิธีทำทีหลัง', false, 'ผู้สัมภาษณ์มักจะถามจี้รายละเอียดขั้นตอนทันที หากตอบไม่ได้จะเสียคะแนนความน่าเชื่อถือทั้งหมด', 2);
+INSERT INTO public.choices VALUES ('49fb3981-bf97-48ed-a035-399bae51accc', '30e66b8d-6030-4b13-8c81-97a7a8358886', 'ตอบว่าไม่รู้และไม่อยากทำเพราะเป็นงานของช่างเดินสายเท่านั้น', false, 'แสดงทัศนคติปิดกั้นการเรียนรู้', 3);
+INSERT INTO public.choices VALUES ('e99100dd-270a-4f79-bea7-3ce7fa2fc09b', '30e66b8d-6030-4b13-8c81-97a7a8358886', 'เปลี่ยนเรื่องคุยไปพูดเรื่องการเขียนโปรแกรมแทนโดยไม่ตอบคำถาม', false, 'ไม่ตรงคำถาม', 4);
+INSERT INTO public.choices VALUES ('a86309fb-e00e-4e00-8db9-21c93a461e28', 'd2bfba71-09f3-46d0-aacd-24c38ff4e835', 'รันคำสั่ง docker logs <container_name> เพื่อดูข้อความ Error สาเหตุที่ Container ดับ', true, 'ถูกต้อง docker logs จะแสดง stdout/stderr ของโปรเซสก่อนที่จะดับลง', 1);
+INSERT INTO public.choices VALUES ('b409f840-ec32-42ef-8cc7-bb2a230e7912', 'd2bfba71-09f3-46d0-aacd-24c38ff4e835', 'ลบ Docker Image ทิ้งแล้วดาวน์โหลดใหม่ทันที', false, 'การลบ Image โดยไม่ดู Log จะทำให้ไม่ทราบสาเหตุของปัญหา', 2);
+INSERT INTO public.choices VALUES ('72de650c-43c9-4b34-b970-fb9f2fc3c794', 'd2bfba71-09f3-46d0-aacd-24c38ff4e835', 'รัน docker exec -it <container_name> bash', false, 'docker exec ใช้ได้กับ Container ที่กำลังรันอยู่เท่านั้น ไม่สามารถ exec เข้าตัวที่ Exited ได้', 3);
+INSERT INTO public.choices VALUES ('3f4b97de-7e2c-427f-a840-fb8888384b01', 'd2bfba71-09f3-46d0-aacd-24c38ff4e835', 'รีสตาร์ทเครื่อง Physical Host ทันที', false, 'การรีสตาร์ทเครื่องแม่ข่ายเป็นการกระทำที่เกินกว่าเหตุและกระทบระบบอื่น', 4);
+INSERT INTO public.choices VALUES ('a5b473ad-3936-4414-9c91-ba289052c2b2', '0fc16af1-29b0-41f4-af69-ba9e1cd8aa60', 'docker exec -it api_gateway sh', true, 'ถูกต้อง คำสั่งนี้จะเปิด Terminal shell เข้าไปใน Container ที่กำลังทำงานอยู่', 1);
+INSERT INTO public.choices VALUES ('d8336586-6f27-45e8-bd54-5457a5f6fe4f', '0fc16af1-29b0-41f4-af69-ba9e1cd8aa60', 'docker run -it api_gateway', false, 'docker run จะเป็นการสร้าง Container ตัวใหม่ขึ้นมา ไม่ใช่เข้าไปในตัวเดิม', 2);
+INSERT INTO public.choices VALUES ('29faeaf6-4242-493f-aac8-caab8c80b71a', '0fc16af1-29b0-41f4-af69-ba9e1cd8aa60', 'docker ssh api_gateway', false, 'ไม่มีคำสั่งย่อย docker ssh ใน Docker CLI', 3);
+INSERT INTO public.choices VALUES ('142182c4-99b1-4b2d-add5-839808215b2b', '0fc16af1-29b0-41f4-af69-ba9e1cd8aa60', 'docker attach api_gateway', false, 'docker attach จะผูก stdout/stderr ของโปรเซสหลัก ซึ่งหากกด Ctrl+C อาจทำให้ Container ดับไปด้วย', 4);
+INSERT INTO public.choices VALUES ('12ff97cf-6710-47f9-9757-7ba345f9adbd', '5e788bf5-347f-4201-9344-7e3f4c9e180f', 'คอนเทนเนอร์ใช้หน่วยความจำ RAM เกินขีดจำกัดที่ตั้งไว้ จนถูก Linux Kernel OOM Killer สั่งยุติการทำงานทันที', true, 'ถูกต้อง นี่คือนิยามและสาเหตุของ Exit code 137 OOMKilled', 1);
+INSERT INTO public.choices VALUES ('7e044336-2025-4348-b338-0c216fff49a5', '5e788bf5-347f-4201-9344-7e3f4c9e180f', 'คอนเทนเนอร์ทำงานเสร็จสิ้นสมบูรณ์ตามปกติ', false, 'ทำงานเสร็จตามปกติคือ Exit Code 0', 2);
+INSERT INTO public.choices VALUES ('dfdc48d9-b443-4855-b04c-9c0cc8f8a46a', '5e788bf5-347f-4201-9344-7e3f4c9e180f', 'มีคนสั่งลบไดเรกทอรี root ของคอนเทนเนอร์', false, 'ไม่ใช่อาการของ OOMKilled', 3);
+INSERT INTO public.choices VALUES ('26b3a62e-2b5b-4954-9672-87d20f6dc1ba', '5e788bf5-347f-4201-9344-7e3f4c9e180f', 'พอร์ตเครือข่ายมีคนใช้งานซ้ำซ้อน', false, 'พอร์ตชนกันจะเกิด Exit Code 1 ตอนเริ่มต้น ไม่ใช่ 137 ตอนกำลังรันงานหนัก', 4);
+INSERT INTO public.choices VALUES ('3b13a230-1cdf-4881-a676-3ba71caf969c', '5d2f59f3-3800-4751-84af-43e8f7a2c8f4', 'Exit Code 143', true, 'ถูกต้อง 128 + 15 (SIGTERM) = 143', 1);
+INSERT INTO public.choices VALUES ('3f8e3874-508d-4288-b972-0f88376c050d', '5d2f59f3-3800-4751-84af-43e8f7a2c8f4', 'Exit Code 0', false, '0 คือโปรเซสทำงานจบด้วยตัวมันเองสำเร็จ', 2);
+INSERT INTO public.choices VALUES ('ad386fd3-aacd-455b-9b92-c9ce10a235b5', '5d2f59f3-3800-4751-84af-43e8f7a2c8f4', 'Exit Code 1', false, '1 คือ Application Error ทั่วไป', 3);
+INSERT INTO public.choices VALUES ('b0e270ec-6dea-4f12-9ffd-adb45a7001fd', '5d2f59f3-3800-4751-84af-43e8f7a2c8f4', 'Exit Code 255', false, '255 มักเกิดจากข้อผิดพลาดร้ายแรงของ Entrypoint หรือ Docker Engine', 4);
+INSERT INTO public.choices VALUES ('91f3cdee-bc8a-4132-ae39-6c9bed01f524', 'c1a10001-0000-0000-0000-000000000001', 'chmod 755 deploy.sh', true, NULL, 1);
+INSERT INTO public.choices VALUES ('1066ba17-9cef-419c-a742-9e64633b8826', 'c1a10001-0000-0000-0000-000000000001', 'chmod 644 deploy.sh', false, NULL, 2);
+INSERT INTO public.choices VALUES ('c141e7aa-24cf-423a-b0ce-10590e64688d', 'c1a10001-0000-0000-0000-000000000001', 'chmod 777 deploy.sh', false, NULL, 3);
+INSERT INTO public.choices VALUES ('146f1f0d-cfd8-4da0-80f2-706d203401f6', 'c1a10001-0000-0000-0000-000000000001', 'chmod 764 deploy.sh', false, NULL, 4);
+INSERT INTO public.choices VALUES ('cc8e11ac-e1e9-4b29-a332-e8637c4c478a', '892ec4d9-193b-40fa-a7c6-71c4e3031c2d', 'pwd', true, 'ถูกต้อง — แสดงเส้นทางเต็มของโฟลเดอร์ที่กำลังทำงานอยู่ปัจจุบัน', 1);
+INSERT INTO public.choices VALUES ('613c7a6c-8806-4ce6-85c4-1080007ed23c', '892ec4d9-193b-40fa-a7c6-71c4e3031c2d', 'cd', false, 'cd ใช้สำหรับเปลี่ยนโฟลเดอร์ หากพิมพ์ cd เปล่าๆ จะพากลับไปยัง Home directory', 2);
+INSERT INTO public.choices VALUES ('79179020-9ec7-4fb9-8d38-a50615902723', '892ec4d9-193b-40fa-a7c6-71c4e3031c2d', 'whoami', false, 'whoami ใช้แสดงชื่อบัญชีผู้ใช้ปัจจุบัน ไม่ใช่ตำแหน่งโฟลเดอร์', 3);
+INSERT INTO public.choices VALUES ('1c54fbf8-ff71-4978-94ea-2434ce613243', '892ec4d9-193b-40fa-a7c6-71c4e3031c2d', 'ls -a', false, 'ls -a ใช้แสดงรายชื่อไฟล์ในโฟลเดอร์ปัจจุบัน ไม่ได้แสดงเส้นทางเต็ม', 4);
+INSERT INTO public.choices VALUES ('b858c880-79c6-48c2-948b-85acb06bd032', '1e16fb7f-d0aa-4285-b8d2-3faa3bccb016', 'ls -lah', true, 'ถูกต้อง — รวมตัวเลือกดูรายละเอียด (-l), ไฟล์ซ่อน (-a) และหน่วยอ่านง่าย (-h)', 1);
+INSERT INTO public.choices VALUES ('b12d888d-9bd5-45fd-938a-e17f7bad322d', '1e16fb7f-d0aa-4285-b8d2-3faa3bccb016', 'ls -l', false, 'แสดงรายละเอียดแต่ไม่แสดงไฟล์ซ่อนที่ขึ้นต้นด้วยจุด และขนาดไฟล์ยังเป็นหน่วยไบต์', 2);
+INSERT INTO public.choices VALUES ('492de5d5-ab88-42d3-8696-aaf6980de153', '1e16fb7f-d0aa-4285-b8d2-3faa3bccb016', 'ls -r', false, 'ls -r เป็นการเรียงลำดับรายชื่อไฟล์แบบย้อนกลับ (reverse)', 3);
+INSERT INTO public.choices VALUES ('4323ff4c-1fec-4f40-ae2d-0740cf2597ce', '1e16fb7f-d0aa-4285-b8d2-3faa3bccb016', 'cat -n *', false, 'cat เป็นคำสั่งเปิดอ่านเนื้อหาภายในไฟล์ ไม่ใช่การแสดงรายการไฟล์ในโฟลเดอร์', 4);
+INSERT INTO public.choices VALUES ('13bbce03-849b-4e02-941e-b1a936c4cf97', '35d32f57-908c-4509-84c0-94b315f2bd35', 'ชื่อไฟล์บน Linux แยกตัวพิมพ์เล็ก-ใหญ่ ต้องระบุเป็น `tail -n 20 Error.log` ให้ตรงกับชื่อไฟล์จริง', true, 'ถูกต้อง — Error.log กับ error.log คือคนละชื่อไฟล์บน Linux', 1);
+INSERT INTO public.choices VALUES ('6dc72aea-fd1b-4c15-b749-fc326d9df4a5', '35d32f57-908c-4509-84c0-94b315f2bd35', 'คำสั่ง tail ไม่สามารถอ่านไฟล์ขนาดต่ำกว่า 10KB ได้ ต้องใช้คำสั่ง less แทน', false, 'tail สามารถอ่านไฟล์ข้อความทุกขนาดได้', 2);
+INSERT INTO public.choices VALUES ('1c4fa316-0109-4259-b423-1fe9dae56d0e', '35d32f57-908c-4509-84c0-94b315f2bd35', 'ต้องใส่เครื่องหมาย `/` นำหน้าชื่อไฟล์เป็น `/error.log` เสมอ', false, 'การใส่ `/error.log` จะกลายเป็นอ้างอิงไฟล์ที่รากสุดของระบบ (`/`) ซึ่งผิดตำแหน่ง', 3);
+INSERT INTO public.choices VALUES ('d804b822-8313-4477-92aa-031de1bd3448', '35d32f57-908c-4509-84c0-94b315f2bd35', 'ไฟล์ถูกบีบอัดอยู่ ต้องแตกไฟล์ด้วย gunzip ก่อนเปิดอ่าน', false, 'ไฟล์ไม่ได้มีนามสกุล .gz และสาเหตุเกิดจากการสะกดตัวพิมพ์ใหญ่-เล็กไม่ตรงกัน', 4);
+INSERT INTO public.choices VALUES ('1bfe1f3d-c099-4535-bf7d-50e4a46cded0', '424f36a8-1a09-4c7c-8511-fe7c60417e2e', 'เพราะ cat จะเทเนื้อหาทั้งหมดออกหน้าจอรวดเดียว ทำให้เปลืองทรัพยากรและอ่านข้อมูลลำบาก ควรใช้ less หรือ tail แทน', true, 'ถูกต้อง — less และ tail ออกแบบมาให้อ่านเฉพาะส่วนที่ต้องการโดยไม่โหลดทั้งไฟล์ลงหน้าจอ', 1);
+INSERT INTO public.choices VALUES ('be6cd004-7cbb-40e4-9e84-2ce736520aa8', '424f36a8-1a09-4c7c-8511-fe7c60417e2e', 'เพราะคำสั่ง cat จะทำการล็อกไฟล์ (File lock) ทำให้แอปพลิเคชันเขียน Log ต่อไม่ได้จนระบบล่ม', false, 'cat ไม่ได้ล็อกไฟล์ไม่ให้โปรเซสอื่นเขียนต่อ แต่ปัญหาคือการอ่านและแสดงผลรวดเดียวทั้งหมด', 2);
+INSERT INTO public.choices VALUES ('fd397b06-4f2e-479f-a925-f8831fc49a95', '424f36a8-1a09-4c7c-8511-fe7c60417e2e', 'เพราะ cat จะลบเนื้อหาเก่าในไฟล์ทิ้งหลังจากแสดงผลเสร็จ', false, 'cat เป็นคำสั่งอ่านอย่างเดียว ไม่ได้ลบเนื้อหาในไฟล์', 3);
+INSERT INTO public.choices VALUES ('51f38174-d697-42c9-bedf-f188191a0c80', '424f36a8-1a09-4c7c-8511-fe7c60417e2e', 'เพราะ cat รองรับเฉพาะไฟล์ที่มีขนาดไม่เกิน 1 MB เท่านั้นตามข้อจำกัดของ Kernel', false, 'cat ไม่มีข้อจำกัดที่ 1 MB แต่ไม่เหมาะกับการเปิดอ่านไฟล์ใหญ่โต้ตอบบนหน้าจอ', 4);
+INSERT INTO public.choices VALUES ('af34dc81-c62a-4efc-8e5e-a98be337abea', 'ff930bba-7a53-42c5-acae-936a295c3727', 'มีช่องว่างหลังเครื่องหมาย `/` ทำให้คำสั่งถูกตีความว่าสั่งลบตั้งแต่ Root (`/`) และตามด้วย `tmp/cache/*` ซึ่งเสี่ยงทำให้ระบบเสียหายร้ายแรง', true, 'ถูกต้อง — การเว้นวรรคผิดในคำสั่ง rm -rf ทำให้อาร์กิวเมนต์แยกออกเป็น 2 พาธ', 1);
+INSERT INTO public.choices VALUES ('9fcb0503-76df-4032-95c3-83d3cd81d0a2', 'ff930bba-7a53-42c5-acae-936a295c3727', 'ระบบจะลบเฉพาะไฟล์ใน `/tmp/cache/*` ได้ตามปกติ เพราะ Shell จะตัดช่องว่างออกให้อัตโนมัติ', false, 'Shell ใช้ช่องว่างเป็นตัวคั่นอาร์กิวเมนต์ ไม่ได้ตัดช่องว่างรวมเข้าด้วยกัน', 2);
+INSERT INTO public.choices VALUES ('add090b8-b57a-4f3b-89c6-c7a7ba752af8', 'ff930bba-7a53-42c5-acae-936a295c3727', 'คำสั่งจะไม่ทำงานเพราะตัวเลือก `-rf` ไม่สามารถใช้ร่วมกับเครื่องหมาย `*` ได้', false, '-rf ใช้ร่วมกับ wildcard * ได้ และนั่นคือสาเหตุที่ทำให้เกิดความเสียหายได้ง่าย', 3);
+INSERT INTO public.choices VALUES ('bc146859-c6f6-42bc-b9ea-8eabcac651ba', 'ff930bba-7a53-42c5-acae-936a295c3727', 'ระบบจะย้ายไฟล์ทั้งหมดไปไว้ในถังขยะ `~/.Trash` ซึ่งสามารถกู้คืนได้ภายหลัง', false, 'คำสั่ง rm บน Linux CLI จะลบไฟล์ออกจากไดเรกทอรีโดยตรง ไม่ได้ย้ายไปถังขยะ', 4);
+INSERT INTO public.choices VALUES ('b8b8c054-abb5-456d-9634-d164a6182a92', 'a41d9eb7-8d8e-4280-992f-cc029c329c9a', 'cd ..', true, 'ถูกต้อง — `..` แทนโฟลเดอร์แม่ 1 ชั้น', 1);
+INSERT INTO public.choices VALUES ('46e5bc6f-7be5-4c58-ae59-0454030653eb', 'a41d9eb7-8d8e-4280-992f-cc029c329c9a', 'cd .', false, '`.` หมายถึงโฟลเดอร์ปัจจุบัน การรัน `cd .` จึงยังคงอยู่ที่เดิม', 2);
+INSERT INTO public.choices VALUES ('a44e253a-3598-4168-8be1-4a6bf8f995ce', 'a41d9eb7-8d8e-4280-992f-cc029c329c9a', 'cd ~', false, '`~` หมายถึง Home directory ของผู้ใช้ เช่น `/home/support`', 3);
+INSERT INTO public.choices VALUES ('9ce6749e-c03b-47f9-99bd-f8c178194f2b', 'a41d9eb7-8d8e-4280-992f-cc029c329c9a', 'cd /', false, '`cd /` คือการย้ายไปยังรากสุดของระบบ (Root directory) และเป็น Absolute Path', 4);
+INSERT INTO public.choices VALUES ('991f7d6a-07ef-4a68-83a2-5bd90682ed53', 'd7c21650-b866-4270-89b0-b1694c2881dd', 'cp -p app.conf app.conf.bak', true, 'ถูกต้อง — `-p` ช่วยคงค่า mode, ownership และ timestamps เดิมไว้', 1);
+INSERT INTO public.choices VALUES ('4845569d-8da0-40d2-82eb-c81941e03ee2', 'd7c21650-b866-4270-89b0-b1694c2881dd', 'mv app.conf app.conf.bak', false, 'mv เป็นการย้ายหรือเปลี่ยนชื่อไฟล์ จะทำให้ไฟล์ต้นฉบับ `app.conf` หายไปและกระทบแอปพลิเคชัน', 2);
+INSERT INTO public.choices VALUES ('75ff46bb-5d8b-41db-bdb9-9680a9031ade', 'd7c21650-b866-4270-89b0-b1694c2881dd', 'touch app.conf.bak', false, 'touch จะสร้างเพียงไฟล์เปล่าที่ไม่มีเนื้อหาข้างใน', 3);
+INSERT INTO public.choices VALUES ('9a7c1996-8981-4d24-ad4d-8adffc11eb9c', 'd7c21650-b866-4270-89b0-b1694c2881dd', 'mkdir app.conf.bak', false, 'mkdir เป็นคำสั่งสร้างโฟลเดอร์ ไม่ใช่การคัดลอกไฟล์', 4);
+INSERT INTO public.choices VALUES ('5fac4501-81d6-45cc-a66f-98e01dfea59f', 'c76d1ecb-de00-4fe1-b3cd-fb37fb4de9f3', '/etc และ /var/log', true, 'ถูกต้อง — /etc เก็บไฟล์คอนฟิก และ /var/log เก็บไฟล์ Log', 1);
+INSERT INTO public.choices VALUES ('2a71a4a5-bdee-44f5-9bb4-5d8e9fac1e4d', 'c76d1ecb-de00-4fe1-b3cd-fb37fb4de9f3', '/usr และ /tmp', false, '/usr เก็บโปรแกรมและไลบรารี ส่วน /tmp เก็บไฟล์ชั่วคราว', 2);
+INSERT INTO public.choices VALUES ('53924a83-7bbd-4a38-8733-3134712c7e6e', 'c76d1ecb-de00-4fe1-b3cd-fb37fb4de9f3', '/opt และ /home', false, '/opt เก็บซอฟต์แวร์เสริม ส่วน /home เก็บโฟลเดอร์ส่วนตัวของผู้ใช้', 3);
+INSERT INTO public.choices VALUES ('d71c6bf9-c4fe-432d-aaea-cecb96e59c7c', 'c76d1ecb-de00-4fe1-b3cd-fb37fb4de9f3', '/bin และ /sbin', false, '/bin และ /sbin เก็บไฟล์คำสั่ง Binary ของระบบ', 4);
+INSERT INTO public.choices VALUES ('60391389-1f39-4b2b-917e-09490ad75397', '31f353c9-c627-49e9-a19b-a79eb9cfc624', 'find /var -type f -size +200M', true, 'ถูกต้อง — ระบุโฟลเดอร์ /var กรองเฉพาะไฟล์ด้วย -type f และขนาดเกิน 200M ด้วย -size +200M', 1);
+INSERT INTO public.choices VALUES ('e2e277bb-607e-41ae-b9a5-e4970c42f84e', '31f353c9-c627-49e9-a19b-a79eb9cfc624', 'find /var -type d -size -200M', false, '-type d คือการหาโฟลเดอร์ และ -200M คือขนาดน้อยกว่า 200MB', 2);
+INSERT INTO public.choices VALUES ('b02b5c1f-84bf-42e5-92c3-a6b3d2bdb31d', '31f353c9-c627-49e9-a19b-a79eb9cfc624', 'du -sh /var +200M', false, 'du ไม่รองรับพารามิเตอร์กรองขนาดแบบ +200M', 3);
+INSERT INTO public.choices VALUES ('4c75d5a1-986d-467d-ba9f-b94974f800c6', '31f353c9-c627-49e9-a19b-a79eb9cfc624', 'ls -lah /var --size=200M', false, 'ls ไม่ได้ค้นหาลงไปทุกโฟลเดอร์ย่อยและไม่มีตัวเลือกกรองขนาดแบบนี้', 4);
+INSERT INTO public.choices VALUES ('0559adfa-bc9b-4469-bccb-48af2ddf0f64', '1ac01c44-5005-4ecb-88fc-c771eb4dae59', 'Symbolic link `/opt/payment/current` ชี้ไปยังโฟลเดอร์ `/opt/payment/releases/20261015` ที่ถูกลบไปแล้ว (Broken link)', true, 'ถูกต้อง — ลิงก์ชี้ไปยังปลายทางที่ไม่มีอยู่จริงในโฟลเดอร์ releases/', 1);
+INSERT INTO public.choices VALUES ('83461c72-ae10-4f70-9763-3a8976c12365', '1ac01c44-5005-4ecb-88fc-c771eb4dae59', 'สิทธิ์ของ `/opt/payment/current` เป็น `lrwxrwxrwx` (777) ระบบความปลอดภัยจึงบล็อกการเข้าถึง', false, 'สิทธิ์ของตัว Symbolic link จะแสดงเป็น lrwxrwxrwx เสมอตามปกติ โดยสิทธิ์จริงจะอิงตามไฟล์ปลายทาง', 2);
+INSERT INTO public.choices VALUES ('a3c2f877-06a9-4dff-adb8-1907bdc04671', '1ac01c44-5005-4ecb-88fc-c771eb4dae59', 'ผู้ใช้ deploy ไม่มีสิทธิ์อ่านโฟลเดอร์ `20261103`', false, 'ปัญหาไม่ได้อยู่ที่สิทธิ์ของ 20261103 แต่อยู่ที่ตัวลิงก์ current ยังชี้ไปที่ 20261015 ซึ่งไม่มีอยู่แล้ว', 3);
+INSERT INTO public.choices VALUES ('17705452-f530-44b5-8b0c-f82ef2aa3082', '1ac01c44-5005-4ecb-88fc-c771eb4dae59', 'ฮาร์ดดิสก์พาร์ทิชัน `/opt` เสียหาย ต้องรัน fsck ทันที', false, 'เป็นเพียงปัญหา Symbolic link ชี้ผิดโฟลเดอร์หลังการลบ Release เก่า ไม่ใช่ดิสก์เสีย', 4);
+INSERT INTO public.choices VALUES ('11d180d2-ef8d-4d5c-b48f-be4084ae6179', 'e19ee335-78a0-4eac-b7a7-95af8779fa8f', 'ตรวจสอบไฟล์ `/etc/hosts` ว่ามีการระบุ IP `10.10.1.50` คู่กับชื่อ `db-internal.corp` ค้างไว้หรือไม่', true, 'ถูกต้อง — ระบบจะอ่าน /etc/hosts ก่อนสอบถาม DNS Server เสมอ', 1);
+INSERT INTO public.choices VALUES ('2473e22e-869d-448c-9c87-e4dd735907d8', 'e19ee335-78a0-4eac-b7a7-95af8779fa8f', 'ตรวจสอบไฟล์ `/etc/fstab` ว่ามีการตั้งค่า Network Drive ผิดหรือไม่', false, '/etc/fstab ใช้สำหรับตั้งค่าการ Mount ระบบไฟล์และดิสก์ ไม่เกี่ยวกับการแปลงชื่อโดเมน', 2);
+INSERT INTO public.choices VALUES ('0de2abe7-d674-4824-b591-1ee5484616d3', 'e19ee335-78a0-4eac-b7a7-95af8779fa8f', 'ตรวจสอบไฟล์ `/etc/hostname` เพราะชื่อเครื่องอาจซ้ำกับฐานข้อมูล', false, '/etc/hostname เก็บเฉพาะชื่อของเครื่องตัวเอง ไม่ได้เก็บตารางแปลง IP ของปลายทางอื่น', 3);
+INSERT INTO public.choices VALUES ('71c01aae-e99e-4bb7-9b32-018f381507e7', 'e19ee335-78a0-4eac-b7a7-95af8779fa8f', 'ลบไฟล์ทั้งหมดใน `/tmp` เพื่อล้างแคชของระบบไฟล์', false, 'ไฟล์ใน /tmp ไม่ใช่ตาราง Host resolution ของระบบปฏิบัติการ', 4);
+INSERT INTO public.choices VALUES ('16e8b226-6fee-44c8-b069-f791a5c06bfc', '23509a71-f1f8-45bf-96da-6d3a6a9c3f91', 'find /etc/nginx -type f -mmin -30', true, 'ถูกต้อง — `-mmin -30` ค้นหาไฟล์ที่ถูกแก้ไขภายใน 30 นาทีล่าสุด', 1);
+INSERT INTO public.choices VALUES ('9f1599fe-e61c-446c-81c5-6b68f447daac', '23509a71-f1f8-45bf-96da-6d3a6a9c3f91', 'find /etc/nginx -type f -mtime +30', false, '`-mtime +30` คือไฟล์ที่ถูกแก้ไขมานานกว่า 30 วันแล้ว', 2);
+INSERT INTO public.choices VALUES ('4466890a-8473-46a0-ad0b-3869238d3b07', '23509a71-f1f8-45bf-96da-6d3a6a9c3f91', 'stat /etc/nginx --minutes 30', false, 'คำสั่ง stat ไม่มีพารามิเตอร์ --minutes สำหรับค้นหาไฟล์', 3);
+INSERT INTO public.choices VALUES ('317c2586-f75d-443d-a4ba-9c7a3c2e591c', '23509a71-f1f8-45bf-96da-6d3a6a9c3f91', 'du -sh /etc/nginx -m 30', false, 'du ใช้สำหรับคำนวณขนาดพื้นที่ดิสก์ ไม่ใช่การค้นหาไฟล์ตามเวลา', 4);
+INSERT INTO public.choices VALUES ('8099cc57-afc1-47d9-95fd-72402ae2eaa0', '27c7d63d-8846-4721-927d-742b789c9ef0', 'Modify คือเวลาที่แก้ไขเนื้อหาภายในไฟล์ ส่วน Change คือเวลาที่แก้ไข Metadata เช่น สิทธิ์หรือเจ้าของไฟล์', true, 'ถูกต้อง — mtime เปลี่ยนเมื่อแก้เนื้อหาไฟล์ ส่วน ctime เปลี่ยนเมื่อแก้เนื้อหาหรือแก้สิทธิ์/เจ้าของ', 1);
+INSERT INTO public.choices VALUES ('e0239bd4-a106-4337-b9d1-61858bfc1661', '27c7d63d-8846-4721-927d-742b789c9ef0', 'Modify คือเวลาที่สร้างไฟล์ครั้งแรก ส่วน Change คือเวลาที่เปิดอ่านไฟล์ล่าสุด', false, 'เวลาเปิดอ่านคือ Access (atime) และเวลาสร้างไฟล์คือ Birth', 2);
+INSERT INTO public.choices VALUES ('80fc38fe-ca1b-4e83-8828-ba87b045d934', '27c7d63d-8846-4721-927d-742b789c9ef0', 'Modify ใช้กับไฟล์ข้อความเท่านั้น ส่วน Change ใช้กับไฟล์ Binary เท่านั้น', false, 'ทั้งสองค่ามีอยู่ในทุกไฟล์บนระบบ Linux', 3);
+INSERT INTO public.choices VALUES ('ee73dd64-fd13-4c0b-ab4f-b58b727628a5', '27c7d63d-8846-4721-927d-742b789c9ef0', 'ทั้งสองค่ามีความหมายเหมือนกันทุกประการ แสดงซ้ำเพื่อรองรับระบบเก่า', false, 'ทั้งสองค่าแยกกันชัดเจน เช่น การรัน chmod จะอัปเดตเฉพาะ Change แต่ไม่อัปเดต Modify', 4);
+INSERT INTO public.choices VALUES ('00d8de74-4aa4-4f90-b164-14c24057d608', '1ec400d8-3617-45ec-8fb7-3dbea642ec4b', 'ใช้ตรวจสอบชนิดที่แท้จริงของไฟล์จากข้อมูลภายใน โดยไม่ได้ดูแค่ชื่อนามสกุลไฟล์', true, 'ถูกต้อง — ช่วยจับผิดไฟล์ที่ตั้งนามสกุลไม่ตรงกับเนื้อหาจริง เช่น ไฟล์ดาวน์โหลดเสียที่ได้เนื้อหาเป็น HTML', 1);
+INSERT INTO public.choices VALUES ('52ce6e4b-70fd-46fb-960f-b602dac3c706', '1ec400d8-3617-45ec-8fb7-3dbea642ec4b', 'ใช้แตกไฟล์บีบอัดตระกูล .gz ออกมาเป็นโฟลเดอร์', false, 'การแตกไฟล์ .gz ต้องใช้ gunzip หรือ tar ไม่ใช่คำสั่ง file', 2);
+INSERT INTO public.choices VALUES ('8ace51a5-b8a3-4081-a237-bb3fb5e03f80', '1ec400d8-3617-45ec-8fb7-3dbea642ec4b', 'ใช้ซ่อมแซมไฟล์ที่เสียหายให้กลับมาเปิดได้ตามปกติ', false, 'คำสั่ง file เป็นการอ่านเพื่อระบุประเภทไฟล์เท่านั้น ไม่ได้ซ่อมแซมไฟล์', 3);
+INSERT INTO public.choices VALUES ('94672ec4-9fb4-4cd3-8345-3533a51b8867', '1ec400d8-3617-45ec-8fb7-3dbea642ec4b', 'ใช้เปลี่ยนเจ้าของไฟล์ให้เป็นของผู้ใช้ปัจจุบัน', false, 'การเปลี่ยนเจ้าของไฟล์คือคำสั่ง chown', 4);
+INSERT INTO public.choices VALUES ('dbb6e1d3-0b9e-4d5a-9186-0af25f2e28c3', 'f3e4853e-922b-4d4a-b10f-7d2bd40d88f1', '`kill 14520` ส่งสัญญาณ SIGTERM (15) ให้โปรเซสเคลียร์งานก่อนปิด ส่วน `kill -9 14520` ส่ง SIGKILL (9) บังคับตัดการทำงานทันที', true, 'ถูกต้อง — ควรเริ่มด้วย SIGTERM เสมอเพื่อป้องกันข้อมูลเสียหาย', 1);
+INSERT INTO public.choices VALUES ('fb5f3427-f18b-47a4-9ab9-1e4473edb0dd', '05515d73-1a5e-475d-b40b-94ce12001fab', 'ssh-copy-id 10.20.1.88', false, 'ssh-copy-id ใช้ส่ง Public key ของเราไปปลายทาง ซึ่งจะติดปัญหา Host key verification failed เช่นเดียวกัน', 2);
+INSERT INTO public.choices VALUES ('5311a7ed-5d31-416f-b39a-94bf54c6658e', 'f3e4853e-922b-4d4a-b10f-7d2bd40d88f1', '`kill 14520` ใช้สำหรับหยุดชั่วคราว (Pause) ส่วน `kill -9 14520` ใช้สำหรับรีสตาร์ทโปรเซสใหม่', false, 'ทั้งสองคำสั่งใช้หยุดการทำงานของโปรเซส ไม่ใช่การรีสตาร์ท', 2);
+INSERT INTO public.choices VALUES ('f9a254a4-e073-4e59-affc-a62c8292897f', 'f3e4853e-922b-4d4a-b10f-7d2bd40d88f1', '`kill -9` จะรอให้โปรเซสทำงานเสร็จอีก 9 วินาทีก่อนปิด ส่วน `kill` ปิดทันที', false, 'เลข 9 คือรหัสสัญญาณ SIGKILL ไม่ใช่จำนวนวินาทีที่รอ', 3);
+INSERT INTO public.choices VALUES ('d212aadf-3331-468a-a9b2-3df1941c64c1', 'f3e4853e-922b-4d4a-b10f-7d2bd40d88f1', 'ไม่มีความแตกต่างกัน เป็นเพียงรูปแบบการเขียนแบบย่อและแบบเต็ม', false, 'ต่างกันอย่างชัดเจนระหว่างการปิดแบบ Graceful (SIGTERM) และการบังคับตัดทันที (SIGKILL)', 4);
+INSERT INTO public.choices VALUES ('2784cce9-c80e-4a64-a1ea-98ce6d7be6d8', 'f8280394-341a-4956-bc80-97c392a1c7be', 'หน่วยความจำ (RAM) ของเครื่องไม่เพียงพอ ทำให้ระบบ OOM Killer ของ Kernel บังคับปิดโปรเซส', true, 'ถูกต้อง — Result: oom-kill บ่งชี้ว่าถูก Out-Of-Memory Killer ตัดการทำงาน', 1);
+INSERT INTO public.choices VALUES ('8ddac4d5-e0db-4709-857e-72f67c52b128', 'f8280394-341a-4956-bc80-97c392a1c7be', 'ไฟล์ `/opt/payment/worker.py` ถูกลบออกจากเครื่อง', false, 'หากไฟล์หายจะฟ้องตั้งแต่เริ่มรันด้วย exit-code ไม่ใช่ oom-kill', 2);
+INSERT INTO public.choices VALUES ('21f3ce17-5577-4296-912a-e4b07293ebd6', 'f8280394-341a-4956-bc80-97c392a1c7be', 'พอร์ตเครือข่ายของบริการชนกับโปรแกรมอื่น', false, 'พอร์ตชนจะจบการทำงานด้วย exit-code และฟ้อง Address already in use', 3);
+INSERT INTO public.choices VALUES ('80ac2668-c5bb-4342-ba1b-9ee93caf82f4', 'f8280394-341a-4956-bc80-97c392a1c7be', 'ยังไม่ได้เปิดใช้งาน `systemctl enable` ให้กับบริการนี้', false, 'ในบรรทัด Loaded แสดงว่า enabled อยู่แล้ว และสาเหตุคือหน่วยความจำเต็ม', 4);
+INSERT INTO public.choices VALUES ('89d70e0d-9e35-4727-afe7-7635912b6688', '90c789a2-b6f3-4c51-9a7a-df5d3e8f28e2', 'systemctl list-units --failed', true, 'ถูกต้อง — แสดงเฉพาะบริการที่อยู่ในสถานะ failed ทั้งหมด', 1);
+INSERT INTO public.choices VALUES ('9bb68765-6e40-4d14-a430-ff85355bc8bd', '90c789a2-b6f3-4c51-9a7a-df5d3e8f28e2', 'systemctl is-active --all', false, 'is-active ใช้ตรวจชื่อบริการที่ระบุ ไม่ใช่การแสดงรายการที่ล่มทั้งหมด', 2);
+INSERT INTO public.choices VALUES ('1017258d-1850-4249-a883-b4c1148b9b19', '90c789a2-b6f3-4c51-9a7a-df5d3e8f28e2', 'ps aux --failed', false, 'คำสั่ง ps aux แสดงโปรเซสที่ยังรันอยู่ ไม่มีตัวเลือก --failed', 3);
+INSERT INTO public.choices VALUES ('1086a172-09b8-4a29-ba11-fb460337afcd', '90c789a2-b6f3-4c51-9a7a-df5d3e8f28e2', 'journalctl --list-failed', false, 'journalctl ใช้เปิดอ่าน Log ไม่มีตัวเลือก --list-failed', 4);
+INSERT INTO public.choices VALUES ('94f18c3e-d233-42c0-8f0f-01ca5c8211dd', '38b2cbc9-0ffb-4c2f-9042-fcd9bf03fa06', 'คือ Zombie Process ที่ทำงานจบไปแล้วแต่โปรเซสแม่ยังไม่อ่านสถานะจบงาน จึงไม่สามารถใช้ kill -9 สั่งฆ่าตัวมันซ้ำได้', true, 'ถูกต้อง — Zombie ไม่มีโค้ดรันอยู่แล้ว เหลือเพียงรายการในตารางโปรเซสที่รอโปรเซสแม่มาเก็บกวาด', 1);
+INSERT INTO public.choices VALUES ('d2c85bfa-1519-4662-ba60-2fb398ca77bd', '38b2cbc9-0ffb-4c2f-9042-fcd9bf03fa06', 'คือโปรเซสที่ถูกเข้ารหัสด้วยไวรัส ต้องใช้สิทธิ์ root รัน `pkill -f defunct` เท่านั้น', false, 'Zombie process เป็นกลไกปกติของตารางโปรเซสบน Linux ไม่ใช่ไวรัส', 2);
+INSERT INTO public.choices VALUES ('f78ff077-1b24-4b38-b68b-73bdc35aa8c0', '38b2cbc9-0ffb-4c2f-9042-fcd9bf03fa06', 'คือโปรเซสที่กำลังบีบอัดไฟล์แบบ Zip (Z) และห้ามขัดจังหวะจนกว่าจะบีบอัดเสร็จ', false, 'ตัวอักษร Z ในคอลัมน์ STAT หมายถึง Zombie ไม่ใช่การบีบอัดไฟล์', 3);
+INSERT INTO public.choices VALUES ('4d805f1b-7f72-4b60-a62c-d3bdab45636a', '38b2cbc9-0ffb-4c2f-9042-fcd9bf03fa06', 'คือโปรเซสของ Kernel ที่ถูกล็อกด้วยฮาร์ดแวร์ ต้องถอดสายแลนออกก่อนจึงจะ kill ได้', false, 'ไม่เกี่ยวข้องกับสายแลนหรือการล็อกฮาร์ดแวร์', 4);
+INSERT INTO public.choices VALUES ('59c7390a-2dcf-4f2f-bf27-ac548e511f6b', 'd7eedd6d-d129-48c5-a471-bde470b716ee', 'journalctl -u nginx -n 100 -f', true, 'ถูกต้อง — ระบุยูนิต (-u), จำนวนบรรทัด (-n 100) และติดตามสด (-f)', 1);
+INSERT INTO public.choices VALUES ('0b80ee61-b221-48bd-8165-cf25afc2af92', 'd7eedd6d-d129-48c5-a471-bde470b716ee', 'systemctl log nginx --tail 100', false, 'systemctl ไม่มีคำสั่งย่อย log', 2);
+INSERT INTO public.choices VALUES ('430bf8d5-b545-478e-a23b-0694160d5db7', 'd7eedd6d-d129-48c5-a471-bde470b716ee', 'ps aux -u nginx -n 100', false, 'ps ใช้ดูรายการโปรเซส ไม่ใช่คำสั่งเปิดอ่าน Log ของ systemd', 3);
+INSERT INTO public.choices VALUES ('0b031d9f-dfbb-41da-bd8a-f1dd1668048d', 'd7eedd6d-d129-48c5-a471-bde470b716ee', 'top -u nginx -f 100', false, 'top ใช้ดูการใช้ CPU/RAM ของโปรเซส ไม่ใช่การอ่าน Log', 4);
+INSERT INTO public.choices VALUES ('62dda2c8-76c7-4c2f-b836-f10c034a539d', '9d6fdd1a-c91e-4801-b419-5b7464be34e6', 'ตั้งค่าให้บริการ nginx เริ่มทำงานอัตโนมัติเมื่อบูตเครื่องเซิร์ฟเวอร์', true, 'ถูกต้อง — enable คือการผูกบริการเข้ากับเป้าหมายการบูตเครื่อง', 1);
+INSERT INTO public.choices VALUES ('722c0325-8c51-4662-a0d0-4027f05849a0', '9d6fdd1a-c91e-4801-b419-5b7464be34e6', 'สั่งรีสตาร์ทบริการ nginx ทันทีโดยไม่ตั้งค่าการบูต', false, 'การรีสตาร์ททันทีคือคำสั่ง systemctl restart nginx', 2);
+INSERT INTO public.choices VALUES ('f9744e61-4874-44ec-9062-ca5cd56a9d84', '9d6fdd1a-c91e-4801-b419-5b7464be34e6', 'เปิดพอร์ต 80 และ 443 บน Firewall ให้กับ nginx', false, 'systemctl enable จัดการเฉพาะ systemd unit ไม่ได้แก้กฎ Firewall', 3);
+INSERT INTO public.choices VALUES ('c31c2fec-76fb-4cf3-8f14-ba23205b0dff', '9d6fdd1a-c91e-4801-b419-5b7464be34e6', 'อัปเดตโปรแกรม nginx เป็นเวอร์ชันล่าสุด', false, 'การอัปเดตแพ็กเกจต้องใช้ apt หรือ dnf ไม่ใช่ systemctl', 4);
+INSERT INTO public.choices VALUES ('1433b4fc-7e4a-492d-a0de-b9dc7ddbfdf0', '1585e544-0263-4635-83aa-d715e87cb38e', 'กดปุ่ม M (พิมพ์ใหญ่)', true, 'ถูกต้อง — M रेียงตาม Memory, P เรียงตาม CPU', 1);
+INSERT INTO public.choices VALUES ('875786b5-6a6a-4f67-9c44-aa198452f0d7', '1585e544-0263-4635-83aa-d715e87cb38e', 'กดปุ่ม R (พิมพ์ใหญ่)', false, 'ปุ่ม r/R ใช้สำหรับเปลี่ยนค่า renice หรือสลับทิศทางการเรียง', 2);
+INSERT INTO public.choices VALUES ('7cb3bcec-cf70-48da-bbbf-c03698002731', '1585e544-0263-4635-83aa-d715e87cb38e', 'กดปุ่ม K (พิมพ์ใหญ่)', false, 'ปุ่ม k ใช้สำหรับส่งสัญญาณ kill โปรเซส', 3);
+INSERT INTO public.choices VALUES ('a708f5df-5037-4a35-831e-c4b100b137b8', '1585e544-0263-4635-83aa-d715e87cb38e', 'กดปุ่ม Z (พิมพ์ใหญ่)', false, 'ปุ่ม Z ใช้ตั้งค่าสีการแสดงผลใน top', 4);
+INSERT INTO public.choices VALUES ('406eab2b-67a9-4e02-80c7-b8ebd31bc70e', '063ee6ab-3870-4443-a4c7-f47dd6b52be3', 'grep -in "timeout" app.log', true, 'ถูกต้อง — -i ไม่สนใจตัวพิมพ์เล็ก-ใหญ่ และ -n แสดงเลขบรรทัด', 1);
+INSERT INTO public.choices VALUES ('66787394-6f9d-41d0-8c38-016066eff954', '063ee6ab-3870-4443-a4c7-f47dd6b52be3', 'grep -vr "timeout" app.log', false, '-v คือการกลับเงื่อนไข (ไม่เอาบรรทัดที่มีคำนี้) และ -r คือค้นหาทั้งโฟลเดอร์', 2);
+INSERT INTO public.choices VALUES ('5a116f87-b6d5-4261-bc7d-c75965a28095', '063ee6ab-3870-4443-a4c7-f47dd6b52be3', 'grep -c "timeout" app.log', false, '-c แสดงเฉพาะจำนวนบรรทัดรวมที่พบ ไม่ได้แสดงข้อความและเลขบรรทัด', 3);
+INSERT INTO public.choices VALUES ('107dc27e-2523-4609-a91a-66d53e9eacff', '063ee6ab-3870-4443-a4c7-f47dd6b52be3', 'find app.log -name "timeout"', false, 'find -name ใช้ค้นหาชื่อไฟล์ ไม่ใช่การค้นหาข้อความภายในไฟล์', 4);
+INSERT INTO public.choices VALUES ('6492f027-c44d-4ac8-804d-7e189c8128b7', 'c848a792-a49c-488d-ba20-3fbea6501ed6', '`>` จะเขียนทับข้อมูลเดิมในไฟล์ `summary.txt` ทั้งหมด ส่วน `>>` จะเขียนต่อท้ายไฟล์เดิม', true, 'ถูกต้อง — ต้องระวังการใช้ `>` กับไฟล์ที่มีข้อมูลสำคัญอยู่แล้ว', 1);
+INSERT INTO public.choices VALUES ('c17e19a8-fdaa-4fb9-b2d7-384bd870f31e', 'c848a792-a49c-488d-ba20-3fbea6501ed6', '`>` ใช้สำหรับข้อความสั้นๆ ส่วน `>>` ใช้สำหรับไฟล์ที่มีขนาดเกิน 100 MB', false, 'ทั้งสองตัวไม่ได้จำกัดขนาดไฟล์ แต่ต่างกันที่การเขียนทับหรือเขียนต่อท้าย', 2);
+INSERT INTO public.choices VALUES ('ae70f5f8-ff09-4968-ae3c-fdcd3d688908', 'c848a792-a49c-488d-ba20-3fbea6501ed6', '`>>` จะเรียงลำดับข้อความจากมากไปน้อยให้อัตโนมัติ ส่วน `>` ไม่เรียง', false, 'การ Redirect ไม่มีการเรียงลำดับข้อความ', 3);
+INSERT INTO public.choices VALUES ('76a2d5c5-2463-4ffd-b910-763745e9da7e', 'c848a792-a49c-488d-ba20-3fbea6501ed6', '`>` จะบันทึกเฉพาะ Standard Output ส่วน `>>` จะบันทึกทั้ง Standard Output และ Standard Error', false, 'ทั้ง `>` และ `>>` บันทึกเฉพาะ stdout (1) หากต้องการรวม stderr ต้องใช้ `2>&1`', 4);
+INSERT INTO public.choices VALUES ('74527afe-d268-4177-9455-fa5c4118b773', 'a2fad7a4-377c-4205-a3dd-ba2639d4f345', 'awk ''{print $1}'' /var/log/nginx/access.log | sort | uniq -c | sort -nr | head -n 5', true, 'ถูกต้อง — ดึงคอลัมน์แรก เรียงก่อนนับด้วย uniq -c แล้วเรียงตัวเลขจากมากไปน้อย', 1);
+INSERT INTO public.choices VALUES ('10219b8b-bcc1-40b3-8b34-e69da78dba35', 'a2fad7a4-377c-4205-a3dd-ba2639d4f345', 'awk ''{print $1}'' /var/log/nginx/access.log | uniq -c | head -n 5', false, 'หากไม่รัน sort ก่อน uniq -c บรรทัด IP เดียวกันที่ไม่ได้อยู่ติดกันจะไม่ถูกนับรวมกัน', 2);
+INSERT INTO public.choices VALUES ('6403c9f9-7b35-43b0-902e-d1958aa38638', 'a2fad7a4-377c-4205-a3dd-ba2639d4f345', 'grep -c "IP" /var/log/nginx/access.log | sort -r | tail -n 5', false, 'ในไฟล์ log ไม่มีคำว่า "IP" ตรงๆ และ grep -c คืนค่าเป็นตัวเลขรวมบรรทัดเดียว', 3);
+INSERT INTO public.choices VALUES ('cd8b3c44-1327-4165-9204-df22c531c50c', 'a2fad7a4-377c-4205-a3dd-ba2639d4f345', 'cut -d'':'' -f1 /var/log/nginx/access.log | wc -l', false, 'คอลัมน์คั่นด้วยช่องว่างไม่ใช่โคลอน และ wc -l นับเพียงจำนวนบรรทัดทั้งหมด', 4);
+INSERT INTO public.choices VALUES ('945bc5fa-bd7a-42f9-88f2-6ae1aaecb705', 'ebbab95e-1663-4e95-9c8e-47efd927b2b5', 'grep -v "healthcheck" access.log | tail -n 20', true, 'ถูกต้อง — grep -v ใช้ตัดบรรทัดที่มีคำว่า healthcheck ออก', 1);
+INSERT INTO public.choices VALUES ('cf9a551f-dbd7-4e59-99c9-e5ae31b6f70f', 'ebbab95e-1663-4e95-9c8e-47efd927b2b5', 'grep -r "healthcheck" access.log | tail -n 20', false, 'จะแสดงเฉพาะบรรทัดที่มีคำว่า healthcheck เท่านั้น (ตรงข้ามกับที่ต้องการ)', 2);
+INSERT INTO public.choices VALUES ('793754a2-95fe-4d93-90d7-575688b9b05d', 'ebbab95e-1663-4e95-9c8e-47efd927b2b5', 'grep -E "healthcheck" access.log | head -n 20', false, 'แสดงเฉพาะบรรทัดที่มีคำว่า healthcheck 20 บรรทัดแรก', 3);
+INSERT INTO public.choices VALUES ('68ea6579-5e74-4692-b4db-a97cece643cc', 'ebbab95e-1663-4e95-9c8e-47efd927b2b5', 'uniq -v "healthcheck" access.log', false, 'คำสั่ง uniq ไม่มีตัวเลือก -v สำหรับกรองข้อความ', 4);
+INSERT INTO public.choices VALUES ('70146e4a-d7ac-4817-8cc3-55b90c445cf9', 'beef98a0-5be8-485d-84d7-dc1947afead4', 'เพราะคำสั่ง uniq จะรวมเฉพาะบรรทัดซ้ำที่อยู่ติดกันเท่านั้น ต้องใส่ `sort` คั่นก่อน `uniq -c` เสมอ', true, 'ถูกต้อง — การใช้ sort status.txt | uniq -c จะจัดกลุ่มให้คำเดียวกันอยู่ติดกันก่อนนับ', 1);
+INSERT INTO public.choices VALUES ('e2e4654f-f201-4f2d-b4da-c870fbce22b5', 'beef98a0-5be8-485d-84d7-dc1947afead4', 'เพราะคำสั่ง uniq รองรับเฉพาะตัวเลข ไม่รองรับข้อความภาษาอังกฤษ', false, 'uniq รองรับข้อความทุกชนิดแต่ต้องเรียงให้บรรทัดซ้ำอยู่ติดกันก่อน', 2);
+INSERT INTO public.choices VALUES ('20f36c6d-26af-459b-a0d8-d4b34e33af8d', 'beef98a0-5be8-485d-84d7-dc1947afead4', 'เพราะต้องใช้คำสั่ง `wc -l` แทน `uniq -c` ในการแยกนับตามกลุ่มคำ', false, 'wc -l นับจำนวนบรรทัดรวมทั้งหมด ไม่ได้แยกนับตามกลุ่มคำ', 3);
+INSERT INTO public.choices VALUES ('156e4756-f985-48c3-b867-7f9eaca69eff', 'beef98a0-5be8-485d-84d7-dc1947afead4', 'เพราะบรรทัดแรกมีช่องว่างที่มองไม่เห็นต่อท้าย', false, 'ต่อให้ข้อความเหมือนกันทุกประการ หากมีบรรทัดอื่นคั่นกลาง uniq ก็จะไม่รวมให้หากไม่ sort ก่อน', 4);
+INSERT INTO public.choices VALUES ('49f6c9a5-81dc-44d9-89d7-1c2ec827f419', '94e77eb0-8531-4d36-b351-a394e5a164e3', 'grep -E -C 3 "ERROR|FATAL|CRITICAL" server.log', true, 'ถูกต้อง — -E ใช้ค้นหาหลายเงื่อนไขด้วย | และ -C 3 แสดงบริบทรอบข้าง 3 บรรทัด', 1);
+INSERT INTO public.choices VALUES ('7be5ae7a-bd9d-4e53-b5d9-ca4db531f07b', '94e77eb0-8531-4d36-b351-a394e5a164e3', 'grep -v -n 3 "ERROR|FATAL|CRITICAL" server.log', false, '-v คือการตัดออก และ -n ไม่ได้รับตัวเลขจำนวนบรรทัดบริบท', 2);
+INSERT INTO public.choices VALUES ('6310dc25-d1d4-4d1f-a360-7e37b261b20a', '94e77eb0-8531-4d36-b351-a394e5a164e3', 'awk "ERROR|FATAL|CRITICAL" -C 3 server.log', false, 'ไวยากรณ์ของ awk ไม่ได้ใช้ตัวเลือก -C 3 แบบ grep', 3);
+INSERT INTO public.choices VALUES ('2b70eeee-47b7-4c2d-8d2c-568b082613b3', '94e77eb0-8531-4d36-b351-a394e5a164e3', 'cut -C 3 "ERROR,FATAL,CRITICAL" server.log', false, 'cut ใช้ตัดคอลัมน์ตามตัวคั่น ไม่ใช่คำสั่งค้นหาบรรทัด', 4);
+INSERT INTO public.choices VALUES ('de4b8e1a-9cf1-4de5-a3f7-a5975edc1c65', 'ffc2a0cd-6e46-43a2-90b3-9302014d2039', 'ส่งข้อความข้อผิดพลาด (stderr = 2) ไปรวมกับผลลัพธ์ปกติ (stdout = 1) เพื่อบันทึกลงไฟล์เดียวกัน', true, 'ถูกต้อง — ช่วยให้ไม่พลาดข้อความ Error เวลาเก็บผลรันลงไฟล์', 1);
+INSERT INTO public.choices VALUES ('ad40d922-92e9-4e42-b163-8fd29d73e807', 'ffc2a0cd-6e46-43a2-90b3-9302014d2039', 'สั่งให้รันสคริปต์ซ้ำ 2 รอบ และหน่วงเวลา 1 วินาที', false, 'ตัวเลข 2 และ 1 คือหมายเลข File Descriptor ไม่ใช่จำนวนรอบการรัน', 2);
+INSERT INTO public.choices VALUES ('60e44d42-a4c4-45b1-8532-baab50f1b490', 'ffc2a0cd-6e46-43a2-90b3-9302014d2039', 'บันทึกเฉพาะ 2 บรรทัดแรกและ 1 บรรทัดสุดท้ายของผลลัพธ์', false, 'การตัดบรรทัดแรกและท้ายต้องใช้ head และ tail', 3);
+INSERT INTO public.choices VALUES ('6a6d16d1-11b2-488f-9568-e4a312b3d262', 'ffc2a0cd-6e46-43a2-90b3-9302014d2039', 'เปรียบเทียบว่าค่าตัวแปรที่ 2 มากกว่าตัวแปรที่ 1 หรือไม่', false, 'ไม่ใช่ตัวดำเนินการเปรียบเทียบทางคณิตศาสตร์', 4);
+INSERT INTO public.choices VALUES ('0002fcad-c676-43bc-af11-0d1996d3c582', '1ca32e9b-b597-44d2-8add-2849374abcb5', '`/var/log/auth.log` (Ubuntu/Debian) และ `/var/log/secure` (RHEL/Rocky)', true, 'ถูกต้อง — เป็นไฟล์มาตรฐานสำหรับตรวจประวัติ SSH และ sudo ของแต่ละค่าย', 1);
+INSERT INTO public.choices VALUES ('41b8d9e8-4a5b-49df-bfd5-f17cf31ab6d5', '1ca32e9b-b597-44d2-8add-2849374abcb5', '`/var/log/syslog` (Ubuntu/Debian) และ `/var/log/httpd` (RHEL/Rocky)', false, 'syslog เป็น log ทั่วไป ส่วน httpd เป็นโฟลเดอร์ log ของ Apache Web Server', 2);
+INSERT INTO public.choices VALUES ('091be5f2-bb38-4983-b701-d18e44fa2425', '1ca32e9b-b597-44d2-8add-2849374abcb5', '`/etc/passwd` (Ubuntu/Debian) และ `/etc/shadow` (RHEL/Rocky)', false, '/etc/passwd และ /etc/shadow เป็นไฟล์เก็บข้อมูลบัญชีผู้ใช้ ไม่ใช่ไฟล์ Log', 3);
+INSERT INTO public.choices VALUES ('d8d6b822-6d80-4003-bfee-5331295080cc', '1ca32e9b-b597-44d2-8add-2849374abcb5', '`/var/log/dmesg` ทั้งสองตระกูล', false, 'dmesg เก็บข้อความจาก Kernel และฮาร์ดแวร์ ไม่ใช่ประวัติการล็อกอิน SSH', 4);
+INSERT INTO public.choices VALUES ('1a4a748c-bb00-43c1-8a34-00406c1ad5e8', '1fabb88c-d4d0-4b99-b096-f544592a7eae', 'ใช้คำสั่ง `zgrep "ORA-12170" /var/log/app/worker.log.1.gz` เพื่อค้นหาโดยไม่ต้องแตกไฟล์ลงดิสก์', true, 'ถูกต้อง — รวดเร็วและไม่ใช้พื้นที่ดิสก์เพิ่ม', 1);
+INSERT INTO public.choices VALUES ('64575ced-d7e0-4be7-9354-b824c673abbb', '1fabb88c-d4d0-4b99-b096-f544592a7eae', 'รัน `gunzip /var/log/app/worker.log.1.gz` เพื่อแตกไฟล์ออกมาก่อนทุกครั้ง', false, 'การแตกไฟล์ใหญ่ลงใน /var/log อาจทำให้ดิสก์เต็มทันทีและทำให้ไฟล์ .gz เดิมหายไป', 2);
+INSERT INTO public.choices VALUES ('9d87b974-abe3-4188-8f3f-651fbd1f381a', '1fabb88c-d4d0-4b99-b096-f544592a7eae', 'เปลี่ยนชื่อไฟล์โดยลบ `.gz` ออกด้วยคำสั่ง `mv` แล้วใช้ `cat` เปิดอ่าน', false, 'การเปลี่ยนแค่ชื่อไฟล์ไม่ได้คลายการบีบอัด เนื้อหาข้างในยังเป็นข้อมูลไบนารีที่อ่านไม่ได้', 3);
+INSERT INTO public.choices VALUES ('0089c71a-0403-4f01-b402-5ee9555eaa9d', '1fabb88c-d4d0-4b99-b096-f544592a7eae', 'ลบไฟล์ `.gz` ทิ้งแล้วสั่งให้แอปพลิเคชันสร้าง Log ของเมื่อวานขึ้นมาใหม่', false, 'Log เป็นข้อมูลเหตุการณ์ที่ผ่านไปแล้ว หากลบทิ้งจะไม่สามารถสร้างย้อนหลังได้', 4);
+INSERT INTO public.choices VALUES ('5e8ef015-0917-4dc4-924a-ecb53b144c1b', 'aaa1442e-1b0e-4ba3-9c3b-d709f527716c', 'ค้นหาช่วงเวลาประมาณ 08:15 ถึง 08:25 (เนื่องจากเครื่องใช้เวลา UTC ซึ่งช้ากว่าเวลาไทย 7 ชั่วโมง)', true, 'ถูกต้อง — 15:20 (GMT+7) ลบ 7 ชั่วโมง = 08:20 UTC', 1);
+INSERT INTO public.choices VALUES ('9626bcb4-5c2a-445f-8fa9-74f569526073', 'aaa1442e-1b0e-4ba3-9c3b-d709f527716c', 'ค้นหาช่วงเวลา 15:15 ถึง 15:25 ได้ทันที เพราะ journalctl จะแปลงเป็นเวลาไทยให้อัตโนมัติเสมอ', false, 'journalctl อ้างอิงตาม Local time ของเครื่องเซิร์ฟเวอร์ ซึ่งในที่นี้ตั้งเป็น UTC', 2);
+INSERT INTO public.choices VALUES ('13e7098b-6f3c-4b12-9bd8-55df5090c025', 'aaa1442e-1b0e-4ba3-9c3b-d709f527716c', 'ค้นหาช่วงเวลา 22:15 ถึง 22:25 (บวกเพิ่มไปอีก 7 ชั่วโมง)', false, 'UTC ช้ากว่าเวลาไทย ต้องนำเวลาไทยลบออก 7 ชั่วโมง ไม่ใช่บวกเพิ่ม', 3);
+INSERT INTO public.choices VALUES ('d815a860-affb-4680-a8a6-267ae241d405', 'aaa1442e-1b0e-4ba3-9c3b-d709f527716c', 'เปลี่ยน Timezone ของเซิร์ฟเวอร์ Production ทันทีด้วย `timedatectl set-timezone` ก่อนค้นหา', false, 'ห้ามเปลี่ยน Timezone ของเครื่อง Production โดยพลการเพราะจะกระทบแอปพลิเคชันและ Cron job ทั้งระบบ', 4);
+INSERT INTO public.choices VALUES ('f0e5c59a-cda2-4718-aa29-2456ef1ee4b8', '2000d365-d8a9-4337-acea-cf9b3795d920', 'โปรเซส java ถูก Kernel OOM Killer บังคับปิดเพราะ RAM ไม่พอ ให้เก็บบรรทัด Log นี้พร้อมสถานะหน่วยความจำเพื่อส่งต่อตาม Runbook', true, 'ถูกต้อง — dmesg -T เป็นหลักฐานสำคัญที่สุดเมื่อโปรเซสดับจาก OOM โดยไม่มี Error ใน application log', 1);
+INSERT INTO public.choices VALUES ('a8ead9cc-81fc-4677-99e9-152b774db665', '2000d365-d8a9-4337-acea-cf9b3795d920', 'การ์ดเครือข่ายของเครื่องหลุดการเชื่อมต่อ ต้องรีสตาร์ทระบบเครือข่าย', false, 'ข้อความระบุชัดเจนว่าเป็น Out of memory ไม่ใช่ปัญหาเครือข่าย', 2);
+INSERT INTO public.choices VALUES ('9486d5f7-d303-4471-afa2-84ff730e16a5', '2000d365-d8a9-4337-acea-cf9b3795d920', 'พื้นที่ฮาร์ดดิสก์เต็ม 100% ต้องลบไฟล์โปรแกรม java ทิ้ง', false, 'Out of memory หมายถึงหน่วยความจำหลัก (RAM/Swap) ไม่พอ ไม่ใช่พื้นที่ดิสก์', 3);
+INSERT INTO public.choices VALUES ('df713038-ad8f-41f7-99d7-4b7838f49295', '2000d365-d8a9-4337-acea-cf9b3795d920', 'ผู้ดูแลระบบคนอื่นสั่งรันคำสั่ง `systemctl stop` ตามปกติ', false, 'การหยุดปกติจะไม่ขึ้นข้อความ Out of memory: Killed process ใน dmesg', 4);
+INSERT INTO public.choices VALUES ('b5a47da0-1d0f-4b0c-a2ee-cc91fd074118', 'ec034ac3-b426-4d0c-b5d3-44e557e114b3', 'แสดง Log ของบริการ api-gateway ในช่วงเวลา 09:00 ถึง 09:30 เฉพาะระดับ Error ขึ้นไปเท่านั้น', true, 'ถูกต้อง — ช่วยจำกัดวงค้นหาเฉพาะช่วงเกิดเหตุและตัดข้อความ INFO/DEBUG ออก', 1);
+INSERT INTO public.choices VALUES ('d70e16e6-8153-4f33-972c-37e038df7c88', 'ec034ac3-b426-4d0c-b5d3-44e557e114b3', 'ลบ Log ของบริการ api-gateway ในช่วงเวลา 09:00 ถึง 09:30 ทิ้งทั้งหมด', false, 'เป็นคำสั่งเปิดอ่านและกรองข้อมูล ไม่ได้ลบ Log', 2);
+INSERT INTO public.choices VALUES ('96e7a915-7511-41c5-b665-bd7932268173', 'ec034ac3-b426-4d0c-b5d3-44e557e114b3', 'แสดง Log ทุกบริการในเครื่องยกเว้น api-gateway', false, '-u เป็นการเลือกเฉพาะยูนิตที่ระบุ ไม่ใช่การยกเว้น', 3);
+INSERT INTO public.choices VALUES ('f9340d2c-031f-4320-82b0-714af6a552b6', 'ec034ac3-b426-4d0c-b5d3-44e557e114b3', 'แสดงเฉพาะ Log ระดับ INFO และ DEBUG เท่านั้น', false, '-p err จะกรองเอาเฉพาะระดับ error, crit, alert และ emerg', 4);
+INSERT INTO public.choices VALUES ('8cfb3aab-c4ee-47c3-9263-07f0baf9c3c7', '72dae6ef-9cc7-4886-a78e-b03dcf03b3f0', 'แปลงเวลานับจากตอนบูตเครื่อง (วินาที) ให้เป็นรูปแบบวันที่และเวลาปกติที่อ่านเข้าใจง่าย', true, 'ถูกต้อง — ช่วยให้เทียบเวลาเกิดเหตุกับ Log อื่นๆ ได้ทันที (แม้เวลาจาก dmesg -T อาจคลาดเคลื่อนเล็กน้อยหากเครื่องเคย suspend)', 1);
+INSERT INTO public.choices VALUES ('3cedeb24-4365-4026-bbc2-ba13e4927c31', '72dae6ef-9cc7-4886-a78e-b03dcf03b3f0', 'แปลข้อความภาษาอังกฤษใน Kernel ให้เป็นภาษาไทยทั้งหมด', false, '-T ย่อมาจาก human-readable timestamp ไม่ใช่การแปลภาษา', 2);
+INSERT INTO public.choices VALUES ('e13b8ad2-e200-4790-8856-523f268879f0', '72dae6ef-9cc7-4886-a78e-b03dcf03b3f0', 'ส่งข้อความ Log ไปยังโปรแกรม Telegram อัตโนมัติ', false, 'dmesg ไม่มีฟีเจอร์ส่งแจ้งเตือนออกภายนอก', 3);
+INSERT INTO public.choices VALUES ('42dad8d4-6d29-48a3-8167-452a343ef84f', '72dae6ef-9cc7-4886-a78e-b03dcf03b3f0', 'กรองเฉพาะข้อความที่เกี่ยวกับโปรโตคอล TCP เท่านั้น', false, '-T เกี่ยวกับการแสดงผลเวลา ไม่ใช่การกรองโปรโตคอล', 4);
+INSERT INTO public.choices VALUES ('40efff27-475e-4ec9-9522-4b3ee71be1fe', '727c6eae-6010-4167-8926-e7b834cdb6c4', 'ชื่อเครื่อง, พาธไฟล์ Log, ช่วงเวลาพร้อม Timezone, บรรทัด Error พร้อมบริบทรอบข้าง และ Request/Transaction ID', true, 'ถูกต้อง — ช่วยให้ทีม Tier 2 วิเคราะห์ต่อได้ทันทีโดยไม่ต้องกลับมานั่งไล่หาพื้นฐานใหม่', 1);
+INSERT INTO public.choices VALUES ('ed315225-0bc5-453c-9e35-542fa2a38e08', '727c6eae-6010-4167-8926-e7b834cdb6c4', 'แคปภาพหน้าจอเฉพาะคำว่า Error คำเดียวโดยตัดเวลาและชื่อเครื่องออก', false, 'ภาพแคปที่ไม่มีเวลา ชื่อเครื่อง และบริบทรอบข้างทำให้ตรวจสอบต่อไม่ได้', 2);
+INSERT INTO public.choices VALUES ('065d3eec-7ad0-42e3-8a36-e55687ba1b8b', '727c6eae-6010-4167-8926-e7b834cdb6c4', 'คัดลอกไฟล์ Log ขนาด 5 GB ทั้งไฟล์วางลงในช่องแชต', false, 'ไฟล์ใหญ่เกินไปและไม่ได้คัดกรองช่วงเวลาที่เกิดเหตุ', 3);
+INSERT INTO public.choices VALUES ('d02047c6-244a-46ca-b6cd-32003ce519bf', '727c6eae-6010-4167-8926-e7b834cdb6c4', 'แจ้งแค่ว่า ''ระบบเสีย รบกวนเช็กให้ด้วย'' โดยไม่แนบ Log ใดๆ', false, 'ขาดข้อมูลหลักฐานเบื้องต้นที่ Tier 1 ต้องตรวจสอบก่อนส่งต่อ', 4);
+INSERT INTO public.choices VALUES ('1a477275-4471-4d6b-9259-0cfdd9921288', '4405d551-253e-42a6-8516-84a2da370226', 'หน่วยความจำยังเหลือพร้อมใช้งานอีกประมาณ 11 GiB (ดูจากคอลัมน์ available) โดยส่วนที่เหลือถูกนำไปทำ buff/cache ตามปกติ', true, 'ถูกต้อง — ใน Linux ต้องดูค่า available เป็นหลัก ไม่ใช่ค่า free', 1);
+INSERT INTO public.choices VALUES ('845a4b5f-2f02-4b67-918e-46e2446e0f9b', '4405d551-253e-42a6-8516-84a2da370226', 'หน่วยความจำกำลังจะหมดวิกฤต เพราะเหลือพื้นที่ว่างจริงเพียง 380 MiB ต้องรีบูตเครื่องทันที', false, 'เข้าใจผิดเพราะดูเฉพาะคอลัมน์ free โดยไม่ดู available ที่รวมหน่วยความจำซึ่งพร้อมคืนจาก cache แล้ว', 2);
+INSERT INTO public.choices VALUES ('166e9a09-2f6a-43ba-95d3-6fe8b94e267d', '4405d551-253e-42a6-8516-84a2da370226', 'เกิดปัญหา Memory Leak ในระบบแคชจนกิน RAM ไปถึง 12 GiB', false, 'การใช้ RAM ว่างมาทำ Page cache (buff/cache) เป็นกลไกเพิ่มความเร็วปกติของ Linux Kernel', 3);
+INSERT INTO public.choices VALUES ('e10dd692-e668-4ef5-a300-8cb7d619db99', '4405d551-253e-42a6-8516-84a2da370226', 'Swap เสียหายเพราะค่า used แสดงเป็น 0B', false, 'Swap used เป็น 0B แปลว่า RAM มีเพียงพอจนไม่ต้องนำข้อมูลไปพักลง Swap บนดิสก์', 4);
+INSERT INTO public.choices VALUES ('78a71ea1-2c02-47fe-acc9-3da7bf6d5b14', 'ff00fcfc-cc97-4ef4-a859-b9e111a5857a', 'จำนวน Inode ของพาร์ทิชัน `/var` ถูกใช้จนเต็ม 100% เพราะมีไฟล์ย่อยจำนวนมากเกินไป', true, 'ถูกต้อง — เมื่อ IFree = 0 ระบบจะไม่สามารถสร้างไฟล์หรือโฟลเดอร์ใหม่ได้เลย', 1);
+INSERT INTO public.choices VALUES ('8b2fdfae-2c60-4a4d-89ff-9089053ba5aa', 'ff00fcfc-cc97-4ef4-a859-b9e111a5857a', 'คำสั่ง `df -h` แสดงผลผิดพลาดเพราะไม่ได้รันด้วยสิทธิ์ root', false, 'df -h แสดงความจุถูกต้องแล้ว แต่ปัญหาเกิดจากจำนวน Inode เต็ม', 2);
+INSERT INTO public.choices VALUES ('d457ecc6-8656-46b2-879f-c2b45579bb3d', 'ff00fcfc-cc97-4ef4-a859-b9e111a5857a', 'แรมของเครื่องเต็มทำให้สร้างไฟล์ลงดิสก์ไม่ได้', false, 'ผลลัพธ์ชี้ชัดเจนที่ IUse% = 100% ซึ่งเป็นเรื่องของ Inode บนระบบไฟล์', 3);
+INSERT INTO public.choices VALUES ('e79e7abe-fa40-4781-b239-b7b1a9ba1c53', 'ff00fcfc-cc97-4ef4-a859-b9e111a5857a', 'พาร์ทิชัน `/var` จำกัดให้เก็บข้อมูลได้สูงสุดเพียง 50% ของขนาดจริง', false, 'ไม่ได้จำกัดที่ 50% แต่ติดที่จำนวน Inode หมด (5,242,880 Inodes)', 4);
+INSERT INTO public.choices VALUES ('b303fdc0-2e7a-4a81-968a-271aa16149e7', '70a6fe79-8783-47a0-9025-d0f2dfc849f9', 'lsof +L1', true, 'ถูกต้อง — แสดงโปรเซสและ PID ที่ยังเปิดไฟล์ซึ่งถูกลบชื่อไปแล้ว (unlinked open files)', 1);
+INSERT INTO public.choices VALUES ('83ff8a29-2aac-499b-91ea-7cff5472d42e', '70a6fe79-8783-47a0-9025-d0f2dfc849f9', 'df -i', false, 'df -i ใช้ดูจำนวน Inode ไม่ได้แสดงรายชื่อโปรเซสที่เปิดไฟล์ค้าง', 2);
+INSERT INTO public.choices VALUES ('80110808-e977-4b8f-941c-e0b673915762', '70a6fe79-8783-47a0-9025-d0f2dfc849f9', 'free -h', false, 'free -h ใช้ดูหน่วยความจำ RAM และ Swap', 3);
+INSERT INTO public.choices VALUES ('8868a1ea-7876-4141-9aee-79a1961006c8', '70a6fe79-8783-47a0-9025-d0f2dfc849f9', 'uptime', false, 'uptime ใช้ดูเวลาที่เปิดเครื่องและค่า Load Average', 4);
+INSERT INTO public.choices VALUES ('489b5d5f-750d-41a4-9f8c-98e292f31026', 'b1082aee-a82d-4fac-8295-780e7b4bc4c0', 'ค่าเฉลี่ยย้อนหลัง 1 นาที, 5 นาที และ 15 นาที ตามลำดับ', true, 'ถูกต้อง — หากค่า 1 นาทีต่ำกว่า 15 นาที แสดงว่าโหลดกำลังลดลง', 1);
+INSERT INTO public.choices VALUES ('1b23f8a1-837b-4018-abb7-cfdb22ea3fb0', 'b1082aee-a82d-4fac-8295-780e7b4bc4c0', 'ค่าเฉลี่ยย้อนหลัง 1 ชั่วโมง, 5 ชั่วโมง และ 15 ชั่วโมง ตามลำดับ', false, 'หน่วยของ Load Average เป็นนาที (1, 5, 15 นาที) ไม่ใช่ชั่วโมง', 2);
+INSERT INTO public.choices VALUES ('dd943a21-4d7d-4046-a6d0-5f8627f18905', 'b1082aee-a82d-4fac-8295-780e7b4bc4c0', 'เปอร์เซ็นต์การใช้ CPU, RAM และ Disk ตามลำดับ', false, 'ทั้ง 3 ตัวเลขคือค่า Load Average ในแต่ละช่วงเวลา ไม่ใช่ CPU/RAM/Disk', 3);
+INSERT INTO public.choices VALUES ('70fe8e21-f1e6-4482-bb3a-cf03aaf347a8', 'b1082aee-a82d-4fac-8295-780e7b4bc4c0', 'ค่าต่ำสุด, ค่าเฉลี่ย และค่าสูงสุดของวันนี้', false, 'ไม่ใช่ค่า Min/Avg/Max ของวัน แต่เป็นค่าเฉลี่ย 1, 5 และ 15 นาทีล่าสุด', 4);
+INSERT INTO public.choices VALUES ('bbdddab5-2a93-4207-aaef-f3b85d8988b9', '34c5edbf-6823-4260-850d-6273902007aa', 'nproc', true, 'ถูกต้อง — แสดงจำนวนหน่วยประมวลผล (processing units/cores) ของเครื่องทันที', 1);
+INSERT INTO public.choices VALUES ('8491e2a9-8798-4562-9d71-b952c97f41b2', '34c5edbf-6823-4260-850d-6273902007aa', 'du -sh', false, 'du -sh ใช้ดูขนาดไฟล์และโฟลเดอร์บนดิสก์', 2);
+INSERT INTO public.choices VALUES ('cbeab7cf-baea-42e5-af7d-2b8183ca8832', '34c5edbf-6823-4260-850d-6273902007aa', 'df -h', false, 'df -h ใช้ดูพื้นที่พาร์ทิชันบนดิสก์', 3);
+INSERT INTO public.choices VALUES ('e7d1476d-ffe1-400f-97e0-a5221d6b4fbc', '34c5edbf-6823-4260-850d-6273902007aa', 'pwd', false, 'pwd ใช้ดูโฟลเดอร์ที่ยืนอยู่ปัจจุบัน', 4);
+INSERT INTO public.choices VALUES ('7a7b3f75-cbde-4e90-aaad-c05f934a4073', '7bb99738-0e7d-4e64-af8c-c6c23eb55759', 'เกิดคอขวดที่การอ่านเขียนดิสก์หรือสตอเรจ (High Disk I/O Wait) ทำให้โปรเซสรอคิว I/O ค้างอยู่', true, 'ถูกต้อง — ค่า wa สูงและโปรเซสสถานะ D เป็นสัญญาณชัดเจนของปัญหา Disk/Storage I/O', 1);
+INSERT INTO public.choices VALUES ('056127ce-f6d0-4165-8128-2431f033e966', '7bb99738-0e7d-4e64-af8c-c6c23eb55759', 'พัดลมระบายความร้อนของ CPU หยุดหมุน', false, 'ค่า wa ย่อมาจาก I/O Wait ไม่เกี่ยวกับพัดลม CPU', 2);
+INSERT INTO public.choices VALUES ('cec6aab6-37aa-4b25-a3c8-6f6fd3fda2af', '7bb99738-0e7d-4e64-af8c-c6c23eb55759', 'ไฟล์ `/etc/hosts` ถูกลบ', false, 'ไม่เกี่ยวกับค่า I/O Wait ใน vmstat', 3);
+INSERT INTO public.choices VALUES ('996eb1c6-fb1b-4196-a818-7c8f60041747', '7bb99738-0e7d-4e64-af8c-c6c23eb55759', 'มีผู้ใช้เปิดหน้าต่าง Terminal ทิ้งไว้เฉยๆ หลายคน', false, 'หน้าต่าง Terminal ที่ไม่ได้รันงานจะอยู่ในสถานะ S (Sleeping) ซึ่งไม่เพิ่มค่า Load Average และไม่เพิ่ม wa', 4);
+INSERT INTO public.choices VALUES ('a7651a9e-66dc-42e4-ba6b-66a6191e46a0', '26fe4415-b506-49a7-90b7-1aff3eeabb25', 'du -sh * | sort -h', true, 'ถูกต้อง — sort -h สามารถเปรียบเทียบหน่วย K, M, G จากผลลัพธ์ของ du -sh ได้อย่างแม่นยำ', 1);
+INSERT INTO public.choices VALUES ('874ef423-648c-4bcf-80fa-cc429f006360', '26fe4415-b506-49a7-90b7-1aff3eeabb25', 'df -h * | uniq -c', false, 'df ใช้ดูระดับพาร์ทิชัน และ uniq -c ไม่ใช่การเรียงขนาด', 2);
+INSERT INTO public.choices VALUES ('d801c315-a7a4-4721-b386-0fa7feece909', '26fe4415-b506-49a7-90b7-1aff3eeabb25', 'free -h | sort -n', false, 'free -h ใช้ดูหน่วยความจำ RAM ไม่ใช่ขนาดโฟลเดอร์บนดิสก์', 3);
+INSERT INTO public.choices VALUES ('a65d6e6c-4ba8-40b9-857a-0f8a8b79ade4', '26fe4415-b506-49a7-90b7-1aff3eeabb25', 'lsof +L1 | wc -l', false, 'lsof +L1 ใช้ดูไฟล์ที่ถูกลบแต่ยังเปิดค้าง ไม่ใช่การเรียงขนาดโฟลเดอร์', 4);
+INSERT INTO public.choices VALUES ('d9906b17-02e4-4de1-a244-4949764981aa', 'a2110b46-0e41-4ae6-898e-582052248f0b', '`~/.ssh` เป็น 700 และ `~/.ssh/authorized_keys` เป็น 600', true, 'ถูกต้อง — เป็นสิทธิ์มาตรฐานที่ปลอดภัยและผ่านการตรวจสอบของ sshd', 1);
+INSERT INTO public.choices VALUES ('38fa1195-3413-4139-97e6-75b79e186003', 'a2110b46-0e41-4ae6-898e-582052248f0b', '`~/.ssh` เป็น 777 และ `~/.ssh/authorized_keys` เป็น 666', false, 'สิทธิ์ 777 และ 666 เปิดให้ผู้อื่นเขียนทับกุญแจได้ จึงถูก sshd บล็อกการล็อกอินทันที', 2);
+INSERT INTO public.choices VALUES ('fb1d0fb6-14e1-4c3e-a30c-7d3974d0686d', 'a2110b46-0e41-4ae6-898e-582052248f0b', '`~/.ssh` เป็น 644 และ `~/.ssh/authorized_keys` เป็น 755', false, 'โฟลเดอร์ต้องมีสิทธิ์ x (700) จึงจะเข้าถึงไฟล์ข้างในได้ ส่วนไฟล์กุญแจไม่ควรมีสิทธิ์ x', 3);
+INSERT INTO public.choices VALUES ('7c325010-7631-4263-9a84-1448adedb7b5', 'a2110b46-0e41-4ae6-898e-582052248f0b', '`~/.ssh` เป็น 400 และ `~/.ssh/authorized_keys` เป็น 000', false, 'โฟลเดอร์ที่ไม่มีสิทธิ์ x (400) จะไม่สามารถเปิดอ่านไฟล์ข้างในได้ และสิทธิ์ 000 อ่านไม่ได้เลย', 4);
+INSERT INTO public.choices VALUES ('f0d078f3-8004-4645-97e0-c83816ccca18', 'c50abf18-1605-4875-adee-013bf4c85344', 'ไฟล์ Private Key มีสิทธิ์เปิดกว้างเกินไป (0644) ให้แก้ไขด้วยคำสั่ง `chmod 600 ~/.ssh/id_ed25519`', true, 'ถูกต้อง — กุญแจส่วนตัวต้องจำกัดให้เจ้าของอ่านได้คนเดียวเท่านั้น (600 หรือ 400)', 1);
+INSERT INTO public.choices VALUES ('8497de5a-eeac-4731-b471-479bd158f644', 'c50abf18-1605-4875-adee-013bf4c85344', 'ไฟล์ Private Key หมดอายุ ต้องสร้างใหม่ด้วย `ssh-keygen` ทุก 30 วัน', false, 'กุญแจ SSH มาตรฐานไม่ได้หมดอายุตามข้อความนี้ แต่ติดเรื่อง Permission 0644', 2);
+INSERT INTO public.choices VALUES ('dae8f144-6e17-4272-b23b-4335f7dcad67', 'c50abf18-1605-4875-adee-013bf4c85344', 'ต้องเปลี่ยนสิทธิ์เป็น `chmod 777 ~/.ssh/id_ed25519` เพื่อให้โปรแกรม ssh อ่านไฟล์ได้', false, 'ยิ่งเปลี่ยนเป็น 777 จะยิ่งเปิดกว้างและยังติดข้อผิดพลาดเดิม', 3);
+INSERT INTO public.choices VALUES ('35263f2e-b119-4d5f-a82a-dde920eb3cfe', 'c50abf18-1605-4875-adee-013bf4c85344', 'เซิร์ฟเวอร์ปลายทาง `10.20.1.50` ปิดพอร์ต 22 อยู่', false, 'ปัญหานี้เกิดที่การตรวจสิทธิ์ไฟล์ Private Key บนเครื่องต้นทางของเราเอง', 4);
+INSERT INTO public.choices VALUES ('65779a5b-e0f2-429c-9244-9ac386bb9731', '4ea1f21a-007e-415a-91bd-4faa49b43e2f', 'Connection refused คือไปถึงเครื่องแล้วแต่พอร์ตไม่มีบริการ sshd เปิดรับ ส่วน Connection timed out คือแพ็กเก็ตไปไม่ถึงหรือถูก Firewall ดรอปเงียบๆ', true, 'ถูกต้อง — ช่วยแยกแยะได้ทันทีว่าปัญหาอยู่ที่ตัวบริการ sshd หรืออยู่ที่ระดับเครือข่าย/Firewall', 1);
+INSERT INTO public.choices VALUES ('43d0efb1-bba7-406d-9484-e286f09706a9', '4ea1f21a-007e-415a-91bd-4faa49b43e2f', 'Connection refused คือใส่รหัสผ่านผิด ส่วน Connection timed out คือใส่ชื่อผู้ใช้ผิด', false, 'หากใส่รหัสผ่านหรือกุญแจผิดจะขึ้นว่า Permission denied ไม่ใช่ Connection refused', 2);
+INSERT INTO public.choices VALUES ('e9273d7e-935e-4aa8-aab3-2e7ed7937e2d', '4ea1f21a-007e-415a-91bd-4faa49b43e2f', 'ทั้งสองข้อความมีความหมายเหมือนกัน ขึ้นอยู่กับเวอร์ชันของ Ubuntu หรือ RHEL', false, 'เป็นรหัสข้อผิดพลาดระดับ TCP ที่ต่างกันอย่างชัดเจนในทุกระบบปฏิบัติการ', 3);
+INSERT INTO public.choices VALUES ('382fac67-fc28-4976-bf3d-979eace398a6', '4ea1f21a-007e-415a-91bd-4faa49b43e2f', 'Connection refused เกิดจากสายแลนหลุด ส่วน Connection timed out เกิดจากฮาร์ดดิสก์เต็ม', false, 'สายแลนหลุดจะไม่สามารถส่งแพ็กเก็ตไปรับคำตอบ RST (Refused) จากปลายทางได้', 4);
+INSERT INTO public.choices VALUES ('daeedc72-2e29-4b4f-8195-f2e891a0ec7c', '05515d73-1a5e-475d-b40b-94ce12001fab', 'rm -rf ~/.ssh', false, 'การลบทั้งโฟลเดอร์ ~/.ssh จะทำให้ Private Key และคอนฟิกทั้งหมดของเราหายไปด้วย!', 3);
+INSERT INTO public.choices VALUES ('b495a9e8-a7bb-43ab-b5e9-0f3bf0238b58', '05515d73-1a5e-475d-b40b-94ce12001fab', 'chmod 777 ~/.ssh/known_hosts', false, 'การเปลี่ยนสิทธิ์ไฟล์ไม่ได้ลบค่า Host key เก่าที่ขัดแย้งกันออก', 4);
+INSERT INTO public.choices VALUES ('1a85a0ca-4263-4d84-a910-81adf1195a5d', '61f3e206-c48a-46a6-bfd0-f3c8b21d81ad', 'scp -P 2222 support@10.20.1.50:/tmp/report.txt ./', true, 'ถูกต้อง — คำสั่ง scp ต้องใช้ -P (ตัวพิมพ์ใหญ่) ในการระบุหมายเลขพอร์ต', 1);
+INSERT INTO public.choices VALUES ('0c411917-840e-4e28-8795-f9a85d396d5c', '61f3e206-c48a-46a6-bfd0-f3c8b21d81ad', 'scp -p 2222 support@10.20.1.50:/tmp/report.txt ./', false, '-p (ตัวพิมพ์เล็ก) ใน scp หมายถึงการคงค่าเวลาและสิทธิ์ของไฟล์ ไม่ใช่การระบุพอร์ต', 2);
+INSERT INTO public.choices VALUES ('df6ad7e5-e35d-4870-af94-21807bddf9be', '61f3e206-c48a-46a6-bfd0-f3c8b21d81ad', 'scp --port=2222 support@10.20.1.50:/tmp/report.txt ./', false, 'scp มาตรฐานไม่รองรับตัวเลือก --port=', 3);
+INSERT INTO public.choices VALUES ('9af2c325-14e9-4887-a8ed-bf7320b941ec', '61f3e206-c48a-46a6-bfd0-f3c8b21d81ad', 'scp -i 2222 support@10.20.1.50:/tmp/report.txt ./', false, '-i ใช้สำหรับระบุไฟล์ Private Key (identity file) ไม่ใช่หมายเลขพอร์ต', 4);
+INSERT INTO public.choices VALUES ('1055ca3d-b3b5-4d9d-9d85-54b04fbe41f1', 'cae06534-8367-4658-867b-09de72d34502', 'ช่วยให้โปรเซสและหน้าจอทำงานต่อไปบนเซิร์ฟเวอร์แม้การเชื่อมต่อ SSH จะหลุด และสามารถกลับเข้าเซสชันเดิมได้ด้วย `tmux attach`', true, 'ถูกต้อง — ป้องกันงานค้างหรือตัดจบกลางคันเมื่อเน็ตหลุด', 1);
+INSERT INTO public.choices VALUES ('5edeb6b8-d801-4b20-b764-09d9923c6eb8', 'cae06534-8367-4658-867b-09de72d34502', 'ช่วยเร่งความเร็วของ CPU บนเซิร์ฟเวอร์ให้ทำงานเร็วขึ้น 2 เท่า', false, 'tmux เป็น Terminal Multiplexer ไม่ได้เร่งความเร็วฮาร์ดแวร์ CPU', 2);
+INSERT INTO public.choices VALUES ('8077d8db-574d-4521-b9f2-15202a77c1e4', 'cae06534-8367-4658-867b-09de72d34502', 'ช่วยข้ามการตรวจสอบรหัสผ่านและ SSH Key ทั้งหมด', false, 'ต้องล็อกอินผ่าน SSH ตามปกติก่อนจึงจะรัน tmux บนเซิร์ฟเวอร์ได้', 3);
+INSERT INTO public.choices VALUES ('5e68c66d-bd74-4762-9216-e71906bbee3a', 'cae06534-8367-4658-867b-09de72d34502', 'ช่วยบีบอัดไฟล์ Log ทั้งหมดใน `/var/log` เป็น `.gz` อัตโนมัติ', false, 'หน้าที่บีบอัดไฟล์ Log ตามรอบคือ logrotate ไม่ใช่ tmux', 4);
+INSERT INTO public.choices VALUES ('4740ad45-7db3-435b-97d2-4ed8dfd2a419', 'df8cecab-518d-43d8-926c-ffcd0f2e042e', 'rsync -avz support@10.20.1.50:/var/log/app/ ./app-logs/', true, 'ถูกต้อง — ประหยัดแบนด์วิดท์ด้วย -z และส่งเฉพาะส่วนที่ต่างกัน', 1);
+INSERT INTO public.choices VALUES ('fdd85206-8637-4555-aefd-c73eddd9d379', 'df8cecab-518d-43d8-926c-ffcd0f2e042e', 'ssh -v support@10.20.1.50 /var/log/app/', false, 'เป็นการสั่งรันพาธโฟลเดอร์ผ่าน ssh ซึ่งจะฟ้องว่าเป็นไดเรกทอรี ไม่ใช่การโอนไฟล์', 2);
+INSERT INTO public.choices VALUES ('0db60506-e216-4214-8d73-6b2ccc2fb10e', 'df8cecab-518d-43d8-926c-ffcd0f2e042e', 'tmux -avz support@10.20.1.50:/var/log/app/', false, 'tmux ใช้จัดการเซสชันหน้าจอ ไม่ใช่คำสั่งโอนถ่ายไฟล์', 3);
+INSERT INTO public.choices VALUES ('2c2a452d-5a11-4386-b96f-3cb42be5fdeb', 'df8cecab-518d-43d8-926c-ffcd0f2e042e', 'cp -p support@10.20.1.50:/var/log/app/ ./', false, 'คำสั่ง cp มาตรฐานใช้คัดลอกไฟล์ภายในเครื่องเดียวกัน ไม่รองรับการส่งข้ามเครื่องผ่าน SSH', 4);
+INSERT INTO public.choices VALUES ('e374b91a-e13b-407e-8d0e-6c9a3aabe702', 'bb4bdd67-7b76-4f2a-bf49-f0e2b0c9c1f8', 'เวลา 03:30 น. ของทุกวันจันทร์ถึงวันศุกร์', true, 'ถูกต้อง — 30 = นาทีที่ 30, 3 = ชั่วโมงที่ 3, 1-5 = จันทร์ถึงศุกร์', 1);
+INSERT INTO public.choices VALUES ('41f9e998-8db2-4ad3-bebc-74627d208a98', 'bb4bdd67-7b76-4f2a-bf49-f0e2b0c9c1f8', 'ทุกๆ 30 นาที ในช่วงเวลา 01:00 น. ถึง 05:00 น.', false, 'ทุกๆ 30 นาทีต้องเขียนเป็น */30 ไม่ใช่ 30 เฉยๆ', 2);
+INSERT INTO public.choices VALUES ('c7713614-b710-41bb-b9f1-5d44f12fb091', 'bb4bdd67-7b76-4f2a-bf49-f0e2b0c9c1f8', 'เวลา 15:03 น. ของวันที่ 1 ถึงวันที่ 5 ของทุกเดือน', false, 'ฟิลด์แรกคือนาทีไม่ใช่ชั่วโมง และ 1-5 อยู่ในฟิลด์ที่ 5 (วันในสัปดาห์) ไม่ใช่ฟิลด์ที่ 3 (วันที่)', 3);
+INSERT INTO public.choices VALUES ('bf8e43a0-1121-4a00-b483-5e3d0c0f54c2', 'bb4bdd67-7b76-4f2a-bf49-f0e2b0c9c1f8', 'รันเพียง 3 ครั้งต่อเดือน ในเดือนมกราคมถึงพฤษภาคม', false, 'ฟิลด์เดือนคือฟิลด์ที่ 4 ซึ่งในที่นี้เป็น *', 4);
+INSERT INTO public.choices VALUES ('f281a0bf-634d-4544-9e00-ebbbb0091745', 'd18c78fa-edc9-4d07-bcee-55e19d3afd37', 'ใช้ `crontab -l` เพื่อดูรายการ และห้ามพิมพ์ `crontab -r` เพราะจะลบตาราง Crontab ทั้งหมดทันที', true, 'ถูกต้อง — -l คือ list ส่วน -r คือ remove', 1);
+INSERT INTO public.choices VALUES ('16ff1d65-2cfc-4429-b0c1-93422589ba76', 'd18c78fa-edc9-4d07-bcee-55e19d3afd37', 'ใช้ `crontab -r` เพื่ออ่านรายการ และห้ามพิมพ์ `crontab -l` เพราะจะล็อกตารางงาน', false, 'สลับกัน! การรัน crontab -r จะลบ Crontab หายทั้งหมดทันที', 2);
+INSERT INTO public.choices VALUES ('d36a5efb-e962-44e3-bb37-7abd0ce44968', 'd18c78fa-edc9-4d07-bcee-55e19d3afd37', 'ใช้ `crontab -e` เพื่อดูอย่างเดียว และห้ามพิมพ์ `crontab -u`', false, '-e คือเปิดแก้ไข (edit) ส่วน -u คือระบุชื่อผู้ใช้', 3);
+INSERT INTO public.choices VALUES ('5b4721a9-6bba-4cc7-aee6-632c0f5fd395', 'd18c78fa-edc9-4d07-bcee-55e19d3afd37', 'ใช้ `cron --show` เพื่อดูรายการ', false, 'คำสั่งมาตรฐานในการจัดการตารางของผู้ใช้คือ crontab -l', 4);
+INSERT INTO public.choices VALUES ('781f42c2-7eb0-4663-86f2-e96f6c93f5ac', 'cbd582ae-b4a6-412f-852d-649e880f77b2', 'สภาพแวดล้อมของ Cron มีค่า PATH จำกัดกว่า Shell ปกติ ทำให้หาคำสั่ง `node` ไม่เจอ ต้องระบุพาธเต็มเช่น `/usr/local/bin/node`', true, 'ถูกต้อง — เป็นสาเหตุอันดับ 1 ที่สคริปต์รันมือผ่านแต่รันใน Cron แล้วขึ้น command not found', 1);
+INSERT INTO public.choices VALUES ('40622e25-3911-4428-8fe0-962678a9412d', 'cbd582ae-b4a6-412f-852d-649e880f77b2', 'โปรแกรม Node.js ไม่สามารถทำงานในช่วงเวลาเที่ยงคืน (00:00) ได้', false, 'Node.js ทำงานได้ทุกเวลา แต่ติดที่หาไฟล์คำสั่ง node ไม่เจอจากตัวแปร PATH', 2);
+INSERT INTO public.choices VALUES ('a61a5ec5-1b40-420a-bd26-be7e9175bc4f', 'cbd582ae-b4a6-412f-852d-649e880f77b2', 'บริการ Cron อนุญาตให้รันเฉพาะคำสั่งภาษา Python เท่านั้น', false, 'Cron สามารถรันโปรแกรมและสคริปต์ได้ทุกภาษาหากระบุพาธถูกต้อง', 3);
+INSERT INTO public.choices VALUES ('2099cbe0-bdd0-4107-9221-f5901109edfb', 'cbd582ae-b4a6-412f-852d-649e880f77b2', 'ไฟล์ `/var/log/report.log` ถูกล็อกทำให้คำสั่ง node ถูกลบออกจากเครื่อง', false, 'ไฟล์ Log บันทึกข้อความได้ตามปกติ แต่ฟ้องว่าหาคำสั่ง node ไม่พบในบรรทัดที่ 14', 4);
+INSERT INTO public.choices VALUES ('bf1e2873-a1a1-4c6b-8d06-dc93d1d9b0d9', 'aea9e7b1-71c1-4b19-9424-3f9410a25f28', 'ใน Crontab เครื่องหมาย `%` จะถูกตีความเป็นการตัดขึ้นบรรทัดใหม่ ต้องใส่ Backslash นำหน้าเป็น `\%` หรือย้ายคำสั่งเข้าไฟล์สคริปต์', true, 'ถูกต้อง — สังเกตจาก Log ของ CRON ที่คำสั่งถูกตัดจบตรงเครื่องหมาย % ตัวแรกพอดี', 1);
+INSERT INTO public.choices VALUES ('1c275aec-1214-44a9-b31a-02c5167098ea', 'aea9e7b1-71c1-4b19-9424-3f9410a25f28', 'คำสั่ง `cp` ไม่สามารถทำงานร่วมกับคำสั่ง `date` บน Linux ได้', false, 'บน Shell ปกติรันได้ แต่ในไฟล์ Crontab ติดกฎพิเศษของเครื่องหมาย %', 2);
+INSERT INTO public.choices VALUES ('39869c70-2919-4a83-9315-9d3aa7779fca', 'aea9e7b1-71c1-4b19-9424-3f9410a25f28', 'บริการ Cron ห้ามตั้งเวลาทำงานตอนตี 1 (01:00 น.)', false, 'Cron สั่งรันงานตอน 01:00:01 แล้วตามที่ปรากฏใน syslog', 3);
+INSERT INTO public.choices VALUES ('abb4bddd-88b3-4f41-a8a4-fc9a72a5023d', 'aea9e7b1-71c1-4b19-9424-3f9410a25f28', 'ชื่อไฟล์ใน Linux ห้ามมีตัวเลขปี ค.ศ. อยู่ในชื่อไฟล์', false, 'ชื่อไฟล์ใส่ตัวเลขวันที่ได้ตามปกติ', 4);
+INSERT INTO public.choices VALUES ('f40e4cb6-c263-4b8b-af4c-380e54f58a25', '8c5078fb-64e4-4e84-bbbb-ac15123d866d', '`/var/log/syslog` (Ubuntu/Debian) และ `/var/log/cron` (RHEL/Rocky)', true, 'ถูกต้อง — เป็นตำแหน่งมาตรฐานของบันทึกการทำงาน Cron ในแต่ละค่าย', 1);
+INSERT INTO public.choices VALUES ('588afe6e-5694-442f-9e89-b48d51585c18', '8c5078fb-64e4-4e84-bbbb-ac15123d866d', '`/var/log/auth.log` (Ubuntu/Debian) และ `/var/log/secure` (RHEL/Rocky)', false, 'auth.log และ secure เก็บเรื่องการล็อกอินและสิทธิ์เป็นหลัก (แม้จะมี session ของ pam_unix บ้าง แต่รายการคำสั่ง CMD ของ RHEL อยู่ที่ /var/log/cron)', 2);
+INSERT INTO public.choices VALUES ('5bd57a73-8240-481d-a554-b9fa5d70f74e', '8c5078fb-64e4-4e84-bbbb-ac15123d866d', '`/etc/crontab` ทั้งสองตระกูล', false, '/etc/crontab คือไฟล์ตั้งค่าตารางงาน ไม่ใช่ไฟล์บันทึกผลการทำงาน (Log)', 3);
+INSERT INTO public.choices VALUES ('c24867c5-e770-4299-8aaf-3af8420fc4e8', '8c5078fb-64e4-4e84-bbbb-ac15123d866d', '`/var/log/dmesg` ทั้งสองตระกูล', false, 'dmesg เป็นบันทึกของ Kernel ไม่ได้เก็บประวัติการรัน Cron job', 4);
+INSERT INTO public.choices VALUES ('d61b3ea4-73fc-40fa-a2bc-5b7db1c599f3', '8e9483d6-ae5f-40c0-b138-8ed3177059f1', 'ไฟล์ใน `/etc/cron.d/` ต้องระบุชื่อผู้ใช้ (username) แทรกเป็นคอลัมน์ที่ 6 ก่อนคำสั่ง ส่วน User Crontab ไม่ต้องระบุชื่อผู้ใช้', true, 'ถูกต้อง — หากลืมใส่ชื่อผู้ใช้ในไฟล์ภายใต้ /etc/cron.d/ งานนั้นจะรันไม่ทำงานเพราะถือว่าชื่อคำสั่งผิด', 1);
+INSERT INTO public.choices VALUES ('d4e82a8f-8d39-4933-9c8e-3ad073bf72e2', '8e9483d6-ae5f-40c0-b138-8ed3177059f1', 'ไฟล์ใน `/etc/cron.d/` มีฟิลด์เวลาเพียง 3 ฟิลด์ ส่วน User Crontab มี 5 ฟิลด์', false, 'ทั้งสองแบบใช้ฟิลด์เวลา 5 ฟิลด์เหมือนกัน', 2);
+INSERT INTO public.choices VALUES ('49127d15-8fe0-4a46-a76d-5e811f827431', '8e9483d6-ae5f-40c0-b138-8ed3177059f1', 'User Crontab รันได้เฉพาะวันจันทร์ถึงศุกร์ ส่วน `/etc/cron.d/` รันได้ทุกวัน', false, 'ทั้งสองแบบตั้งเวลารันได้ทุกวันเหมือนกัน', 3);
+INSERT INTO public.choices VALUES ('4cc68483-e564-4c56-8840-8f663151fd80', '8e9483d6-ae5f-40c0-b138-8ed3177059f1', 'ไม่มีความแตกต่างกัน สามารถคัดลอกบรรทัดวางสลับกันได้ทันที', false, 'วางสลับกันตรงๆ ไม่ได้ เพราะต่างกันที่คอลัมน์ระบุชื่อผู้ใช้ (User field)', 4);
+INSERT INTO public.choices VALUES ('795ccc37-fde6-4fd4-b188-f38df3fd5620', '2a3504c4-29e5-46af-b2fb-9ebf81c95947', 'systemctl list-timers', true, 'ถูกต้อง — แสดงรายการ systemd timers ทั้งหมดพร้อมเวลารันครั้งล่าสุดและครั้งถัดไป', 1);
+INSERT INTO public.choices VALUES ('5840b3a2-60fa-4901-9d58-e754eea22a74', '2a3504c4-29e5-46af-b2fb-9ebf81c95947', 'systemctl list-sockets', false, 'list-sockets ใช้ดูรายการ Socket units ไม่ใช่การตั้งเวลา', 2);
+INSERT INTO public.choices VALUES ('9583e1c1-ffa4-4919-9b78-f25056964409', '2a3504c4-29e5-46af-b2fb-9ebf81c95947', 'ps aux --timers', false, 'คำสั่ง ps aux ไม่มีตัวเลือก --timers', 3);
+INSERT INTO public.choices VALUES ('480af81e-0990-4fdc-95ef-c91c114199fc', '2a3504c4-29e5-46af-b2fb-9ebf81c95947', 'dmesg --cron', false, 'dmesg ไม่มีตัวเลือก --cron', 4);
+INSERT INTO public.choices VALUES ('f3ae3f5f-bcc2-4dfa-a5f5-ede8e4678376', '4e95dfd0-892c-4c0c-b51f-9f1b56c0ad9f', 'systemctl → ss → nc → curl', true, 'ถูกต้อง — ไล่จาก Service, Port ในเครื่อง, การต่อจากภายนอก ไปจนถึง HTTP', 1);
+INSERT INTO public.choices VALUES ('5209e17b-b8c0-4ba9-813b-63c0c3f1f451', '4e95dfd0-892c-4c0c-b51f-9f1b56c0ad9f', 'curl → ss → systemctl → nc', false, 'เริ่มที่ชั้นบนสุดทำให้ไม่รู้ว่าปัญหาอยู่ชั้นไหนจริงๆ', 2);
+INSERT INTO public.choices VALUES ('add6bb49-4b1f-492c-89a4-45af48c078ac', '4e95dfd0-892c-4c0c-b51f-9f1b56c0ad9f', 'reboot เครื่องก่อน แล้วค่อยตรวจตามลำดับ', false, 'การรีบูตทำให้หลักฐานหาย และอาจกระทบผู้ใช้อื่น', 3);
+INSERT INTO public.choices VALUES ('89e446b9-f48e-42db-8c52-21f01b9a27ef', '4e95dfd0-892c-4c0c-b51f-9f1b56c0ad9f', 'nc → reboot → ss → systemctl', false, 'ไม่มีเหตุผลที่จะข้ามการตรวจ Service และมีการรีบูตโดยไม่จำเป็น', 4);
+INSERT INTO public.choices VALUES ('04a0d79f-00e2-44bd-8ac0-61c6e02adc90', 'c75407f1-a3a5-4a5b-981b-b9e31701154f', 'sudo ss -tulpn', true, 'ถูกต้อง — จำเป็นต้องมี sudo ถึงจะเห็น Process ของผู้ใช้อื่นครบ', 1);
+INSERT INTO public.choices VALUES ('576aa2f2-edbd-4b75-9806-fe3c93476888', 'c75407f1-a3a5-4a5b-981b-b9e31701154f', 'ss -s', false, 'แสดงสรุปจำนวน Socket ไม่ใช่รายการ Port ที่ฟัง', 2);
+INSERT INTO public.choices VALUES ('3832c86f-799f-483a-b9bb-0b8d3d11ebc9', 'c75407f1-a3a5-4a5b-981b-b9e31701154f', 'systemctl list-sockets', false, 'แสดง systemd socket unit ไม่ใช่ทุก Port ที่ฟังอยู่ในเครื่อง', 3);
+INSERT INTO public.choices VALUES ('b51d466e-44a5-4565-97e9-5a8458f17d1a', 'c75407f1-a3a5-4a5b-981b-b9e31701154f', 'curl -v localhost', false, 'ทดสอบการเรียก HTTP ไม่ได้แสดงรายการ Port', 4);
+INSERT INTO public.choices VALUES ('b7b465ed-1cff-4737-90d3-f61b454c23f0', 'a5cff860-3040-413a-b67a-63944822a4ad', 'แอปฟังเฉพาะ 127.0.0.1 จึงรับเฉพาะการเชื่อมต่อจากในเครื่อง ต้องส่งต่อทีมแอปให้ตรวจ bind address', true, 'ถูกต้อง — ดู Local Address ใน ss เป็นอันดับแรก', 1);
+INSERT INTO public.choices VALUES ('5578f065-9eab-454f-873d-752c9f6f709b', 'a5cff860-3040-413a-b67a-63944822a4ad', 'Firewall ของ Network ดรอปแพ็กเก็ต จึงต้องส่งต่อทีม Network', false, 'ถ้าถูก Firewall ดรอปมักได้ timed out ไม่ใช่ refused', 2);
+INSERT INTO public.choices VALUES ('b049a70a-c191-41d5-ad56-36e9b350a611', 'a5cff860-3040-413a-b67a-63944822a4ad', 'Service order-api ล่ม ต้องรีสตาร์ททันที', false, 'systemctl แสดงว่า active และ ss เห็น Process ฟังอยู่', 3);
+INSERT INTO public.choices VALUES ('098990d9-6b4c-4ebb-8882-9c1278bc7881', 'a5cff860-3040-413a-b67a-63944822a4ad', 'Port 8080 ถูกโปรเซสอื่นใช้อยู่แล้ว', false, 'Process ที่ฟังคือ node PID 18420 ซึ่งเป็นตัวแอปเอง', 4);
+INSERT INTO public.choices VALUES ('338ce2ee-4345-492b-9da8-7f97837198d3', 'af321481-4010-42cc-a917-de4dc61cda20', 'refused = ไม่มีโปรแกรมฟัง Port, timed out = ไม่มีคำตอบกลับ มักถูกบล็อกหรือไม่มีเส้นทาง', true, 'ถูกต้อง', 1);
+INSERT INTO public.choices VALUES ('68f591bf-8296-44e4-82c0-d761d7b20c5f', 'af321481-4010-42cc-a917-de4dc61cda20', 'refused = DNS ผิด, timed out = รหัสผ่านผิด', false, 'DNS ผิดจะขึ้น Could not resolve host และรหัสผ่านผิดไม่เกี่ยวกับ TCP', 2);
+INSERT INTO public.choices VALUES ('96119a99-cc11-4554-bdab-42505f1798db', 'af321481-4010-42cc-a917-de4dc61cda20', 'ทั้งสองคำเหมือนกัน', false, 'บ่งชี้ปัญหาคนละชั้น', 3);
+INSERT INTO public.choices VALUES ('f6400730-c830-4ab4-8446-5bf7e5b96c31', 'af321481-4010-42cc-a917-de4dc61cda20', 'refused = ดิสก์เต็ม, timed out = RAM เต็ม', false, 'ไม่เกี่ยวกับทรัพยากรเครื่อง', 4);
+INSERT INTO public.choices VALUES ('ee5f1037-6e5b-4fbd-9d60-debbfc548c1c', 'f986cb3a-3b71-4610-889e-2cc401e88854', 'curl -sS -o /dev/null -w "%{http_code} %{time_total}s\n" --max-time 10 https://api.example.com/health', true, 'ถูกต้อง', 1);
+INSERT INTO public.choices VALUES ('3a48a0fa-cc51-43f7-a333-27f2dbabd29d', 'f986cb3a-3b71-4610-889e-2cc401e88854', 'curl -v https://api.example.com/health > /dev/null', false, 'ไม่ได้จำกัดเวลาและพิมพ์ข้อความ Verbose จำนวนมาก', 2);
+INSERT INTO public.choices VALUES ('9b58c411-6ccd-4c28-b185-7320372dea9d', 'f986cb3a-3b71-4610-889e-2cc401e88854', 'curl -k https://api.example.com/health', false, '-k ข้ามการตรวจใบรับรอง ไม่ได้ช่วยให้ได้ Status Code ตามต้องการ', 3);
+INSERT INTO public.choices VALUES ('40b04dc3-3660-4494-b659-b7e5db18be56', 'f986cb3a-3b71-4610-889e-2cc401e88854', 'ping https://api.example.com/health', false, 'ping ใช้ไม่ได้กับ URL และไม่ตรวจ HTTP', 4);
+INSERT INTO public.choices VALUES ('5f18e908-56c5-4dda-b954-f2e8e05f0fcb', '7973243b-4e81-479c-9ae6-9ec56f46a8b5', 'Port 9000 ถูก Process java (PID 1544) ใช้อยู่ ให้เก็บข้อมูลแล้วส่งต่อตาม Runbook ก่อนตัดสินใจจัดการ', true, 'ถูกต้อง — รู้ตัวผู้ถือ Port แล้ว แต่ต้องยืนยันก่อนว่าเป็น Process ที่ควรอยู่หรือไม่', 1);
+INSERT INTO public.choices VALUES ('f1146496-dd38-4736-bb9b-9fd06733c5a6', '7973243b-4e81-479c-9ae6-9ec56f46a8b5', 'ไฟล์ Config สะกดผิด ให้แก้ไฟล์ทันที', false, 'Log ชี้ที่ Port ถูกใช้ ไม่ใช่ Config ผิดรูปแบบ', 2);
+INSERT INTO public.choices VALUES ('273f3782-2135-4f94-8bf1-cb764213bd97', '7973243b-4e81-479c-9ae6-9ec56f46a8b5', 'ดิสก์เต็ม ให้ลบ Log', false, 'ไม่มีหลักฐานเรื่องดิสก์ใน Log', 3);
+INSERT INTO public.choices VALUES ('c939ed84-2a14-4ed1-b8df-45974637ed05', '7973243b-4e81-479c-9ae6-9ec56f46a8b5', 'ใช้ kill -9 1544 ทันทีเพื่อให้ Service สตาร์ทได้', false, 'อาจฆ่าบริการสำคัญอื่น ต้องทำตาม Runbook', 4);
+INSERT INTO public.choices VALUES ('7a197055-b098-46ff-83b9-9b13e1cff350', 'd63a08cb-8a15-4783-8eba-9dec781d11b9', 'ตรวจสถานะและ Port ของ Backend (systemctl, ss) และอ่าน error.log ของ Nginx หาบรรทัด upstream', true, 'ถูกต้อง — 502 มักมาจาก Backend ล่มหรือต่อไม่ได้', 1);
+INSERT INTO public.choices VALUES ('df7bb28d-680c-46ce-a157-e05968790d38', 'd63a08cb-8a15-4783-8eba-9dec781d11b9', 'รีสตาร์ท Nginx ทันที', false, 'Nginx ตอบอยู่แล้ว การรีสตาร์ทยังไม่แก้สาเหตุ', 2);
+INSERT INTO public.choices VALUES ('c48221fb-ea4e-46e2-b498-39c377e75675', 'd63a08cb-8a15-4783-8eba-9dec781d11b9', 'ตรวจ DNS ของผู้ใช้', false, 'curl ได้ Response จาก Nginx แล้ว แปลว่า DNS ใช้ได้', 3);
+INSERT INTO public.choices VALUES ('907071c6-8d88-41b7-a75a-225c84e35119', 'd63a08cb-8a15-4783-8eba-9dec781d11b9', 'ลบแคชเบราว์เซอร์ของผู้ใช้', false, 'curl ไม่ผ่านแคชเบราว์เซอร์และเจอ 502 เหมือนกัน', 4);
+INSERT INTO public.choices VALUES ('ecaaa173-4205-4679-8cf8-97372ebdb7eb', '6164b7cc-ad3b-4035-8811-281134f2b57d', '14 IP', true, 'ถูกต้อง /28 มี 16 IP ลบ 2 (Network + Broadcast) = 14 IP', 1);
+INSERT INTO public.choices VALUES ('149cfce2-b6dc-4492-92d7-27f239d3f36e', '6164b7cc-ad3b-4035-8811-281134f2b57d', '16 IP', false, '16 คือจำนวน IP ทั้งหมด แต่ยังไม่ได้หัก Network และ Broadcast IP', 2);
+INSERT INTO public.choices VALUES ('9c193bd6-e552-41f6-9d9a-abf8a7533afc', '6164b7cc-ad3b-4035-8811-281134f2b57d', '30 IP', false, '30 IP คือจำนวนของ /27', 3);
+INSERT INTO public.choices VALUES ('2ee11eb8-bd5d-4ec4-a83d-bb8b74179c2d', '6164b7cc-ad3b-4035-8811-281134f2b57d', '6 IP', false, '6 IP คือจำนวนของ /29', 4);
+INSERT INTO public.choices VALUES ('ff86e962-92a7-427f-9fb5-557deae19f41', '98df92a1-ad7f-46d6-9529-d780a7dad658', 'เครื่องไม่ได้รับ IP จาก DHCP Server หรือการเชื่อมต่อระดับสาย LAN มีปัญหา', true, 'ถูกต้อง ช่วง 169.254.x.x บ่งชี้ว่า DHCP Request ล้มเหลว', 1);
+INSERT INTO public.choices VALUES ('7c9637d6-208b-4f40-b94e-769055d2df0d', '98df92a1-ad7f-46d6-9529-d780a7dad658', 'DNS Server ตอบกลับช้า ทำให้ได้ IP สำรอง', false, 'DNS มีหน้าที่แปลงชื่อโดเมน ไม่ได้จ่าย IP ให้เครื่อง', 2);
+INSERT INTO public.choices VALUES ('34e857c5-587b-46c9-8cbc-5bec47e10a4c', '98df92a1-ad7f-46d6-9529-d780a7dad658', 'เป็น Public IP ปกติที่ออกเน็ตได้โดยตรง', false, '169.254.x.x เป็น Link-Local IP ไม่สามารถออกเน็ตได้', 3);
+INSERT INTO public.choices VALUES ('c02a4326-967e-46d9-a6a2-6e65ddbfcae8', '98df92a1-ad7f-46d6-9529-d780a7dad658', 'เกิด IP ชนกัน (IP Conflict) บน Switch', false, 'IP ชนกันเครื่องมักจะตัดการเชื่อมต่อหรือขึ้น Warning IP conflict แต่จะไม่เปลี่ยนเป็น 169.254 โดยอัตโนมัติ', 4);
+INSERT INTO public.choices VALUES ('0fb29788-e507-4bb5-bcf3-4759e9a16bb8', 'b4c8e401-d6ff-494a-84f3-715e4b84eaba', '172.32.1.1', true, 'ถูกต้อง Private Class B สิ้นสุดที่ 172.31.255.255 ดังนั้น 172.32.1.1 คือ Public IP', 1);
+INSERT INTO public.choices VALUES ('f92847ee-37ca-439e-9fbb-b3663f632763', 'b4c8e401-d6ff-494a-84f3-715e4b84eaba', '10.240.1.5', false, '10.0.0.0/8 เป็น Private IP Class A', 2);
+INSERT INTO public.choices VALUES ('3821f13e-cfef-44b8-a872-407e096af0b3', 'b4c8e401-d6ff-494a-84f3-715e4b84eaba', '172.20.10.5', false, '172.16.0.0 - 172.31.255.255 เป็น Private IP Class B', 3);
+INSERT INTO public.choices VALUES ('ed246c97-1596-4ca4-b39f-f82bb2cd299a', 'b4c8e401-d6ff-494a-84f3-715e4b84eaba', '192.168.100.1', false, '192.168.0.0/16 เป็น Private IP Class C', 4);
+INSERT INTO public.choices VALUES ('1e8e9a89-0b23-4793-850b-a54177058239', '809eec81-5754-4afb-8940-ff635ec0484c', 'DNS Server ล่มไม่สามารถแปลงชื่อ db-server ได้', false, 'ถ้า DNS ล่ม จะขึ้น Name or service not known ก่อนที่จะเริ่มส่ง TCP SYN', 4);
+INSERT INTO public.choices VALUES ('4d206e3c-6b1e-42e9-b2b2-ce8ce3fe95cc', 'a6917e20-839e-4d3c-821d-4541711f8053', 'เครื่องสื่อสารได้เฉพาะภายใน Subnet เดียวกัน แต่ออกนอกวงหรือออกอินเทอร์เน็ตไม่ได้', true, 'ถูกต้อง ขาด Default Gateway ทำให้ไม่รู้จะส่ง Packet ออกนอกวงไปที่ใด', 1);
+INSERT INTO public.choices VALUES ('03f2c281-1f28-4e3b-9ed2-c3a55c5f5cc2', 'a6917e20-839e-4d3c-821d-4541711f8053', 'เครื่องจะตัดการเชื่อมต่อเครือข่ายทั้งหมด แม้แต่วงเดียวกันก็คุยไม่ได้', false, 'ในวงเดียวกันคุยผ่าน ARP และ Switch Layer 2 ได้โดยตรงโดยไม่ต้องพึ่ง Gateway', 2);
+INSERT INTO public.choices VALUES ('3e017dd6-03f7-4955-a0e9-e7dafbc50220', 'a6917e20-839e-4d3c-821d-4541711f8053', 'บริการ SSH จะหยุดทำงานทันที', false, 'SSH ยังเปิดรับการเชื่อมต่อจากเครื่องใน Subnet เดียวกันได้', 3);
+INSERT INTO public.choices VALUES ('0d4ac371-27fc-42fb-bc5f-d001d2d93a0f', 'a6917e20-839e-4d3c-821d-4541711f8053', 'เครื่องจะสลับไปใช้ IP 127.0.0.1 อัตโนมัติ', false, 'Loopback 127.0.0.1 ทำงานแยกกัน ไม่เกี่ยวกับ Default Gateway', 4);
+INSERT INTO public.choices VALUES ('f0afb309-87f6-4525-b4ca-97199287bb06', '9b606785-3b1d-4039-8aef-d077d30d52dc', 'dig @8.8.8.8 api.example.com +short', true, 'ถูกต้อง @ ระบุเซิร์ฟเวอร์ และ +short จะแสดงเฉพาะค่า IP ที่ตอบกลับ', 1);
+INSERT INTO public.choices VALUES ('c9db95da-a074-4166-99ba-de3cbe57a169', '9b606785-3b1d-4039-8aef-d077d30d52dc', 'dig api.example.com --server 8.8.8.8 -q', false, 'dig ไม่ใช้ option --server หรือ -q', 2);
+INSERT INTO public.choices VALUES ('672a229a-84d4-4514-a43e-f999488ec45c', '9b606785-3b1d-4039-8aef-d077d30d52dc', 'nslookup -short api.example.com @8.8.8.8', false, 'nslookup ไม่ใช้ @ หรือ -short', 3);
+INSERT INTO public.choices VALUES ('e3d62eb7-75b8-49ee-9613-fd6213cd5ed3', '9b606785-3b1d-4039-8aef-d077d30d52dc', 'dig -ip 8.8.8.8 api.example.com', false, 'dig ไม่ใช้ flag -ip ในการระบุ DNS server', 4);
+INSERT INTO public.choices VALUES ('bffdbf77-176c-48cf-84ef-5403369a92de', 'f3360feb-004a-49b9-9366-b7b9899c587f', 'DNS Resolver ยังคงติดแคชตามระยะเวลา TTL ของ Record เดิม', true, 'ถูกต้อง Resolver จะไม่ร้องขอ IP ใหม่จนกว่า TTL เดิมจะนับถอยหลังหมด', 1);
+INSERT INTO public.choices VALUES ('be593a36-19af-489f-99cb-e8d726f42a15', 'f3360feb-004a-49b9-9366-b7b9899c587f', 'พอร์ต 53 บนเซิร์ฟเวอร์ถูกบล็อก', false, 'ถ้าพอร์ต 53 ถูกบล็อก จะเกิด Timeout ไม่ใช่ได้ IP เก่ากลับมา', 2);
+INSERT INTO public.choices VALUES ('594fbb8c-2e6c-442e-8184-929006f26817', 'f3360feb-004a-49b9-9366-b7b9899c587f', 'Default Gateway ของเครื่องล่ม', false, 'ถ้า Gateway ล่มจะไม่สามารถออกเน็ตหรือคุยข้ามวงได้', 3);
+INSERT INTO public.choices VALUES ('01a03022-ec33-497f-9787-14307d202c5b', 'f3360feb-004a-49b9-9366-b7b9899c587f', 'A Record ไม่รองรับ IPv4', false, 'A Record คือมาตรฐานสำหรับ IPv4 โดยเฉพาะ', 4);
+INSERT INTO public.choices VALUES ('0c454b0b-2edc-4b94-bc2d-ade3454a338f', '611c9533-5018-4260-93b1-75368ecf0e4b', 'dig -x 203.0.113.50', true, 'ถูกต้อง flag -x ย่อมาจาก reverse query (PTR record lookup)', 1);
+INSERT INTO public.choices VALUES ('1857e5a5-ad01-46d0-bf2a-91ce31fc92c1', '611c9533-5018-4260-93b1-75368ecf0e4b', 'dig -r 203.0.113.50', false, '-r ไม่ใช่แฟล็กสำหรับ reverse dns', 2);
+INSERT INTO public.choices VALUES ('677bd17d-11aa-498c-a257-25a597c6db50', '611c9533-5018-4260-93b1-75368ecf0e4b', 'nslookup -reverse 203.0.113.50', false, 'nslookup ทำ reverse lookup โดยพิมพ์ IP ตรงๆ ไม่ต้องใส่ -reverse', 3);
+INSERT INTO public.choices VALUES ('6a504dbf-42a1-4ba1-b267-884a5ecdf62a', '611c9533-5018-4260-93b1-75368ecf0e4b', 'host -a 203.0.113.50', false, 'host สามารถใส่ IP ตรงๆ ได้ แต่ dig -x เป็นคำสั่งมาตรฐานที่นิยมใช้', 4);
+INSERT INTO public.choices VALUES ('9d796172-ae91-4265-9ba2-08b33932d534', 'b8d26fbb-9136-4651-a96a-004a0568191c', 'Hop ที่ 4 มีการทำ ICMP Rate-limiting แต่ไม่ได้ส่งผลกระทบต่อทราฟฟิกจริงเพราะ Hop ปลายทางไม่มี Loss', true, 'ถูกต้อง ถ้าปัญหาเกิดจริง Loss จะต้องลุกลามต่อไปยังทุก Hop ข้างหลัง', 1);
+INSERT INTO public.choices VALUES ('6fb7e0e2-d0fc-484e-ad2c-2a5905710f08', 'b8d26fbb-9136-4651-a96a-004a0568191c', 'เราเตอร์ตัวที่ 4 ชำรุด ต้องติดต่อให้ผู้ดูแลเปลี่ยนฮาร์ดแวร์ทันที', false, 'ถ้าฮาร์ดแวร์พัง Hop 5 และปลายทางจะไม่สามารถส่งข้อมูลผ่านได้แบบ 0% loss', 2);
+INSERT INTO public.choices VALUES ('a9cb6eba-0d21-4702-a7b6-5a6ddc4410e8', 'b8d26fbb-9136-4651-a96a-004a0568191c', 'สาย LAN ของเครื่องเซิร์ฟเวอร์หลวม', false, 'ถ้าสาย LAN หลวม ปัญหาจะเริ่มแสดงที่ Hop ที่ 1 (Local Gateway) ทันที', 3);
+INSERT INTO public.choices VALUES ('33f655c6-01cc-4aa4-b13b-809fef7d0b7e', 'b8d26fbb-9136-4651-a96a-004a0568191c', 'เป็นผลมาจากการทำ DNS Cache ล้มเหลว', false, 'mtr ทำงานบนระดับ IP Layer 3 ไม่เกี่ยวกับ DNS Cache', 4);
+INSERT INTO public.choices VALUES ('41451867-e918-41b2-85cf-3e2f47375a8a', '15081888-fb1c-4b94-9d2a-5bab1372ddd3', 'Firewall หรือ OS ปลายทางอาจบล็อกโปรโตคอล ICMP ไว้ แต่พอร์ตของแอปพลิเคชัน (TCP 80/443) ยังเปิดให้บริการอยู่', true, 'ถูกต้อง ICMP ปิดกั้นได้ง่าย จึงต้องเช็คด้วย TCP port (เช่น curl หรือ nc) เพิ่มเติม', 1);
+INSERT INTO public.choices VALUES ('bcad0c50-fcbe-43d4-bac8-099c29e453ee', '15081888-fb1c-4b94-9d2a-5bab1372ddd3', 'ping สามารถใช้ทดสอบได้เฉพาะเครื่องในวง LAN เดียวกันเท่านั้น', false, 'ping ใช้งานข้ามเครือข่ายอินเทอร์เน็ตได้ทั่วโลกหากไม่มีการบล็อก', 2);
+INSERT INTO public.choices VALUES ('5ff96425-b92b-47e3-9d91-25474600c5db', '15081888-fb1c-4b94-9d2a-5bab1372ddd3', 'ping ต้องการสิทธิ์ root เสมอจึงไม่แสดงผล', false, 'คำสั่ง ping ทั่วไปผู้ใช้ธรรมดาก็รันได้', 3);
+INSERT INTO public.choices VALUES ('ccf61d51-1024-4d1c-9661-04dab6fe42b4', '15081888-fb1c-4b94-9d2a-5bab1372ddd3', 'สาย Fiber Optic ไม่รองรับการส่งข้อมูลแบบ Echo Request', false, 'สายสัญญาณทุกประเภทรองรับ IP packet ทุกชนิด', 4);
+INSERT INTO public.choices VALUES ('3d475c12-016b-4ce4-a6dd-6b4295df05b6', '809eec81-5754-4afb-8940-ff635ec0484c', 'Service PostgreSQL บนเครื่อง db-server หยุดทำงาน หรือไม่ได้เปิดพอร์ต LISTEN อยู่', true, 'ถูกต้อง Kernel ปลายทางจะส่ง RST ปฏิเสธทันทีเมื่อไม่มีโปรเซสรอรับที่พอร์ตนั้น', 1);
+INSERT INTO public.choices VALUES ('fa1728d4-fa1f-4d57-a37c-199cc34dfd85', '809eec81-5754-4afb-8940-ff635ec0484c', 'Firewall หรือ Security Group สั่ง DROP แพ็กเก็ตทิ้ง', false, 'ถ้า Firewall สั่ง DROP จะเกิด Connection Timed Out ไม่ใช่ Connection Refused', 2);
+INSERT INTO public.choices VALUES ('5de6be7d-6ea7-4e73-9f42-c3565d17a0c4', '809eec81-5754-4afb-8940-ff635ec0484c', 'สาย LAN ของเครื่อง Client ขาด', false, 'ถ้าสาย LAN ขาด จะขึ้น Network is unreachable', 3);
+INSERT INTO public.choices VALUES ('182f098c-6953-4929-b880-f73969e1c7df', '9305fed3-82a6-4ca9-a25b-a0ae68b2049d', 'เครื่องภายนอกจะไม่สามารถเชื่อมต่อได้เลย จะเชื่อมต่อได้เฉพาะแอปพลิเคชันที่รันอยู่ในเครื่องตัวเองเท่านั้น', true, 'ถูกต้อง 127.0.0.1 จำกัดเฉพาะ Localhost ต้องเปลี่ยนเป็น 0.0.0.0 จึงจะรับจากภายนอกได้', 1);
+INSERT INTO public.choices VALUES ('80e244da-ce1f-492d-9aff-83d28f4c4df8', '9305fed3-82a6-4ca9-a25b-a0ae68b2049d', 'เครื่องภายนอกเชื่อมต่อได้ตามปกติหากมี Firewall อนุญาต', false, 'แม้ Firewall จะเปิด แต่ OS จะไม่รับฟังทราฟฟิกภายนอกเข้ามาที่ 127.0.0.1', 2);
+INSERT INTO public.choices VALUES ('0bd28997-65fa-4729-bae4-5e1479d1e6e8', '9305fed3-82a6-4ca9-a25b-a0ae68b2049d', 'Service PostgreSQL จะทำงานแบบ Read-only', false, 'ไม่เกี่ยวกับการจำกัดสิทธิ์ Read/Write', 3);
+INSERT INTO public.choices VALUES ('93bfbf4b-f123-4112-af7e-30574b1cad55', '9305fed3-82a6-4ca9-a25b-a0ae68b2049d', 'พอร์ต 5432 จะสลับไปใช้ UDP อัตโนมัติ', false, 'PostgreSQL ใช้ TCP เท่านั้น', 4);
+INSERT INTO public.choices VALUES ('8015805f-913c-4f89-8b0c-06d64da8db67', '5f978533-62ea-48fe-9698-8ee8b1b27294', 'Refused เกิดจากเครื่องปลายทางตอบปฏิเสธ (Service ดับ/ไม่ฟังพอร์ต), ส่วน Timed Out เกิดจากการไม่ได้รับการตอบกลับใดๆ เลย (Firewall ดรอปทิ้งหรือเครื่องดับ)', true, 'ถูกต้อง นี่คือคำตอบที่ตรงตามกลไก TCP และคำถามสัมภาษณ์งาน', 1);
+INSERT INTO public.choices VALUES ('d8abc4be-4a35-41bd-a1f0-63fd0339ca32', '5f978533-62ea-48fe-9698-8ee8b1b27294', 'Refused คือรหัสผ่านผิด, ส่วน Timed Out คือชื่อผู้ใช้ผิด', false, 'Authentication เกิดขึ้นที่ Application Layer หลังจาก TCP Handshake สำเร็จแล้ว', 2);
+INSERT INTO public.choices VALUES ('020c5bde-67a0-4779-a116-ca006947e6c0', '5f978533-62ea-48fe-9698-8ee8b1b27294', 'Refused เกิดขึ้นบน IPv4 เท่านั้น ส่วน Timed Out เกิดบน IPv6', false, 'ทั้งสองข้อผิดพลาดเกิดขึ้นได้ทั้งบน IPv4 และ IPv6', 3);
+INSERT INTO public.choices VALUES ('23e1a3d9-9a60-4ac3-b02b-5bb99352b43a', '5f978533-62ea-48fe-9698-8ee8b1b27294', 'Refused เกิดจากฮาร์ดแวร์ เราเตอร์พัง ส่วน Timed Out เกิดจากซอฟต์แวร์', false, 'ไม่ถูกต้องตามหลักการทำงานของเครือข่าย', 4);
+INSERT INTO public.choices VALUES ('e92b20be-fdb2-409c-a92c-dc0a57b5fe92', '8e98bdbc-25ff-4734-ab03-4f4cc8d75ec6', 'SELECT c.* FROM customers c LEFT JOIN orders o ON c.id = o.customer_id WHERE o.id IS NULL;', true, 'ถูกต้อง นี่คือรูปแบบ Anti-Join มาตรฐานที่ค้นหาแถวที่ไม่พบคู่ตรงกันในตารางฝั่งขวา', 1);
+INSERT INTO public.choices VALUES ('c3e5f858-2e6a-468a-af41-0d8ac775ff48', '8e98bdbc-25ff-4734-ab03-4f4cc8d75ec6', 'SELECT c.* FROM customers c INNER JOIN orders o ON c.id = o.customer_id WHERE o.id IS NULL;', false, 'INNER JOIN จะดึงเฉพาะรายการที่มีคู่ตรงกันทั้งสองฝั่ง ทำให้เงื่อนไข WHERE o.id IS NULL ไม่ได้ผลลัพธ์ใดๆ เลย', 2);
+INSERT INTO public.choices VALUES ('c370edf2-f2ad-4403-9151-639397bd87f9', '8e98bdbc-25ff-4734-ab03-4f4cc8d75ec6', 'SELECT c.* FROM customers c WHERE c.id = (SELECT customer_id FROM orders);', false, 'ไวยากรณ์นี้จะ Error หาก Subquery คืนค่ามากกว่า 1 แถว และเป็นเงื่อนไขที่ดึงเฉพาะคนที่มีออเดอร์', 3);
+INSERT INTO public.choices VALUES ('d8538ccb-3c84-4418-b152-9abd9ed9202c', '8e98bdbc-25ff-4734-ab03-4f4cc8d75ec6', 'SELECT c.* FROM customers c RIGHT JOIN orders o ON c.id = o.customer_id;', false, 'RIGHT JOIN จะเน้นตาราง orders เป็นหลัก ซึ่งไม่ได้รายการลูกค้าที่ไม่มีออเดอร์', 4);
+INSERT INTO public.choices VALUES ('7ac3e809-de40-471a-b626-e56ea4b7b302', '1965fab0-45b2-4e02-adc4-72650a0c04f0', 'เพราะ NULL คือสภาวะไม่มีค่า (Unknown) ไม่สามารถเปรียบเทียบด้วยเครื่องหมาย = ได้ ต้องใช้ไวยากรณ์ IS NULL เท่านั้น', true, 'ถูกต้อง NULL ต้องตรวจสอบด้วย IS NULL หรือ IS NOT NULL เสมอ', 1);
+INSERT INTO public.choices VALUES ('33c8914a-c91e-483a-974a-a5aa47e15582', '1965fab0-45b2-4e02-adc4-72650a0c04f0', 'เพราะตารางบังคับให้คอลัมน์ email ต้องเป็น UNIQUE', false, 'ข้อจำกัด UNIQUE ไม่ได้ห้ามการ Query', 2);
+INSERT INTO public.choices VALUES ('820b7491-22e3-42ae-8d4a-0e2c1b341871', '1965fab0-45b2-4e02-adc4-72650a0c04f0', 'เพราะต้องเปลี่ยนคำว่า NULL เป็นสตริง ''NULL'' เสมอ', false, '''NULL'' คือสตริงตัวอักษร ไม่ใช่ค่าว่าง NULL ในฐานข้อมูล', 3);
+INSERT INTO public.choices VALUES ('744e07a2-863a-4271-b5ae-550d3f522de8', '1965fab0-45b2-4e02-adc4-72650a0c04f0', 'เพราะ PostgreSQL ไม่รองรับค่า NULL', false, 'PostgreSQL รองรับค่า NULL ตามมาตรฐาน SQL สากล', 4);
+INSERT INTO public.choices VALUES ('e0f05385-311d-41c1-ac98-1363240ad3ad', '31c1b64e-e85e-4f8c-9eca-381f6805148b', 'คืนค่าตัวแรกที่ไม่เป็น NULL จากรายการที่ระบุ หากเป็น NULL ทั้งหมดจะคืนคำว่า ''N/A''', true, 'ถูกต้อง นี่คือนิยามและการทำงานของฟังก์ชัน COALESCE', 1);
+INSERT INTO public.choices VALUES ('934f697f-aaf1-4dcf-a3c9-54a781f7beae', '31c1b64e-e85e-4f8c-9eca-381f6805148b', 'นำค่า phone, mobile และ ''N/A'' มาต่อกันเป็นข้อความเดียว', false, 'การต่อสตริงใช้ฟังก์ชัน CONCAT หรือโอเปอเรเตอร์ ||', 2);
+INSERT INTO public.choices VALUES ('5c99259d-f10c-4ef7-adda-41e9594be1a8', '31c1b64e-e85e-4f8c-9eca-381f6805148b', 'คืนค่าเฉพาะกรณีที่ phone และ mobile มีค่าตรงกันเท่านั้น', false, 'ฟังก์ชันที่เช็คความเหมือนแล้วคืน NULL คือ NULLIF', 3);
+INSERT INTO public.choices VALUES ('0850af74-78f5-401d-a2b3-49b141d8784c', '31c1b64e-e85e-4f8c-9eca-381f6805148b', 'บังคับแปลงเบอร์โทรศัพท์ให้เป็นรูปแบบสากล', false, 'COALESCE ไม่ได้จัด Format ตัวเลข', 4);
+INSERT INTO public.choices VALUES ('ba3dd0fa-59c3-4bc7-9415-fa3152177e0c', '5718c858-1020-4652-9789-1d2f2f1629ae', 'ใช้ HAVING COUNT(*) > 10 หลังคำสั่ง GROUP BY ip_address', true, 'ถูกต้อง HAVING ใช้กรองเงื่อนไขของค่า Aggregate หลังจากจัดกลุ่มแล้ว', 1);
+INSERT INTO public.choices VALUES ('1c1bc5ad-3ee1-4aae-b804-75b0f8cdcb9d', '5718c858-1020-4652-9789-1d2f2f1629ae', 'ใช้ WHERE COUNT(*) > 10 ก่อนคำสั่ง GROUP BY', false, 'จะเกิด Syntax error: aggregate functions are not allowed in WHERE', 2);
+INSERT INTO public.choices VALUES ('d0b3ec53-9542-410f-925a-f1f8ff382393', '5718c858-1020-4652-9789-1d2f2f1629ae', 'ใช้ ORDER BY COUNT(*) > 10', false, 'ORDER BY ใช้จัดลำดับ ไม่ได้กรองตัดแถวที่ไม่ต้องการออก', 3);
+INSERT INTO public.choices VALUES ('19234115-2c37-4cd4-87c6-b83826770bda', '5718c858-1020-4652-9789-1d2f2f1629ae', 'ใช้ LIMIT 10', false, 'LIMIT 10 เพียงแค่ตัดผลลัพธ์มาแสดง 10 แถวแรก ไม่ได้กรองตามเงื่อนไขจำนวนครั้ง', 4);
+INSERT INTO public.choices VALUES ('cb3272f0-cf15-42a3-8656-bf053e2f8d93', 'e39e6e87-df02-4e08-a4a3-ddfce1e64731', 'สร้าง Index บนคอลัมน์ที่อยู่ในเงื่อนไข WHERE ของคำสั่ง Query เพื่อเปลี่ยนเป็นการค้นหาแบบ Index Scan', true, 'ถูกต้อง การสร้าง Index คือวิธีแก้ปัญหา Seq Scan บนตารางขนาดใหญ่โดยตรง', 1);
+INSERT INTO public.choices VALUES ('0fa519e5-c6ac-4582-bc9c-473d85ed0c1a', 'e39e6e87-df02-4e08-a4a3-ddfce1e64731', 'เพิ่มขนาดของ CPU และ RAM ของ Database Server ให้สูงขึ้นทันที', false, 'การขยายเครื่องไม่ใช่วิธีแก้ปัญหาที่ถูกต้องเมื่อขาด Index การ Scan 5 ล้านแถวยังคงช้าอยู่ดี', 2);
+INSERT INTO public.choices VALUES ('2d25ce7f-dd7a-44ed-a774-fd3bd50cf762', 'e39e6e87-df02-4e08-a4a3-ddfce1e64731', 'เปลี่ยนประเภทคอลัมน์เป็น VARCHAR ทั้งหมด', false, 'ไม่มีผลต่อการทำงานของ Index', 3);
+INSERT INTO public.choices VALUES ('13496dbb-e16e-4b88-8a9c-b84ca50aefe1', 'e39e6e87-df02-4e08-a4a3-ddfce1e64731', 'สั่ง VACUUM FULL เพื่อลบข้อมูลเก่า', false, 'VACUUM เคลียร์ dead tuples แต่ไม่ได้สร้างดัชนีค้นหาใหม่', 4);
+INSERT INTO public.choices VALUES ('2f2609ed-20de-4d9d-adca-aa2467eb4d98', '442a963b-7185-4a91-9925-5d292b0ec6cd', 'SELECT pg_terminate_backend(12450);', true, 'ถูกต้อง pg_terminate_backend บังคับตัดเซสชันของ pid นั้นทันทีอย่างแน่นอน', 1);
+INSERT INTO public.choices VALUES ('73957f91-3da9-4a1d-b93d-011c39adf891', '442a963b-7185-4a91-9925-5d292b0ec6cd', 'KILL QUERY 12450;', false, 'KILL QUERY เป็นไวยากรณ์ของ MySQL ไม่ใช่ PostgreSQL', 2);
+INSERT INTO public.choices VALUES ('4cddbec9-16db-4ac1-9c6e-76f5d5c73706', '442a963b-7185-4a91-9925-5d292b0ec6cd', 'DROP PROCESS 12450;', false, 'ไม่มีคำสั่งนี้ใน PostgreSQL', 3);
+INSERT INTO public.choices VALUES ('08eb5281-0e05-4408-b41d-1717d1241ed5', '442a963b-7185-4a91-9925-5d292b0ec6cd', 'SYSTEMCTL STOP QUERY 12450;', false, 'systemctl จัดการ Service ระดับ Linux OS ไม่สามารถตัด pid ใน database ได้', 4);
+INSERT INTO public.choices VALUES ('e2b178c2-3443-425e-a168-e82e236b999d', '264fa5d3-53b8-42c9-9879-5fe87517011a', 'กู้คืนระบบให้กลับมาใช้งานได้โดยเร็วที่สุด (Restore Service / ลด MTTR) แม้จะต้องใช้ทางเลี่ยงชั่วคราวหรือสั่ง Rollback', true, 'ถูกต้อง เป้าหมายคือหยุดความเสียหายต่อธุรกิจให้เร็วที่สุด', 1);
+INSERT INTO public.choices VALUES ('d299f7fa-c629-4808-b5b0-87414824eac3', '264fa5d3-53b8-42c9-9879-5fe87517011a', 'นั่งไล่อ่านโค้ดทุกบรรทัดเพื่อหาบั๊กที่ทำให้เกิดปัญหาก่อนเปิดระบบ', false, 'การมัวแต่อ่านโค้ดโดยไม่ Rollback จะทำให้ธุรกิจเสียหายอย่างหนัก', 2);
+INSERT INTO public.choices VALUES ('f22c4857-c359-4123-8668-0abb3784af02', '264fa5d3-53b8-42c9-9879-5fe87517011a', 'ประชุมเพื่อหาตัวคนผิดที่รับผิดชอบการดีพลอย', false, 'การกล่าวโทษ (Blame) ผิดหลักการ Blameless Post-Mortem', 3);
+INSERT INTO public.choices VALUES ('7bd83241-d9ea-4d30-adf0-5562c866e25f', '264fa5d3-53b8-42c9-9879-5fe87517011a', 'ปิดระบบทั้งองค์กรเพื่อความปลอดภัย', false, 'ไม่ใช่แนวทางที่ถูกต้องสำหรับ Incident Management', 4);
+INSERT INTO public.choices VALUES ('0174e6da-a0da-47b5-8f93-ffb28c9a43f4', '32ec1200-c002-4d27-b0d8-89f96f2d05d5', 'มีอะไรเปลี่ยนแปลงไปในระบบก่อนหน้าที่ปัญหาจะเริ่มเกิดขึ้นหรือไม่? (What Changed?)', true, 'ถูกต้อง การสืบค้น Change Logs มักไขข้อข้องใจได้ตรงจุดที่สุด', 1);
+INSERT INTO public.choices VALUES ('91700085-e319-4e86-862e-13d41662e3d3', '32ec1200-c002-4d27-b0d8-89f96f2d05d5', 'เครื่องเซิร์ฟเวอร์ซื้อมาปีไหน?', false, 'อายุเครื่องไม่ใช่คำถามแรกในการ Triage', 2);
+INSERT INTO public.choices VALUES ('602e95eb-1d45-4803-813a-32d7dbd5c9c7', '32ec1200-c002-4d27-b0d8-89f96f2d05d5', 'ใครเป็นคนเขียนโค้ดบรรทัดแรกของโปรเจกต์?', false, 'ไม่เกี่ยวข้องกับการแก้ปัญหาเฉพาะหน้า', 3);
+INSERT INTO public.choices VALUES ('c9bb0881-ff0d-4a29-a8e8-89662961c0e5', '32ec1200-c002-4d27-b0d8-89f96f2d05d5', 'ดาต้าเบสรองรับภาษาอะไรบ้าง?', false, 'ไม่ใช่คำถามวิเคราะห์ต้นตอ', 4);
+INSERT INTO public.choices VALUES ('f5220e5a-109c-4417-a8c1-8e3e0a937c4b', '9a165cbe-1a6d-41a7-994d-d7f2c50274c7', 'Log ข้อความ Error พร้อม Transaction ID ที่เจาะจง, ช่วงเวลาที่เริ่มเป็น และสิ่งที่ Support ได้ทดสอบคัดกรองเบื้องต้นไปแล้ว', true, 'ถูกต้อง นี่คือข้อมูลจำเป็นสำหรับการสืบสวนต่ออย่างมีประสิทธิภาพ', 1);
+INSERT INTO public.choices VALUES ('6176fe47-0bd0-421d-814a-9b6b8ea99b84', '9a165cbe-1a6d-41a7-994d-d7f2c50274c7', 'เขียนสั้นๆ เพียงว่า ''ระบบช้า รบกวนช่วยดูด่วน''', false, 'ข้อมูลไม่เพียงพอ ทำให้ต้องเสียเวลาถามตอบไปมา', 2);
+INSERT INTO public.choices VALUES ('367d9683-f379-4bdd-ae58-e772df6fad85', '9a165cbe-1a6d-41a7-994d-d7f2c50274c7', 'แนบเฉพาะสเปกฮาร์ดแวร์ของเครื่องคอมพิวเตอร์ลูกค้า', false, 'สเปกเครื่องลูกข่ายไม่ช่วยบอกสาเหตุของปัญหาฝั่งแอปพลิเคชัน', 3);
+INSERT INTO public.choices VALUES ('096e6549-0ea1-4b2b-afe1-ef5e26eaa3ff', '9a165cbe-1a6d-41a7-994d-d7f2c50274c7', 'ส่งภาพหน้าต่างสีฟ้าโดยไม่ระบุรายละเอียด', false, 'ไม่ช่วยให้ผู้พัฒนาวิเคราะห์โค้ดได้', 4);
+INSERT INTO public.choices VALUES ('0f50b0e6-40ed-4c54-a1e4-bc51d7178931', 'cad3c17c-591e-452d-bc6f-28238eee28f1', 'มุ่งเน้นการปรับปรุงระบบและกระบวนการทำงานเพื่อป้องกันไม่ให้เกิดปัญหาซ้ำ โดยไม่กล่าวโทษหรือลงโทษตัวบุคคล', true, 'ถูกต้อง มุ่งแก้ที่ระบบและกระบวนการ ไม่ใช่ลงโทษคน', 1);
+INSERT INTO public.choices VALUES ('ed09dc1a-309c-421c-8ad9-48e61141c032', 'cad3c17c-591e-452d-bc6f-28238eee28f1', 'การปกปิดความผิดพลาดไม่ให้ผู้บริหารรับรู้', false, 'ผิดหลักความโปร่งใสและตรวจสอบได้', 2);
+INSERT INTO public.choices VALUES ('80fe8f88-082b-42ee-8d71-20c207930c70', 'cad3c17c-591e-452d-bc6f-28238eee28f1', 'การตัดโบนัสพนักงานทุกคนที่อยู่ในกะที่ระบบล่ม', false, 'ตรงข้ามกับแนวคิด Blameless โดยสิ้นเชิง', 3);
+INSERT INTO public.choices VALUES ('20533ebe-cccd-480a-9ac3-0fda1e77834c', 'cad3c17c-591e-452d-bc6f-28238eee28f1', 'การโยนความผิดให้ผู้ให้บริการคลาวด์ภายนอกเสมอ', false, 'ไม่ใช่แนวทางวิเคราะห์ที่สร้างสรรค์', 4);
+INSERT INTO public.choices VALUES ('6e6995e5-d4cd-419a-98e0-f60ead13ae23', 'e6ac9105-39ae-46e1-85cb-1df0720cf127', 'Backend Application Server ด้านหลังหยุดทำงาน แครชล่ม หรือไม่เปิดพอร์ตตามที่ Nginx คอนฟิกไว้', true, 'ถูกต้อง Nginx ไม่สามารถเชื่อมต่อไปยัง Upstream ได้จึงส่ง 502 Bad Gateway', 1);
+INSERT INTO public.choices VALUES ('5db3d8f2-a68f-4039-8067-49814f04563f', 'e6ac9105-39ae-46e1-85cb-1df0720cf127', 'Backend ประมวลผลช้าเกินกว่า 60 วินาที', false, 'ประมวลผลนานเกิน Timeout จะได้รหัส 504 Gateway Timeout ไม่ใช่ 502', 2);
+INSERT INTO public.choices VALUES ('4a6845ad-1ccd-49b5-8630-9dd88cda2212', 'e6ac9105-39ae-46e1-85cb-1df0720cf127', 'Client ส่ง Header Authorization ที่มี Token หมดอายุมา', false, 'Token หมดอายุจะได้รหัส 401 Unauthorized', 3);
+INSERT INTO public.choices VALUES ('a663e255-d684-41b2-8d01-a7b74239aebc', 'e6ac9105-39ae-46e1-85cb-1df0720cf127', 'Client ส่ง URL ที่ไม่มีอยู่จริงบนเซิร์ฟเวอร์', false, 'URL ไม่มีอยู่จริงจะได้รหัส 404 Not Found', 4);
+INSERT INTO public.choices VALUES ('c0cc2028-8a14-4220-81a0-9458b12fed83', '5b92c358-a418-4117-a664-1c45579f5e01', '401 คือยังไม่ผ่านการยืนยันตัวตน (Authentication Failed/No Token), ส่วน 403 คือยืนยันตัวตนแล้วแต่ไม่มีสิทธิ์เข้าถึง (Authorization Failed/Forbidden)', true, 'ถูกต้อง 401 = Who are you? / 403 = I know who you are, but you cannot enter.', 1);
+INSERT INTO public.choices VALUES ('37e50f17-c1b4-4aff-8b8d-51bd4c2504b0', '5b92c358-a418-4117-a664-1c45579f5e01', '401 ใช้กับหน้าเว็บ ส่วน 403 ใช้กับ REST API เท่านั้น', false, 'ทั้งสองรหัสเป็นมาตรฐาน HTTP ใช้ได้ทั้ง Web และ API', 2);
+INSERT INTO public.choices VALUES ('d736d075-509b-490f-bb00-e7549afc8e15', '5b92c358-a418-4117-a664-1c45579f5e01', '401 เป็นข้อผิดพลาดฝั่ง Server ส่วน 403 เป็นฝั่ง Client', false, 'ทั้งรหัสขึ้นต้นด้วย 4xx จัดเป็น Client Error ทั้งคู่', 3);
+INSERT INTO public.choices VALUES ('846318c3-ed31-4b30-a6d8-e4d6f513a2ae', '5b92c358-a418-4117-a664-1c45579f5e01', '401 คือเซิร์ฟเวอร์หาไฟล์ไม่พบ ส่วน 403 คือไฟล์ถูกลบไปแล้ว', false, 'ไฟล์หาไม่พบคือ 404 Not Found หรือ 410 Gone', 4);
+INSERT INTO public.choices VALUES ('e5c71722-b6ca-45df-964c-58b94f68f032', '1b0c7347-ec8c-4c56-abd9-96fe64f7019e', 'ตรวจสอบ Slow Query หรือคำสั่งที่ค้างอยู่ใน Database และดูภาระ CPU/Memory ของ Backend Service', true, 'ถูกต้อง Backend ยังไม่ตายแต่ประมวลผลนานเกินกำหนด มักเกิดจากฐานข้อมูลช้า', 1);
+INSERT INTO public.choices VALUES ('7bd3691a-6967-433a-9e5b-2bbe15667f31', '1b0c7347-ec8c-4c56-abd9-96fe64f7019e', 'สั่งรีสตาร์ท Router ของผู้ใช้งานทันที', false, '504 เกิดขึ้นที่ฝั่งเซิร์ฟเวอร์ (Proxy กับ Upstream) ไม่เกี่ยวกับเน็ตบ้านผู้ใช้', 2);
+INSERT INTO public.choices VALUES ('1ef59d8f-8ec3-44a8-b746-11b49630231f', '1b0c7347-ec8c-4c56-abd9-96fe64f7019e', 'ตรวจสอบว่าผู้ใช้จำรหัสผ่านถูกหรือไม่', false, 'รหัสผ่านผิดจะไม่ทำให้เกิด 504 Timeout', 3);
+INSERT INTO public.choices VALUES ('797d57fc-e777-461b-ace6-13d68f95ca14', '1b0c7347-ec8c-4c56-abd9-96fe64f7019e', 'เปลี่ยนโดเมนเนมของเว็บไซต์ใหม่', false, 'ไม่เกี่ยวกับการทำงานของ Gateway Timeout', 4);
+INSERT INTO public.choices VALUES ('1447f67c-fa2e-46c8-ad38-68a4dd01798e', '4fe283f1-19c2-4303-a2fa-0b62358c2440', 'curl -I https://api.example.com', true, 'ถูกต้อง -I ส่ง HEAD request เพื่อดึงเฉพาะ Header', 1);
+INSERT INTO public.choices VALUES ('a43a5a1e-b5a8-4ea9-8f95-d23c677f1277', '4fe283f1-19c2-4303-a2fa-0b62358c2440', 'curl -h https://api.example.com', false, '-h คือการเปิดหน้า Help ของคำสั่ง curl', 2);
+INSERT INTO public.choices VALUES ('493c172b-80fd-444a-a0bc-bd92f5fa8695', '4fe283f1-19c2-4303-a2fa-0b62358c2440', 'curl --body-none https://api.example.com', false, 'ไม่มี option --body-none ใน curl', 3);
+INSERT INTO public.choices VALUES ('fa7b3d61-410f-466c-b725-690d0831a720', '4fe283f1-19c2-4303-a2fa-0b62358c2440', 'curl -s https://api.example.com', false, '-s คือ silent mode เพื่อปิด progress bar', 4);
+INSERT INTO public.choices VALUES ('443b61f4-4851-4d9b-97f8-aff76452305d', 'f92cd87a-0d5e-49eb-a61a-7764f41baf12', 'curl -H "Host: api.company.com" http://10.0.1.25/health', true, 'ถูกต้อง การใส่ Host Header ช่วยทดสอบเจาะจง IP ได้โดยตรง', 1);
+INSERT INTO public.choices VALUES ('d42ce7d6-7e89-4d97-b9fe-07769878de92', 'f92cd87a-0d5e-49eb-a61a-7764f41baf12', 'curl http://10.0.1.25:api.company.com', false, 'ไวยากรณ์นี้ไม่ถูกต้อง หลังโคลอนต้องเป็นพอร์ตตัวเลข', 2);
+INSERT INTO public.choices VALUES ('4cd001f0-51fe-4050-ba90-67ad3feca724', 'f92cd87a-0d5e-49eb-a61a-7764f41baf12', 'curl -X DOMAIN http://10.0.1.25', false, '-X กำหนด HTTP Method ไม่ใช่โดเมน', 3);
+INSERT INTO public.choices VALUES ('d05ec264-9fc1-4c1a-9721-515974506caf', 'f92cd87a-0d5e-49eb-a61a-7764f41baf12', 'curl --dns-bypass http://10.0.1.25', false, 'ไม่มีแฟล็ก --dns-bypass ใน curl', 4);
+INSERT INTO public.choices VALUES ('5d7208d8-3426-4c2b-b6ce-10b9d073b066', '35845f5e-4dcb-431d-8543-90b3ad2d0b52', 'openssl s_client -connect domain.com:443 -servername domain.com < /dev/null | openssl x509 -noout -enddate', true, 'ถูกต้อง นี่คือคำสั่งที่ถูกต้องพร้อมระบุ SNI (-servername) และแสดงบรรทัด notAfter', 1);
+INSERT INTO public.choices VALUES ('42394f72-4d0e-4fbd-b836-3753d087da0d', '35845f5e-4dcb-431d-8543-90b3ad2d0b52', 'openssl check-cert domain.com:443', false, 'ไม่มีคำสั่งย่อย check-cert ใน openssl', 2);
+INSERT INTO public.choices VALUES ('53d22a3e-9e4b-470c-9499-395e59c04b20', '35845f5e-4dcb-431d-8543-90b3ad2d0b52', 'curl --check-ssl-expiry domain.com', false, 'curl ไม่มีแฟล็ก --check-ssl-expiry', 3);
+INSERT INTO public.choices VALUES ('76852451-286a-447e-9630-39c3ac04a06b', '35845f5e-4dcb-431d-8543-90b3ad2d0b52', 'ping -ssl domain.com', false, 'ping ทำงานบนระดับ ICMP Layer 3 ไม่รู้จัก SSL/TLS', 4);
+INSERT INTO public.choices VALUES ('e01f4209-60ae-4bd7-9477-6715b8565d70', '22fcc240-b574-4819-8d9b-af1205ffe0df', 'ยังไม่ได้สั่ง Reload หรือ Restart โปรเซสของ Web Server (เช่น sudo systemctl reload nginx) ทำให้ระบบยังคงใช้ใบรับรองเดิมที่อยู่ใน RAM', true, 'ถูกต้อง ต้อง reload service เสมอหลังจากอัปเดตไฟล์ certificate', 1);
+INSERT INTO public.choices VALUES ('25b7fd17-a598-41c9-87f9-49a7103040e0', '22fcc240-b574-4819-8d9b-af1205ffe0df', 'ระบบต้องรอเวลาอย่างน้อย 24 ชั่วโมงเพื่อให้ DNS อัปเดต', false, 'SSL Certificate อยู่บน Web Server ไม่เกี่ยวกับ DNS Propagation', 2);
+INSERT INTO public.choices VALUES ('570e7fbb-ea61-47de-9a38-2db194827023', '22fcc240-b574-4819-8d9b-af1205ffe0df', 'เพราะไม่ได้ทำการ Format ดิสก์ใหม่', false, 'การเปลี่ยน Certificate ไม่เกี่ยวกับการ Format ดิสก์', 3);
+INSERT INTO public.choices VALUES ('27a3bf9f-dc6a-48b8-9e8a-fa9cc7972fe9', '22fcc240-b574-4819-8d9b-af1205ffe0df', 'เพราะพอร์ต 443 ถูกจำกัดให้ใช้ Certificate ใบเดิมตลอดไป', false, 'พอร์ตเครือข่ายสามารถเปลี่ยน Certificate ได้ตลอดเวลา', 4);
+
+
+--
+-- Data for Name: flashcards; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.flashcards VALUES ('d1a10001-0000-0000-0000-000000000002', 'linux:fc:journalctl-follow', 1, 'b1a10001-0000-0000-0000-000000000002', 'คำสั่งติดตาม System Log ของ Service nginx แบบ Real-time', 'journalctl -u nginx -f', 'พารามิเตอร์ -f ย่อมาจาก follow', 2, '2026-11-03 09:22:14.247234+00', '2026-11-03 09:22:14.247234+00');
+INSERT INTO public.flashcards VALUES ('d1a10001-0000-0000-0000-000000000003', 'linux:fc:df-h-inode', 1, 'b1a10001-0000-0000-0000-000000000005', 'คำสั่งดูพื้นที่ดิสก์ที่เหลืออยู่แบบ Human-Readable และตรวจ Inode', 'df -h  (ดูพื้นที่ GB/MB)\ndf -i  (ดูจำนวน Inode ที่เหลือ)', 'h ย่อมาจาก Human-readable, i ย่อมาจาก Inode', 3, '2026-11-03 09:22:14.247234+00', '2026-11-03 09:22:14.247234+00');
+INSERT INTO public.flashcards VALUES ('d1a10001-0000-0000-0000-000000000004', 'network:fc:refused-vs-timeout', 2, '3ff8610b-94c3-43a7-8e1f-436f27946647', 'ความแตกต่างระหว่าง Connection Refused กับ Connection Timed Out', 'Connection Refused: แพ็กเก็ตไปถึง แต่ปลายทางไม่มี Service เปิดฟัง หรือ Firewall ปฏิเสธ (TCP RST)\n\nConnection Timed Out: แพ็กเก็ตส่งไปแล้วไม่มีการตอบกลับ มักโดน Firewall ดรอปเงียบๆ หรือ Routing ขาด', 'Refused = ปลายทางปฏิเสธกลับมา, Timeout = รอจนหมดเวลา', 1, '2026-11-03 09:22:14.247234+00', '2026-11-03 09:22:14.247234+00');
+INSERT INTO public.flashcards VALUES ('d1a10001-0000-0000-0000-000000000005', 'network:fc:well-known-ports', 2, '3ff8610b-94c3-43a7-8e1f-436f27946647', 'Well-known Port: DNS, SSH, HTTPS, PostgreSQL', 'DNS: 53 (UDP/TCP)\nSSH: 22\nHTTPS: 443\nPostgreSQL: 5432', 'Postgres ลงท้ายด้วย 32', 2, '2026-11-03 09:22:14.247234+00', '2026-11-03 09:22:14.247234+00');
+INSERT INTO public.flashcards VALUES ('6bf81206-4699-4eff-aaf2-6484dc9497e4', 'docker:01-container-basics:fc01', 5, 'cf0d4598-1c64-4a7f-b8c9-d6a18307a0f9', 'docker ps กับ docker ps -a ต่างกันอย่างไร?', 'docker ps: แสดงเฉพาะ Container ที่กำลังรันอยู่ (Running)
+docker ps -a: แสดง Container ทั้งหมด รวมทั้งตัวที่หยุดทำงานหรือแครช (Exited/Stopped)', 'Running only vs All containers', 1, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('3c9d63db-b144-4a94-8258-aac6b0460cda', 'docker:01-container-basics:fc02', 5, 'cf0d4598-1c64-4a7f-b8c9-d6a18307a0f9', 'คำสั่งใดใช้ติดตาม Log แบบ Real-time คล้ายคำสั่ง tail -f บน Linux?', 'docker logs -f <container_name>', 'docker logs -f', 2, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('74329849-ec5c-48d5-9010-f76ef0a939d8', 'docker:01-container-basics:fc03', 5, 'cf0d4598-1c64-4a7f-b8c9-d6a18307a0f9', 'ทำไมจึงไม่ควรเข้าไปแก้ไขไฟล์โค้ดถาวรด้วย docker exec?', 'เพราะ Container ถูกออกแบบให้เป็น Stateless (Ephemeral) หาก Container ถูก Restart หรือสร้างใหม่ ข้อมูลและไฟล์ที่แก้ไขไว้จะสูญหายทันที', 'Stateless / Ephemeral lifecycle', 3, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('3bbcb941-a9f6-44af-9975-7db8e0803403', 'docker:01-container-basics:fc04', 5, 'cf0d4598-1c64-4a7f-b8c9-d6a18307a0f9', 'คำสั่ง docker stats มีประโยชน์อย่างไรสำหรับสาย Support?', 'แสดงข้อมูลการใช้ทรัพยากร CPU, RAM, Network I/O ของแต่ละ Container แบบ Real-time ทำให้รู้ได้ทันทีว่า Container ไหนกำลังดึงเครื่องพัง', 'Real-time CPU/RAM resource monitor', 4, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('d1a10001-0000-0000-0000-000000000006', 'sql:fc:where-vs-having', 3, '10413c74-c724-4168-99e9-fc7c279fb980', 'ความแตกต่างระหว่าง WHERE กับ HAVING ใน SQL', 'WHERE: กรองข้อมูล "ก่อน" ทำการจัดกลุ่ม (Filter individual rows)\n\nHAVING: กรองข้อมูล "หลัง" จากจัดกลุ่มและคำนวณ Aggregate เช่น COUNT(), SUM() แล้ว', 'HAVING มักใช้คู่กับ GROUP BY', 1, '2026-11-03 09:22:14.247234+00', '2026-11-03 09:22:14.247234+00');
+INSERT INTO public.flashcards VALUES ('d1a10001-0000-0000-0000-000000000007', 'sql:fc:explain-analyze', 3, '0ec2fdf6-2627-408b-9791-35963b5fe97e', 'คำสั่งดู Query Execution Plan และเวลาที่รันจริงใน PostgreSQL', 'EXPLAIN ANALYZE <sql_query>;', 'มีคีย์เวิร์ด 2 คำขึ้นต้น', 2, '2026-11-03 09:22:14.247234+00', '2026-11-03 09:22:14.247234+00');
+INSERT INTO public.flashcards VALUES ('8e84e94e-31d9-4929-814a-ef2de62e9a31', 'linux:02-basics:fc02', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'คำสั่งดูรายการไฟล์ทั้งหมดรวมไฟล์ซ่อน พร้อมแสดงสิทธิ์และขนาดแบบอ่านง่าย (KB/MB/GB)', 'ls -lah
+
+-l: แสดงรายละเอียดแบบยาว
+-a: รวมไฟล์ซ่อนที่ขึ้นต้นด้วย .
+-h: แสดงขนาดไฟล์แบบ Human-readable', 'ls ตามด้วย 3 ตัวเลือกยอดนิยม', 2, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('02bacb63-dee2-41cf-8e1e-288ebd8eb921', 'linux:07-disk-memory-cpu:fc04', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'ลบไฟล์ Log ขนาดใหญ่ด้วย rm ไปแล้ว แต่ทำไม df -h พื้นที่ดิสก์ยังไม่คืน และเช็กอย่างไร?', 'เพราะยังมีโปรเซสเปิดถือไฟล์นั้นค้างอยู่ (Held open)
+วิธีตรวจ: รัน lsof +L1 (หรือ lsof | grep deleted) เพื่อดูว่าโปรเซสใดถือไฟล์อยู่', 'List Open Files ที่มี link count < 1', 4, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('9a87616f-f0e2-45b5-a72e-fb6097ce0310', 'linux:07-disk-memory-cpu:fc05', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'เวลาดูหน่วยความจำด้วยคำสั่ง free -h ควรดูที่คอลัมน์ใดเป็นหลัก?', 'ดูที่คอลัมน์ available เป็นหลัก (ไม่ใช่คอลัมน์ free)
+เพราะ Linux นำ RAM ว่างไปทำ buff/cache ซึ่งพร้อมคืนให้แอปพลิเคชันได้ทันทีเมื่อจำเป็น', 'available = พร้อมให้แอปใช้งานจริง', 5, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('67389778-e704-4576-a2c3-6a81d2620fab', 'linux:07-disk-memory-cpu:fc06', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'คำสั่งตรวจว่าเคยมีโปรเซสถูก OOM Killer ของ Kernel สั่งปิดเพราะ RAM หมดหรือไม่', 'dmesg -T | grep -i oom
+(หรือ journalctl -k | grep -i oom)', 'ค้นหาคำว่า oom ใน Kernel log', 6, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('c2618586-2422-4fc5-a3bd-6627c9e3d89d', 'linux:07-disk-memory-cpu:fc07', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'ตัวเลข Load Average 3 ค่าจากคำสั่ง uptime แทนช่วงเวลาใด?', 'ค่าเฉลี่ยโหลดย้อนหลัง 1 นาที, 5 นาที และ 15 นาที ตามลำดับ', '1, 5, 15 นาที', 7, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('6099564e-06a8-4586-891d-973bd462eca6', 'linux:07-disk-memory-cpu:fc08', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'คำสั่งแสดงจำนวน CPU Core ของเครื่องเพื่อนำมาเทียบกับค่า Load Average', 'nproc
+(หาก Load Average สูงเกินค่าจาก nproc แสดงว่าเริ่มมีงานรอคิว)', 'Number of Processing Units', 8, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('c8c43fd6-95b5-447c-9448-95151473de8c', 'linux:07-disk-memory-cpu:fc09', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'หาก Load Average สูงมาก แต่ดู CPU Usage แล้วต่ำมาก มักเกิดจากสาเหตุใด?', 'เกิดจากปัญหา Disk I/O Wait สูง (%wa สูง และโปรเซสค้างในสถานะ D) เพราะ Linux นับโปรเซสที่รอ I/O รวมใน Load Average ด้วย', 'รอการอ่านเขียนดิสก์หรือ NFS', 9, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('495f7ae0-affd-49f9-acfc-52c32ad2ed2d', 'linux:07-disk-memory-cpu:fc10', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'คอลัมน์ us, sy, id, wa ในคำสั่ง vmstat หรือ top หมายถึงอะไร?', '• us (user): CPU ที่ใช้รันโปรแกรมทั่วไป
+• sy (system): CPU ที่ใช้ทำงานระดับ Kernel
+• id (idle): CPU ที่ว่างอยู่
+• wa (iowait): เวลาที่ CPU รอการอ่านเขียนดิสก์/เครือข่าย', 'User, System, Idle, Wait', 10, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('88d08759-6186-4aa2-9665-b3e9a838e6ae', 'linux:07-disk-memory-cpu:fc11', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'คำสั่งดูสถิติ Memory, Swap, I/O และ CPU ทุก 1 วินาที จำนวน 5 ครั้ง', 'vmstat 1 5
+(บรรทัดแรกคือค่าเฉลี่ยตั้งแต่เปิดเครื่อง ให้ดูตั้งแต่บรรทัดที่ 2 เป็นต้นไป)', 'Virtual Memory Statistics', 11, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('6f99cfa3-e4b6-4e8c-9ee5-151a2bc16195', 'linux:07-disk-memory-cpu:fc12', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'กฎเหล็กของ Tier 1 เมื่อตรวจพบว่าดิสก์เซิร์ฟเวอร์ Production เต็ม', 'ห้ามลบไฟล์ด้วยตัวเองโดยไม่อยู่ใน Runbook ให้เก็บผลลัพธ์จาก df -h, df -i, du -sh และ lsof +L1 แล้วส่งต่อ (Escalate) ทันที', 'ตรวจและเก็บหลักฐาน ไม่ลบสุ่มสี่สุ่มห้า', 12, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('6027dd08-04ab-4663-986a-9ad203db4bb0', 'linux:08-remote-access:fc01', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'สิทธิ์ (Octal Permission) ที่บังคับสำหรับโฟลเดอร์ ~/.ssh และไฟล์ ~/.ssh/authorized_keys', '• ~/.ssh : 700 (drwx------)
+• ~/.ssh/authorized_keys : 600 (-rw-------)
+• Private Key (เช่น ~/.ssh/id_ed25519) : 600 (-rw-------)', 'โฟลเดอร์ 700, ไฟล์กุญแจ 600', 1, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('c700700d-c233-498d-af1f-ac23b3712f72', 'linux:08-remote-access:fc02', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'คำสั่งเชื่อมต่อ SSH โดยระบุพอร์ต 2222 และระบุไฟล์ Private Key', 'ssh -p 2222 -i ~/.ssh/my_key user@host
+
+-p (พิมพ์เล็ก): ระบุพอร์ต
+-i: ระบุไฟล์ Identity (Private Key)', 'ssh ใช้ -p ตัวพิมพ์เล็ก', 2, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('352b5a33-6faf-4a11-9ac0-e4b7a876e12e', 'dc:fc:smf-vs-mmf', 10, 'd610df66-7525-44ca-9e83-02b4749afe01', 'ความแตกต่างของสายไฟเบอร์ Single-Mode (OS2) กับ Multi-Mode (OM3/OM4)', '• Single-Mode (OS2): สายสีเหลือง, แกน 9µm, แสง 1310/1550nm, คู่กับหัว LR (ระยะไกล 2-40+ กม.)
+• Multi-Mode (OM3/OM4): สายสีฟ้า Aqua, แกน 50µm, แสง 850nm, คู่กับหัว SR (ระยะใกล้ในห้อง Data Hall 100-400 ม.)', 'จำจากสีปลอกสาย: เหลือง = ไกล (LR), ฟ้า Aqua = ใกล้ (SR)', 1, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('600fd749-11e8-4c37-9f20-a4cb3189511f', 'dc:fc:sfp-qsfp-speeds', 10, 'd610df66-7525-44ca-9e83-02b4749afe01', 'ความเร็วของหัว Transceiver: SFP, SFP+, SFP28, QSFP+, QSFP28', '• SFP = 1 Gbps
 • SFP+ = 10 Gbps
 • SFP28 = 25 Gbps
 • QSFP+ = 40 Gbps (4x10G)
-• QSFP28 = 100 Gbps (4x25G)', 'Q ย่อมาจาก Quad (4 ช่องสัญญาณรวมกัน)', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
+• QSFP28 = 100 Gbps (4x25G)', 'Q ย่อมาจาก Quad (4 ช่องสัญญาณรวมกัน)', 2, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('330d010e-2f68-4757-b236-4e7a515130fe', 'dc:fc:rolling-fiber', 10, 'd610df66-7525-44ca-9e83-02b4749afe01', 'การทำ Rolling Fiber (สลับสาย Tx/Rx) คืออะไร และทำเมื่อไหร่?', 'คือการสลับตำแหน่งหัวสายไฟเบอร์ LC คู่ซ้าย-ขวาที่ปลายด้านใดด้านหนึ่ง
 
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:rolling-fiber', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-cabling-and-fiber' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'การทำ Rolling Fiber (สลับสาย Tx/Rx) คืออะไร และทำเมื่อไหร่?', 'คือการสลับตำแหน่งหัวสายไฟเบอร์ LC คู่ซ้าย-ขวาที่ปลายด้านใดด้านหนึ่ง
+ทำเมื่อเสียบสายไฟเบอร์แล้วไฟ Link ไม่ติด (Link Down) เพราะขั้วส่งแสง (Tx) วิ่งไปชนกับขั้วส่งแสง (Tx) ของอีกฝั่ง แทนที่จะเข้าขั้วรับแสง (Rx)', 'Tx ต้องเข้า Rx เสมอ', 3, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('aa3fc941-c6a5-4729-83ef-6414fd7215f2', 'dc:fc:bend-radius', 10, 'd610df66-7525-44ca-9e83-02b4749afe01', 'Bend Radius ของสายไฟเบอร์คืออะไร และทำไมจึงนิยมใช้เทปตีนตุ๊กแก (Velcro) แทนเคเบิลไทร์?', 'Bend Radius คือรัศมีการโค้งงอแคบสุดที่สายไฟเบอร์รับได้โดยแสงไม่รั่วออกนอกแกนแก้ว (Attenuation Loss) หรือแกนแก้วหัก
 
-ทำเมื่อเสียบสายไฟเบอร์แล้วไฟ Link ไม่ติด (Link Down) เพราะขั้วส่งแสง (Tx) วิ่งไปชนกับขั้วส่งแสง (Tx) ของอีกฝั่ง แทนที่จะเข้าขั้วรับแสง (Rx)', 'Tx ต้องเข้า Rx เสมอ', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:bend-radius', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-cabling-and-fiber' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'Bend Radius ของสายไฟเบอร์คืออะไร และทำไมจึงนิยมใช้เทปตีนตุ๊กแก (Velcro) แทนเคเบิลไทร์?', 'Bend Radius คือรัศมีการโค้งงอแคบสุดที่สายไฟเบอร์รับได้โดยแสงไม่รั่วออกนอกแกนแก้ว (Attenuation Loss) หรือแกนแก้วหัก
-
-การใช้เทป Velcro ช่วยไม่ให้รัดสายแน่นจนบีบปลอกสายและทำลายใยแก้วข้างในเหมือนพลาสติกเคเบิลไทร์', 'ห้ามพับสายหักศอก 90 องศา', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:t568b-color-code', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-cabling-and-fiber' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'ลำดับสีสายแลนมาตรฐาน T568B ทั้ง 8 พิน (พิน 1 ถึง 8)', '1. ขาว-ส้ม
+การใช้เทป Velcro ช่วยไม่ให้รัดสายแน่นจนบีบปลอกสายและทำลายใยแก้วข้างในเหมือนพลาสติกเคเบิลไทร์', 'ห้ามพับสายหักศอก 90 องศา', 4, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('149b4883-feaa-470c-b259-5b53df77508c', 'dc:fc:t568b-color-code', 10, 'd610df66-7525-44ca-9e83-02b4749afe01', 'ลำดับสีสายแลนมาตรฐาน T568B ทั้ง 8 พิน (พิน 1 ถึง 8)', '1. ขาว-ส้ม
 2. ส้ม
 3. ขาว-เขียว
 4. น้ำเงิน
 5. ขาว-น้ำเงิน
 6. เขียว
 7. ขาว-น้ำตาล
-8. น้ำตาล', 'ขึ้นต้นด้วยคู่ส้ม แล้วขาวเขียวคร่อมคู่น้ำเงิน', 5)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:riser-hba', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-server-hardware-oob' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'หน้าที่ของ Riser Card และ HBA Card ในเครื่องเซิร์ฟเวอร์', '• Riser Card: แผงแปลงสล็อต PCIe จากแนวตั้งเป็นแนวนอน เพื่อให้ใส่การ์ดในเครื่อง 1U/2U เตี้ยๆ ได้
-• HBA (Host Bus Adapter): การ์ดเชื่อมต่อเซิร์ฟเวอร์เข้ากับระบบจัดเก็บข้อมูลภายนอก เช่น Fibre Channel SAN หรือ SAS Storage', 'Riser = ยกตะแคงแนวนอน, HBA = การ์ดต่อ Storage', 6)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:ecc-dimm-rules', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-server-hardware-oob' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'ECC RAM คืออะไร และทำไมการใส่ RAM เซิร์ฟเวอร์ต้องเรียงตาม DIMM Population Rules?', '• ECC (Error-Correcting Code): แรมที่ตรวจจับและซ่อมบิตข้อมูลที่เพี้ยนเองได้ ป้องกันเครื่องแฮงค์
-• DIMM Population Rules: ลำดับช่องเสียบแรมที่ระบุบนฝาเครื่อง (เช่น A1, B1, A2...) เพื่อให้ Memory Controller ทุก Channel ทำงานสมดุลกันและบูตผ่าน', 'ดูผังลำดับช่องเสียบใต้ฝาเครื่องเสมอ', 7)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:rack-unit-1u', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-server-hardware-oob' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'ขนาดความสูง 1U (Rack Unit) เท่ากับกี่นิ้ว และหลักการวางน้ำหนักในตู้แร็ค 42U คืออะไร?', '• 1U = 1.75 นิ้ว (4.445 ซม.)
-• อุปกรณ์ที่หนักที่สุด (เช่น ตู้แบตเตอรี่ UPS และ Storage Array) ต้องติดตั้งไว้ที่ด้านล่างสุดของตู้แร็คเสมอ เพื่อป้องกันตู้แร็คคว่ำขณะดึงรางสไลด์', 'ของหนักอยู่ล่างสุดเสมอ (Bottom-Heavy)', 8)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:idrac-ilo-ipmi', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-server-hardware-oob' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'iDRAC, iLO, IPMI และ Redfish คืออะไร?', 'ระบบจัดการฮาร์ดแวร์เซิร์ฟเวอร์ระยะไกล (Out-of-Band Management) ผ่านชิป BMC บนเมนบอร์ด:
+8. น้ำตาล', 'ขึ้นต้นด้วยคู่ส้ม แล้วขาวเขียวคร่อมคู่น้ำเงิน', 5, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('ba6305d9-fa64-4573-bf8a-804eaadd08c3', 'dc:fc:riser-hba', 10, 'a64393d6-d903-4f53-958f-99df97e3d586', 'หน้าที่ของ Riser Card และ HBA Card ในเครื่องเซิร์ฟเวอร์', '• Riser Card: แผงแปลงสล็อต PCIe จากแนวตั้งเป็นแนวนอน เพื่อให้ใส่การ์ดในเครื่อง 1U/2U เตี้ยๆ ได้
+• HBA (Host Bus Adapter): การ์ดเชื่อมต่อเซิร์ฟเวอร์เข้ากับระบบจัดเก็บข้อมูลภายนอก เช่น Fibre Channel SAN หรือ SAS Storage', 'Riser = ยกตะแคงแนวนอน, HBA = การ์ดต่อ Storage', 6, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('9d1351c4-681b-4384-8b0e-f3ebc14dcd43', 'dc:fc:ecc-dimm-rules', 10, 'a64393d6-d903-4f53-958f-99df97e3d586', 'ECC RAM คืออะไร และทำไมการใส่ RAM เซิร์ฟเวอร์ต้องเรียงตาม DIMM Population Rules?', '• ECC (Error-Correcting Code): แรมที่ตรวจจับและซ่อมบิตข้อมูลที่เพี้ยนเองได้ ป้องกันเครื่องแฮงค์
+• DIMM Population Rules: ลำดับช่องเสียบแรมที่ระบุบนฝาเครื่อง (เช่น A1, B1, A2...) เพื่อให้ Memory Controller ทุก Channel ทำงานสมดุลกันและบูตผ่าน', 'ดูผังลำดับช่องเสียบใต้ฝาเครื่องเสมอ', 7, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('3e9f9cc8-8f5c-459c-984c-a39dc1c77578', 'dc:fc:rack-unit-1u', 10, 'a64393d6-d903-4f53-958f-99df97e3d586', 'ขนาดความสูง 1U (Rack Unit) เท่ากับกี่นิ้ว และหลักการวางน้ำหนักในตู้แร็ค 42U คืออะไร?', '• 1U = 1.75 นิ้ว (4.445 ซม.)
+• อุปกรณ์ที่หนักที่สุด (เช่น ตู้แบตเตอรี่ UPS และ Storage Array) ต้องติดตั้งไว้ที่ด้านล่างสุดของตู้แร็คเสมอ เพื่อป้องกันตู้แร็คคว่ำขณะดึงรางสไลด์', 'ของหนักอยู่ล่างสุดเสมอ (Bottom-Heavy)', 8, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('112918e3-77ca-47b2-8eda-d08037f1a7c8', 'dc:fc:idrac-ilo-ipmi', 10, 'a64393d6-d903-4f53-958f-99df97e3d586', 'iDRAC, iLO, IPMI และ Redfish คืออะไร?', 'ระบบจัดการฮาร์ดแวร์เซิร์ฟเวอร์ระยะไกล (Out-of-Band Management) ผ่านชิป BMC บนเมนบอร์ด:
 • iDRAC = Dell
 • iLO = HPE
 • IPMI = มาตรฐานคำสั่ง CLI ทั่วไป
-• Redfish = มาตรฐานยุคใหม่ผ่าน RESTful HTTPS/JSON', 'ทำงานได้แม้เครื่องปิดอยู่หรือ OS ค้างสนิท (ขอแค่เสียบปลั๊กไฟ)', 9)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:uid-led', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-server-hardware-oob' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'ไฟ UID LED (Chassis Identify Light) สีฟ้าบนเซิร์ฟเวอร์มีประโยชน์อย่างไร?', 'ใช้สั่งให้ไฟสีฟ้ากระพริบทั้งด้านหน้าและด้านหลังของเซิร์ฟเวอร์เครื่องเป้าหมาย เพื่อช่วยให้ช่างหน้าตู้แร็คระบุตำแหน่งเครื่องได้อย่างแม่นยำ ป้องกันการถอดสายไฟหรือดึงดิสก์ผิดเครื่อง', 'เปิดไฟสีฟ้าชี้เป้าก่อนเดินไปหลังตู้แร็คเสมอ', 10)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:pxe-boot-flow', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-network-boot-san-blade' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'ลำดับการทำงานของ PXE Boot (การบูตติดตั้ง OS ผ่านสายแลน)', '1. การ์ดแลนส่ง DHCP Discover ขอ IP
+• Redfish = มาตรฐานยุคใหม่ผ่าน RESTful HTTPS/JSON', 'ทำงานได้แม้เครื่องปิดอยู่หรือ OS ค้างสนิท (ขอแค่เสียบปลั๊กไฟ)', 9, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('a578601a-4e71-443e-8946-755d1e34af3a', 'dc:fc:uid-led', 10, 'a64393d6-d903-4f53-958f-99df97e3d586', 'ไฟ UID LED (Chassis Identify Light) สีฟ้าบนเซิร์ฟเวอร์มีประโยชน์อย่างไร?', 'ใช้สั่งให้ไฟสีฟ้ากระพริบทั้งด้านหน้าและด้านหลังของเซิร์ฟเวอร์เครื่องเป้าหมาย เพื่อช่วยให้ช่างหน้าตู้แร็คระบุตำแหน่งเครื่องได้อย่างแม่นยำ ป้องกันการถอดสายไฟหรือดึงดิสก์ผิดเครื่อง', 'เปิดไฟสีฟ้าชี้เป้าก่อนเดินไปหลังตู้แร็คเสมอ', 10, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('324ec96c-3bbe-4503-a3e6-5e634fe34bbc', 'linux:08-remote-access:fc03', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'คำสั่งเปิดโหมด Verbose ใน SSH เพื่อไล่หาสาเหตุเวลาล็อกอินไม่ผ่าน', 'ssh -v user@host
+(สามารถเพิ่มเป็น -vv หรือ -vvv เพื่อดูรายละเอียดมากขึ้น)', '-v ย่อมาจาก verbose', 3, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('d877dcd5-6336-46b3-b136-5560bf98d48a', 'dc:fc:pxe-boot-flow', 10, 'a8d18af7-6692-4b1b-86b5-88a0d4fb8f9b', 'ลำดับการทำงานของ PXE Boot (การบูตติดตั้ง OS ผ่านสายแลน)', '1. การ์ดแลนส่ง DHCP Discover ขอ IP
 2. DHCP Server ตอบกลับพร้อม IP + Option 66 (TFTP Server) + Option 67 (Boot file)
 3. ดาวน์โหลด Bootloader และ Kernel ผ่าน TFTP (UDP 69)
-4. รันตัวติดตั้ง OS อัตโนมัติ (Kickstart / Preseed / WDS)', 'DHCP แจกทาง -> TFTP ส่งไฟล์บูต', 11)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:san-wwpn-zoning', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-network-boot-san-blade' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'WWPN, LUN และ SAN Zoning คืออะไร?', '• WWPN (World Wide Port Name): เลขที่อยู่ 64-bit ประจำพอร์ต HBA และพอร์ต Storage (เหมือน MAC Address ของ Fibre Channel)
+4. รันตัวติดตั้ง OS อัตโนมัติ (Kickstart / Preseed / WDS)', 'DHCP แจกทาง -> TFTP ส่งไฟล์บูต', 11, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('6c24c1cd-b95c-4ea2-a82d-c5eb7a9c39ce', 'dc:fc:san-wwpn-zoning', 10, 'a8d18af7-6692-4b1b-86b5-88a0d4fb8f9b', 'WWPN, LUN และ SAN Zoning คืออะไร?', '• WWPN (World Wide Port Name): เลขที่อยู่ 64-bit ประจำพอร์ต HBA และพอร์ต Storage (เหมือน MAC Address ของ Fibre Channel)
 • LUN: ก้อนดิสก์เสมือนที่แบ่งจากตู้ SAN ให้เซิร์ฟเวอร์ใช้งาน
-• Zoning: การจับคู่บน SAN Switch ว่า Initiator WWPN ใดมีสิทธิ์มองเห็น Target WWPN ใด', 'Single-Initiator Zoning ป้องกันเซิร์ฟเวอร์แย่งเขียนดิสก์ทับกัน', 12)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:cisco-ucs-blade', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-network-boot-san-blade' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'จุดเด่นของ Blade Server (เช่น Cisco UCS และ HPE BladeSystem) คืออะไร?', '• รวมเซิร์ฟเวอร์หลายใบไว้ในโครง Chassis เดียว โดยแชร์ไฟ PSU, พัดลม และโมดูลสวิตช์ร่วมกัน
-• Cisco UCS มี Service Profile บน Fabric Interconnect ที่ย้ายค่า MAC, WWPN และการตั้งค่า BIOS ไปยังใบ Blade ใหม่ได้ทันทีเมื่อฮาร์ดแวร์เดิมเสีย', 'ลดสายไฟหลังตู้และเปลี่ยนเครื่องทดแทนได้ไวมาก', 13)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:1phase-vs-3phase', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-power-cooling-facilities' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'ความแตกต่างของระบบไฟ 1 เฟส กับ 3 เฟส ใน Data Center', '• 1 เฟส (110V/220V): มีสาย Line 1 เส้น + N + G จ่ายเข้าตัว PSU ของเซิร์ฟเวอร์แต่ละเครื่อง
-• 3 เฟส (208V/380V/400V/480V): มีสาย Line 3 เส้น (L1, L2, L3) จ่ายเข้าตู้แร็ค PDU กำลังสูง โดยต้องกระจายโหลดทั้ง 3 เฟสให้สมดุลกัน', 'สูตรกำลังไฟ P = V x I', 14)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:ups-ats-abfeed', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-power-cooling-facilities' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'บทบาทของ UPS, ATS และระบบไฟคู่ A/B Power Feed', '• UPS: จ่ายไฟจากแบตเตอรี่ทันที (0ms) ประคองไฟ 5-15 นาทีระหว่างรอเครื่องปั่นไฟ
+• Zoning: การจับคู่บน SAN Switch ว่า Initiator WWPN ใดมีสิทธิ์มองเห็น Target WWPN ใด', 'Single-Initiator Zoning ป้องกันเซิร์ฟเวอร์แย่งเขียนดิสก์ทับกัน', 12, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('d342ba8d-c355-4173-aadd-8f5efcebaaf6', 'dc:fc:cisco-ucs-blade', 10, 'a8d18af7-6692-4b1b-86b5-88a0d4fb8f9b', 'จุดเด่นของ Blade Server (เช่น Cisco UCS และ HPE BladeSystem) คืออะไร?', '• รวมเซิร์ฟเวอร์หลายใบไว้ในโครง Chassis เดียว โดยแชร์ไฟ PSU, พัดลม และโมดูลสวิตช์ร่วมกัน
+• Cisco UCS มี Service Profile บน Fabric Interconnect ที่ย้ายค่า MAC, WWPN และการตั้งค่า BIOS ไปยังใบ Blade ใหม่ได้ทันทีเมื่อฮาร์ดแวร์เดิมเสีย', 'ลดสายไฟหลังตู้และเปลี่ยนเครื่องทดแทนได้ไวมาก', 13, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('0d3e1aef-3344-4b0c-9b1f-e0e0752b75c9', 'dc:fc:1phase-vs-3phase', 10, '92409c70-8fd7-4575-b8c5-22e661376a62', 'ความแตกต่างของระบบไฟ 1 เฟส กับ 3 เฟส ใน Data Center', '• 1 เฟส (110V/220V): มีสาย Line 1 เส้น + N + G จ่ายเข้าตัว PSU ของเซิร์ฟเวอร์แต่ละเครื่อง
+• 3 เฟส (208V/380V/400V/480V): มีสาย Line 3 เส้น (L1, L2, L3) จ่ายเข้าตู้แร็ค PDU กำลังสูง โดยต้องกระจายโหลดทั้ง 3 เฟสให้สมดุลกัน', 'สูตรกำลังไฟ P = V x I', 14, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('c5b49acf-5e6f-4cc8-9eb9-8ff2377963df', 'dc:fc:ups-ats-abfeed', 10, '92409c70-8fd7-4575-b8c5-22e661376a62', 'บทบาทของ UPS, ATS และระบบไฟคู่ A/B Power Feed', '• UPS: จ่ายไฟจากแบตเตอรี่ทันที (0ms) ประคองไฟ 5-15 นาทีระหว่างรอเครื่องปั่นไฟ
 • ATS: สวิตช์สลับไฟอัตโนมัติจากไฟการไฟฟ้าไปยัง Generator
-• A/B Feed: เสียบสายไฟ PSU 1 เข้า PDU ฝั่ง A และ PSU 2 เข้า PDU ฝั่ง B โดยคุมโหลดฝั่งละไม่เกิน 40-45%', 'คุมโหลดไม่เกิน 45% ต่อฝั่ง เผื่อฝั่งหนึ่งดับอีกฝั่งจะรับโหลดรวมไม่เกิน 90%', 15)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:power-sequence', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-power-cooling-facilities' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'ลำดับการปิด (Power-Down) และการเปิด (Power-Up) อุปกรณ์ทั้งตู้แร็ค', '• ตอนปิด: ปิด Server ก่อน -> ปิด Storage -> ปิด Network Switch หลังสุด
-• ตอนเปิด: เปิด Network/SAN Switch ก่อน -> เปิด Storage รอให้พร้อม -> ค่อยทยอยเปิด Server ทีละชุด (ป้องกันไฟกระชาก Inrush current)', 'Server ต้องเห็น Storage และ Network พร้อมก่อนเสมอตอนบูต', 16)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:hot-cold-aisle', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-power-cooling-facilities' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'หลักการของ Hot Aisle / Cold Aisle และแผ่น Blanking Panel', '• Cold Aisle: หน้าตู้แร็คหันเข้าหากัน รับลมเย็นจากพื้นยกเข้าหน้าเครื่อง
+• A/B Feed: เสียบสายไฟ PSU 1 เข้า PDU ฝั่ง A และ PSU 2 เข้า PDU ฝั่ง B โดยคุมโหลดฝั่งละไม่เกิน 40-45%', 'คุมโหลดไม่เกิน 45% ต่อฝั่ง เผื่อฝั่งหนึ่งดับอีกฝั่งจะรับโหลดรวมไม่เกิน 90%', 15, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('c61d1276-8553-4d89-ad7f-ba6bd4412eb9', 'dc:fc:power-sequence', 10, '92409c70-8fd7-4575-b8c5-22e661376a62', 'ลำดับการปิด (Power-Down) และการเปิด (Power-Up) อุปกรณ์ทั้งตู้แร็ค', '• ตอนปิด: ปิด Server ก่อน -> ปิด Storage -> ปิด Network Switch หลังสุด
+• ตอนเปิด: เปิด Network/SAN Switch ก่อน -> เปิด Storage รอให้พร้อม -> ค่อยทยอยเปิด Server ทีละชุด (ป้องกันไฟกระชาก Inrush current)', 'Server ต้องเห็น Storage และ Network พร้อมก่อนเสมอตอนบูต', 16, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('89bec550-7006-4d0b-960f-343032c66720', 'dc:fc:hot-cold-aisle', 10, '92409c70-8fd7-4575-b8c5-22e661376a62', 'หลักการของ Hot Aisle / Cold Aisle และแผ่น Blanking Panel', '• Cold Aisle: หน้าตู้แร็คหันเข้าหากัน รับลมเย็นจากพื้นยกเข้าหน้าเครื่อง
 • Hot Aisle: หลังตู้แร็คหันชนกัน ระบายลมร้อนออกด้านหลังขึ้นเพดาน
-• Blanking Panel: แผ่นปิดช่อง U ที่ว่างหน้าตู้ เพื่อกั้นไม่ให้ลมร้อนไหลวนย้อนกลับมาด้านหน้า', 'ลมเย็นเข้าหน้า ลมร้อนออกหลัง', 17)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
+• Blanking Panel: แผ่นปิดช่อง U ที่ว่างหน้าตู้ เพื่อกั้นไม่ให้ลมร้อนไหลวนย้อนกลับมาด้านหน้า', 'ลมเย็นเข้าหน้า ลมร้อนออกหลัง', 17, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('337a0234-9800-480e-8b67-085f0a99484e', 'dc:fc:vesda-fm200', 10, '92409c70-8fd7-4575-b8c5-22e661376a62', 'VESDA และสารดับเพลิง FM-200 / Novec 1230 คืออะไร?', '• VESDA: ระบบท่อดูดอากาศตรวจจับอนุภาคควันความไวสูงด้วยเลเซอร์ แจ้งเตือนตั้งแต่เริ่มมีกลิ่นไหม้
+• FM-200 / Novec 1230: แก๊สสารสะอาดดับเพลิง (Clean Agent) ที่ดับไฟโดยไม่นำไฟฟ้าและไม่ทำลายแผงวงจรเซิร์ฟเวอร์', 'ห้ามใช้น้ำหรือถังผงเคมีแห้งฉีดใส่เซิร์ฟเวอร์', 18, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('f2f4cfe5-bc12-49c7-9318-a41774ac771a', 'dc:fc:interview-psu-spark', 10, 'e2bdf887-4d4b-4710-b6c1-8dd61f020fdc', '[สัมภาษณ์] หากเห็นประกายไฟจาก PSU ลูกหนึ่งของเซิร์ฟเวอร์ ทำไมห้ามสับเบรกเกอร์ไฟหลักของทั้งตู้แร็ค?', 'เพราะการสับไฟหลักของตู้แร็คจะทำให้เซิร์ฟเวอร์เครื่องอื่นอีก 20-40 เครื่องในตู้ดับทั้งหมด!
 
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:vesda-fm200', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-power-cooling-facilities' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), 'VESDA และสารดับเพลิง FM-200 / Novec 1230 คืออะไร?', '• VESDA: ระบบท่อดูดอากาศตรวจจับอนุภาคควันความไวสูงด้วยเลเซอร์ แจ้งเตือนตั้งแต่เริ่มมีกลิ่นไหม้
-• FM-200 / Novec 1230: แก๊สสารสะอาดดับเพลิง (Clean Agent) ที่ดับไฟโดยไม่นำไฟฟ้าและไม่ทำลายแผงวงจรเซิร์ฟเวอร์', 'ห้ามใช้น้ำหรือถังผงเคมีแห้งฉีดใส่เซิร์ฟเวอร์', 18)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
+สิ่งที่ต้องทำคือตั้งสติ ประเมินความปลอดภัย ตรวจสอบว่าเครื่องมี Redundant PSU ลูกที่ 2 รับโหลดอยู่ ถอดเฉพาะสายไฟของลูก PSU ที่ช็อต และแจ้งหัวหน้าทีม/NOC ทันที', 'ผู้จัดการต้องการเห็นสติและการจำกัดวงผลกระทบ (Blast Radius)', 19, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('eb61db42-a4a8-462e-8fb1-62d67d0030e5', 'network:01-ip-subnetting:fc02', 2, 'd8929572-6865-40b4-bf65-a32bfcdb15a5', 'ช่วง Private IP Address ตาม RFC 1918 ทั้ง 3 Class คือช่วงใดบ้าง?', 'Class A: 10.0.0.0/8
+Class B: 172.16.0.0/12 (172.16 - 172.31)
+Class C: 192.168.0.0/16', '10.x, 172.16-31.x, 192.168.x', 2, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('cde2d7d3-eb58-4e18-835a-d303eb9e860a', 'dc:fc:hosting-vs-colo', 10, 'e2bdf887-4d4b-4710-b6c1-8dd61f020fdc', '[สัมภาษณ์] ความแตกต่างของคำถามสัมภาษณ์ระหว่างบริษัท Hosting กับ Colocation (เช่น Equinix)', '• บริษัท Hosting (มีเซิร์ฟเวอร์ตัวเอง): เน้นการลง OS (Linux/Windows), PXE boot, RAID, iDRAC/iLO และการแก้ปัญหาฮาร์ดแวร์/OS
+• บริษัท Colocation (ให้เช่าตู้และเชื่อมสาย): เน้นงาน Smart Hands, Cross-connect สายไฟเบอร์, ชนิดหัว SFP/QSFP, การสลับสาย Tx/Rx และมาตรฐานความปลอดภัยหน้าตู้ลูกค้า', 'Hosting เน้น Server+OS, Colocation เน้น Fiber+Cross-Connect+Smart Hands', 20, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('e1c20bdd-853d-4611-ac7a-80114172a891', 'docker:02-troubleshooting-exit-codes:fc01', 5, '13d2405e-0e29-4bf2-9f78-03f4f29d3aef', 'Exit Code 137 ใน Docker มีความหมายว่าอย่างไร?', 'คอนเทนเนอร์ถูกบังคับปิดด้วย SIGKILL (128 + 9) สาเหตุยอดนิยมคือ OOMKilled (Out of Memory - ใช้ RAM เกิน Limit)', 'SIGKILL / OOMKilled (Out of Memory)', 1, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('9d195724-f8a2-4c59-ad0b-76a753a4eada', 'docker:02-troubleshooting-exit-codes:fc02', 5, '13d2405e-0e29-4bf2-9f78-03f4f29d3aef', 'Exit Code 143 ใน Docker มีความหมายว่าอย่างไร?', 'คอนเทนเนอร์หยุดทำงานอย่างสุภาพด้วย SIGTERM (128 + 15) เช่น ได้รับคำสั่ง docker stop หรือระบบกำลัง Deploy ใหม่', 'Graceful shutdown via SIGTERM', 2, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('eacb47ac-0484-4ac4-8671-35d6743a8eb4', 'docker:02-troubleshooting-exit-codes:fc03', 5, '13d2405e-0e29-4bf2-9f78-03f4f29d3aef', 'คำสั่งใดใช้ตรวจสอบว่าคอนเทนเนอร์โดน OOMKilled หรือไม่แบบรวดเร็ว?', 'docker inspect <container> --format ''{{.State.OOMKilled}}'' หรือดูใน Kernel Log ด้วยคำสั่ง dmesg -T | grep -i oom', 'docker inspect .State.OOMKilled', 3, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('d1a10001-0000-0000-0000-000000000001', 'linux:fc:ss-listen', 1, 'b1a10001-0000-0000-0000-000000000001', 'คำสั่งตรวจสอบว่า Process ใดกำลังฟังพอร์ต (Listen) อยู่บน Linux', 'ss -tulpn หรือ netstat -tulpn
 
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:interview-psu-spark', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-interview-and-mindset' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), '[สัมภาษณ์] หากเห็นประกายไฟจาก PSU ลูกหนึ่งของเซิร์ฟเวอร์ ทำไมห้ามสับเบรกเกอร์ไฟหลักของทั้งตู้แร็ค?', 'เพราะการสับไฟหลักของตู้แร็คจะทำให้เซิร์ฟเวอร์เครื่องอื่นอีก 20-40 เครื่องในตู้ดับทั้งหมด!
+-t: TCP
+-u: UDP
+-l: Listening
+-p: Show process/PID
+-n: Numeric port', 'จำตัวย่อ TULPN', 1, '2026-11-03 09:22:14.247234+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('840b7116-6411-4d82-80a4-cf6a141a1089', 'linux:02-basics:fc01', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'คำสั่งแสดงเส้นทางเต็มของโฟลเดอร์ที่กำลังยืนอยู่ปัจจุบัน', 'pwd
+(Print Working Directory)', 'ตัวย่อ 3 ตัวอักษร', 1, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('39deab3c-366f-4706-b945-93aafd794048', 'linux:02-basics:fc03', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'ความแตกต่างระหว่าง Absolute Path กับ Relative Path', '• Absolute Path: ขึ้นต้นด้วย / เสมอ (อ้างอิงจากรากสุดของระบบ เช่น /var/log/syslog)
+• Relative Path: ไม่ขึ้นต้นด้วย / (อ้างอิงจากตำแหน่งปัจจุบัน เช่น ./app.log หรือ ../config)', 'ดูที่ตัวอักษรแรกของเส้นทาง', 3, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('8f54e66a-facb-4671-9672-2ea9f6003bc9', 'linux:02-basics:fc04', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'สัญลักษณ์ . , .. และ ~ ในเส้นทาง Linux หมายถึงอะไร?', '• . = โฟลเดอร์ปัจจุบัน
+• .. = โฟลเดอร์แม่ (ถอยขึ้น 1 ชั้น)
+• ~ = โฟลเดอร์ Home ของผู้ใช้ปัจจุบัน', 'จุดเดียว สองจุด และตัวหนอน', 4, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('3d65c2dd-2d36-4346-ba8b-3d6679a9f45c', 'linux:02-basics:fc05', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'คำสั่งสลับกลับไปยังโฟลเดอร์ก่อนหน้าที่เพิ่งจากมา', 'cd -', 'ใช้เครื่องหมายขีดกลาง', 5, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('7ad0de06-e939-484c-8b72-312ee902b4a0', 'linux:02-basics:fc06', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'ทำไมไม่ควรใช้ cat เปิดอ่านไฟล์ Log ขนาดใหญ่ และควรใช้คำสั่งใดแทน?', 'เพราะ cat จะแสดงเนื้อหาทั้งไฟล์รวดเดียวทำให้หน้าจอค้างและเปลือง I/O
+ควรใช้:
+• less <file> (อ่านทีละหน้า ค้นหาด้วย /)
+• tail -n 50 <file> (ดูเฉพาะ 50 บรรทัดสุดท้าย)', 'ใช้โปรแกรมแบ่งหน้าหรือดูท้ายไฟล์', 6, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('d2027c4b-9d64-4385-afc2-cff95fd72be4', 'linux:02-basics:fc07', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'ปุ่มลัดสำคัญเมื่อเปิดอ่านไฟล์ด้วยคำสั่ง less', '• /คำค้นหา : ค้นหาข้อความไปข้างหน้า (กด n ไปจุดถัดไป)
+• G (พิมพ์ใหญ่) : กระโดดไปบรรทัดสุดท้ายของไฟล์
+• g (พิมพ์เล็ก) : กระโดดไปบรรทัดแรกของไฟล์
+• q : ออกจากโปรแกรม less', 'คล้ายปุ่มในโปรแกรม vi', 7, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('f9deb9d2-1021-4091-b415-f793c7f810c5', 'linux:02-basics:fc08', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'คำสั่งดูเฉพาะ 20 บรรทัดแรก และ 50 บรรทัดสุดท้ายของไฟล์ app.log', '• 20 บรรทัดแรก: head -n 20 app.log
+• 50 บรรทัดสุดท้าย: tail -n 50 app.log', 'ส่วนหัวและส่วนหาง', 8, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('9a3faab0-01ea-4697-a9c6-dab663ad4abd', 'linux:02-basics:fc09', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'คำสั่งคัดลอกโฟลเดอร์ทั้งก้อน และคำสั่งคัดลอกไฟล์โดยคงเวลาแก้ไขเดิม (Timestamp)', '• คัดลอกโฟลเดอร์: cp -r src_dir/ dest_dir/
+• คงสิทธิ์และเวลาเดิม: cp -p file.conf file.conf.bak', '-r (recursive) และ -p (preserve)', 9, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('de014bfd-1937-45a5-8dcd-707c5d040021', 'linux:02-basics:fc10', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'ความแตกต่างของ Wildcard * กับ ? ใน Shell', '• * แทนตัวอักษรใดๆ กี่ตัวก็ได้ (รวมถึง 0 ตัว) เช่น *.log
+• ? แทนตัวอักษรใดๆ เพียง 1 ตัวอักษรเท่านั้น เช่น app-0?.log', 'ดอกจัน = กี่ตัวก็ได้, ปรัศนี = 1 ตัว', 10, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('6189f2da-a0e0-4268-b1bd-9e92ea94e6e6', 'linux:02-basics:fc11', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'วิธีเปิดดูคู่มือการใช้งานคำสั่งบนเครื่อง Linux เมื่อจำ Option ไม่ได้', '• man <คำสั่ง>  (เปิดคู่มือฉบับเต็ม กด q เพื่อออก)
+• <คำสั่ง> --help  (แสดงสรุป Option แบบย่อบนหน้าจอ)', 'ย่อมาจาก manual', 11, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('d7503e51-282e-40fe-bbd3-093411b79ce2', 'linux:02-basics:fc12', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'คำสั่งสร้างโฟลเดอร์ซ้อนกันหลายชั้นในครั้งเดียว (เช่น /tmp/incident/2026/logs)', 'mkdir -p /tmp/incident/2026/logs
+(-p จะสร้างโฟลเดอร์แม่ที่ยังไม่มีให้อัตโนมัติ และไม่ฟ้อง Error ถ้ามีอยู่แล้ว)', 'ใช้ออปชัน -p (parents)', 12, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('b451a63f-4c91-46ec-8f74-00276b4f778f', 'linux:03-file-system:fc01', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'ไดเรกทอรี /etc, /var/log, /opt และ /tmp ใช้เก็บข้อมูลประเภทใด?', '• /etc : ไฟล์ตั้งค่าระบบและบริการ (Config)
+• /var/log : ไฟล์บันทึกเหตุการณ์ (Log)
+• /opt : โปรแกรมเสริมหรือซอฟต์แวร์องค์กรที่ติดตั้งแยก
+• /tmp : ไฟล์ชั่วคราว', 'มาตรฐาน FHS ของ Linux', 1, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('bebc3d31-113d-4123-ae68-37d3313d330e', 'linux:03-file-system:fc02', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'ไฟล์ /etc/hosts และ /etc/resolv.conf ทำหน้าที่อะไร?', '• /etc/hosts : จับคู่ IP กับชื่อโดเมนภายในเครื่อง (ระบบอ่านก่อนถาม DNS)
+• /etc/resolv.conf : ระบุ IP ของ DNS Server ที่เครื่องใช้แปลงชื่อโดเมน (nameserver)', 'เกี่ยวกับการแปลงชื่อโดเมนเป็น IP', 2, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('4438aa8e-f40b-459d-b308-7443ad0187e8', 'linux:03-file-system:fc03', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'ไฟล์ /etc/fstab คืออะไร และทำไมห้ามแก้ไขเองโดยพลการ?', 'ไฟล์กำหนดรายการดิสก์และพาร์ทิชันที่จะถูก Mount อัตโนมัติตอนบูตเครื่อง
+หากเขียนผิดจะทำให้เซิร์ฟเวอร์บูตไม่ขึ้นในรอบถัดไป', 'File System Table', 3, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('8c4f1562-03be-44a1-aed5-8c7463b0a885', 'linux:03-file-system:fc04', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'คำสั่งค้นหาเฉพาะไฟล์ธรรมดาใน /var ที่มีขนาดใหญ่กว่า 100 MB', 'find /var -type f -size +100M', 'ใช้ -type f และ -size', 4, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('ca780ba0-9fb6-426a-b5e3-9b840e8f5d7b', 'linux:03-file-system:fc05', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'คำสั่งค้นหาไฟล์ใน /etc ที่ถูกแก้ไขเนื้อหาภายใน 60 นาทีที่ผ่านมา', 'find /etc -type f -mmin -60
+(หากต้องการนับเป็นวันใช้ -mtime เช่น -mtime -1 คือภายใน 24 ชม.)', 'mmin = modified minutes', 5, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('11a1ab8e-d447-410e-b10b-607099fa48c4', 'linux:03-file-system:fc06', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'คำสั่งค้นหาไฟล์ตามชื่อแบบไม่สนใจตัวพิมพ์เล็ก-ใหญ่ (Case-insensitive)', 'find /var/log -iname "*error*.log"', 'เติมตัว i หน้าคำว่า name', 6, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('75204618-3d00-4db9-9972-c3f6acca773a', 'linux:03-file-system:fc07', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'คำสั่งสร้าง Symbolic Link (Soft Link) และวิธีดูว่าชี้ไปที่ไหน', '• สร้างลิงก์: ln -s <พาธต้นทางจริง> <ชื่อลิงก์>
+• ตรวจสอบปลายทาง: ls -l <ชื่อลิงก์> หรือ file <ชื่อลิงก์>', 'ตัวเลือก -s ย่อมาจาก symbolic', 7, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('aada3fcb-8b87-4149-abbf-b0af861c2388', 'linux:03-file-system:fc08', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'Symbolic Link (Soft Link) ต่างจาก Hard Link อย่างไร?', '• Symbolic Link (ln -s): ชี้ไปยังชื่อพาธ ข้ามพาร์ทิชันได้ ชี้โฟลเดอร์ได้ ถ้าลบต้นทางลิงก์จะเสีย (Broken link)
+• Hard Link (ln): ชี้ไปยังเลข Inode เดียวกันโดยตรง ข้ามพาร์ทิชันไม่ได้ ลบชื่อไฟล์ต้นทางข้อมูลยังอยู่', 'เปรียบเทียบการชี้ไปที่ชื่อพาธ กับ ชี้ไปที่ Inode', 8, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('35be689d-9e8c-4e04-affa-530d913bc034', 'linux:03-file-system:fc09', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'คำสั่งดูเวลาแก้ไขไฟล์อย่างละเอียด (Access, Modify, Change) และหมายเลข Inode', 'stat <ชื่อไฟล์>', 'ย่อมาจาก status ของไฟล์', 9, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('afdbe3f9-37cd-4460-ab16-46b2ffe0b8fa', 'linux:03-file-system:fc10', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'คำสั่งตรวจสอบชนิดที่แท้จริงของไฟล์โดยไม่ดูจากนามสกุล', 'file <ชื่อไฟล์>
+(เช่นตรวจว่าไฟล์ .gz เป็น gzip จริงหรือเป็นเพียงข้อความ HTML/ASCII)', 'คำสั่งตรงตัว 4 ตัวอักษร', 10, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('f35dbd31-db88-46fb-aa53-18f7ea2df159', 'linux:03-file-system:fc11', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'คำสั่งสรุปขนาดพื้นที่ของแต่ละโฟลเดอร์ย่อยใน /var/log แบบอ่านง่าย', 'du -sh /var/log/*
 
-สิ่งที่ต้องทำคือตั้งสติ ประเมินความปลอดภัย ตรวจสอบว่าเครื่องมี Redundant PSU ลูกที่ 2 รับโหลดอยู่ ถอดเฉพาะสายไฟของลูก PSU ที่ช็อต และแจ้งหัวหน้าทีม/NOC ทันที', 'ผู้จัดการต้องการเห็นสติและการจำกัดวงผลกระทบ (Blast Radius)', 19)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
+-s: สรุปรวมแต่ละรายการ (summary)
+-h: หน่วยอ่านง่าย (KB, MB, GB)', 'Disk Usage', 11, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('c5098f8a-0042-4eed-a3a0-24e77966e837', 'linux:03-file-system:fc12', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'วิธีซ่อนข้อความ Permission denied เวลาใช้คำสั่ง find ด้วยสิทธิ์ผู้ใช้ทั่วไป', 'ต่อท้ายคำสั่งด้วย 2>/dev/null
+เช่น: find /var -name "*.log" 2>/dev/null', 'Redirect standard error (2) ไปทิ้งที่ /dev/null', 12, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('af41fea8-7019-43ac-b88d-67d6a3ac1081', 'linux:08-remote-access:fc04', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'ความต่างของตัวเลือกระบุพอร์ตระหว่างคำสั่ง ssh กับคำสั่ง scp', '• ssh ใช้ -p (ตัวพิมพ์เล็ก): ssh -p 2222 user@host
+• scp ใช้ -P (ตัวพิมพ์ใหญ่): scp -P 2222 file.txt user@host:/tmp/', 'scp ใช้ -p พิมพ์เล็กสำหรับ preserve timestamps ไปแล้ว จึงต้องใช้ -P พิมพ์ใหญ่สำหรับพอร์ต', 4, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('2f39cad6-4153-4755-959a-dcb8bfff483c', 'linux:04-process-service:fc01', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'ความแตกต่างระหว่างสัญญาณ SIGTERM (15) กับ SIGKILL (9)', '• SIGTERM (kill <PID> หรือ kill -15): ขอให้โปรเซสปิดตัวเองอย่างสุภาพ มีเวลาเคลียร์งานและบันทึกข้อมูล
+• SIGKILL (kill -9 <PID>): บังคับตัดการทำงานทันทีที่ระดับ Kernel โปรเซสไม่มีโอกาสเคลียร์งาน', 'ควรเริ่มจาก 15 ก่อนใช้ 9 เสมอ', 1, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('848bd8fb-5429-4e2e-9a09-1c3affe92fc1', 'linux:04-process-service:fc02', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'คำสั่งแสดงโปรเซสทั้งหมดที่กำลังทำงานอยู่ในเครื่องพร้อม %CPU, %MEM และ PID', 'ps aux
+(มักใช้คู่กับ grep เช่น ps aux | grep nginx)', 'Process Status', 2, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('599b58a8-7c8e-498c-8b65-18e2abf7c384', 'linux:04-process-service:fc03', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'ปุ่มลัดในโปรแกรม top สำหรับเรียงตามการใช้ CPU และเรียงตามการใช้ RAM', '• กด P (พิมพ์ใหญ่): เรียงตาม %CPU จากมากไปน้อย
+• กด M (พิมพ์ใหญ่): เรียงตาม %MEM จากมากไปน้อย
+• กด q: ออกจากโปรแกรม top', 'P = Processor, M = Memory', 3, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('cf58810a-c0c8-428f-9bcf-066976ddd16e', 'linux:04-process-service:fc04', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'รหัสสถานะโปรเซส R, S, D, Z ในคอลัมน์ STAT ของ ps aux หมายถึงอะไร?', '• R (Running): กำลังทำงานบน CPU
+• S (Sleeping): รอเหตุการณ์หรือคำขอ
+• D (Uninterruptible sleep): รอ Disk/Network I/O
+• Z (Zombie): โปรเซสจบแล้วแต่โปรเซสแม่ยังไม่อ่าน exit status', 'ระวังสถานะ D (I/O ค้าง) และ Z (Zombie)', 4, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('fc490c20-cf7e-447c-975b-b76c63b5f480', 'linux:04-process-service:fc05', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'ทำไม Zombie Process (สถานะ Z / <defunct>) จึงฆ่าด้วย kill -9 ไม่ได้?', 'เพราะโปรเซสนั้นทำงานจบและคืนหน่วยความจำไปแล้ว เหลือเพียงรายการ PID ในตารางที่รอโปรเซสแม่ (PPID) มาอ่านสถานะจบงาน', 'สิ่งที่ตายไปแล้วฆ่าซ้ำไม่ได้', 5, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('99a52ea1-8de1-4248-9527-c135afa5e377', 'linux:04-process-service:fc06', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'คำสั่งตรวจรายชื่อบริการ systemd ทั้งหมดที่อยู่ในสถานะ failed', 'systemctl list-units --failed
+(หรือย่อว่า systemctl --failed)', 'ใช้ดูภาพรวมว่ามีบริการใดล่มอยู่บ้าง', 6, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('5e46fea2-ccdb-4732-aa06-8dbee689bba7', 'linux:04-process-service:fc07', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'คำสั่งตรวจสถานะละเอียด และคำสั่งเช็กสถานะแบบสั้นของบริการ systemd', '• ดูสถานะละเอียด: systemctl status <service>
+• เช็กสั้นๆ (active/failed): systemctl is-active <service>', 'status เทียบกับ is-active', 7, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('617638db-ed06-4a60-abcf-18fe318ee5cc', 'linux:04-process-service:fc08', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'ความแตกต่างระหว่าง systemctl start กับ systemctl enable', '• systemctl start <service>: สั่งให้เริ่มทำงานทันทีในตอนนี้
+• systemctl enable <service>: ตั้งค่าให้เริ่มทำงานอัตโนมัติเมื่อเปิดเครื่อง (Boot)', 'รันตอนนี้ เทียบกับ รันตอนบูต', 8, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('f1e9d281-2111-41a1-9978-ada6d508441f', 'linux:04-process-service:fc09', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'คำสั่งดู Log ของบริการ nginx ย้อนหลัง 100 บรรทัด และติดตามแบบเรียลไทม์', 'journalctl -u nginx -n 100 -f
 
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('dc:fc:hosting-vs-colo', (SELECT id FROM topics WHERE slug = 'datacenter'), (SELECT id FROM lessons WHERE slug = 'dc-interview-and-mindset' AND topic_id = (SELECT id FROM topics WHERE slug = 'datacenter')), '[สัมภาษณ์] ความแตกต่างของคำถามสัมภาษณ์ระหว่างบริษัท Hosting กับ Colocation (เช่น Equinix)', '• บริษัท Hosting (มีเซิร์ฟเวอร์ตัวเอง): เน้นการลง OS (Linux/Windows), PXE boot, RAID, iDRAC/iLO และการแก้ปัญหาฮาร์ดแวร์/OS
-• บริษัท Colocation (ให้เช่าตู้และเชื่อมสาย): เน้นงาน Smart Hands, Cross-connect สายไฟเบอร์, ชนิดหัว SFP/QSFP, การสลับสาย Tx/Rx และมาตรฐานความปลอดภัยหน้าตู้ลูกค้า', 'Hosting เน้น Server+OS, Colocation เน้น Fiber+Cross-Connect+Smart Hands', 20)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
+-u: ระบุชื่อ unit บริการ
+-n 100: ย้อนหลัง 100 บรรทัด
+-f: ติดตามสด (follow)', 'ใช้ journalctl คู่กับ -u, -n, -f', 9, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('0852e2dc-54ec-4a6f-b6b5-78fdaf169cca', 'linux:04-process-service:fc10', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'คำสั่งดู Log ของบริการเฉพาะช่วงเวลา 30 นาทีล่าสุดด้วย journalctl', 'journalctl -u <service> --since "30 minutes ago"', 'ใช้ออปชัน --since', 10, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('0e275e66-e49f-4d34-85f7-5b017e2ab932', 'linux:04-process-service:fc11', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'ชื่อบริการ Apache Web Server บน Ubuntu/Debian ต่างจาก RHEL/Rocky อย่างไร?', '• Ubuntu / Debian: apache2
+• RHEL / Rocky Linux: httpd', 'จำว่าตระกูล Red Hat เรียกตามชื่อ daemon', 11, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('e123cad9-27ba-4fa1-a597-626a59cf5e2d', 'linux:04-process-service:fc12', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'คำสั่งส่งสัญญาณปิดโปรเซสโดยระบุจากชื่อโปรแกรมแทนเลข PID', 'pkill <ชื่อโปรเซส>
+(ก่อนรันควรตรวจด้วย pgrep -l <ชื่อโปรเซส> ก่อนเสมอว่าตรงกับตัวไหนบ้าง)', 'Process Kill by name', 12, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('8f06d8f5-9709-4910-90f9-d15b3f7ad21b', 'linux:05-text-tools:fc01', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'ความแตกต่างระหว่างเครื่องหมาย > กับ >> ในการ Redirect ผลลัพธ์', '• > : เขียนทับไฟล์เดิมทั้งหมดทันที (Overwrite)
+• >> : เขียนต่อท้ายไฟล์เดิมโดยไม่ลบข้อมูลเก่า (Append)', 'ลูกศรเดียวทับ ลูกศรคู่ต่อท้าย', 1, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('433d2734-0d9f-4495-be49-7fcab61f1806', 'linux:05-text-tools:fc02', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'ความหมายของ 2>&1 ท้ายคำสั่ง Linux', 'รวมข้อความ Error (stderr = 2) เข้ากับช่องทางผลลัพธ์ปกติ (stdout = 1) เพื่อส่งต่อหรือบันทึกลงไฟล์เดียวกัน', '1 = stdout, 2 = stderr', 2, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('5d01c1c4-8bc4-4322-b45b-42267ee11cb3', 'linux:08-remote-access:fc12', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'ชื่อบริการ SSH Daemon บน Ubuntu/Debian เทียบกับ RHEL/Rocky Linux', '• Ubuntu / Debian: systemctl status ssh
+• RHEL / Rocky Linux: systemctl status sshd', 'ssh กับ sshd', 12, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('6b76bbd4-0055-40be-a76f-a38dc56196bb', 'linux:05-text-tools:fc03', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'ตัวเลือก -i, -n, -r, -v ของคำสั่ง grep ทำหน้าที่อะไร?', '• -i : ไม่สนใจตัวพิมพ์เล็ก-ใหญ่ (ignore case)
+• -n : แสดงเลขบรรทัด
+• -r : ค้นหาทุกไฟล์ในโฟลเดอร์ย่อย (recursive)
+• -v : เอาเฉพาะบรรทัดที่ไม่มีคำนั้น (invert match)', '4 ตัวเลือกที่ใช้บ่อยที่สุดของ grep', 3, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('47c155e0-ffb0-4082-b226-8ff4e7488e4a', 'linux:05-text-tools:fc04', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'คำสั่งค้นหาหลายคำพร้อมกัน (เช่น ERROR หรือ FATAL) ด้วย grep', 'grep -E "ERROR|FATAL" app.log', 'ใช้ออปชัน -E (Extended Regex) คู่กับเครื่องหมาย |', 4, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('da930cde-da3e-4557-9059-a8657fb332dd', 'linux:05-text-tools:fc05', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'คำสั่งแสดงบรรทัดก่อนหน้าและหลังบรรทัดที่ค้นพบอย่างละ 3 บรรทัดด้วย grep', 'grep -C 3 "Exception" app.log
+(-B 3 = ก่อนหน้า 3 บรรทัด, -A 3 = หลัง 3 บรรทัด, -C 3 = ทั้งก่อนและหลัง)', 'C ย่อมาจาก Context', 5, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('28f0776e-a44f-4e4b-8c57-d2b698c973ba', 'linux:05-text-tools:fc06', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'คำสั่งนับจำนวนบรรทัดที่มีคำว่า ERROR ในไฟล์ app.log', 'grep "ERROR" app.log | wc -l
+(หรือใช้ grep -c "ERROR" app.log)', 'wc -l = Word Count (lines)', 6, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('084c397a-036e-4f4f-8c12-53e85fdd86b4', 'linux:05-text-tools:fc07', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'คำสั่งดึงเฉพาะคอลัมน์ที่ 1 (เช่น IP Address) จากไฟล์ access.log ด้วย awk', 'awk ''{print $1}'' access.log
+($1 คือคอลัมน์ที่ 1, $2 คือคอลัมน์ที่ 2 โดยแยกตามช่องว่างอัตโนมัติ)', 'ใช้เครื่องหมายดอลลาร์ตามด้วยเลขคอลัมน์ในเครื่องหมาย '' ''', 7, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('e0a3272e-204f-45d3-b8e5-57c42526aae7', 'linux:05-text-tools:fc08', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'ทำไมต้องใช้คำสั่ง sort ก่อนส่งข้อมูลเข้าคำสั่ง uniq -c เสมอ?', 'เพราะ uniq จะยุบรวมและนับเฉพาะบรรทัดซ้ำที่อยู่ติดกันเท่านั้น หากไม่ sort ก่อน บรรทัดที่ซ้ำแต่อยู่ห่างกันจะไม่ถูกนับรวมกัน', 'uniq ดูเฉพาะบรรทัดที่ติดกัน', 8, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('05846b42-eaa5-4d42-8618-7d888dfcc89c', 'linux:05-text-tools:fc09', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'สูตรคำสั่งหา Top 5 IP ที่เรียกเข้ามามากที่สุดจาก access.log', 'awk ''{print $1}'' access.log | sort | uniq -c | sort -nr | head -n 5', 'ดึงคอลัมน์ -> เรียงตัวอักษร -> นับซ้ำ -> เรียงตัวเลขมากไปน้อย -> ตัด 5 บรรทัดแรก', 9, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('d2fc1248-9566-4711-a522-5d3361cd6c91', 'linux:05-text-tools:fc10', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'คำสั่งตัดข้อความคอลัมน์ที่ 1 โดยใช้เครื่องหมาย : เป็นตัวคั่น (เช่นใน /etc/passwd)', 'cut -d'':'' -f1 /etc/passwd
 
--- --------------------------------------------------------------------
--- TOPIC: Docker & Containers (docker)
--- --------------------------------------------------------------------
-INSERT INTO topics (slug, title, description, icon, color, display_order)
-VALUES ('docker', 'Docker & Containers', 'Docker Command, Container Lifecycle, Log, Networking และการแก้ปัญหา Container ล่ม', 'Container', 'from-sky-500 to-blue-600', 5)
-ON CONFLICT (slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  description = EXCLUDED.description,
-  icon = EXCLUDED.icon,
-  color = EXCLUDED.color,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
+-d'':'' : กำหนดตัวคั่น (delimiter)
+-f1 : เลือกฟิลด์ที่ 1', 'cut คู่กับ -d และ -f', 10, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('f2511c96-66e6-46a9-afe6-6e32ba001c02', 'linux:05-text-tools:fc11', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'คำสั่งแสดงผลลัพธ์ออกหน้าจอพร้อมกับบันทึกเขียนลงไฟล์ในเวลาเดียวกัน', '<คำสั่ง> | tee output.log
+(หากต้องการเขียนต่อท้ายไฟล์เดิมใช้ tee -a output.log)', 'ชื่อเหมือนข้อต่อท่อรูปตัว T', 11, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('c15e6db1-9d58-42e2-9052-38eb6bb28660', 'linux:05-text-tools:fc12', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'คำสั่งติดตามไฟล์ Log แบบสดๆ พร้อมกรองเฉพาะบรรทัดที่มีคำว่า ERROR', 'tail -f /var/log/app.log | grep "ERROR"', 'tail -f ส่งผ่าน pipe ไปยัง grep', 12, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('4260033d-4d9e-461d-9eca-2d20d20be6fa', 'linux:06-log-reading:fc01', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'ไฟล์ System Log หลักของ Ubuntu/Debian เทียบกับ RHEL/Rocky Linux', '• Ubuntu / Debian: /var/log/syslog
+• RHEL / Rocky Linux: /var/log/messages', 'syslog กับ messages', 1, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('f944411f-0ff0-45d4-bbcd-8abed54872d3', 'linux:06-log-reading:fc02', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'ไฟล์เก็บประวัติการล็อกอิน SSH และ sudo ของ Ubuntu เทียบกับ RHEL', '• Ubuntu / Debian: /var/log/auth.log
+• RHEL / Rocky Linux: /var/log/secure', 'auth.log กับ secure', 2, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('8dc97648-f2c7-4c72-879e-c1cd944384c3', 'linux:06-log-reading:fc03', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'คำสั่งกรอง Log ของบริการด้วย journalctl เฉพาะช่วงเวลาที่กำหนด', 'journalctl -u <service> --since "2026-11-03 10:00:00" --until "2026-11-03 10:30:00"', 'ใช้ --since และ --until', 3, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('82308232-8ded-4de8-ab16-37edd7424333', 'linux:06-log-reading:fc04', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'คำสั่งดูเฉพาะ Log ระดับ Error ขึ้นไปของรอบการบูตปัจจุบันด้วย journalctl', 'journalctl -p err -b
+(-p err จะแสดงระดับ err, crit, alert, emerg)', '-p ย่อมาจาก priority, -b ย่อมาจาก boot', 4, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('b855b981-8633-4bbd-ac09-103864a0d598', 'linux:06-log-reading:fc05', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'คำสั่งดูบันทึกของ Kernel (เช่น OOM Killer หรือ Disk Error) พร้อมแสดงเวลาที่อ่านง่าย', 'dmesg -T
+(หรือกรองด้วย dmesg -T | grep -iE "oom|error")', '-T แปลงเวลาวินาทีเป็นวันที่และเวลา', 5, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('d2342cf1-94a3-4bc3-bca7-70cbb09820ac', 'linux:06-log-reading:fc06', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'คำสั่งค้นหาข้อความและเปิดอ่านไฟล์ Log ที่ถูกบีบอัดเป็น .gz โดยไม่ต้องแตกไฟล์', '• ค้นหาข้อความ: zgrep "ERROR" /var/log/app.log.1.gz
+• เปิดอ่านทีละหน้า: zless /var/log/app.log.1.gz
+• แสดงเนื้อหา: zcat /var/log/app.log.1.gz', 'เติมตัว z นำหน้าคำสั่งปกติ', 6, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('b6e52805-54ee-432d-a299-62abdaa0a6f1', 'linux:06-log-reading:fc07', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'logrotate ทำหน้าที่อะไรในระบบ Linux?', 'ตัดรอบไฟล์ Log เก่าตามเวลาหรือขนาดที่กำหนด เปลี่ยนชื่อต่อท้าย และบีบอัดเป็น .gz พร้อมลบไฟล์เก่าเกินกำหนดเพื่อป้องกันดิสก์เต็ม', 'ป้องกันไม่ให้ไฟล์ Log ไฟล์เดียวโตจนดิสก์เต็ม', 7, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('8137c128-a719-4254-8c4e-8139f8493473', 'linux:06-log-reading:fc08', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'คำสั่งตรวจสอบเวลาปัจจุบันและ Timezone ของเครื่องเซิร์ฟเวอร์', 'timedatectl หรือ date', 'ต้องเช็กเสมอก่อนเทียบเวลา Log กับเวลาที่ผู้ใช้แจ้ง', 8, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('178af316-ec5a-4daa-b6b3-f99b9a3fb790', 'linux:08-remote-access:fc05', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'คำสั่งสร้างคู่กุญแจ SSH แบบ Ed25519 และคำสั่งส่ง Public Key ไปยังเซิร์ฟเวอร์', '• สร้างกุญแจ: ssh-keygen -t ed25519
+• ส่ง Public Key: ssh-copy-id user@host', 'สร้างด้วย ssh-keygen ส่งด้วย ssh-copy-id', 5, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('98ac57fe-20c6-4022-94c2-44ccd0fa2dfb', 'network:01-ip-subnetting:fc05', 2, 'd8929572-6865-40b4-bf65-a32bfcdb15a5', 'คำสั่งใดบน Linux ใช้ตรวจสอบ Routing Table และ Default Gateway?', 'ip route show หรือ ip route', 'ip route', 5, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('0ca50cdf-cc23-4db0-8a81-bdbe6db62445', 'linux:06-log-reading:fc09', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'หากเครื่องเซิร์ฟเวอร์ตั้งเวลาเป็น UTC แล้วผู้ใช้แจ้งว่าเกิดปัญหาเวลา 14:00 น. (เวลาไทย) ต้องดู Log เวลาใด?', 'เวลา 07:00 UTC
+(เวลาไทย GMT+7 เร็วกว่า UTC 7 ชั่วโมง ดังนั้นต้องลบออก 7 ชั่วโมง)', 'UTC + 7 = เวลาไทย', 9, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('12f3d939-a6a2-415c-98af-7dee18272d41', 'linux:06-log-reading:fc10', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'ไฟล์ access.log กับ error.log ของ Web Server (เช่น Nginx) เก็บข้อมูลต่างกันอย่างไร?', '• access.log: บันทึกทุก HTTP Request ที่เรียกเข้ามา (IP, URL, HTTP Status 200/404/500, เวลาตอบสนอง)
+• error.log: บันทึกข้อผิดพลาดของตัว Web Server หรือการเชื่อมต่อ Upstream ไม่สำเร็จ', 'ประวัติการเข้าชม เทียบกับ ข้อผิดพลาดของระบบ', 10, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('44eb1f52-f82a-4234-994d-c0d529e7f28f', 'linux:06-log-reading:fc11', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'หากโปรเซสฐานข้อมูลดับไปเองโดยไม่มี Error ในไฟล์ Log ของแอปเลย ควรตรวจที่ไหน?', 'ตรวจ Kernel Log ด้วยคำสั่ง:
+dmesg -T | grep -iE "oom|killed"
+เพราะอาจถูก Kernel OOM Killer ส่ง SIGKILL ตัดการทำงานกะทันหัน', 'โปรเซสไม่มีโอกาสเขียน Log ของตัวเองเพราะถูก Kernel ตัดทันที', 11, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('ccf5d047-49e1-4669-99c1-a6e1abfc011d', 'linux:06-log-reading:fc12', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'สิ่งที่ต้องแนบเมื่อส่งต่อ (Escalate) ปัญหาจาก Log ให้ทีม Tier 2', '1. ชื่อเครื่อง (Hostname) และพาธไฟล์ Log
+2. ช่วงเวลาที่เกิดเหตุพร้อมระบุ Timezone (เช่น UTC หรือ +07)
+3. ข้อความ Error พร้อมบริบทรอบข้าง (grep -C)
+4. Request ID / Transaction ID ที่เกี่ยวข้อง', 'ครบ 4 องค์ประกอบหลัก', 12, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('42da51ab-d158-4e4e-ba98-8e30a1f609d2', 'linux:07-disk-memory-cpu:fc01', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'ความแตกต่างระหว่างคำสั่ง df -h กับ df -i', '• df -h : ตรวจสอบความจุพื้นที่ดิสก์ในหน่วย KB/MB/GB (Use%)
+• df -i : ตรวจสอบจำนวน Inode หรือสารบัญไฟล์ที่ใช้ไป (IUse%)', 'h = human-readable size, i = inodes', 1, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('26d84fd4-7648-4065-8e4e-9680b9ffcb07', 'linux:07-disk-memory-cpu:fc02', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'ทำไมระบบถึงฟ้อง No space left on device ทั้งที่ df -h ยังมีพื้นที่ว่างเหลือหลาย GB?', 'เพราะจำนวน Inode เต็ม 100% (ตรวจด้วย df -i) มักเกิดจากการมีไฟล์ขนาดเล็กจำนวนมหาศาลอยู่ในพาร์ทิชันนั้น', '1 ไฟล์ต้องใช้ 1 Inode เสมอ', 2, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('560beb43-e745-4547-a44c-ebef41a5b522', 'linux:07-disk-memory-cpu:fc03', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'คำสั่งเรียงลำดับขนาดโฟลเดอร์ย่อยจากน้อยไปมากในหน่วยอ่านง่าย', 'du -sh * | sort -h
+(-h ใน sort ช่วยให้เรียงลำดับหน่วย K, M, G ได้ถูกต้อง)', 'du -sh คู่กับ sort -h', 3, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('705dd8ec-e528-4203-add1-7d65d409e7c9', 'linux:08-remote-access:fc06', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'เมื่อเซิร์ฟเวอร์ปลายทางถูกลง OS ใหม่แล้วขึ้น REMOTE HOST IDENTIFICATION HAS CHANGED แก้ด้วยคำสั่งใด?', 'ssh-keygen -R <hostname_หรือ_IP>
+(ต้องยืนยันกับทีม Infra ก่อนเสมอว่ามีการ Rebuild เครื่องจริง)', '-R = Remove host key จาก known_hosts', 6, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('a3365071-d8b4-41f0-9ead-7f7fe9de4e5f', 'linux:08-remote-access:fc07', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'เมื่อรัน ssh แล้วขึ้น Permission denied (publickey) เกิดจากสาเหตุใดได้บ้าง?', '1. ใช้ชื่อ user ผิด หรือระบุไฟล์กุญแจ (-i) ผิดดอก
+2. ยังไม่ได้นำ Public Key ไปใส่ใน ~/.ssh/authorized_keys ของปลายทาง
+3. สิทธิ์ของ ~/.ssh (ต้อง 700) หรือ authorized_keys (ต้อง 600) เปิดกว้างเกินไป', 'ตรวจทั้งฝั่งเรากับฝั่งปลายทางด้วย ssh -v', 7, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('7420622e-a39b-4c0e-8c0c-ed68d3709e50', 'linux:08-remote-access:fc08', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'ความแตกต่างระหว่าง scp กับ rsync -avz ในการโอนไฟล์', '• scp: คัดลอกไฟล์ทั้งหมดตั้งแต่ต้นใหม่ทุกครั้ง เหมาะกับไฟล์เดียวขนาดไม่ใหญ่
+• rsync -avz: เปรียบเทียบและส่งเฉพาะส่วนที่ต่างกัน บีบอัดข้อมูลระหว่างส่ง (-z) และต่อไฟล์ที่ค้างได้', 'rsync เหมาะกับโฟลเดอร์ใหญ่หรือการซิงก์ซ้ำ', 8, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('6e9042d4-7e39-42fa-9147-9b7eb8049f65', 'linux:08-remote-access:fc09', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'ตัวเลือก -a, -v, -z ในคำสั่ง rsync -avz หมายถึงอะไร?', '• -a (archive): คัดลอกทั้งโฟลเดอร์ย่อยพร้อมคงสิทธิ์ เจ้าของ และเวลาเดิม
+• -v (verbose): แสดงรายชื่อไฟล์ที่กำลังโอน
+• -z (compress): บีบอัดข้อมูลระหว่างส่งผ่านเครือข่าย', 'Archive, Verbose, Compress', 9, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('ae602e48-6182-4dc2-8cb0-3686b0a02c3e', 'linux:08-remote-access:fc10', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'คำสั่งพื้นฐานของ tmux: สร้างเซสชันใหม่, ดูรายการเซสชัน และกลับเข้าเซสชันเดิม', '• สร้างเซสชัน: tmux new -s <ชื่อ>
+• ดูรายการเซสชัน: tmux ls
+• กลับเข้าเซสชันเดิม: tmux attach -t <ชื่อ> (หรือ tmux a -t <ชื่อ>)', 'new, ls, attach', 10, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('2f4f3eb9-5e6a-4f10-9dc7-7bbbee8b397e', 'linux:08-remote-access:fc11', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'ปุ่มลัดสำหรับถอยออกจากหน้าจอ tmux (Detach) โดยปล่อยให้โปรแกรมทำงานต่อเบื้องหลัง', 'กด Ctrl + b (แล้วปล่อยมือ) จากนั้นกดปุ่ม d', 'd ย่อมาจาก detach', 11, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('98baeaf2-62c1-4b29-93f8-830fce9d4995', 'linux:09-cron-schedule:fc01', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'ลำดับความหมายของเวลา 5 ฟิลด์ใน Crontab (* * * * *)', '1. นาที (0 - 59)
+2. ชั่วโมง (0 - 23)
+3. วันที่ในเดือน (1 - 31)
+4. เดือน (1 - 12)
+5. วันในสัปดาห์ (0 - 7 โดย 0 และ 7 คือวันอาทิตย์)', 'นาที -> ชั่วโมง -> วันที่ -> เดือน -> วันในสัปดาห์', 1, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('a37022a7-a410-4084-9ebd-81a52ba2324a', 'linux:09-cron-schedule:fc02', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'รูปแบบเวลา Crontab สำหรับรันทุกๆ 15 นาที และรันทุกวันเวลา 02:30 น.', '• ทุกๆ 15 นาที: */15 * * * *
+• ทุกวันเวลา 02:30 น.: 30 2 * * *', 'ใช้ */15 ในฟิลด์นาที', 2, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('8dd4b8d8-4072-40e0-9442-397afb9f0a34', 'linux:09-cron-schedule:fc03', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'ความหมายของคำย่อ @reboot และ @daily ใน Crontab', '• @reboot : รัน 1 ครั้งหลังจากเครื่องบูตเสร็จ
+• @daily (หรือ @midnight) : รันวันละครั้งตอนเวลา 00:00 น. (เทียบเท่า 0 0 * * *)', 'ใช้แทนตัวเลข 5 ฟิลด์ได้', 3, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('c3b5afcf-5f60-4207-aef3-ca1dd84296eb', 'linux:09-cron-schedule:fc04', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'คำสั่งดูรายการ Crontab ของตัวเอง และคำสั่งดูของ user อื่น (เช่น appuser)', '• ของตัวเอง: crontab -l
+• ของผู้ใช้คนอื่น: sudo crontab -u appuser -l', '-l = list, -u = user', 4, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('da0f36ae-5349-4e00-9c62-219a069a1983', 'linux:09-cron-schedule:fc05', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'ทำไมห้ามเผลอพิมพ์คำสั่ง crontab -r เด็ดขาด?', 'เพราะ -r (remove) จะลบตาราง Crontab ทั้งหมดของผู้ใช้นั้นทิ้งทันทีโดยไม่ถามยืนยัน (ให้ใช้เฉพาะ crontab -l ในการตรวจสอบ)', 'ปุ่ม r อยู่ติดกับปุ่ม e บนคีย์บอร์ด', 5, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('3ba2ea29-42d9-4b7d-9915-be7d6c9341aa', 'linux:09-cron-schedule:fc06', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'ความต่างระหว่างบรรทัดใน User Crontab (crontab -e) กับไฟล์ใน /etc/cron.d/', '• User Crontab: มี 5 ฟิลด์เวลา ตามด้วยคำสั่งทันที
+• /etc/cron.d/ และ /etc/crontab: ต้องระบุชื่อผู้ใช้ (username) แทรกเป็นคอลัมน์ที่ 6 ก่อนคำสั่งเสมอ', 'ระดับระบบต้องระบุว่ารันในสิทธิ์ของ user ใด', 6, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('6c116e09-ffcb-4488-9149-3d65500f6c71', 'linux:09-cron-schedule:fc07', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'ชื่อบริการและตำแหน่งไฟล์ Log ของ Cron บน Ubuntu เทียบกับ RHEL', '• Ubuntu / Debian:
+  - บริการ: systemctl status cron
+  - Log: grep CRON /var/log/syslog
+• RHEL / Rocky Linux:
+  - บริการ: systemctl status crond
+  - Log: /var/log/cron', 'cron/syslog เทียบกับ crond/cron', 7, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('146c6b20-16cd-440d-85ef-877c6b1f1178', 'network:01-ip-subnetting:fc01', 2, 'd8929572-6865-40b4-bf65-a32bfcdb15a5', 'Subnet Mask มีหน้าที่อะไรในระบบเครือข่าย?', 'แยกแยะว่าส่วนใดของ IP Address คือ Network ID (บอกเครือข่าย) และส่วนใดคือ Host ID (บอกเครื่องปลายทาง)', 'Network ID vs Host ID', 1, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('976e621c-2cf8-4f2f-9bbd-76ca176d48cc', 'linux:09-cron-schedule:fc08', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'ทำไมสคริปต์ที่รันด้วยมือผ่านปกติ พอนำไปใส่ใน Cron แล้วมักฟ้อง command not found?', 'เพราะสภาพแวดล้อมของ Cron มีค่าตัวแปร PATH จำกัดมาก (มักมีแค่ /usr/bin:/bin)
+วิธีแก้: ต้องระบุ Absolute Path เต็มของทุกคำสั่งและทุกไฟล์ในสคริปต์', 'ปัญหาเรื่องตัวแปร PATH', 8, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('cc9db3aa-bc16-4649-bfd8-e1105124e65c', 'linux:09-cron-schedule:fc09', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'ทำไมควรต่อท้ายบรรทัด Crontab ด้วย >> /var/log/app/job.log 2>&1 เสมอ?', 'เพื่อบันทึกทั้งผลลัพธ์ปกติ (stdout) และข้อความ Error (stderr) ลงไฟล์ Log มิฉะนั้นเมื่อสคริปต์รันพังจะไม่มีข้อความ Error เก็บไว้ตรวจสอบ', 'Log ของระบบ Cron บอกแค่ว่าสั่งรันหรือยัง แต่ไม่บอก Error ข้างในสคริปต์', 9, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('1d598216-9d11-4f56-ad77-c685f1a5efc6', 'linux:09-cron-schedule:fc10', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'ข้อควรระวังเมื่อใช้เครื่องหมาย % (เช่น date +%Y%m%d) ในบรรทัด Crontab', 'ใน Crontab เครื่องหมาย % จะถูกตีความเป็นการขึ้นบรรทัดใหม่ (Newline)
+ต้องใส่ Backslash นำหน้าเป็น \% ทุกตัว (เช่น date +\%Y\%m\%d) หรือย้ายคำสั่งเข้าไฟล์ .sh', 'ต้อง Escape เครื่องหมาย % ด้วย \', 10, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('b786df76-a5a5-49ea-a1f2-6a991a39dc67', 'linux:09-cron-schedule:fc11', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'คำสั่งตรวจสอบรายการงานตั้งเวลาที่ทำงานผ่าน systemd timer', 'systemctl list-timers --all', 'ใช้เมื่อหาใน crontab ไม่เจอ', 11, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('c59aadac-dc44-4217-890f-8c2113444ba5', 'linux:09-cron-schedule:fc12', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'หากตั้งเวลาใน Cron เป็น 02:00 น. แต่งานกลับรันตอน 09:00 น. เวลาไทย เกิดจากอะไร?', 'Timezone ของเครื่องเซิร์ฟเวอร์ตั้งเป็น UTC (+0000) ซึ่งช้ากว่าเวลาไทย 7 ชั่วโมง (02:00 UTC = 09:00 เวลาไทย)
+ตรวจด้วยคำสั่ง timedatectl', 'Cron ยึดเวลาตาม Timezone ของเครื่อง', 12, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('2ba0b4e4-9657-4e28-9e90-13d8186bb930', 'linux:10-health-check:fc01', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'ลำดับตรวจเมื่อระบบเข้าไม่ได้', '1. Service รันไหม: systemctl is-active
+2. Port ฟังไหม: ss -tulpn
+3. ต่อจากภายนอกได้ไหม: nc -zv
+4. HTTP ตอบไหม: curl -I', 'ล่างขึ้นบน หยุดที่ชั้นแรกที่ผิด', 1, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('cf489d3f-447a-4d33-9f76-15acc0793050', 'linux:10-health-check:fc02', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'systemctl is-active กับ is-enabled ต่างกันอย่างไร', '• is-active: ตอนนี้รันอยู่ไหม (active/inactive/failed)
+• is-enabled: เริ่มอัตโนมัติตอนบูตไหม (enabled/disabled)', 'ตอนนี้ เทียบกับ ตอนบูต', 2, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('11133e98-a7ed-4af2-b8ec-1b1eb3e18d66', 'linux:10-health-check:fc03', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'คำสั่งดูทุก Port ที่ฟังอยู่พร้อมชื่อ Process', 'sudo ss -tulpn
 
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'docker'), 'docker-container-basics', 'คำสั่ง Docker พื้นฐานและการจัดการ Container ในงาน Support', 'จัดการ Container ประจำวันด้วย docker ps, logs, exec, inspect, stats, การทำความเข้าใจ Port Mapping และวิธี Jump เข้าไปตรวจสอบ', '
-# คำสั่ง Docker พื้นฐานและการจัดการ Container ในงาน Support
+t TCP, u UDP, l Listening, p Process, n ตัวเลข', 'จำคำว่า tulpn', 3, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('126de0c0-1b25-416d-a498-2add15fd11be', 'linux:10-health-check:fc04', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'คำสั่งกรองเฉพาะ Port 8080 ที่ฟังอยู่', 'sudo ss -ltnp ''sport = :8080''', 'ใช้ตัวกรอง sport', 4, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('6253bf44-ca86-4e47-88bb-f4afecd8582f', 'linux:10-health-check:fc05', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'Local Address 127.0.0.1:8080 กับ 0.0.0.0:8080 ต่างกันอย่างไร', '• 127.0.0.1:8080: รับเฉพาะการเชื่อมต่อในเครื่องตัวเอง
+• 0.0.0.0:8080: ฟังทุก Interface เครื่องอื่นต่อเข้ามาได้ (ถ้า Firewall ไม่บล็อก)', 'ดูว่ารับจากใคร', 5, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('0d7f0e7d-b852-4cd3-888f-4f08df94675c', 'linux:10-health-check:fc06', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'คำสั่งหาว่า Process ไหนใช้ Port 8080', 'sudo lsof -i :8080
+(หรือ sudo ss -ltnp ''sport = :8080'')', 'List Open Files แบบ Network', 6, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('44006424-587f-4f05-ac5c-8cd9c38c8560', 'linux:10-health-check:fc07', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'คำสั่งทดสอบต่อ TCP Port ปลายทางโดยไม่ส่งข้อมูล', 'nc -zv <host> <port>
 
-ในระบบ Cloud Native ปัจจุบัน แอปพลิเคชันเกือบทั้งหมดถูกบรรจุอยู่ใน **Docker Container** เมื่อเกิดปัญหา แอปดับ หรือส่งข้อมูลไม่ผ่าน ทีม Support จำเป็นต้องใช้คำสั่ง Docker ตรวจสอบสถานะและดู Log ได้อย่างคล่องแคล่ว
+z = สแกนเฉยๆ, v = แสดงผล', 'netcat', 7, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('3b3477ab-2f44-4fad-8b51-b5dccc6d89c0', 'linux:10-health-check:fc08', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'ถ้าไม่มี nc จะทดสอบต่อ Port ได้อย่างไร', 'timeout 3 bash -c ''</dev/tcp/<host>/<port>'' && echo open', 'ใช้ bash ต่อ TCP เอง', 8, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('3f6ab51f-3ba8-49e3-a7bc-b8e82126ed74', 'linux:10-health-check:fc09', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'curl พิมพ์เฉพาะ Status Code กับเวลาที่ใช้', 'curl -sS -o /dev/null -w "%{http_code} %{time_total}s\n" --max-time 10 <URL>', '-w กำหนดรูปแบบผลลัพธ์', 9, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('175022d6-d009-4c14-b8ca-0380f124eaa4', 'linux:10-health-check:fc10', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'curl exit code 6, 7, 28 และ 60 หมายถึงอะไร', '• 6: Resolve host ไม่ได้ (DNS)
+• 7: Connect ไม่ได้ (refused)
+• 28: Timeout
+• 60: ปัญหาใบรับรอง SSL', 'DNS, Connect, Timeout, Cert', 10, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('c8ed3813-155e-4a0a-951d-9ce8a41ed015', 'linux:10-health-check:fc11', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'HTTP 502, 503 และ 504 ต่างกันอย่างไร', '• 502: Backend ตอบไม่ถูกต้องหรือต่อไม่ได้
+• 503: Service ไม่พร้อม (ล้น/ปิดปรับปรุง)
+• 504: Backend ตอบช้าจนเกิน Timeout', 'Bad Gateway, Unavailable, Gateway Timeout', 11, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('8c2b9041-e64e-4df8-a6dd-2b4c6daad929', 'linux:10-health-check:fc12', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'ข้อควรระวังเรื่อง curl -k และการใส่ข้อมูลลับในคำสั่ง', '• -k ข้ามการตรวจใบรับรอง ใช้แยกปัญหาเท่านั้น และต้องบอกใน Ticket
+• ห้ามใส่ Token หรือรหัสผ่านจริงในคำสั่งที่จะแปะ Ticket', 'ความปลอดภัยก่อนความสะดวก', 12, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('0b61972f-aeae-4d8f-8e60-191816dfa9c1', 'network:01-ip-subnetting:fc03', 2, 'd8929572-6865-40b4-bf65-a32bfcdb15a5', 'ทำไม Subnet /24 (256 IP) จึงใช้งานเป็น Host ได้จริงเพียง 254 IP?', 'เพราะต้องหักออก 2 ค่าเสมอ คือ:
+1. Network IP (IP แรก เช่น .0)
+2. Broadcast IP (IP สุดท้าย เช่น .255)', 'Network ID และ Broadcast ID', 3, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('9f3bef19-c8be-4f69-ae1f-71e74a187881', 'network:01-ip-subnetting:fc04', 2, 'd8929572-6865-40b4-bf65-a32bfcdb15a5', 'IP ขึ้นต้นด้วย 169.254.x.x คืออะไรและเกิดขึ้นเมื่อใด?', 'APIPA (Automatic Private IP Addressing) เกิดขึ้นเมื่อเครื่องขอ IP จาก DHCP Server ไม่สำเร็จ หรือสาย LAN ไม่เชื่อมต่อ', 'DHCP Request Failed', 4, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('73f46202-06f4-41de-ab9e-7fe66c90b186', 'network:02-dns-resolution:fc01', 2, '04cb05e0-09ef-4ee4-8cf5-1ed7d502bbfe', 'ลำดับแรกที่ระบบปฏิบัติการ Linux ตรวจสอบเมื่อ Resolve โดเมนคือที่ใด?', 'ไฟล์ Local Hosts (`/etc/hosts`)', '/etc/hosts', 1, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('fac22337-965c-4ad4-b1b7-4250c59e0635', 'network:02-dns-resolution:fc02', 2, '04cb05e0-09ef-4ee4-8cf5-1ed7d502bbfe', 'A Record กับ CNAME Record ต่างกันอย่างไร?', 'A Record แมปชื่อโดเมนเข้ากับ IPv4 Address โดยตรง
+CNAME (Canonical Name) เป็นชื่อ Alias ที่ชี้ไปยังอีกชื่อโดเมนหนึ่ง', 'IP vs Alias domain', 2, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('e001504d-31c9-4ca0-9f91-398a4bd8159e', 'network:02-dns-resolution:fc03', 2, '04cb05e0-09ef-4ee4-8cf5-1ed7d502bbfe', 'คำสั่ง dig ใดใช้บังคับ query ไปยัง DNS 1.1.1.1 เพื่อดึงค่า A record แบบสั้น?', 'dig @1.1.1.1 domain.com +short', 'dig @server +short', 3, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('2bf91248-71bd-4299-b83a-ebead45cca65', 'network:02-dns-resolution:fc04', 2, '04cb05e0-09ef-4ee4-8cf5-1ed7d502bbfe', 'DNS TTL (Time-To-Live) ส่งผลต่อการเปลี่ยน IP อย่างไร?', 'Resolver จะจำ IP เดิมไว้จนกว่าเวลา TTL จะนับถอยหลังหมดลง จึงเกิดช่วงหน่วงที่เรียกว่า DNS Propagation Delay', 'Caching expiration time', 4, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('4e21aa5c-b4bc-44ce-b486-92abff7e4c5d', 'network:02-dns-resolution:fc05', 2, '04cb05e0-09ef-4ee4-8cf5-1ed7d502bbfe', 'ไฟล์คอนฟิกใดบน Linux ที่เก็บรายชื่อ DNS Nameserver ของระบบ?', '/etc/resolv.conf (ระบุด้วยบรรทัด nameserver X.X.X.X)', '/etc/resolv.conf', 5, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('bf58d304-b4a1-4065-bb9b-eb58c5d08183', 'network:03-routing-latency:fc01', 2, '240e3caf-58b9-4b37-9d41-8d7a2830fe79', 'คำสั่ง ping ใช้โปรโตคอลใดในการส่งข้อความตรวจสอบเครือข่าย?', 'ICMP (Internet Control Message Protocol) โดยส่ง Echo Request (Type 8) และรอรับ Echo Reply (Type 0)', 'ICMP', 1, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('be70769c-efa1-4867-b0ff-b8d52a94bcf9', 'network:03-routing-latency:fc02', 2, '240e3caf-58b9-4b37-9d41-8d7a2830fe79', 'traceroute ใช้กลไกใดของ IP Packet ในการระบุแต่ละ Hop ตลอดเส้นทาง?', 'ตั้งค่า TTL (Time-To-Live) เริ่มจาก 1 แล้วเพิ่มทีละ 1 เพื่อให้เราเตอร์ส่ง ICMP Time Exceeded กลับมา', 'TTL (Time-To-Live)', 2, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('b2fe5397-a5d5-4aac-b4bf-234a9cb68486', 'network:03-routing-latency:fc03', 2, '240e3caf-58b9-4b37-9d41-8d7a2830fe79', 'เครื่องมือ mtr มีข้อดีเหนือกว่า traceroute ทั่วไปอย่างไร?', 'รวมความสามารถของ ping และ traceroute เข้าด้วยกัน โดยส่งแพ็กเก็ตทดสอบต่อเนื่องแบบ Real-time และสรุปค่า Packet Loss/Latency ของแต่ละ Hop ได้แม่นยำ', 'Real-time + Packet Loss per Hop', 3, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('69424af8-2aa7-4acd-8cc1-ba54691d16ba', 'network:03-routing-latency:fc04', 2, '240e3caf-58b9-4b37-9d41-8d7a2830fe79', 'ทำไมการรัน traceroute จึงควรใส่แฟล็ก -n?', 'เพื่อไม่ให้เสียเวลา Reverse DNS แปลง IP เป็นชื่อโฮสต์ ทำให้แสดงผลได้เร็วขึ้นทันที', 'Numeric output (No DNS lookup)', 4, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('107c306f-d618-47aa-8fed-492f0b3937c3', 'network:04-tcp-ports-firewall:fc01', 2, '3ff8610b-94c3-43a7-8e1f-436f27946647', 'ขั้นตอน 3 ลำดับของ TCP 3-Way Handshake มีอะไรบ้าง?', '1. Client ส่ง SYN
+2. Server ตอบ SYN-ACK
+3. Client ส่ง ACK ยืนยัน
+(จากนั้นเข้าสู่สถานะ ESTABLISHED)', 'SYN -> SYN-ACK -> ACK', 1, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('db65ec84-9021-416c-8e8d-93994de26344', 'network:04-tcp-ports-firewall:fc02', 2, '3ff8610b-94c3-43a7-8e1f-436f27946647', 'เมื่อใดที่เซิร์ฟเวอร์จะส่งแพ็กเก็ต TCP RST กลับมายัง Client?', 'เมื่อมี Client พยายามเชื่อมต่อมาที่พอร์ตที่ไม่มีแอปพลิเคชันใดเปิดรับ (LISTEN) อยู่ ทำให้ Client ได้รับข้อความ Connection Refused', 'ไม่มีใครฟังพอร์ต หรือ Service ปลายทางดับ', 2, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('e82de9db-c95c-47f3-b499-05d0623ce250', 'network:04-tcp-ports-firewall:fc03', 2, '3ff8610b-94c3-43a7-8e1f-436f27946647', 'คำสั่งใดบน Linux ใช้ตรวจสอบพอร์ต TCP/UDP ที่เปิดฟังอยู่พร้อมระบุ Process Name?', 'sudo ss -tulpn
+(-t: TCP, -u: UDP, -l: Listen, -p: Process, -n: Numeric)', 'ss -tulpn', 3, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('ae2a7eff-24d3-44a1-90be-6aadb4f57cc2', 'network:04-tcp-ports-firewall:fc04', 2, '3ff8610b-94c3-43a7-8e1f-436f27946647', 'หากแอปพลิเคชัน bind อยู่ที่ 127.0.0.1 ต่างจาก 0.0.0.0 อย่างไร?', '127.0.0.1 รับการเชื่อมต่อเฉพาะภายในเครื่องตัวเอง (Localhost) เท่านั้น
+0.0.0.0 รับการเชื่อมต่อจากทุก Network Interface (เปิดให้ภายนอกเข้าถึงได้)', 'Localhost only vs All interfaces', 4, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('73cb0262-ede6-4151-8fbf-580bf1295eaa', 'network:04-tcp-ports-firewall:fc05', 2, '3ff8610b-94c3-43a7-8e1f-436f27946647', 'ทำไม Firewall ปลายทางแบบ DROP จึงทำให้เกิดอาการ Connection Timed Out?', 'เพราะนโยบาย DROP จะทิ้งแพ็กเก็ต SYN เงียบๆ โดยไม่ส่งคำตอบใดๆ กลับมา ทำให้ Client ต้องรอจนกว่าจะหมดเวลา Timeout', 'DROP = Silent drop without reply', 5, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('d6ad8ddb-d0d0-4669-b63e-ad14cb5a5aa2', 'sql:01-queries-joins:fc01', 3, '5a3d9602-fb56-4f50-b4fa-c231d799a302', 'INNER JOIN กับ LEFT JOIN ให้ผลลัพธ์ต่างกันอย่างไร?', 'INNER JOIN คืนเฉพาะแถวที่เงื่อนไขตรงกันทั้ง 2 ฝั่ง
+LEFT JOIN คืนแถวจากตารางฝั่งซ้ายทั้งหมด หากฝั่งขวาไม่มีคู่จะแสดงเป็น NULL', 'Intersection vs Left Table All', 1, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('dec48697-569c-461d-93eb-501ae8029dd9', 'sql:01-queries-joins:fc02', 3, '5a3d9602-fb56-4f50-b4fa-c231d799a302', 'เทคนิค Anti-Join ใช้สำหรับอะไรในงาน Support?', 'ใช้ค้นหาข้อมูลที่ไม่มีคู่หรือตกหล่น เช่น หาผู้ใช้ที่ไม่มีประวัติสั่งซื้อ ด้วยรูปแบบ: LEFT JOIN ... WHERE right_table.id IS NULL', 'LEFT JOIN + WHERE IS NULL', 2, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('d106a2a8-9116-47e1-ad1e-dd82caf8de73', 'sql:01-queries-joins:fc03', 3, '5a3d9602-fb56-4f50-b4fa-c231d799a302', 'ทำไมการเช็ค NULL ด้วย ''WHERE col = NULL'' จึงผิดเสมอ?', 'เพราะ NULL คือ Unknown ไม่สามารถเปรียบเทียบด้วยเครื่องหมาย = ได้ ต้องใช้ไวยากรณ์ ''IS NULL'' หรือ ''IS NOT NULL'' เท่านั้น', 'ต้องใช้ IS NULL', 3, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('65108b55-db1f-46c1-a46b-a95523c8df34', 'sql:01-queries-joins:fc04', 3, '5a3d9602-fb56-4f50-b4fa-c231d799a302', 'ฟังก์ชัน COALESCE(val1, val2, ...) มีหน้าที่อะไร?', 'คืนค่าแรกในพารามิเตอร์ที่ไม่ใช่ค่า NULL (มักใช้กำหนดค่าเริ่มต้น หรือ Default fallback)', 'Return first non-null value', 4, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('583427e1-09ed-42c1-a16c-ba606a1e13fa', 'sql:01-queries-joins:fc05', 3, '5a3d9602-fb56-4f50-b4fa-c231d799a302', 'ทำไมงาน Support จึงควร Query ข้อมูลบน Read Replica แทน Master Database?', 'เพื่อไม่ให้ Query ที่ซับซ้อนหรือดึงข้อมูลจำนวนมากไปรบกวนทรัพยากร CPU, RAM หรือทำให้เกิด Lock ขัดขวาง Transaction การเขียนของผู้ใช้งานในระบบจริง', 'ป้องกัน Database Lock และ CPU Overload บนระบบหลัก', 5, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('9f8511af-e26e-43ae-99e4-0711a0ac7dce', 'sql:02-aggregations-grouping:fc01', 3, '10413c74-c724-4168-99e9-fc7c279fb980', 'COUNT(*) กับ COUNT(column_name) ต่างกันอย่างไร?', 'COUNT(*) นับจำนวนแถวทั้งหมด รวมทั้งแถวที่มีค่า NULL
+COUNT(column) นับเฉพาะแถวที่คอลัมน์นั้นมีค่า (ละเว้นแถวที่เป็น NULL)', 'นับทุกแถว vs นับเฉพาะไม่เป็น NULL', 1, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('df62d97c-c021-4a57-aa41-377bb79161f7', 'sql:02-aggregations-grouping:fc02', 3, '10413c74-c724-4168-99e9-fc7c279fb980', 'WHERE กับ HAVING ต่างกันอย่างไรในคำสั่ง SQL?', 'WHERE กรองแถวก่อนนำไปจัดกลุ่ม (ห้ามใช้ฟังก์ชัน Aggregate)
+HAVING กรองผลลัพธ์หลังจากรวมกลุ่ม GROUP BY แล้ว (ใช้กับ Aggregate เช่น COUNT > 10 ได้)', 'ก่อนจัดกลุ่ม vs หลังจัดกลุ่ม', 2, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('2e3637bf-4cae-469f-8b2b-85c620f6fff1', 'sql:02-aggregations-grouping:fc03', 3, '10413c74-c724-4168-99e9-fc7c279fb980', 'คำสั่งใดใน PostgreSQL ใช้ปัดเศษ Timestamp ให้เป็นระดับชั่วโมงเพื่อนำมา GROUP BY?', 'DATE_TRUNC(''hour'', created_at)', 'DATE_TRUNC(''hour'', ...)', 3, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('9304b707-8bc1-4469-bba7-b224a82ee7d9', 'sql:02-aggregations-grouping:fc04', 3, '10413c74-c724-4168-99e9-fc7c279fb980', 'ลำดับการประมวลผล (Execution Order) ของ WHERE, GROUP BY, HAVING คืออะไร?', '1. WHERE (กรองแถว)
+2. GROUP BY (รวมกลุ่ม)
+3. HAVING (กรองกลุ่ม)', 'WHERE -> GROUP BY -> HAVING', 4, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('8ad69d11-b681-4f03-b04c-f9b6b284565b', 'sql:03-indexes-performance:fc01', 3, '0ec2fdf6-2627-408b-9791-35963b5fe97e', 'Sequential Scan กับ Index Scan ต่างกันอย่างไร?', 'Sequential Scan: กวาดอ่านข้อมูลทุกแถวตั้งแต่ต้นจนจบตาราง (ช้ามากบนตารางใหญ่)
+Index Scan: ใช้ B-Tree ค้นหาตำแหน่งแถวที่ต้องการอย่างรวดเร็ว (ความเร็วระดับ O(log N))', 'Full table scan vs Binary search tree', 1, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('30dffb0f-f033-4619-9217-6d95df2efe1b', 'sql:03-indexes-performance:fc02', 3, '0ec2fdf6-2627-408b-9791-35963b5fe97e', 'คำสั่ง EXPLAIN กับ EXPLAIN ANALYZE ต่างกันอย่างไร?', 'EXPLAIN แสดงเฉพาะแผนการทำงาน (Estimate cost/rows) โดยไม่ได้รันคำสั่งจริง
+EXPLAIN ANALYZE จะสั่งรันคำสั่งจริงและแสดงเวลาการทำงานจริง (Actual time) ของแต่ละขั้นตอน', 'Estimate plan vs Actually execute & measure time', 2, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('bb12cd67-1c94-4d46-ad1b-49df8a84efc8', 'sql:03-indexes-performance:fc03', 3, '0ec2fdf6-2627-408b-9791-35963b5fe97e', 'คำสั่งใดใน PostgreSQL ใช้ตรวจสอบ Query ที่กำลังรันอยู่แบบ Real-time?', 'SELECT * FROM pg_stat_activity WHERE state != ''idle'';', 'pg_stat_activity', 3, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('63ed67c7-7cc9-4a11-aa03-d4ba35a7f26d', 'sql:03-indexes-performance:fc04', 3, '0ec2fdf6-2627-408b-9791-35963b5fe97e', 'ความแตกต่างระหว่าง pg_cancel_backend() กับ pg_terminate_backend() คืออะไร?', 'pg_cancel_backend(pid): พยายามยกเลิกเฉพาะ Query ที่กำลังรันอยู่ แต่ยังคง Session การเชื่อมต่อไว้
+pg_terminate_backend(pid): บังคับตัดการเชื่อมต่อของ Client ทิ้งทันที (Kill connection)', 'Cancel current query vs Terminate entire connection', 4, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('c62cc901-2845-4c71-ab69-f3c13a116552', 'troubleshooting:01-incident-triage-methodology:fc01', 6, '11fc305a-c347-452a-8cbb-f81491cb8cae', 'ความแตกต่างระหว่าง Sev 1 กับ Sev 3 ตามมาตรฐาน ITIL คืออะไร?', 'Sev 1 (Critical): ระบบหลักล่มทั้งระบบ กระทบผู้ใช้ทุกคน ธุรกิจเสียหายรุนแรง
+Sev 3 (Medium): ฟังก์ชันย่อยมีปัญหา แต่ยังมีวิธีเลี่ยง (Workaround Available) ธุรกิจยังดำเนินการต่อได้', 'All down vs Minor feature with workaround', 1, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('3399914c-18d5-4b99-a434-d2a1eb0b126c', 'troubleshooting:01-incident-triage-methodology:fc02', 6, '11fc305a-c347-452a-8cbb-f81491cb8cae', 'ทำไมคำถาม ''What Changed?'' จึงเป็นหัวใจสำคัญของการ Triage?', 'เพราะกว่า 80-90% ของ Incident เกิดจากการเปลี่ยนแปลง เช่น การดีพลอยเวอร์ชันใหม่, การเปลี่ยนคอนฟิก, หรือการแก้ไขระบบเครือข่าย', '80-90% of issues stem from recent changes', 2, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('7da96f65-5675-408c-9b4b-0fc13ab6e7e3', 'troubleshooting:01-incident-triage-methodology:fc03', 6, '11fc305a-c347-452a-8cbb-f81491cb8cae', 'MTTR ย่อมาจากอะไรและมีความสำคัญอย่างไรใน Incident Management?', 'Mean Time to Recovery (หรือ Mean Time to Resolve) คือเวลาเฉลี่ยที่ใช้ในการกู้คืนระบบให้กลับมาใช้งานได้ ยิ่งค่านี้น้อย ยิ่งแสดงถึงประสิทธิภาพของทีม Support', 'Mean Time to Recovery', 3, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('596ba80a-0190-4ff3-a86e-dfcb854990c2', 'troubleshooting:02-root-cause-escalation:fc01', 6, '782f94c6-acb3-408b-b091-a093bf7d0c40', 'เทคนิค 5 Whys มีเป้าหมายเพื่ออะไรในการแก้ปัญหา?', 'การถามว่า ''ทำไม'' ซ้ำๆ เพื่อก้าวข้ามผ่านแค่อาการที่เห็นภายนอก (Symptom) ไปสู่ต้นตอที่แท้จริงของระบบหรือกระบวนการ (Root Cause)', 'Identify true underlying root cause', 1, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('e288bdc8-b7b6-430d-bb22-c6173bdc2e9f', 'troubleshooting:02-root-cause-escalation:fc02', 6, '782f94c6-acb3-408b-b091-a093bf7d0c40', 'ข้อมูล 4 อย่างที่ควรมีเสมอใน Ticket ส่งต่อเคส (Escalation Handover) คืออะไร?', '1. ขอบเขตและผลกระทบ (Scope & Impact)
+2. เวลาที่เริ่มพบและสิ่งที่เปลี่ยนแปลงล่าสุด (When & What Changed)
+3. หลักฐานทางเทคนิค (Error Log, Request ID, Status Code)
+4. สิ่งที่ทีม Tier 1 ได้คัดกรองไปแล้ว (What''s already ruled out)', 'Scope, Timeline, Evidence, Ruled out', 2, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('a09618b3-a844-470c-a162-cf53c083cc17', 'troubleshooting:02-root-cause-escalation:fc03', 6, '782f94c6-acb3-408b-b091-a093bf7d0c40', 'ทำไมองค์กรเทคโนโลยีชั้นนำจึงยึดถือหลักการ Blameless Post-Mortem?', 'เพราะการไม่กล่าวโทษบุคคลจะส่งเสริมความโปร่งใส ทำให้ทีมกล้าเปิดเผยปัญหาเพื่อนำไปสู่การปรับปรุงระบบและกระบวนการป้องกันอย่างยั่งยืน', 'Encourages transparency & system-level improvements', 3, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('433b290e-85b2-4a43-ae2a-a6df11ff3635', 'web-api:01-http-status-codes:fc01', 4, '8cd3f8e6-7571-47ca-bd5b-cd313f6179c6', 'ความแตกต่างระหว่าง HTTP Status Code หมวด 4xx และ 5xx คืออะไร?', '4xx: Client Error (ความผิดพลาดจากฝั่งผู้เรียก เช่น ส่งข้อมูลผิด, ไม่ได้ล็อกอิน)
+5xx: Server Error (ความผิดพลาดจากฝั่งระบบ/เซิร์ฟเวอร์ เช่น แอปแครช, DB ล่ม, Proxy Timeout)', 'Client Error vs Server Error', 1, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('37d15e3a-82c7-4191-bf77-6f10b9b0a39e', 'web-api:01-http-status-codes:fc02', 4, '8cd3f8e6-7571-47ca-bd5b-cd313f6179c6', '502 Bad Gateway เกิดขึ้นจากสาเหตุใดในระบบที่มี Reverse Proxy?', 'Reverse Proxy (เช่น Nginx) ไม่สามารถเชื่อมต่อกับ Upstream Backend ได้ เนื่องจาก Backend แครชล่ม, ดับอยู่ หรือพอร์ตไม่ตรง (Connection Refused)', 'Upstream Backend ตายหรือไม่เปิดพอร์ต', 2, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('85e15288-35a6-4b99-9aef-b9d51f8c9803', 'web-api:01-http-status-codes:fc03', 4, '8cd3f8e6-7571-47ca-bd5b-cd313f6179c6', '504 Gateway Timeout ต่างจาก 502 Bad Gateway อย่างไร?', '502: Backend ดับ/ตายสนิทเชื่อมต่อไม่ติดทันที
+504: Backend ยังรันอยู่ แต่ประมวลผลนานเกินกำหนด (มักติด Slow Query ใน Database) จน Proxy ตัดการเชื่อมต่อไปก่อน', 'ตายสนิท vs ตอบกลับช้าจนเกินเวลา', 3, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('dc2af395-32b3-4026-ad84-baa410aff45b', 'web-api:01-http-status-codes:fc04', 4, '8cd3f8e6-7571-47ca-bd5b-cd313f6179c6', '401 Unauthorized กับ 403 Forbidden ต่างกันอย่างไร?', '401: ไม่พบข้อมูลยืนยันตัวตน (ยังไม่ได้ Login หรือ Token ผิด/หมดอายุ)
+403: ยืนยันตัวตนแล้วแต่ไม่มีสิทธิ์เข้าถึงทรัพยากรนั้น (Permission Denied)', 'Authentication vs Authorization', 4, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('047fc3f8-a440-48ca-af37-7621f56e6b34', 'web-api:01-http-status-codes:fc05', 4, '8cd3f8e6-7571-47ca-bd5b-cd313f6179c6', 'HTTP Status Code 429 มีความหมายว่าอย่างไร?', 'Too Many Requests (ผู้ใช้ส่ง Request ถี่เกินโควตาที่กำหนดและโดน Rate Limiter บล็อกไว้)', 'Rate limit exceeded', 5, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('383bb10f-727a-4735-9e7f-b0b3b237868d', 'web-api:02-curl-api-testing:fc01', 4, 'cfa14627-c168-4b14-9e7b-15eb4f7e1ead', 'แฟล็ก -i กับ -I ใน curl ต่างกันอย่างไร?', '-I (ตัวใหญ่): ส่ง HEAD request เพื่อแสดงเฉพาะ HTTP Response Header เท่านั้น
+-i (ตัวเล็ก): ส่ง request ปกติแต่ให้แสดงผลลัพธ์ทั้ง Headers และ Body', 'HEAD only vs Headers + Body', 1, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('08c99096-636c-40a2-b226-3774925c9f4b', 'web-api:02-curl-api-testing:fc02', 4, 'cfa14627-c168-4b14-9e7b-15eb4f7e1ead', 'แฟล็ก -k หรือ --insecure ใน curl มีประโยชน์อะไรและมีความเสี่ยงอย่างไร?', 'ประโยชน์: สั่งให้ข้ามการตรวจสอบใบรับรอง SSL/TLS (ใช้ทดสอบ Self-signed cert ภายใน)
+ความเสี่ยง: เสี่ยงต่อการถูกดักข้อมูลแบบ Man-in-the-Middle ห้ามใช้บน Production สคริปต์', 'Bypass SSL certificate check', 2, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('cf8119ce-0f24-4120-a0c5-bdabcf4966c6', 'web-api:02-curl-api-testing:fc03', 4, 'cfa14627-c168-4b14-9e7b-15eb4f7e1ead', 'แฟล็ก -w ใน curl ใช้สำหรับทำอะไรในงาน Support?', 'ใช้จัดรูปแบบแสดงค่า Latency Breakdown (เวลา Resolve DNS, เวลา TCP Handshake, เวลาต่อ SSL, และ Time to First Byte)', 'Latency & timing breakdown metrics', 3, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('f57ad89b-f81c-4eb9-86b1-3a15aa6ce90b', 'web-api:03-ssl-tls-certificates:fc01', 4, 'c1527b50-8bf1-4171-95ce-52bd25ee35f4', 'ห่วงโซ่ความเชื่อถือ (Chain of Trust) ของ SSL/TLS ประกอบด้วยอะไรบ้าง?', '1. Root CA (ฝังอยู่ใน OS/เบราว์เซอร์)
+2. Intermediate CA (ผู้ออกใบรับรองระดับกลาง)
+3. Server / Leaf Certificate (ใบรับรองของเว็บไซต์เรา)', 'Root -> Intermediate -> Leaf', 1, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('02445f8e-4ff1-4848-8c83-104f852d6c50', 'web-api:03-ssl-tls-certificates:fc02', 4, 'c1527b50-8bf1-4171-95ce-52bd25ee35f4', 'ทำไมเบราว์เซอร์จึงขึ้นเตือน ''unable to get local issuer certificate''?', 'เกิดจากเว็บเซิร์ฟเวอร์ส่งเฉพาะ Leaf Cert แต่ไม่ได้ใส่ไฟล์ Intermediate CA Bundle ลงไปด้วย ทำให้เบราว์เซอร์ต่อสายโซ่กลับไปยัง Root CA ไม่ได้', 'Missing intermediate CA bundle (Fullchain)', 2, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('8842cda8-8a11-464f-b14f-84888daecf11', 'web-api:03-ssl-tls-certificates:fc03', 4, 'c1527b50-8bf1-4171-95ce-52bd25ee35f4', 'หลังเปลี่ยนไฟล์ SSL Certificate บน Nginx หรือ Apache ต้องทำสิ่งใดเป็นขั้นตอนสุดท้ายเสมอ?', 'สั่ง Reload หรือ Restart เว็บเซิร์ฟเวอร์ (เช่น sudo systemctl reload nginx) เพื่อให้อ่านไฟล์ใบรับรองใหม่เข้า RAM', 'systemctl reload nginx', 3, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+
+
+--
+-- Data for Name: lesson_progress; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.lesson_progress VALUES ('d610df66-7525-44ca-9e83-02b4749afe01', '2026-11-05 03:49:48.215665+00');
+
+
+--
+-- Data for Name: lessons; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO public.lessons VALUES ('b1a10001-0000-0000-0000-000000000002', 1, 'linux-services-and-systemctl', 'การจัดการ Service ด้วย systemctl และสืบค้น Log ด้วย journalctl', 'คู่มือการสั่งการ Systemd Services การตรวจสอบสถานะ Failed และการกรอง System Log เมื่อระบบมีปัญหา', '# การจัดการ Systemd Service และการวิเคราะห์ Log
+
+บน Linux สมัยใหม่ (Ubuntu, RHEL, CentOS, Debian) ระบบจัดการ Service หลักคือ **systemd**
 
 ---
 
-## 1. คำสั่งตรวจสอบสถานะ Container
+## 1. คำสั่งควบคุม Service ด้วย `systemctl`
+- ตรวจสอบสถานะ: `systemctl status nginx`
+- เริ่ม/หยุด/รีสตาร์ท: `systemctl start | stop | restart nginx`
+- โหลดคอนฟิกใหม่โดยไม่ตัดการเชื่อมต่อ: `systemctl reload nginx`
+- เปิด/ปิดให้รันอัตโนมัติเมื่อบูตเครื่อง: `systemctl enable | disable nginx`
+- ค้นหา Service ที่สถานะ Failed: `systemctl --failed`
 
-### 1) ตรวจสอบรายการ Container ด้วย `docker ps`
+---
+
+## 2. การสืบค้น Log อย่างมือโปรด้วย `journalctl`
+เมื่อ Service สตาร์ทไม่ติด (`Active: failed`) ห้ามเดา ให้เปิด Log ทันที:
 ```bash
-# แสดงเฉพาะ Container ที่กำลังรันอยู่ (Running)
-docker ps
+# ดู Log ล่าสุดของ Service นั้นๆ แบบเรียลไทม์ (Follow)
+journalctl -u nginx -f
 
-# แสดง Container ทั้งหมด รวมทั้งตัวที่หยุดทำงาน (Exited / Crashed)
-docker ps -a
+# ดู Log ของ Service เฉพาะรอบการบูตปัจจุบัน (Current Boot)
+journalctl -u nginx -b
+
+# ดูเฉพาะ Log ระดับ Error ขึ้นไป
+journalctl -u nginx -p err
+
+# ดู Log ย้อนหลัง 30 นาที
+journalctl -u nginx --since "30 minutes ago"
 ```
 
-### สถานะที่ต้องจับตาในคอลัมน์ STATUS:
-- `Up 2 hours`: กำลังทำงานปกติ
-- `Up 3 hours (healthy)`: ทำงานปกติและ Healthcheck ผ่าน
-- `Restarting (1) 5 seconds ago`: **สัญญาณอันตราย!** Container กำลังติด Crash Loop (แอปพังแล้ว Docker พยายามสตาร์ทใหม่ซ้ำๆ)
-- `Exited (137) 10 minutes ago`: Container ดับลง โดยมี Exit Code กำกับ
+> **Support Tip**: หากรัน `systemctl restart nginx` แล้วแจ้งเตือนว่า "Job for nginx.service failed" ให้ทดสอบคอนฟิกด้วย `nginx -t` ทันที มักเกิดจากเครื่องหมายเซมิโคลอน `;` หาย หรือพอร์ตชน', 6, 'beginner', 2, true, '2026-11-03 09:22:14.247234+00', '2026-11-03 09:22:14.247234+00');
+INSERT INTO public.lessons VALUES ('b1a10001-0000-0000-0000-000000000005', 1, 'linux-process-and-resources', 'การตรวจวัด CPU, RAM, Disk และจัดการ Process (ps, top, kill, df, free)', 'วิธีวิเคราะห์เมื่อ Server อืด Disk เต็ม หรือแอปพลิเคชันเกิด Zombie / Deadlock Process', '# การตรวจสอบ Process และ System Resources
+
+เมื่อลูกค้าแจ้งว่า **"Server ช้ามาก เข้าเว็บไม่ได้"** หรือเกิด Alarm แจ้งเตือน Disk Full สิ่งที่ Support ต้องทำคือ:
 
 ---
 
-## 2. การตรวจสอบ Log ด้วย `docker logs`
-
-เมื่อ Container ดับ หรือแอปพลิเคชันทำงานผิดปกติ ให้เปิดดู Standard Output (stdout/stderr):
-
+## 1. ตรวจสอบ Memory และ Swap
 ```bash
-# ดู Log 100 บรรทัดล่าสุด
-docker logs --tail 100 app_backend
-
-# ดู Log แบบ Real-time (Streaming) คล้าย tail -f
-docker logs -f --tail 50 app_backend
-
-# ดู Log พร้อมระบุ Timestamp
-docker logs -t --tail 50 app_backend
+# แสดง Memory แบบอ่านง่าย (MB/GB)
+free -h
 ```
+- **total**: หน่วยความจำทั้งหมด
+- **used**: หน่วยความจำที่โปรแกรมใช้งานจริง
+- **buff/cache**: หน่วยความจำที่ Linux นำไปพักแคชไฟล์ (ระบบจะคืนให้อัตโนมัติเมื่อแอปต้องการ)
+- **available**: หน่วยความจำที่พร้อมให้โปรแกรมใหม่ใช้งานได้จริง (ดูตัวเลขนี้เป็นหลัก)
 
 ---
 
-## 3. การเข้าไปตรวจสอบภายใน Container ด้วย `docker exec`
-
-หากต้องการเข้าไปทดสอบ ping, curl หรือตรวจไฟล์คอนฟิกภายใน Container:
-
+## 2. ตรวจสอบ Disk Space และ Inodes
 ```bash
-# เปิด Interactive Shell เข้าไปยัง Container
-docker exec -it app_backend sh
+# ตรวจสอบพื้นที่ดิสก์ในแต่ละ Mount point
+df -h
 
-# หาก Container มี bash ติดตั้งอยู่
-docker exec -it app_backend bash
+# ตรวจสอบจำนวน Inode (บ่อยครั้งดิสก์ยังเหลือ แต่สร้างไฟล์ไม่ได้เพราะ Inode เต็ม!)
+df -i
+
+# หาโฟลเดอร์ที่กินพื้นที่มากที่สุด 10 อันดับแรกใน /var
+du -sh /var/* | sort -hr | head -n 10
 ```
-- เมื่อเข้าไปแล้ว ให้ทดสอบเชื่อมต่อ Database หรือดู Environment Variables ด้วยคำสั่ง `env`
-- ออกจาก Container ด้วยการพิมพ์ `exit`
 
 ---
 
-## 4. ตรวจสอบคอนฟิกเชิงลึกด้วย `docker inspect`
-
-คำสั่ง `docker inspect` คืนค่า JSON ละเอียดเกี่ยวกับ Container:
-
+## 3. จัดการ Process ที่มีปัญหา
 ```bash
-# ดูข้อมูลทั้งหมดของ Container
-docker inspect app_backend
+# ค้นหา Process ID (PID) ของโปรแกรม
+ps aux | grep node
+pgrep -fl python
 
-# ดึงเฉพาะ IP Address ของ Container
-docker inspect -f ''{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'' app_backend
+# ปิด Process อย่างสุภาพ (SIGTERM - รหัส 15 ให้โปรแกรมเคลียร์งานก่อนปิด)
+kill 12345
 
-# ตรวจสอบสถานะ Healthcheck
-docker inspect -f ''{{json .State.Health.Status}}'' app_backend
+# บังคับปิดทันทีเมื่อ Process ค้างไม่ตอบสนอง (SIGKILL - รหัส 9)
+kill -9 12345
 ```
 
----
-
-## 5. ตรวจสอบการใช้ทรัพยากรด้วย `docker stats`
-
-```bash
-# แสดง CPU %, Memory %, Network I/O ของทุก Container แบบสดๆ
-docker stats
-```
-- หากพบคอลัมน์ `MEM USAGE / LIMIT` ใกล้ถึง 100% บ่งชี้ว่า Container เสี่ยงต่อการโดนระบบสั่งฆ่าเนื่องจากหน่วยความจำเต็ม (OOMKilled)
-
-> ⚠️ **ข้อควรระวัง (Warning)**:
-> หลีกเลี่ยงการแก้ไขไฟล์โค้ดหรือคอนฟิกภายใน Container โดยตรงด้วย `docker exec` เพราะ Container ถูกออกแบบให้เป็น **Stateless (Ephemeral)** หาก Container ถูก Restart ข้อมูลที่แก้ไขจะสูญหายทันที
-', 8, 'beginner', 1)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'docker'), 'docker-troubleshooting-exit-codes', 'ถอดรหัส Exit Codes และการแก้ปัญหา Container ดับ (OOMKilled 137)', 'เข้าใจความหมายของ Exit Code 0, 1, 137 (OOMKilled), 143, วิธีตรวจสอบคำสั่ง dmesg และแนวทางแก้ปัญหา CrashLoop', '
-# ถอดรหัส Exit Codes และการแก้ปัญหา Container ดับ (OOMKilled 137)
-
-เมื่อตรวจพบว่า Container หยุดทำงานและขึ้นสถานะ `Exited (...)` รหัสตัวเลขที่อยู่ในวงเล็บคือ **Exit Code** ที่ระบบปฏิบัติการหรือโปรแกรมส่งออกมาก่อนดับลง การเข้าใจตัวเลขเหล่านี้จะช่วยบอกสาเหตุของปัญหาได้ทันทีโดยไม่ต้องคาดเดา
-
----
-
-## 1. ตาราง Exit Codes ยอดฮิตใน Docker
-
-| Exit Code | สัญญาณ (Signal) | ความหมาย | สาเหตุที่พบบ่อยในงาน Support |
-|---|---|---|---|
-| **0** | - | จบการทำงานปกติ (Success) | คำสั่งหลักทำงานเสร็จสิ้นสมบูรณ์ (เช่น Batch Script หรือ Database Migration ทำงานเสร็จ) |
-| **1** | SIGHUP / Error | ข้อผิดพลาดในระดับ Application | โค้ดมี Uncaught Exception, Syntax Error, หรือขาด Environment Variable ที่จำเป็น |
-| **137** | **SIGKILL (128 + 9)** | **ถูกระบบสั่งฆ่าทันที** | **OOMKilled (Out of Memory)**: คอนเทนเนอร์ใช้ RAM เกินโควตาที่กำหนด หรือโดน `docker kill` |
-| **139** | SIGSEGV (128 + 11) | Segmentation Fault | โปรแกรมพยายามเข้าถึงหน่วยความจำที่ไม่อนุญาต (มักพบบนภาษา C/C++ หรือ Binary พัง) |
-| **143** | **SIGTERM (128 + 15)** | **หยุดการทำงานอย่างสุภาพ** | ได้รับคำสั่งสั่งปิดปกติ เช่น มีคนสั่ง `docker stop` หรือระบบทำการ Deploy เวอร์ชันใหม่ |
-
----
-
-## 2. เจาะลึกวิกฤต Exit Code 137: OOMKilled (Out of Memory)
-
-เมื่อรัน `docker ps -a` แล้วพบ:
-```
-CONTAINER ID   IMAGE      STATUS
-a1b2c3d4e5f6   my-app     Exited (137) 3 minutes ago
-```
-
-### ขั้นตอนยืนยันว่าโดน OOMKilled จริงหรือไม่:
-
-#### วิธีที่ 1: ตรวจสอบผ่าน `docker inspect`
-```bash
-docker inspect my-app --format ''OOMKilled: {{.State.OOMKilled}}, ExitCode: {{.State.ExitCode}}''
-# ผลลัพธ์: OOMKilled: true, ExitCode: 137
-```
-- หาก `OOMKilled: true` แปลว่าคอนเทนเนอร์ถูก Linux Kernel OOM Killer บังคับปิดเนื่องจากใช้ RAM เกินขีดจำกัด (`--memory`) ที่ตั้งไว้
-
-#### วิธีที่ 2: ตรวจสอบ Kernel Message ด้วย `dmesg`
-```bash
-sudo dmesg -T | grep -i -E ''oom[-_]killer|out of memory''
-# ผลลัพธ์: [Wed Nov 4 10:15:30 2026] Out of memory: Kill process 12450 (node) score 950 or sacrifice child
-```
-
----
-
-## 3. ปัญหา Container Restart วนลูป (Crash Loop)
-
-หากสถานะขึ้นว่า `Restarting (1) 10 seconds ago` สาเหตุหลักมักเกิดจาก:
-1. **ขาด Environment Variable**: เช่น ไม่ได้ใส่ค่า `DATABASE_URL` หรือ `SECRET_KEY` ทำให้โปรแกรม Crash ทันทีตอน Start
-2. **การพึ่งพาเซอร์วิสอื่น (Race Condition)**: แอปพยายามเชื่อมต่อ Database ทันทีที่สตาร์ท แต่ Database Container ยังบูตไม่เสร็จ
-3. **พอร์ตชนกันบน Host**: พอร์ตที่พยายามผูกถูกแอปพลิเคชันอื่นใช้งานอยู่แล้ว
-
-> ⚠️ **คำแนะนำการแก้ไข (Remediation)**:
-> 1. ตรวจสอบ Log ก่อน Container ดับด้วย `docker logs <container> --tail 50`
-> 2. หากเกิด OOMKilled ให้ปรึกษาทีม Dev เพื่อเพิ่ม Memory Limit หรือตรวจหา Memory Leak ในโค้ด
-', 8, 'intermediate', 2)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('docker:01-container-basics:q01', (SELECT id FROM topics WHERE slug = 'docker'), (SELECT id FROM lessons WHERE slug = 'docker-container-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'docker')), 'หากรันคำสั่ง docker ps แล้วไม่พบ Container ของฐานข้อมูล แต่เมื่อรัน docker ps -a กลับพบว่าสถานะคือ ''Exited (1) 2 minutes ago'' คุณควรทำขั้นตอนใดต่อไปเป็นอันดับแรก?', 'ระบบแจ้งเตือนว่าฐานข้อมูลดับลงและไม่สามารถเข้าใช้งานได้', 'easy', 'multiple_choice', 'เมื่อ Container อยู่ในสถานะ Exited บ่งบอกว่า Container ดับลง ขั้นตอนแรกที่ถูกต้องคือการดู Log ด้วย docker logs <container_name> เพื่อหาสาเหตุของ Error หรือ Panic ที่ทำให้โปรเซสดับ', ARRAY['docker', 'logs', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'docker:01-container-basics:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'docker:01-container-basics:q01'), 'รันคำสั่ง docker logs <container_name> เพื่อดูข้อความ Error สาเหตุที่ Container ดับ', TRUE, 'ถูกต้อง docker logs จะแสดง stdout/stderr ของโปรเซสก่อนที่จะดับลง', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'docker:01-container-basics:q01'), 'ลบ Docker Image ทิ้งแล้วดาวน์โหลดใหม่ทันที', FALSE, 'การลบ Image โดยไม่ดู Log จะทำให้ไม่ทราบสาเหตุของปัญหา', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'docker:01-container-basics:q01'), 'รัน docker exec -it <container_name> bash', FALSE, 'docker exec ใช้ได้กับ Container ที่กำลังรันอยู่เท่านั้น ไม่สามารถ exec เข้าตัวที่ Exited ได้', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'docker:01-container-basics:q01'), 'รีสตาร์ทเครื่อง Physical Host ทันที', FALSE, 'การรีสตาร์ทเครื่องแม่ข่ายเป็นการกระทำที่เกินกว่าเหตุและกระทบระบบอื่น', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('docker:01-container-basics:q02', (SELECT id FROM topics WHERE slug = 'docker'), (SELECT id FROM lessons WHERE slug = 'docker-container-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'docker')), 'คำสั่งใดใช้เปิด Interactive Shell เพื่อเข้าไปตรวจสอบไฟล์คอนฟิกและสภาพแวดล้อมภายใน Container ชื่อ api_gateway ที่กำลังรันอยู่?', 'คุณต้องการเข้าไปทดสอบรันคำสั่ง curl ภายใน Container ไปยัง Backend', 'easy', 'multiple_choice', 'docker exec -it <container_name> <command> โดย -i (interactive) และ -t (allocate pseudo-TTY) ร่วมกับคำสั่ง shell เช่น sh หรือ bash คือวิธีมาตรฐานในการเข้าไปใน Container', ARRAY['docker', 'exec', 'cli']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'docker:01-container-basics:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'docker:01-container-basics:q02'), 'docker exec -it api_gateway sh', TRUE, 'ถูกต้อง คำสั่งนี้จะเปิด Terminal shell เข้าไปใน Container ที่กำลังทำงานอยู่', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'docker:01-container-basics:q02'), 'docker run -it api_gateway', FALSE, 'docker run จะเป็นการสร้าง Container ตัวใหม่ขึ้นมา ไม่ใช่เข้าไปในตัวเดิม', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'docker:01-container-basics:q02'), 'docker ssh api_gateway', FALSE, 'ไม่มีคำสั่งย่อย docker ssh ใน Docker CLI', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'docker:01-container-basics:q02'), 'docker attach api_gateway', FALSE, 'docker attach จะผูก stdout/stderr ของโปรเซสหลัก ซึ่งหากกด Ctrl+C อาจทำให้ Container ดับไปด้วย', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('docker:02-troubleshooting-exit-codes:q01', (SELECT id FROM topics WHERE slug = 'docker'), (SELECT id FROM lessons WHERE slug = 'docker-troubleshooting-exit-codes' AND topic_id = (SELECT id FROM topics WHERE slug = 'docker')), 'Container ตัวหนึ่งดับลงโดยแสดงสถานะ ''Exited (137)'' และเมื่อ inspect ดูพบว่า OOMKilled เป็น true ข้อใดคือสาเหตุที่แท้จริง?', 'บริการประมวลผลไฟล์ภาพขนาดใหญ่ดับลงกะทันหันในขณะที่มีผู้ใช้งานอัปโหลดไฟล์เข้ามาพร้อมกันเป็นจำนวนมาก', 'medium', 'multiple_choice', 'Exit Code 137 เท่ากับ 128 + 9 (SIGKILL) ซึ่งเกิดขึ้นเมื่อคอนเทนเนอร์ใช้งานหน่วยความจำ RAM เกินกว่าขีดจำกัด (Memory Limit) ที่กำหนดไว้ ทำให้ถูก Linux Kernel OOM (Out Of Memory) Killer ส่งสัญญาณสั่งฆ่าทันที', ARRAY['docker', 'exit-codes', 'oomkilled', 'memory']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'docker:02-troubleshooting-exit-codes:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'docker:02-troubleshooting-exit-codes:q01'), 'คอนเทนเนอร์ใช้หน่วยความจำ RAM เกินขีดจำกัดที่ตั้งไว้ จนถูก Linux Kernel OOM Killer สั่งยุติการทำงานทันที', TRUE, 'ถูกต้อง นี่คือนิยามและสาเหตุของ Exit code 137 OOMKilled', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'docker:02-troubleshooting-exit-codes:q01'), 'คอนเทนเนอร์ทำงานเสร็จสิ้นสมบูรณ์ตามปกติ', FALSE, 'ทำงานเสร็จตามปกติคือ Exit Code 0', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'docker:02-troubleshooting-exit-codes:q01'), 'มีคนสั่งลบไดเรกทอรี root ของคอนเทนเนอร์', FALSE, 'ไม่ใช่อาการของ OOMKilled', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'docker:02-troubleshooting-exit-codes:q01'), 'พอร์ตเครือข่ายมีคนใช้งานซ้ำซ้อน', FALSE, 'พอร์ตชนกันจะเกิด Exit Code 1 ตอนเริ่มต้น ไม่ใช่ 137 ตอนกำลังรันงานหนัก', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('docker:02-troubleshooting-exit-codes:q02', (SELECT id FROM topics WHERE slug = 'docker'), (SELECT id FROM lessons WHERE slug = 'docker-troubleshooting-exit-codes' AND topic_id = (SELECT id FROM topics WHERE slug = 'docker')), 'Exit Code ใดใน Docker ที่บ่งบอกว่า Container ได้รับคำสั่งสั่งปิดการทำงานอย่างสุภาพ (Graceful Shutdown ด้วย SIGTERM)?', 'คำถามสัมภาษณ์งานตำแหน่ง DevOps / Support Engineer', 'easy', 'multiple_choice', 'Exit Code 143 คำนวณมาจาก 128 + 15 (SIGTERM) ซึ่งเป็นสัญญาณที่ส่งเมื่อมีการสั่ง docker stop หรือระบบ Orchestrator สั่งยุติเพื่อทำการ Deploy เวอร์ชันใหม่', ARRAY['docker', 'exit-codes', 'sigterm']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'docker:02-troubleshooting-exit-codes:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'docker:02-troubleshooting-exit-codes:q02'), 'Exit Code 143', TRUE, 'ถูกต้อง 128 + 15 (SIGTERM) = 143', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'docker:02-troubleshooting-exit-codes:q02'), 'Exit Code 0', FALSE, '0 คือโปรเซสทำงานจบด้วยตัวมันเองสำเร็จ', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'docker:02-troubleshooting-exit-codes:q02'), 'Exit Code 1', FALSE, '1 คือ Application Error ทั่วไป', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'docker:02-troubleshooting-exit-codes:q02'), 'Exit Code 255', FALSE, '255 มักเกิดจากข้อผิดพลาดร้ายแรงของ Entrypoint หรือ Docker Engine', 4);
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('docker:01-container-basics:fc01', (SELECT id FROM topics WHERE slug = 'docker'), (SELECT id FROM lessons WHERE slug = 'docker-container-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'docker')), 'docker ps กับ docker ps -a ต่างกันอย่างไร?', 'docker ps: แสดงเฉพาะ Container ที่กำลังรันอยู่ (Running)
-docker ps -a: แสดง Container ทั้งหมด รวมทั้งตัวที่หยุดทำงานหรือแครช (Exited/Stopped)', 'Running only vs All containers', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('docker:01-container-basics:fc02', (SELECT id FROM topics WHERE slug = 'docker'), (SELECT id FROM lessons WHERE slug = 'docker-container-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'docker')), 'คำสั่งใดใช้ติดตาม Log แบบ Real-time คล้ายคำสั่ง tail -f บน Linux?', 'docker logs -f <container_name>', 'docker logs -f', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('docker:01-container-basics:fc03', (SELECT id FROM topics WHERE slug = 'docker'), (SELECT id FROM lessons WHERE slug = 'docker-container-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'docker')), 'ทำไมจึงไม่ควรเข้าไปแก้ไขไฟล์โค้ดถาวรด้วย docker exec?', 'เพราะ Container ถูกออกแบบให้เป็น Stateless (Ephemeral) หาก Container ถูก Restart หรือสร้างใหม่ ข้อมูลและไฟล์ที่แก้ไขไว้จะสูญหายทันที', 'Stateless / Ephemeral lifecycle', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('docker:01-container-basics:fc04', (SELECT id FROM topics WHERE slug = 'docker'), (SELECT id FROM lessons WHERE slug = 'docker-container-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'docker')), 'คำสั่ง docker stats มีประโยชน์อย่างไรสำหรับสาย Support?', 'แสดงข้อมูลการใช้ทรัพยากร CPU, RAM, Network I/O ของแต่ละ Container แบบ Real-time ทำให้รู้ได้ทันทีว่า Container ไหนกำลังดึงเครื่องพัง', 'Real-time CPU/RAM resource monitor', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('docker:02-troubleshooting-exit-codes:fc01', (SELECT id FROM topics WHERE slug = 'docker'), (SELECT id FROM lessons WHERE slug = 'docker-troubleshooting-exit-codes' AND topic_id = (SELECT id FROM topics WHERE slug = 'docker')), 'Exit Code 137 ใน Docker มีความหมายว่าอย่างไร?', 'คอนเทนเนอร์ถูกบังคับปิดด้วย SIGKILL (128 + 9) สาเหตุยอดนิยมคือ OOMKilled (Out of Memory - ใช้ RAM เกิน Limit)', 'SIGKILL / OOMKilled (Out of Memory)', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('docker:02-troubleshooting-exit-codes:fc02', (SELECT id FROM topics WHERE slug = 'docker'), (SELECT id FROM lessons WHERE slug = 'docker-troubleshooting-exit-codes' AND topic_id = (SELECT id FROM topics WHERE slug = 'docker')), 'Exit Code 143 ใน Docker มีความหมายว่าอย่างไร?', 'คอนเทนเนอร์หยุดทำงานอย่างสุภาพด้วย SIGTERM (128 + 15) เช่น ได้รับคำสั่ง docker stop หรือระบบกำลัง Deploy ใหม่', 'Graceful shutdown via SIGTERM', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('docker:02-troubleshooting-exit-codes:fc03', (SELECT id FROM topics WHERE slug = 'docker'), (SELECT id FROM lessons WHERE slug = 'docker-troubleshooting-exit-codes' AND topic_id = (SELECT id FROM topics WHERE slug = 'docker')), 'คำสั่งใดใช้ตรวจสอบว่าคอนเทนเนอร์โดน OOMKilled หรือไม่แบบรวดเร็ว?', 'docker inspect <container> --format ''{{.State.OOMKilled}}'' หรือดูใน Kernel Log ด้วยคำสั่ง dmesg -T | grep -i oom', 'docker inspect .State.OOMKilled', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
--- --------------------------------------------------------------------
--- TOPIC: Linux Administration (linux)
--- --------------------------------------------------------------------
-INSERT INTO topics (slug, title, description, icon, color, display_order)
-VALUES ('linux', 'Linux Administration', 'คำสั่งพื้นฐาน, การจัดการสิทธิ์ไฟล์, Process, Service systemctl และการวิเคราะห์ Log', 'Terminal', 'from-amber-500 to-orange-600', 1)
-ON CONFLICT (slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  description = EXCLUDED.description,
-  icon = EXCLUDED.icon,
-  color = EXCLUDED.color,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'linux'), 'linux-permissions', 'การจัดการสิทธิ์และ Permission ไฟล์ (chmod, chown, umask)', 'เจาะลึกระบบสิทธิ์ rwx บน Linux การคำนวณเลข Octal และกรณีศึกษาที่พบบ่อยในงาน Support', '
+> **Support Tip (กรณีศึกษา Disk Full แต่ลบไฟล์แล้วพื้นที่ไม่คืน)**:
+หากลบไฟล์ Log ขนาด 50GB ไปแล้วแต่ `df -h` ยังฟ้องว่าเต็ม 100% มักเกิดจาก **โปรแกรมยังคงเปิดไฟล์นั้นค้างอยู่ (Held open)** ให้รัน `lsof | grep deleted` เพื่อหาว่า Process ไหนถือไฟล์อยู่ แล้วสั่ง reload หรือ restart Service นั้น', 8, 'intermediate', 3, true, '2026-11-03 09:22:14.247234+00', '2026-11-03 09:22:14.247234+00');
+INSERT INTO public.lessons VALUES ('b1a10001-0000-0000-0000-000000000001', 1, 'linux-permissions', 'การจัดการสิทธิ์และ Permission ไฟล์ (chmod, chown, umask)', 'เจาะลึกระบบสิทธิ์ rwx บน Linux การคำนวณเลข Octal และกรณีศึกษาที่พบบ่อยในงาน Support', '
 # การจัดการสิทธิ์ไฟล์และโฟลเดอร์บน Linux
 
 ในฐานะสาย Support ปัญหา **Permission Denied** คือหนึ่งในเคสที่พบบ่อยที่สุด การเข้าใจโครงสร้างสิทธิ์ของ Linux อย่างถ่องแท้จะช่วยให้แก้ปัญหาได้อย่างรวดเร็วและปลอดภัย
@@ -1737,18 +1302,8 @@ VALUES ((SELECT id FROM topics WHERE slug = 'linux'), 'linux-permissions', 'ก�
 3. **ตรวจสอบสิทธิ์**: `namei -l /path/to/file` (ตรวจสอบสิทธิ์ทีละโฟลเดอร์ตั้งแต่ root จนถึงไฟล์ปลายทาง มีประโยชน์มากเมื่อเจอปัญหาสิทธิ์เข้าถึงโฟลเดอร์แม่)
 
 > **Support Tip**: สิทธิ์ `x` (Execute) บนโฟลเดอร์หมายถึง "สิทธิ์ในการ cd เข้าไปข้างใน" หากโฟลเดอร์มีแค่ `r` แต่อยากเปิดอ่านไฟล์ข้างใน ระบบจะแจ้ง *Permission Denied* ทันที
-', 7, 'beginner', 1)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'linux'), 'linux-basics', 'พื้นฐาน Linux และการใช้งาน Terminal (pwd, ls, cd, cp, mv, rm, cat, less)', 'ปูพื้นฐานการใช้งาน Shell เส้นทางไฟล์แบบ Absolute/Relative คำสั่งจัดการไฟล์เบื้องต้น และข้อควรระวังหน้างานสำหรับ Support Tier 1', '
+', 7, 'beginner', 1, true, '2026-11-03 09:22:14.247234+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('2f157328-48ee-496e-bcef-7afd1b6a8d1f', 1, 'linux-basics', 'พื้นฐาน Linux และการใช้งาน Terminal (pwd, ls, cd, cp, mv, rm, cat, less)', 'ปูพื้นฐานการใช้งาน Shell เส้นทางไฟล์แบบ Absolute/Relative คำสั่งจัดการไฟล์เบื้องต้น และข้อควรระวังหน้างานสำหรับ Support Tier 1', '
 # พื้นฐาน Linux และการใช้งาน Terminal
 
 ในการทำงานของทีม **Application Support และ NOC Tier 1** การรีโมตเข้าไปตรวจสอบเครื่องเซิร์ฟเวอร์ผ่านหน้าจอข้อความ (Command Line Interface) เป็นกิจวัตรประจำวัน ความแม่นยำในการระบุตำแหน่งโฟลเดอร์ การเปิดอ่านไฟล์อย่างปลอดภัย และการหลีกเลี่ยงคำสั่งที่อาจกระทบไฟล์ระบบ จะช่วยให้การตรวจสอบปัญหาเบื้องต้นรวดเร็วและไม่สร้างผลกระทบซ้ำซ้อน
@@ -1842,18 +1397,8 @@ $ tail -n 3 error.log
 ## อ้างอิง
 - คู่มือในระบบ: `man bash`, `man ls`, `man cp`, `man rm`, `man less`, `man tail`
 - GNU Coreutils Manual: https://www.gnu.org/software/coreutils/manual/
-', 8, 'beginner', 2)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'linux'), 'linux-file-system', 'โครงสร้างไดเรกทอรีและการจัดการไฟล์ (find, stat, file, ln -s, du)', 'ทำความเข้าใจโครงสร้างไดเรกทอรีมาตรฐานบน Linux ไฟล์คอนฟิกสำคัญที่งาน Support ต้องเปิดอ่าน และการค้นหาไฟล์ด้วย find', '
+', 8, 'beginner', 2, true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('adeaa019-95a7-4877-8d5a-94c875441152', 1, 'linux-file-system', 'โครงสร้างไดเรกทอรีและการจัดการไฟล์ (find, stat, file, ln -s, du)', 'ทำความเข้าใจโครงสร้างไดเรกทอรีมาตรฐานบน Linux ไฟล์คอนฟิกสำคัญที่งาน Support ต้องเปิดอ่าน และการค้นหาไฟล์ด้วย find', '
 # โครงสร้างไดเรกทอรีและการจัดการไฟล์บน Linux
 
 เมื่อเกิดเหตุแจ้งเตือน (Alert) เช่น พื้นที่ดิสก์เต็ม หรือแอปพลิเคชันอ่านค่าคอนฟิกผิดพลาด เจ้าหน้าที่ **Application Support / NOC Tier 1** ต้องทราบว่าไฟล์คอนฟิก ไฟล์ Log และตัวโปรแกรมถูกจัดเก็บไว้ที่ไดเรกทอรีใด รวมถึงใช้คำสั่งค้นหาไฟล์ที่มีขนาดใหญ่หรือเพิ่งถูกแก้ไขก่อนเกิดปัญหาได้อย่างแม่นยำ
@@ -1953,18 +1498,150 @@ lrwxrwxrwx 1 deploy deploy 24 Nov  3 13:00 /opt/app/current -> /opt/app/releases
 ## อ้างอิง
 - คู่มือในระบบ: `man hier`, `man find`, `man stat`, `man file`, `man ln`, `man du`
 - Filesystem Hierarchy Standard (FHS) 3.0 Specification
-', 9, 'beginner', 3)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
+', 9, 'beginner', 3, true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('cf0d4598-1c64-4a7f-b8c9-d6a18307a0f9', 5, 'docker-container-basics', 'คำสั่ง Docker พื้นฐานและการจัดการ Container ในงาน Support', 'จัดการ Container ประจำวันด้วย docker ps, logs, exec, inspect, stats, การทำความเข้าใจ Port Mapping และวิธี Jump เข้าไปตรวจสอบ', '
+# คำสั่ง Docker พื้นฐานและการจัดการ Container ในงาน Support
 
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'linux'), 'linux-process-service', 'การจัดการ Process และ systemd Service (ps, top, kill, systemctl, journalctl)', 'วิธีตรวจสอบสถานะโปรเซสและบริการ systemd การแยกแยะ SIGTERM กับ SIGKILL และขั้นตอนวิเคราะห์เมื่อ Service ล่ม (failed)', '
+ในระบบ Cloud Native ปัจจุบัน แอปพลิเคชันเกือบทั้งหมดถูกบรรจุอยู่ใน **Docker Container** เมื่อเกิดปัญหา แอปดับ หรือส่งข้อมูลไม่ผ่าน ทีม Support จำเป็นต้องใช้คำสั่ง Docker ตรวจสอบสถานะและดู Log ได้อย่างคล่องแคล่ว
+
+---
+
+## 1. คำสั่งตรวจสอบสถานะ Container
+
+### 1) ตรวจสอบรายการ Container ด้วย `docker ps`
+```bash
+# แสดงเฉพาะ Container ที่กำลังรันอยู่ (Running)
+docker ps
+
+# แสดง Container ทั้งหมด รวมทั้งตัวที่หยุดทำงาน (Exited / Crashed)
+docker ps -a
+```
+
+### สถานะที่ต้องจับตาในคอลัมน์ STATUS:
+- `Up 2 hours`: กำลังทำงานปกติ
+- `Up 3 hours (healthy)`: ทำงานปกติและ Healthcheck ผ่าน
+- `Restarting (1) 5 seconds ago`: **สัญญาณอันตราย!** Container กำลังติด Crash Loop (แอปพังแล้ว Docker พยายามสตาร์ทใหม่ซ้ำๆ)
+- `Exited (137) 10 minutes ago`: Container ดับลง โดยมี Exit Code กำกับ
+
+---
+
+## 2. การตรวจสอบ Log ด้วย `docker logs`
+
+เมื่อ Container ดับ หรือแอปพลิเคชันทำงานผิดปกติ ให้เปิดดู Standard Output (stdout/stderr):
+
+```bash
+# ดู Log 100 บรรทัดล่าสุด
+docker logs --tail 100 app_backend
+
+# ดู Log แบบ Real-time (Streaming) คล้าย tail -f
+docker logs -f --tail 50 app_backend
+
+# ดู Log พร้อมระบุ Timestamp
+docker logs -t --tail 50 app_backend
+```
+
+---
+
+## 3. การเข้าไปตรวจสอบภายใน Container ด้วย `docker exec`
+
+หากต้องการเข้าไปทดสอบ ping, curl หรือตรวจไฟล์คอนฟิกภายใน Container:
+
+```bash
+# เปิด Interactive Shell เข้าไปยัง Container
+docker exec -it app_backend sh
+
+# หาก Container มี bash ติดตั้งอยู่
+docker exec -it app_backend bash
+```
+- เมื่อเข้าไปแล้ว ให้ทดสอบเชื่อมต่อ Database หรือดู Environment Variables ด้วยคำสั่ง `env`
+- ออกจาก Container ด้วยการพิมพ์ `exit`
+
+---
+
+## 4. ตรวจสอบคอนฟิกเชิงลึกด้วย `docker inspect`
+
+คำสั่ง `docker inspect` คืนค่า JSON ละเอียดเกี่ยวกับ Container:
+
+```bash
+# ดูข้อมูลทั้งหมดของ Container
+docker inspect app_backend
+
+# ดึงเฉพาะ IP Address ของ Container
+docker inspect -f ''{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'' app_backend
+
+# ตรวจสอบสถานะ Healthcheck
+docker inspect -f ''{{json .State.Health.Status}}'' app_backend
+```
+
+---
+
+## 5. ตรวจสอบการใช้ทรัพยากรด้วย `docker stats`
+
+```bash
+# แสดง CPU %, Memory %, Network I/O ของทุก Container แบบสดๆ
+docker stats
+```
+- หากพบคอลัมน์ `MEM USAGE / LIMIT` ใกล้ถึง 100% บ่งชี้ว่า Container เสี่ยงต่อการโดนระบบสั่งฆ่าเนื่องจากหน่วยความจำเต็ม (OOMKilled)
+
+> ⚠️ **ข้อควรระวัง (Warning)**:
+> หลีกเลี่ยงการแก้ไขไฟล์โค้ดหรือคอนฟิกภายใน Container โดยตรงด้วย `docker exec` เพราะ Container ถูกออกแบบให้เป็น **Stateless (Ephemeral)** หาก Container ถูก Restart ข้อมูลที่แก้ไขจะสูญหายทันที
+', 8, 'beginner', 1, true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('13d2405e-0e29-4bf2-9f78-03f4f29d3aef', 5, 'docker-troubleshooting-exit-codes', 'ถอดรหัส Exit Codes และการแก้ปัญหา Container ดับ (OOMKilled 137)', 'เข้าใจความหมายของ Exit Code 0, 1, 137 (OOMKilled), 143, วิธีตรวจสอบคำสั่ง dmesg และแนวทางแก้ปัญหา CrashLoop', '
+# ถอดรหัส Exit Codes และการแก้ปัญหา Container ดับ (OOMKilled 137)
+
+เมื่อตรวจพบว่า Container หยุดทำงานและขึ้นสถานะ `Exited (...)` รหัสตัวเลขที่อยู่ในวงเล็บคือ **Exit Code** ที่ระบบปฏิบัติการหรือโปรแกรมส่งออกมาก่อนดับลง การเข้าใจตัวเลขเหล่านี้จะช่วยบอกสาเหตุของปัญหาได้ทันทีโดยไม่ต้องคาดเดา
+
+---
+
+## 1. ตาราง Exit Codes ยอดฮิตใน Docker
+
+| Exit Code | สัญญาณ (Signal) | ความหมาย | สาเหตุที่พบบ่อยในงาน Support |
+|---|---|---|---|
+| **0** | - | จบการทำงานปกติ (Success) | คำสั่งหลักทำงานเสร็จสิ้นสมบูรณ์ (เช่น Batch Script หรือ Database Migration ทำงานเสร็จ) |
+| **1** | SIGHUP / Error | ข้อผิดพลาดในระดับ Application | โค้ดมี Uncaught Exception, Syntax Error, หรือขาด Environment Variable ที่จำเป็น |
+| **137** | **SIGKILL (128 + 9)** | **ถูกระบบสั่งฆ่าทันที** | **OOMKilled (Out of Memory)**: คอนเทนเนอร์ใช้ RAM เกินโควตาที่กำหนด หรือโดน `docker kill` |
+| **139** | SIGSEGV (128 + 11) | Segmentation Fault | โปรแกรมพยายามเข้าถึงหน่วยความจำที่ไม่อนุญาต (มักพบบนภาษา C/C++ หรือ Binary พัง) |
+| **143** | **SIGTERM (128 + 15)** | **หยุดการทำงานอย่างสุภาพ** | ได้รับคำสั่งสั่งปิดปกติ เช่น มีคนสั่ง `docker stop` หรือระบบทำการ Deploy เวอร์ชันใหม่ |
+
+---
+
+## 2. เจาะลึกวิกฤต Exit Code 137: OOMKilled (Out of Memory)
+
+เมื่อรัน `docker ps -a` แล้วพบ:
+```
+CONTAINER ID   IMAGE      STATUS
+a1b2c3d4e5f6   my-app     Exited (137) 3 minutes ago
+```
+
+### ขั้นตอนยืนยันว่าโดน OOMKilled จริงหรือไม่:
+
+#### วิธีที่ 1: ตรวจสอบผ่าน `docker inspect`
+```bash
+docker inspect my-app --format ''OOMKilled: {{.State.OOMKilled}}, ExitCode: {{.State.ExitCode}}''
+# ผลลัพธ์: OOMKilled: true, ExitCode: 137
+```
+- หาก `OOMKilled: true` แปลว่าคอนเทนเนอร์ถูก Linux Kernel OOM Killer บังคับปิดเนื่องจากใช้ RAM เกินขีดจำกัด (`--memory`) ที่ตั้งไว้
+
+#### วิธีที่ 2: ตรวจสอบ Kernel Message ด้วย `dmesg`
+```bash
+sudo dmesg -T | grep -i -E ''oom[-_]killer|out of memory''
+# ผลลัพธ์: [Wed Nov 4 10:15:30 2026] Out of memory: Kill process 12450 (node) score 950 or sacrifice child
+```
+
+---
+
+## 3. ปัญหา Container Restart วนลูป (Crash Loop)
+
+หากสถานะขึ้นว่า `Restarting (1) 10 seconds ago` สาเหตุหลักมักเกิดจาก:
+1. **ขาด Environment Variable**: เช่น ไม่ได้ใส่ค่า `DATABASE_URL` หรือ `SECRET_KEY` ทำให้โปรแกรม Crash ทันทีตอน Start
+2. **การพึ่งพาเซอร์วิสอื่น (Race Condition)**: แอปพยายามเชื่อมต่อ Database ทันทีที่สตาร์ท แต่ Database Container ยังบูตไม่เสร็จ
+3. **พอร์ตชนกันบน Host**: พอร์ตที่พยายามผูกถูกแอปพลิเคชันอื่นใช้งานอยู่แล้ว
+
+> ⚠️ **คำแนะนำการแก้ไข (Remediation)**:
+> 1. ตรวจสอบ Log ก่อน Container ดับด้วย `docker logs <container> --tail 50`
+> 2. หากเกิด OOMKilled ให้ปรึกษาทีม Dev เพื่อเพิ่ม Memory Limit หรือตรวจหา Memory Leak ในโค้ด
+', 8, 'intermediate', 2, true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('f18ea418-7710-44cb-b1b9-4a5724a2a92b', 1, 'linux-process-service', 'การจัดการ Process และ systemd Service (ps, top, kill, systemctl, journalctl)', 'วิธีตรวจสอบสถานะโปรเซสและบริการ systemd การแยกแยะ SIGTERM กับ SIGKILL และขั้นตอนวิเคราะห์เมื่อ Service ล่ม (failed)', '
 # การจัดการ Process และ systemd Service
 
 เมื่อเกิดเหตุการณ์ **"เว็บเข้าไม่ได้"** หรือ **"ระบบประมวลผลค้าง"** สิ่งแรกที่ทีม **Application Support และ NOC Tier 1** ต้องตรวจสอบคือ โปรเซสของแอปพลิเคชันยังทำงานอยู่หรือไม่ และบริการ (Service) อยู่ในสถานะปกติหรือขึ้น `failed` การอ่านสถานะของ `systemd` และการจัดการโปรเซสอย่างถูกวิธีจะช่วยให้แยกแยะสาเหตุและกู้คืนบริการตามคู่มือปฏิบัติงาน (Runbook) ได้อย่างปลอดภัย
@@ -2053,18 +1730,8 @@ $ journalctl -u order-api.service --since "15 minutes ago" -n 50 --no-pager
 ## อ้างอิง
 - คู่มือในระบบ: `man ps`, `man top`, `man kill`, `man signal`, `man systemctl`, `man journalctl`
 - เอกสารทางการ systemd: https://www.freedesktop.org/wiki/Software/systemd/
-', 10, 'intermediate', 4)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'linux'), 'linux-text-tools', 'การค้นหาและกรองข้อความจากไฟล์ Log (grep, pipe, awk, sort, uniq, wc)', 'เทคนิคการใช้ Pipe และ Redirection ร่วมกับ grep, awk, sort, uniq เพื่อค้นหา Error และสรุปสถิติจากไฟล์ Log หน้างาน', '
+', 10, 'intermediate', 4, true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 1, 'linux-text-tools', 'การค้นหาและกรองข้อความจากไฟล์ Log (grep, pipe, awk, sort, uniq, wc)', 'เทคนิคการใช้ Pipe และ Redirection ร่วมกับ grep, awk, sort, uniq เพื่อค้นหา Error และสรุปสถิติจากไฟล์ Log หน้างาน', '
 # การค้นหาและกรองข้อความจากไฟล์ Log
 
 ไฟล์ Log บนเซิร์ฟเวอร์ Production มักมีความยาวหลายแสนบรรทัด การเปิดอ่านด้วยตาเปล่าทีละบรรทัดจึงไม่สามารถทำได้ทันเวลาเมื่อเกิด Incident เจ้าหน้าที่ **Application Support และ NOC Tier 1** จึงต้องใช้เครื่องมือกรองข้อความอย่าง `grep`, `awk`, `sort`, `uniq` และ `wc` เชื่อมต่อกันผ่านเครื่องหมาย **Pipe (`|`)** เพื่อสกัดเฉพาะบรรทัดที่เกิดปัญหา นับจำนวน Error หรือหา IP ที่ยิงเข้ามาผิดปกติภายในไม่กี่วินาที
@@ -2163,18 +1830,8 @@ $ grep -n -C 2 "NullPointerException" /var/log/app/backend.log
 ## อ้างอิง
 - คู่มือในระบบ: `man grep`, `man awk`, `man sort`, `man uniq`, `man wc`, `man cut`, `man tee`
 - GNU Grep Manual: https://www.gnu.org/software/grep/manual/
-', 10, 'intermediate', 5)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'linux'), 'linux-log-reading', 'การอ่านและวิเคราะห์ System & Application Log (journalctl, dmesg, zgrep, logrotate)', 'ตำแหน่งไฟล์ Log มาตรฐานบน Ubuntu/Debian และ RHEL การค้นหา Log ตามช่วงเวลา การอ่านไฟล์ที่ถูก Rotate (.gz) และข้อควรระวังเรื่อง Timezone', '
+', 10, 'intermediate', 5, true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('b5b35ad3-068d-4e04-b07b-670f9697aea3', 1, 'linux-log-reading', 'การอ่านและวิเคราะห์ System & Application Log (journalctl, dmesg, zgrep, logrotate)', 'ตำแหน่งไฟล์ Log มาตรฐานบน Ubuntu/Debian และ RHEL การค้นหา Log ตามช่วงเวลา การอ่านไฟล์ที่ถูก Rotate (.gz) และข้อควรระวังเรื่อง Timezone', '
 # การอ่านและวิเคราะห์ System & Application Log
 
 หัวใจสำคัญที่สุดของงาน **Application Support และ NOC Tier 1** คือการเปลี่ยนอาการเสียที่ผู้ใช้แจ้ง (เช่น "ทำรายการไม่สำเร็จตอน 10:15 น.") ให้กลายเป็นหลักฐานทางเทคนิคจากไฟล์ Log เพื่อระบุสาเหตุเบื้องต้นและส่งต่อข้อมูลที่ครบถ้วนให้ทีม Tier 2 / นักพัฒนาได้อย่างตรงจุด
@@ -2266,18 +1923,8 @@ $ zgrep "ORD-2026-8812" /var/log/checkout/*.gz
 ## อ้างอิง
 - คู่มือในระบบ: `man journalctl`, `man dmesg`, `man zgrep`, `man zless`, `man logrotate`, `man timedatectl`
 - เอกสาร systemd journal: https://www.freedesktop.org/software/systemd/man/journalctl.html
-', 10, 'intermediate', 6)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'linux'), 'linux-disk-memory-cpu', 'การตรวจทรัพยากรเครื่อง Disk, Memory และ CPU (df, du, free, uptime, lsof, vmstat)', 'วิธีตรวจสอบดิสก์เต็ม Inode เต็ม พื้นที่ไม่คืนหลังลบไฟล์ การอ่านค่าหน่วยความจำ available และวิเคราะห์ Load Average เทียบกับจำนวน Core', '
+', 10, 'intermediate', 6, true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('5f86a586-91de-4a51-b749-fcf6d837849f', 1, 'linux-disk-memory-cpu', 'การตรวจทรัพยากรเครื่อง Disk, Memory และ CPU (df, du, free, uptime, lsof, vmstat)', 'วิธีตรวจสอบดิสก์เต็ม Inode เต็ม พื้นที่ไม่คืนหลังลบไฟล์ การอ่านค่าหน่วยความจำ available และวิเคราะห์ Load Average เทียบกับจำนวน Core', '
 # การตรวจทรัพยากรเครื่อง (Disk, Memory, CPU)
 
 เมื่อระบบ 모니터링 (Monitoring) แจ้งเตือนว่าเซิร์ฟเวอร์ทำงานช้า ดิสก์ใกล้เต็ม หรือหน่วยความจำสูง เจ้าหน้าที่ **Application Support และ NOC Tier 1** ต้องสามารถรันคำสั่งพื้นฐานเพื่อแยกแยะให้ได้ว่าคอขวดเกิดจาก **Disk**, **Memory** หรือ **CPU/I/O** และรวบรวมตัวเลขสำคัญส่งต่อให้ทีมที่รับผิดชอบโดยไม่ไปลบไฟล์ระบบโดยพลการ
@@ -2371,18 +2018,8 @@ $ uptime
 ## อ้างอิง
 - คู่มือในระบบ: `man df`, `man du`, `man free`, `man uptime`, `man nproc`, `man vmstat`, `man lsof`
 - Linux Kernel Documentation (procfs & memory): https://docs.kernel.org/filesystems/proc.html
-', 10, 'intermediate', 7)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'linux'), 'linux-remote-access', 'การเข้าถึงระยะไกลด้วย SSH, การโอนไฟล์ (scp, rsync) และ tmux พื้นฐาน', 'การใช้งาน SSH และ SSH Key สิทธิ์ของโฟลเดอร์ .ssh การโอนไฟล์ด้วย scp/rsync การใช้ tmux ป้องกันเซสชันหลุด และการแก้ปัญหาเชื่อมต่อไม่ได้', '
+', 10, 'intermediate', 7, true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('75b271d2-e3ff-464b-be92-18b9ea5a0d05', 1, 'linux-remote-access', 'การเข้าถึงระยะไกลด้วย SSH, การโอนไฟล์ (scp, rsync) และ tmux พื้นฐาน', 'การใช้งาน SSH และ SSH Key สิทธิ์ของโฟลเดอร์ .ssh การโอนไฟล์ด้วย scp/rsync การใช้ tmux ป้องกันเซสชันหลุด และการแก้ปัญหาเชื่อมต่อไม่ได้', '
 # การเข้าถึงระยะไกลด้วย SSH, การโอนไฟล์ และ tmux พื้นฐาน
 
 การทำงานของทีม **Application Support และ NOC Tier 1** ต้องเชื่อมต่อเข้าสู่เครื่องเซิร์ฟเวอร์ปลายทางผ่านโปรโตคอล **SSH (Secure Shell)** ตลอดจนดึงไฟล์ Log ออกมาวิเคราะห์หรือรักษาเซสชันการทำงานไม่ให้หลุดเมื่อเน็ตเวิร์กกระตุก นอกจากนี้ ปัญหา *"SSH เข้าเครื่องไม่ได้"* ยังเป็นหนึ่งใน Ticket ยอดฮิตที่ต้องแยกสาเหตุให้ได้ว่าเกิดจากเครือข่าย พอร์ต หรือสิทธิ์ของไฟล์กุญแจ
@@ -2469,18 +2106,455 @@ incident_20261103.log                         100%  412KB  18.5MB/s   00:00
 ## อ้างอิง
 - คู่มือในระบบ: `man ssh`, `man ssh-keygen`, `man scp`, `man rsync`, `man tmux`, `man sshd_config`
 - OpenSSH Manual Pages: https://www.openssh.com/manual.html
-', 10, 'intermediate', 8)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
+', 10, 'intermediate', 8, true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('d610df66-7525-44ca-9e83-02b4749afe01', 10, 'dc-cabling-and-fiber', 'ระบบสายสัญญาณ ไฟเบอร์ออปติก และ Transceiver (Cabling, Fiber & Optics)', 'ความแตกต่างของสาย Single-mode vs Multi-mode, หัวแปลงสัญญาณ SFP/QSFP (SR/LR), การสลับขั้วสายไฟเบอร์ Tx/Rx, รัศมีการโค้งงอ และการเข้าหัวสายแลนมาตรฐาน T568B', '
+# ระบบสายสัญญาณ ไฟเบอร์ออปติก และ Transceiver ใน Data Center
 
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'linux'), 'linux-cron-schedule', 'การตรวจสอบงานตั้งเวลาด้วย Cron และ Crontab (crontab -l, /etc/cron.d, Cron Log)', 'โครงสร้างเวลา 5 ฟิลด์ของ Crontab ความต่างของบริการ cron บน Ubuntu กับ RHEL และวิธีไล่ปัญหาเมื่อ Batch Job ไม่ทำงานตามเวลา', '
+ไม่ว่าคุณจะทำงานในบริษัท **Colocation** (เช่น Equinix, NTT, STT GDC) หรือดูแลตู้เซิร์ฟเวอร์ของบริษัท **Hosting** ทักษะพื้นฐานที่ถูกใช้งานทุกวันและถูกถามในการสัมภาษณ์เสมอคือเรื่อง **สายสัญญาณ (Cabling)** ทั้งฝั่งใยแก้วนำแสง (Fiber Optic) และสายทองแดง (Copper UTP)
+
+---
+
+## 1. สายไฟเบอร์ออปติก: Single-Mode (SMF) vs Multi-Mode (MMF)
+
+สายไฟเบอร์ออปติกส่งข้อมูลด้วยแสงผ่านแกนกลางแก้ว (Core) แบ่งออกเป็น 2 ตระกูลหลักที่ช่าง Data Center ต้องแยกให้ออกทันทีจาก **สีของสาย (Jacket Color)** และรหัสมาตรฐาน:
+
+![เปรียบเทียบสายไฟเบอร์ Single-mode (OS2 สีเหลือง) กับ Multi-mode (OM3/OM4 สีฟ้า Aqua)](/images/datacenter/fiber-smf-vs-mmf.png)
+
+| คุณสมบัติ | Single-Mode Fiber (SMF) | Multi-Mode Fiber (MMF) |
+|---|---|---|
+| **รหัสมาตรฐาน** | **OS1 / OS2** | **OM1 / OM2 / OM3 / OM4 / OM5** |
+| **สีปลอกสายมาตรฐาน** | **สีเหลือง (Yellow)** | **สีฟ้าอมเขียว (Aqua)** สำหรับ OM3/OM4, **สีส้ม (Orange)** สำหรับ OM1/OM2, **สีเขียวตอง (Lime Green)** สำหรับ OM5 |
+| **ขนาดแกนกลาง (Core)** | เล็กมาก **9 µm** (ไมครอน) — แสงวิ่งเป็นเส้นตรงเส้นเดียว | ใหญ่กว่า **50 µm** (หรือ 62.5 µm ในรุ่นเก่า) — แสงสะท้อนหลายมุม |
+| **แหล่งกำเนิดแสง** | Laser (ความยาวคลื่น **1310 nm** หรือ **1550 nm**) | LED / VCSEL (ความยาวคลื่น **850 nm**) |
+| **ระยะทางใช้งาน** | **ระยะไกล** (ตั้งแต่ 2 กม., 10 กม. ไปจนถึง 40–80 กม. ระหว่างอาคารหรือข้ามศูนย์ข้อมูล) | **ระยะใกล้ภายในห้อง Data Hall** (ประมาณ 100–400 เมตร ขึ้นกับความเร็ว) |
+| **คู่หัว Transceiver** | คู่กับรหัส **LR** (Long Reach), **ER**, **ZR** | คู่กับรหัส **SR** (Short Reach) |
+
+> **Support Tip**: ห้ามนำสาย **Single-mode (สีเหลือง)** ไปเสียบเข้ากับหัวโมดูล **SR (850nm)** หรือเอาสาย **Multi-mode (สีฟ้า)** ไปเสียบโมดูล **LR (1310nm)** เพราะขนาดแกนแสงและความยาวคลื่นไม่ตรงกัน จะทำให้สัญญาณดรอปหรือลิงก์ไม่ขึ้น
+
+---
+
+## 2. ชนิดของหัว Transceiver (SFP / SFP+ / QSFP) และรหัส SR vs LR
+
+โมดูลแปลงสัญญาณแสงเป็นไฟฟ้าที่เสียบเข้าพอร์ตของ Switch หรือการ์ดเครือข่าย (NIC) มีชื่อเรียกตามขนาดและความเร็วดังนี้:
+
+![ชนิดของหัว Transceiver SFP, SFP+, QSFP28 และหัวสายไฟเบอร์แบบ LC Duplex](/images/datacenter/sfp-qsfp-transceivers.png)
+
+### มาตรฐานฟอร์มแฟกเตอร์และความเร็ว
+- **SFP (Small Form-factor Pluggable)**: ความเร็ว **1 Gbps**
+- **SFP+ (Enhanced SFP)**: ขนาดเท่า SFP เดิม แต่รองรับความเร็ว **10 Gbps** (พบเยอะที่สุดในเซิร์ฟเวอร์ทั่วไป)
+- **SFP28**: ขนาดเท่า SFP+ แต่รองรับความเร็ว **25 Gbps**
+- **QSFP+ (Quad SFP+)**: มี 4 ช่องสัญญาณรวมกัน รองรับความเร็ว **40 Gbps** ($4 \times 10\text{G}$)
+- **QSFP28**: มี 4 ช่องสัญญาณ รองรับความเร็ว **100 Gbps** ($4 \times 25\text{G}$)
+
+### รหัสระยะทางยอดนิยม
+- **SR (Short Reach)**: ใช้แสง `850 nm` คู่กับสาย **Multi-mode (OM3/OM4)** ระยะทางไม่เกิน 300–400 เมตร
+- **LR (Long Reach)**: ใช้แสง `1310 nm` คู่กับสาย **Single-mode (OS2)** ระยะทางสูงสุดประมาณ 10 กิโลเมตร
+- **DAC (Direct Attach Copper)**: สายทองแดงที่มีหัว SFP+/QSFP ติดตายตัวมาจากโรงงาน ใช้เสียบเชื่อมระหว่างเซิร์ฟเวอร์กับ Top-of-Rack (ToR) Switch ในตู้เดียวกัน (ระยะสั้น 1–5 เมตร ราคาประหยัดและกินไฟน้อย)
+
+---
+
+## 3. การสลับขั้วสายไฟเบอร์ (Rolling Fiber: Tx / Rx)
+
+สายไฟเบอร์แบบ Duplex (2 เส้นคู่กัน มีหัวเสียบแบบ **LC connector**) จะประกอบด้วย:
+- **Tx (Transmit)**: ขาส่งแสงออก (มักมีแสงสีแดงหรืออินฟราเรดพุ่งออกมา)
+- **Rx (Receive)**: ขารับแสงเข้า
+
+หลักการเชื่อมต่อที่ถูกต้องคือ **Tx ของฝั่ง A ต้องวิ่งไปเข้า Rx ของฝั่ง B** และ **Rx ของฝั่ง A ต้องรับมาจาก Tx ของฝั่ง B** (ไขว้กันแบบ Crossover)
+
+![แผนภาพการสลับขั้วสายไฟเบอร์ Tx เข้า Rx (Rolling Fiber)](/images/datacenter/fiber-tx-rx-roll.png)
+
+### อาการเมื่อเสียบสายผิดขั้ว (Tx ชน Tx / Rx ชน Rx)
+เมื่อเสียบสายไฟเบอร์ผ่าน Patch Panel หลายทอด แล้วพบว่า **ไฟสถานะพอร์ตบน Switch ไม่ติด (Link Down)** ทั้งที่โมดูลทั้งสองฝั่งทำงานปกติ:
+1. สาเหตุอันดับหนึ่งคือ **ขั้วสายไม่ได้ไขว้กัน (Polarity Mismatch)** คือ Tx วิ่งไปชน Tx
+2. **วิธีแก้ (Rolling the Fiber)**: ถอดหัวสาย LC ฝั่งหนึ่งออกมา แล้ว **แกะคลิปล็อกสลับตำแหน่งหัวสายคู่ซ้าย-ขวา (สลับขา A กับขา B)** จากนั้นเสียบกลับเข้าไปใหม่ หากไฟ Link กระพริบขึ้นมา แปลว่าแก้ถูกจุดทันที!
+
+> ⚠️ **คำเตือนความปลอดภัยทางสายตา**: ห้ามใช้ตาเปล่าส่องดูปลายสายไฟเบอร์ออปติกโดยตรงเด็ดขาด! แสงเลเซอร์ของโมดูล Single-mode (`1310nm`/`1550nm`) เป็นแสงอินฟราเรดที่ตาคนมองไม่เห็นแต่สามารถทำลายจอประสาทตาได้อย่างถาวร ให้ใช้ **Optical Power Meter** หรือใช้กล้องมือถือส่องตรวจแสงของหัว Multi-mode เท่านั้น
+
+---
+
+## 4. รัศมีการโค้งงอ (Bend Radius) และการทำความสะอาดหัวสาย
+
+1. **Bend Radius (รัศมีการโค้งงอต่ำสุด)**:
+   - แกนในของสายไฟเบอร์ทำจากแก้ว หากพับสายหักศอก รัดสายด้วยเคเบิลไทร์แน่นเกินไป หรือดึงสายตึงเกินรัศมีโค้งงอ (ปกติไม่ควรโค้งแคบกว่าวงกลมเส้นผ่านศูนย์กลาง 3–5 ซม.) แสงจะรั่วออกนอกแกนกลาง (Micro/Macro-bending loss) ทำให้ค่าสัญญาณตก (High Attenuation / dB loss) หรือแกนแก้วหักในทันที
+   - ในตู้แร็คจึงนิยมใช้ **เทปตีนตุ๊กแก (Velcro Strap)** แทนการรัดด้วยพลาสติกเคเบิลไทร์
+2. **การทำความสะอาดหัวไฟเบอร์ (Inspect & Clean)**:
+   - ฝุ่นขนาดเพียงไมครอนเดียวที่ปลายหัวフェอร์รูล (Ferrule) สามารถบังลำแสงและทำให้เกิด **CRC Error** หรือลิงก์หลุดๆ ติดๆ (Flapping) ได้
+   - ก่อนเสียบสายไฟเบอร์เข้า Transceiver หรือ Patch Panel ทุกครั้ง ต้องใช้ **ปากกาทำความสะอาดหัวไฟเบอร์ (One-Click Fiber Cleaner)** กดทำความสะอาดปลายหัว LC/SC เสมอ
+
+---
+
+## 5. สายทองแดง (Copper UTP) และการเข้าหัว RJ45 มาตรฐาน T568B
+
+สำหรับพอร์ตจัดการระยะไกล (OOB Management เช่น iDRAC/iLO) หรือการเชื่อมต่อความเร็ว 1G/10GBASE-T จะใช้สายทองแดงตีเกลียว (Twisted Pair: Cat5e, Cat6, Cat6A) เข้าหัว **RJ45**
+
+ในการสัมภาษณ์งานช่างเทคนิค Data Center มักถูกถามการเรียงสีสายมาตรฐาน **T568B** (ซึ่งเป็นมาตรฐานหลักที่ใช้ในองค์กรเกือบทั้งหมด):
+
+![ผังการเรียงสีสายแลนมาตรฐาน T568B ทั้ง 8 พิน](/images/datacenter/rj45-t568b-pinout.png)
+
+### ลำดับสีสายมาตรฐาน T568B (เรียงจากพิน 1 ซ้ายมือ ไปถึงพิน 8 ขวามือ เมื่อหันด้านเขี้ยวล็อกลงล่าง)
+1. **ขาว-ส้ม** (White/Orange) — `Tx+`
+2. **ส้ม** (Orange) — `Tx-`
+3. **ขาว-เขียว** (White/Green) — `Rx+`
+4. **น้ำเงิน** (Blue)
+5. **ขาว-น้ำเงิน** (White/Blue)
+6. **เขียว** (Green) — `Rx-`
+7. **ขาว-น้ำตาล** (White/Brown)
+8. **น้ำตาล** (Brown)
+
+> **Support Tip**: สำหรับความเร็ว **1 Gbps (1000BASE-T)** และ **10 Gbps (10GBASE-T)** จะใช้สายทองแดงครบทั้ง **8 เส้น (4 คู่สาย)** หากเข้าหัวไม่แน่นหรือสายขาดไปเพียง 1 เส้น ความเร็วของพอร์ตจะตกลงมาเหลือแค่ **100 Mbps** (เพราะ 100Mbps ใช้แค่พิน `1, 2, 3, 6`) นี่คือจุดสังเกตสำคัญเวลาเจอปัญหาเครือข่ายช้าผิดปกติ
+', 9, 'beginner', 1, true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('a64393d6-d903-4f53-958f-99df97e3d586', 10, 'dc-server-hardware-oob', 'ฮาร์ดแวร์เซิร์ฟเวอร์ การเข้าตู้แร็ค และระบบจัดการระยะไกล (Server Hardware & OOB)', 'โครงสร้างชิ้นส่วนเซิร์ฟเวอร์ (CPU, DIMM, HBA, Riser, CMOS), มาตรฐานตู้ Rack 42U, การตั้งค่า BIOS/BMC และการใช้ iDRAC, iLO, IPMI, Redfish', '
+# ฮาร์ดแวร์เซิร์ฟเวอร์ การเข้าตู้แร็ค และระบบจัดการระยะไกล (OOB)
+
+งานหลักของวิศวกรและช่างเทคนิคประจำศูนย์ข้อมูล (Data Center Operations) คือการติดตั้ง ซ่อมบำรุง อัปเกรดชิ้นส่วนฮาร์ดแวร์ และตรวจสอบอาการเสียผ่านระบบจัดการระยะไกลโดยไม่กระทบต่อเสถียรภาพของระบบ
+
+---
+
+## 1. กายวิภาคและชิ้นส่วนภายในเครื่อง Rack Server
+
+เมื่อเปิดฝาเครื่องเซิร์ฟเวอร์ระดับองค์กร (เช่น Dell PowerEdge, HPE ProLiant, Lenovo ThinkSystem, Supermicro) คุณจะพบชิ้นส่วนสำคัญที่ออกแบบมาเพื่อการทำงานต่อเนื่อง 24/7 ดังนี้:
+
+![โครงสร้างชิ้นส่วนภายในเครื่อง Rack Server ระดับองค์กร](/images/datacenter/server-internals-anatomy.png)
+
+### ชิ้นส่วนสำคัญที่ต้องรู้จักและถอดประกอบได้
+1. **CPU (Processor) & Heatsink**:
+   - เซิร์ฟเวอร์มักมี 1 หรือ 2 ซ็อกเก็ต (Dual-Socket: `CPU1`, `CPU2`)
+   - ก่อนถอดเปลี่ยน CPU ต้องทาซิลิโคนระบายความร้อน (Thermal Paste) ในปริมาณที่เหมาะสม และขันน็อต Heatsink ตามลำดับทแยงมุม (Torque sequence) ที่ระบุบนซ็อกเก็ตเพื่อให้น้ำหนักกดทับหน้าสัมผัสเท่ากันทุกพิน
+2. **RAM / DIMM (ECC Memory)**:
+   - เซิร์ฟเวอร์ใช้แรมแบบ **ECC (Error-Correcting Code)** เช่น RDIMM หรือ LRDIMM ซึ่งสามารถตรวจจับและแก้ไขบิตข้อมูลที่เพี้ยนเองได้ ป้องกันเครื่องจอฟ้าหรือ Kernel Panic
+   - **กฎการเสียบแรม (DIMM Population Rules)**: ห้ามเสียบแรมมั่วช่องเด็ดขาด! ต้องเรียงตามคู่มือบนฝาเครื่องเสมอ (เช่น เริ่มจากช่องสีขาว `A1, B1, A2, B2...` เพื่อให้ทำงานแบบ Multi-Channel เต็มประสิทธิภาพ หากเสียบผิดลำดับ เครื่องอาจไม่บูตหรือร้องเตือน Memory Configuration Error)
+3. **Riser Card (การ์ดแปลงสล็อตแนวตั้งเป็นแนวนอน)**:
+   - เนื่องจากตัวเครื่องเซิร์ฟเวอร์แบบ 1U หรือ 2U มีความสูงจำกัด จึงไม่สามารถเสียบการ์ด PCIe แนวตั้งตรงๆ ได้ ต้องเสียบการ์ดลงบน **Riser Card** เพื่อวางการ์ดในแนวนอนขนานกับเมนบอร์ด
+4. **HBA Card (Host Bus Adapter) & RAID Controller**:
+   - **HBA Card**: การ์ดเชื่อมต่อระบบจัดเก็บข้อมูลภายนอก เช่น **Fibre Channel HBA** (มีพอร์ตไฟเบอร์เชื่อมเข้า SAN Switch) หรือ **SAS HBA**
+   - **RAID Controller (เช่น Dell PERC, HPE Smart Array)**: การ์ดควบคุมฮาร์ดดิสก์ด้านหน้าเครื่องเพื่อรวมดิสก์เป็น RAID 1, RAID 5, RAID 6 หรือ RAID 10 พร้อมแบตเตอรี่สำรองแคช (BBU / Supercap)
+5. **พัดลมระบายความร้อนแบบถอดเปลี่ยนได้ทันที (Hot-Swap Fan Modules)**:
+   - เรียงเป็นแถวกลางเครื่อง (Fan Wall) หากพัดลมตัวใดเสีย 1 ตัว พัดลมที่เหลือจะเร่งรอบขึ้นสูงสุด (เสียงดังมาก) และเราสามารถดึงสลักสีส้ม/ม่วงเพื่อเปลี่ยนตัวใหม่ได้ทันทีโดยไม่ต้องปิดเครื่อง
+6. **ถ่านเซิร์ฟเวอร์ (CMOS Battery - CR2032)**:
+   - เก็บค่าเวลา (RTC) และการตั้งค่า BIOS เบื้องต้น หากถ่านหมดหรือต้องการเคลียร์ค่า BIOS ที่ค้าง (NVRAM Clear) จะใช้วิธีถอดปลั๊กไฟ ถอดถ่าน CMOS หรือสลับจัมเปอร์ `NVRAM_CLR` บนเมนบอร์ด
+
+> ⚠️ **ความปลอดภัยด้านไฟฟ้าสถิต (ESD Protection)**: ก่อนสัมผัสเมนบอร์ด แรม หรือการ์ดใดๆ ต้องสวม **สายรัดข้อมือป้องกันไฟฟ้าสถิต (ESD Wrist Strap)** แล้วหนีบสายกราวด์เข้ากับโครงโลหะของตู้แร็คเสมอ และจับการ์ดหรือแรมที่ขอบแผ่นปริ้นท์เท่านั้น ห้ามนิ้วแตะพินทองเหลืองโดยตรง
+
+---
+
+## 2. การนำเครื่องเข้าตู้แร็ค (Racking & Stacking)
+
+มาตรฐานความสูงของตู้และอุปกรณ์ใน Data Center วัดเป็นหน่วย **U (Rack Unit)**:
+- **1U** = **1.75 นิ้ว** (ประมาณ 4.445 เซนติเมตร)
+- ตู้แร็คมาตรฐานใน Data Center มักมีความสูง **42U** หรือ **48U** และกว้าง 19 นิ้ว
+
+![มาตรฐานตู้แร็ค 42U รางสไลด์และการจัดวางอุปกรณ์](/images/datacenter/rack-units-racking.png)
+
+### หลักการติดตั้งเครื่องเข้าตู้แร็คอย่างปลอดภัย
+1. **วางของหนักไว้ด้านล่างสุดเสมอ (Bottom-Heavy Rule)**:
+   - อุปกรณ์ที่มีน้ำหนักมากที่สุด เช่น ตู้แบตเตอรี่ **UPS**, ตู้ **Storage Disk Array (JBOD/SAN)** หรือเซิร์ฟเวอร์ขนาด 4U ต้องติดตั้งไว้ที่ระยะ U ล่างสุดของตู้ เพื่อลดจุดศูนย์ถ่วง ป้องกันตู้แร็คคว่ำขณะดึงเครื่องออกมาซ่อม
+2. **การติด Cage Nuts และรางสไลด์ (Sliding Rails)**:
+   - อ่านตัวเลข U ที่เสาหน้าซ้าย-ขวา และเสาหลังซ้าย-ขวาให้ตรงกันเป๊ะ (ระวังใส่เหลื่อมรูจนเครื่องเอียง)
+   - ใช้เครื่องมือใส่ **Cage Nut** เข้าจากด้านในของเสาสี่เหลี่ยม
+   - เมื่อยกเซิร์ฟเวอร์เข้าสวมราง หากเครื่องหนักเกิน 20 กิโลกรัม ต้องใช้คนยกช่วยกันอย่างน้อย 2 คน หรือใช้รถยกเซิร์ฟเวอร์ (**Server Lift**)
+3. **การจัดสายด้านหลัง (Cable Management)**:
+   - แยกสายไฟ (Power Cords) ไว้ฝั่งหนึ่งของเสาตู้ และสายสัญญาณ (Fiber/UTP) ไว้อีกฝั่งหนึ่ง เพื่อลดสัญญาณรบกวนและให้ถอดเปลี่ยน PSU ได้ง่าย
+   - หากใช้แขนจัดสาย (**CMA - Cable Management Arm**) ต้องตรวจสอบว่าสายมีความยาวเผื่อให้ดึงเซิร์ฟเวอร์สไลด์ออกมาข้างหน้าได้สุดรางโดยสายไม่หลุด แต่ต้องระวังไม่ให้แขน CMA ไปบังทางระบายลมร้อนหลังเครื่อง
+
+---
+
+## 3. ระบบจัดการเซิร์ฟเวอร์ระยะไกล (Out-of-Band Management: iDRAC / iLO / IPMI / Redfish)
+
+ในเซิร์ฟเวอร์ระดับองค์กรจะมีชิปคอมพิวเตอร์ขนาดเล็กแยกอิสระอยู่บนเมนบอร์ด เรียกว่า **BMC (Baseboard Management Controller)** ซึ่งทำงานทันทีที่มีการเสียบสายไฟเข้าเครื่อง แม้ว่าเครื่องเซิร์ฟเวอร์นั้นจะยังไม่ได้เปิดสวิตช์ หรือระบบปฏิบัติการ (Linux/Windows) จะค้างสนิทไปแล้วก็ตาม!
+
+![หน้าจอจัดการระยะไกลผ่าน iDRAC / iLO และการตรวจสอบสถานะฮาร์ดแวร์](/images/datacenter/idrac-ilo-oob-console.png)
+
+### ชื่อเรียกตามยี่ห้อเซิร์ฟเวอร์
+- **Dell**: **iDRAC** (Integrated Dell Remote Access Controller)
+- **HPE (HP)**: **iLO** (Integrated Lights-Out)
+- **Supermicro / ทั่วไป**: **IPMI** (Intelligent Platform Management Interface)
+- **มาตรฐานยุคใหม่ (RESTful API)**: **Redfish** (ใช้สั่งการผ่าน HTTPS/JSON แทน IPMI แบบเก่า)
+
+### งานที่ใช้ iDRAC / iLO / IPMI ในชีวิตจริงของทีม Support & DC
+1. **เช็กว่าชิ้นส่วนไหนเสียจาก System Event Log (SEL)**:
+   - เมื่อไฟหน้าเครื่องเปลี่ยนจากสีเขียว/ฟ้า เป็น **สีส้มกระพริบ (Amber Blinking)** แทนที่จะเดาสุ่ม เราสามารถล็อกอินเข้าหน้าเว็บ iDRAC/iLO เพื่ออ่านบันทึกฮาร์ดแวร์ได้ทันที เช่น:
+     - `"Correctable memory error rate exceeded for DIMM_A2"` → รู้ทันทีว่าต้องเปลี่ยนแรมช่อง `A2`
+     - `"Drive 0 in Bay 3 is in Predictive Failure state"` → เตรียมดิสก์ลูกใหม่ไป Hot-swap ที่ช่อง 3
+2. **เปิดหน้าจอเสมือน (Virtual Console / HTML5 KVM)**:
+   - ดูหน้าจอบูต BIOS, แก้ไข GRUB, หรือดูหน้าจอ Kernel Panic เหมือนเอาสายจอและคีย์บอร์ดไปเสียบหน้าตู้จริง
+3. **Mount ไฟล์ติดตั้ง OS ระยะไกล (Virtual Media)**:
+   - แนบไฟล์ `.iso` ของ Ubuntu หรือ Windows Server จากเครื่องคอมพิวเตอร์ของเราเข้าเป็นไดรฟ์จำลองให้เซิร์ฟเวอร์บูตติดตั้ง OS ใหม่ได้จากระยะไกล
+4. **สั่งเปิด/ปิด/รีเซ็ตไฟเลี้ยงเครื่องด้วยคำสั่ง `ipmitool`**:
+   ```bash
+   # เช็กสถานะไฟเลี้ยงของเครื่องระยะไกล
+   ipmitool -I lanplus -H 10.100.1.50 -U admin -P SecretPass chassis power status
+
+   # สั่งบังคับรีบูตเครื่องที่ค้างสนิท (Hard Reset)
+   ipmitool -I lanplus -H 10.100.1.50 -U admin -P SecretPass chassis power reset
+
+   # อ่านรายการแจ้งเตือนฮาร์ดแวร์ (System Event Log)
+   ipmitool -I lanplus -H 10.100.1.50 -U admin -P SecretPass sel elist
+
+   # สั่งเปิดไฟกระพริบสีฟ้า (UID LED / Chassis Identify) เพื่อช่วยช่างหน้าตู้หาเครื่องให้เจอ
+   ipmitool -I lanplus -H 10.100.1.50 -U admin -P SecretPass chassis identify 60
+   ```
+
+> **Support Tip**: ฟีเจอร์ **UID LED (Unit Identification Light - ไฟสีฟ้าหน้าและหลังเครื่อง)** สำคัญมากในห้อง Data Center ที่มีเซิร์ฟเวอร์หน้าตาเหมือนกันเรียงกันเป็นพันเครื่อง ก่อนลงไปถอดสายหรือเปลี่ยนอะไหล่ ให้สั่งเปิดไฟ UID สีฟ้าผ่าน iDRAC/iLO หรือกดปุ่มหน้าเครื่องก่อนเดินไปหลังตู้เสมอ เพื่อป้องกันการถอดสายผิดเครื่อง!
+', 10, 'intermediate', 2, true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('a8d18af7-6692-4b1b-86b5-88a0d4fb8f9b', 10, 'dc-network-boot-san-blade', 'เครือข่าย OOB, กระบวนการ PXE Boot, ระบบ SAN Zoning และ Blade Server', 'การแยกวงแลน Out-of-Band (OOB), ขั้นตอนการบูตผ่านเครือข่าย PXE (DHCP + TFTP), พื้นฐาน SAN Fibre Channel & Zoning, Blade Server (Cisco UCS / HPE) และ Hypervisor', '
+# เครือข่าย OOB, กระบวนการ PXE Boot, ระบบ SAN Zoning และ Blade Server
+
+นอกจากการประกอบฮาร์ดแวร์แล้ว วิศวกรปฏิบัติการ Data Center ต้องเข้าใจว่าเซิร์ฟเวอร์เครื่องเปล่าที่เพิ่งแกะกล่องเข้าตู้แร็ค เชื่อมต่อกับเครือข่ายจัดการระยะไกล โหลดระบบปฏิบัติการอัตโนมัติ และมองเห็นพื้นที่จัดเก็บข้อมูลส่วนกลาง (SAN Storage) ได้อย่างไร
+
+---
+
+## 1. เครือข่าย Out-of-Band (OOB Management Network)
+
+ในสถาปัตยกรรม Data Center มาตรฐาน เครือข่ายจะถูกแยกออกเป็น 2 วงที่แยกจากกันอย่างเด็ดขาด:
+
+![แผนผังการแยกวงเครือข่าย Production (In-Band) และ Out-of-Band (OOB Management)](/images/datacenter/oob-management-topology.png)
+
+1. **In-Band (Production Network)**:
+   - พอร์ตไฟเบอร์ความเร็วสูง (10G / 25G / 100G) บนการ์ด NIC ที่เชื่อมต่อเข้ากับ Top-of-Rack Switch สำหรับรับส่งทราฟฟิกของแอปพลิเคชันและผู้ใช้งานจริง
+2. **Out-of-Band (OOB Management Network)**:
+   - พอร์ตสายแลนทองแดง RJ45 ความเร็ว 1Gbps ที่เขียนว่า `iDRAC`, `iLO`, หรือ `IPMI Mgmt` หลังเครื่องเซิร์ฟเวอร์ รวมกับพอร์ต Console ของ Switch/Router
+   - เชื่อมต่อเข้ากับ **Management Switch แยกต่างหาก** และเข้าถึงได้เฉพาะวิศวกรที่ต่อ **VPN / Bastion Jump Host** เท่านั้น
+   - **ทำไมต้องแยกวง OOB?** เพราะหากวันใดเกิดเหตุการณ์ตั้งค่า Firewall ผิดพลาดบน OS หรือ Production Switch ล่มจน SSH เข้าเซิร์ฟเวอร์ไม่ได้ วิศวกรยังสามารถเข้าทางวง OOB เพื่อเปิดหน้าจอ Console เข้าไปแก้ไขและกู้คืนระบบได้เสมอ
+
+### การตั้งค่าและตรวจเช็ก OOB เบื้องต้น
+- ตั้งค่า IP ของ BMC (iDRAC/iLO) ได้ 2 วิธี: ตั้งผ่านหน้าจอ **BIOS Setup (F2 / F9)** ตอนบูตเครื่อง หรือตั้งค่าให้รับ IP จาก **DHCP (พร้อมผูก MAC Reservation)**
+- หากปิง IP ของ iDRAC/iLO ไม่เจอ ให้ตรวจ:
+  1. โหมดพอร์ตใน BIOS ตั้งเป็น **Dedicated NIC** (ใช้พอร์ตแยกเฉพาะ) หรือ **Shared LOM** (แชร์พอร์ตเดียวกับการ์ดแลนหลัก)
+  2. ไฟสถานะ Link/Act ที่พอร์ต RJ45 หลังเครื่องติดหรือไม่
+  3. ค่า Subnet Mask, Default Gateway และ VLAN บนพอร์ต Management Switch ตรงกับวง OOB หรือไม่
+
+---
+
+## 2. กระบวนการบูตของระบบ และ PXE Boot (Preboot Execution Environment)
+
+ในบริษัท Hosting หรือ Cloud ที่มีเซิร์ฟเวอร์หลายพันเครื่อง เราจะไม่เดินถือแฟลชไดรฟ์ไปเสียบลง Linux/Windows ทีละเครื่อง แต่จะใช้การบูตติดตั้งผ่านสายแลนที่เรียกว่า **PXE Boot (อ่านว่า "พิกซี่บูต")**
+
+![ลำดับการทำงานของ PXE Boot ผ่าน DHCP และ TFTP Server](/images/datacenter/pxe-boot-sequence.png)
+
+### ลำดับขั้นตอนการบูตของเครื่องเซิร์ฟเวอร์ตั้งแต่กดปุ่ม Power
+1. **Power-On & BMC Initialization**: จ่ายไฟเข้าเมนบอร์ด ชิป BMC ตื่นขึ้นมาตรวจเซนเซอร์ไฟและพัดลม
+2. **POST (Power-On Self-Test)**: BIOS/UEFI ตรวจสอบ CPU, นับจำนวน RAM (DIMM), และสแกนหาการ์ด PCIe / HBA / RAID
+3. **Boot Device Selection**: BIOS/UEFI มองหาอุปกรณ์บูตตามลำดับที่ตั้งไว้ (เช่น Disk ในเครื่อง หรือ Network PXE)
+4. **ขั้นตอน PXE Boot (กรณีบูตผ่านเครือข่ายเพื่อลง OS ใหม่)**:
+   - **ขั้นที่ 4.1 (DHCP Discover / Offer)**: การ์ดแลนส่งแพ็กเก็ต广播 (Broadcast) ขอ IP Address จาก DHCP Server
+   - **ขั้นที่ 4.2 (DHCP Options 66 & 67)**: DHCP Server ตอบกลับพร้อมมอบ IP Address และแจ้งข้อมูลสำคัญ 2 ค่า คือ **Option 66 (Next-Server / IP ของ TFTP Server)** และ **Option 67 (Boot Filename เช่น `pxelinux.0` หรือ `grubx64.efi`)**
+   - **ขั้นที่ 4.3 (TFTP Download)**: การ์ดแลนเชื่อมต่อไปยัง **TFTP Server** (ใช้พอร์ต `UDP 69`) เพื่อดาวน์โหลดไฟล์ Bootloader, Linux Kernel (`vmlinuz`), และ `initrd` ลงมาไว้ใน RAM
+   - **ขั้นที่ 4.4 (Automated Installer)**: บูตเข้าสู่ตัวติดตั้งอัตโนมัติ (เช่น Kickstart สำหรับ RHEL/CentOS, Preseed/Cloud-init สำหรับ Ubuntu, หรือ WDS สำหรับ Windows) ดึงไฟล์ระบบปฏิบัติการผ่าน HTTP/NFS จนติดตั้งเสร็จสมบูรณ์
+5. **OS Bootloader & Init**: เมื่อมี OS ในดิสก์แล้ว ครั้งต่อไปเครื่องจะบูตเข้า **GRUB2** → โหลด **Linux Kernel** → สตาร์ทโปรเซสหมายเลข 1 คือ **`systemd` (PID 1)** เพื่อเปิดบริการต่างๆ จนขึ้นหน้า Login
+
+---
+
+## 3. พื้นฐานระบบ SAN (Storage Area Network) และการทำ Zoning
+
+ในระบบองค์กรขนาดใหญ่ พื้นที่เก็บข้อมูลสำคัญจะไม่วางไว้แค่ในฮาร์ดดิสก์หน้าเครื่องเซิร์ฟเวอร์ (DAS - Direct Attached Storage) แต่จะเชื่อมต่อผ่านเครือข่ายความเร็วสูงเฉพาะทางที่เรียกว่า **SAN (Storage Area Network)**
+
+![สถาปัตยกรรม Fibre Channel SAN (Fabric A/B) และการทำ WWN Zoning](/images/datacenter/san-fabric-zoning.png)
+
+### คำศัพท์สำคัญของระบบ Fibre Channel SAN ที่ต้องรู้
+- **Initiator (ฝั่งผู้ขอใช้ดิสก์)**: คือการ์ด **HBA (Host Bus Adapter)** ที่เสียบอยู่ในเครื่องเซิร์ฟเวอร์
+- **Target (ฝั่งผู้ให้บริการดิสก์)**: คือพอร์ตของตู้ **Storage Array** (เช่น NetApp, Dell EMC PowerStore, Pure Storage, Hitachi)
+- **WWNN / WWPN (World Wide Node/Port Name)**:
+  - เปรียบเสมือน **MAC Address ของโลก Fibre Channel** เป็นตัวเลขฐานสิบหกขนาด 64-bit (เช่น `50:06:0b:00:00:c2:62:01`) ที่ระบุตัวตนของพอร์ต HBA และพอร์ต Storage
+- **LUN (Logical Unit Number)**:
+  - ก้อนพื้นที่ดิสก์เสมือนที่แบ่งมาจากตู้ Storage Array แล้วส่งมาให้เซิร์ฟเวอร์มองเห็นเหมือนเป็นฮาร์ดดิสก์ลูกหนึ่ง (เช่น `/dev/sdb`)
+- **SAN Zoning (การแบ่งโซนบน SAN Switch)**:
+  - ทำบน Fibre Channel Switch (เช่น Brocade หรือ Cisco MDS) เพื่อกำหนดสิทธิ์ว่า **พอร์ต HBA ของเซิร์ฟเวอร์เครื่องไหน (Initiator WWPN) มีสิทธิ์มองเห็นพอร์ตของตู้ Storage ตัวไหน (Target WWPN)**
+  - กฎมาตรฐานคือ **Single-Initiator Zoning** (1 โซน มีเซิร์ฟเวอร์ 1 พอร์ต จับคู่กับ Storage) เพื่อป้องกันไม่ให้เซิร์ฟเวอร์อื่นมองเห็นหรือเผลอเขียนข้อมูลทับ LUN ของกันและกัน
+- **Multipathing (Fabric A & Fabric B)**:
+  - เซิร์ฟเวอร์แต่ละเครื่องจะมีพอร์ต HBA 2 พอร์ต แยกต่อเข้า **SAN Switch A** และ **SAN Switch B** หากสวิตช์ตัวใดตัวหนึ่งดับ เซิร์ฟเวอร์ยังอ่านเขียนข้อมูลผ่านอีกเส้นทางได้ต่อเนื่องโดยไม่ล่ม (`multipathd`)
+
+---
+
+## 4. ระบบเบลดเซิร์ฟเวอร์ (Blade Server: Cisco UCS & HPE BladeSystem)
+
+นอกจากเซิร์ฟเวอร์แบบกล่อง 1U/2U (Rack Server) แล้ว ใน Data Center ยังมีเซิร์ฟเวอร์แบบ **Blade Server** ที่นำแผ่นเซิร์ฟเวอร์หลายๆ ใบเสียบรวมกันในโครงตู้เดียว (**Blade Chassis** ขนาด 6U หรือ 10U):
+
+![โครงสร้างตู้ Blade Server Chassis (Cisco UCS / HPE ProLiant Blade)](/images/datacenter/cisco-ucs-hp-blade.png)
+
+- **ข้อดีของ Blade Server**: ใช้ภาคจ่ายไฟ (PSU), พัดลมระบายความร้อน, และโมดูลสวิตช์ด้านหลังร่วมกันทั้งตู้ ช่วยลดจำนวนสายไฟและสายแลนที่ต้องเดินหลังตู้ลงได้มหาศาล
+- **Cisco UCS (Unified Computing System)**:
+  - มีจุดเด่นคือ **Fabric Interconnect (FI)** และระบบ **Service Profile** ซึ่งเก็บค่าตัวตนของเซิร์ฟเวอร์ (MAC Address, WWPN, การตั้งค่า BIOS, ลำดับการบูต) ไว้เป็นโปรไฟล์ซอฟต์แวร์ หากใบ Blade ใบไหนเมนบอร์ดพัง ช่างสามารถเสียบใบ Blade เปล่าใบใหม่เข้าไป แล้วโยน Service Profile เดิมใส่ เครื่องจะกลับมาทำงานพร้อม MAC และ WWPN เดิมทันทีภายในไม่กี่นาที
+- **HPE ProLiant c-Class / HPE Synergy**:
+  - ใช้โมดูลจัดการกลางที่เรียกว่า **Onboard Administrator (OA)** หรือ **HPE OneView** ในการควบคุมไฟ พัดลม และ Virtual Connect ทั้ง Chassis
+
+---
+
+## 5. ความรู้พื้นฐานเรื่อง Hypervisor และ Container สำหรับช่าง Data Center
+
+แม้ช่าง Data Center จะดูแลฮาร์ดแวร์เป็นหลัก แต่ในชีวิตจริงเครื่องเซิร์ฟเวอร์เกือบทุกเครื่องทำหน้าที่เป็นโฮสต์รันระบบจำลองเสมือน:
+
+| เทคโนโลยี | ตัวอย่างซอฟต์แวร์ | บทบาทที่เกี่ยวข้องกับงาน Data Center Operations |
+|---|---|---|
+| **Type-1 Hypervisor (Bare-Metal)** | **VMware ESXi**, **KVM (Proxmox / OpenStack)**, **Citrix XenServer**, **Microsoft Hyper-V** | ติดตั้งลงบนฮาร์ดแวร์เซิร์ฟเวอร์โดยตรงเพื่อแบ่งทรัพยากรเป็นหลาย **VM (Virtual Machine)** ก่อนที่ช่าง DC จะปิดเครื่องโฮสต์เพื่อเปลี่ยนแรมหรือเมนบอร์ด ต้องประสานให้ทีมระบบสั่งเข้า **Maintenance Mode** เพื่อย้าย VM หนีไปยังโฮสต์อื่นก่อนเสมอ (เช่น **VMware vMotion** หรือ **Live Migration**) |
+| **Containers** | **Docker**, **containerd**, **Kubernetes (K8s) Worker Nodes** | รันแอปพลิเคชันแบบแยกส่วนโดยแชร์ Linux Kernel เดียวกัน หากโฮสต์ที่เป็น K8s Node ต้องซ่อมฮาร์ดแวร์ ทีมระบบจะสั่ง `kubectl drain <node>` เพื่อย้าย Pod ออกจากเครื่องก่อนให้ช่าง DC ปิดเครื่อง |
+', 10, 'intermediate', 3, true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('92409c70-8fd7-4575-b8c5-22e661376a62', 10, 'dc-power-cooling-facilities', 'ระบบไฟฟ้า 1/3 เฟส, UPS/ATS, การจัดการลมร้อน-ลมเย็น และระบบดับเพลิง DC', 'ความแตกต่างของไฟ 1 เฟส vs 3 เฟส, การทำงานของ UPS และ ATS, ระบบไฟคู่ A/B Feed, ลำดับการเปิด-ปิดไฟตู้แร็ค, Hot/Cold Aisle และสารดับเพลิงสะอาด FM-200 / Novec 1230', '
+# ระบบไฟฟ้า (Power), การระบายความร้อน (Cooling) และระบบดับเพลิงใน Data Center
+
+หัวใจสูงสุดของ Data Center คือ **ความพร้อมใช้งานอย่างต่อเนื่อง (Uptime & Availability)** แม้ไฟฟ้าจากการไฟฟ้านครหลวง/ภูมิภาคจะดับ หรือเครื่องปรับอากาศเสียตัวหนึ่ง เซิร์ฟเวอร์ภายในศูนย์ข้อมูลจะต้องไม่ดับตาม นี่คือความรู้ด้านระบบประกอบอาคาร (Facilities: Power & Mechanical) ที่ผู้สัมภาษณ์มักถามเสมอ
+
+---
+
+## 1. ระบบไฟฟ้า 1 เฟส vs 3 เฟส และแรงดันไฟฟ้าใน Data Center
+
+ในการคำนวณโหลดไฟของตู้แร็ค เราใช้สูตรพื้นฐานทางไฟฟ้าคือ:
+
+$$\text{Power (Watts)} = \text{Voltage (V)} \times \text{Current (Amps)}$$
+
+(สำหรับไฟฟ้ากระแสสลับ 3 เฟสที่คำนึงถึง Power Factor จะคำนวณจาก $P = \sqrt{3} \times V \times I \times \text{PF}$)
+
+### ตารางเปรียบเทียบระบบไฟ 1 เฟส (Single-Phase) และ 3 เฟส (Three-Phase)
+
+| คุณสมบัติ | ระบบไฟ 1 เฟส (Single-Phase) | ระบบไฟ 3 เฟส (Three-Phase) |
+|---|---|---|
+| **โครงสร้างสายไฟ** | 3 เส้น: **Line (L) 1 เส้น** + Neutral (N) + Ground (G) | 4 หรือ 5 เส้น: **Line 3 เส้น (L1, L2, L3)** + Neutral (N) + Ground (G) |
+| **แรงดันไฟฟ้าที่พบบ่อย** | **110V–120V** (อเมริกา/ญี่ปุ่น) หรือ **220V–240V** (ไทย/ยุโรป/เอเชีย) | **208V** (อเมริกา) หรือ **380V / 400V / 415V** (ไทย/สากล) และ **480V** ในระดับหม้อแปลงหลักของอาคาร |
+| **การใช้งานใน Data Center** | เข้าสู่ภาคจ่ายไฟ (PSU) ของเซิร์ฟเวอร์แต่ละเครื่อง (ส่วนใหญ่รับไฟ `200V–240V AC` ผ่านหัวปลั๊กมาตรฐาน **IEC C13/C14** หรือ **C19/C20**) | จ่ายไฟจากตู้ MDB/PDU หลักเข้าสู่ **Rack PDU (รางปลั๊กไฟอัจฉริยะประจำตู้แร็ค)** เพื่อให้รองรับโหลดไฟสูงระดับ 11kW – 22kW ต่อตู้ และต้องบาลานซ์โหลดทั้ง 3 เฟส (`L1, L2, L3`) ให้ใกล้เคียงกัน |
+
+---
+
+## 2. สายโซ่ระบบไฟฟ้าสำรอง: Utility → Generator → ATS → UPS → A/B PDU
+
+ทำไมเมื่อไฟดับ เซิร์ฟเวอร์ใน Data Center ถึงไม่ดับแม้แต่วินาทีเดียว? เพราะมีสถาปัตยกรรมสำรองไฟหลายชั้นดังนี้:
+
+![ผังระบบไฟฟ้าสำรองใน Data Center: Utility, Generator, ATS, UPS และ A/B Power Feed](/images/datacenter/dc-power-chain-ups-ats.png)
+
+1. **UPS (Uninterruptible Power Supply)**:
+   - ทำหน้าที่ **จ่ายไฟสำรองจากแบตเตอรี่ทันทีแบบไร้รอยต่อ (0 มิลลิวินาที)** เมื่อไฟจากการไฟฟ้า (Utility Grid) ตกหรือดับ พร้อมกรองกระแสไฟให้เรียบสม่ำเสมอ (Online Double-Conversion)
+   - แบตเตอรี่ของ UPS ใน Data Center ไม่ได้มีไว้รันเซิร์ฟเวอร์ทั้งวัน แต่มีไว้ **ประคองไฟเป็นเวลา 5–15 นาที** เพื่อให้เครื่องปั่นไฟดีเซลสตาร์ทติดและรับช่วงต่อได้ทัน
+2. **Generator (เครื่องปั่นไฟดีเซลสำรอง)**:
+   - เมื่อไฟหลักดับเกินไม่กี่วินาที เครื่องปั่นไฟขนาดใหญ่จะสตาร์ทอัตโนมัติและเดินเครื่องจนกว่ากระแสไฟจะนิ่ง (ใช้เวลาประมาณ 10–30 วินาที) จากนั้นสามารถจ่ายไฟเลี้ยงทั้งศูนย์ข้อมูลได้นานหลายวันตราบใดที่มีน้ำมันเชื้อเพลิง
+3. **ATS (Automatic Transfer Switch)**:
+   - สวิตช์สลับแหล่งจ่ายไฟอัตโนมัติ ทำหน้าที่ตรวจจับเมื่อไฟจากการไฟฟ้าดับ แล้วสั่งสตาร์ท Generator พอไฟจาก Generator นิ่งปุ๊บ **ATS จะสลับแหล่งจ่ายไฟจาก Grid ไปยัง Generator อัตโนมัติ** และสลับกลับเมื่อไฟการไฟฟ้ากลับมาปกติ
+   - *(ในตู้แร็คบางแห่งที่มีอุปกรณ์ที่มีสายไฟเส้นเดียว เช่น Switch รุ่นเล็ก จะใช้ **Rack ATS** เสียบรับไฟจากทั้งฝั่ง A และฝั่ง B เพื่อแปลงออกเป็นสายเดียวเลี้ยงอุปกรณ์นั้น)*
+4. **ระบบจ่ายไฟคู่ (Dual Power Feed: A-Feed & B-Feed)**:
+   - เซิร์ฟเวอร์ทุกเครื่องจะมี **PSU 2 ลูก (PSU 1 และ PSU 2)**
+   - **กฎเหล็ก**: ห้ามเสียบสายไฟทั้ง 2 เส้นของเซิร์ฟเวอร์เข้าที่รางปลั๊ก PDU ตัวเดียวกันเด็ดขาด! ต้องเสียบ **PSU 1 เข้ากับ PDU ฝั่ง A (A-Feed)** และเสียบ **PSU 2 เข้ากับ PDU ฝั่ง B (B-Feed)** ซึ่งรับไฟมาจาก UPS และเบรกเกอร์คนละชุดกัน
+   - **กฎการใช้โหลดไม่เกิน 40%–45% ต่อฝั่ง**: บนรางปลั๊ก PDU แต่ละฝั่ง (A และ B) เราจะใช้กระแสไฟไม่เกิน **40%–45% ของพิกัดเบรกเกอร์** เท่านั้น เพราะหากวันใดไฟฝั่ง B ดับทั้งเส้น โหลดทั้งหมด 100% ของตู้จะเทไปอยู่ที่ฝั่ง A ทันที ($45\% + 45\% = 90\%$) เบรกเกอร์ฝั่ง A จะได้ไม่ทริปตัดไฟตามไป!
+
+---
+
+## 3. ลำดับการเปิดและปิดไฟของตู้แร็ค (Rack Power-Up & Power-Down Sequence)
+
+คำถามสัมภาษณ์ยอดฮิต: *"หากจำเป็นต้องปิดระบบทั้งตู้แร็คเพื่อบำรุงรักษาใหญ่ (Planned Maintenance) และเปิดกลับมาใหม่ คุณจะเรียงลำดับปิดและเปิดอะไรก่อน-หลัง?"*
+
+### ลำดับการปิดระบบ (Power-Down Sequence)
+1. **ขั้นที่ 1: ปิด Application & Compute Servers ก่อน** — สั่ง Shutdown ระบบปฏิบัติการของเซิร์ฟเวอร์และ VM ทั้งหมดอย่างถูกวิธี เพื่อให้หยุดเขียนข้อมูลลงดิสก์
+2. **ขั้นที่ 2: ปิดตู้ Storage (SAN / NAS / Disk Array)** — เมื่อแน่ใจว่าไม่มีเซิร์ฟเวอร์ใดอ่าน-เขียนข้อมูลแล้ว จึงสั่งปิดตู้ Storage เพื่อป้องกันข้อมูลเสียหาย (Data Corruption)
+3. **ขั้นที่ 3: ปิดอุปกรณ์ Network Switches / Routers หลังสุด** — ปิดสวิตช์เป็นลำดับสุดท้าย แล้วจึงสับเบรกเกอร์ของ PDU
+
+### ลำดับการเปิดระบบ (Power-Up Sequence — ย้อนกลับ!)
+1. **ขั้นที่ 1: เปิดอุปกรณ์ Network Switches & SAN Switches ก่อน** — รอให้สวิตช์บูตเสร็จและพอร์ตทั้งหมดพร้อมเชื่อมต่อ
+2. **ขั้นที่ 2: เปิดตู้ Storage (SAN / NAS / Disk Array)** — รอให้ดิสก์ทั้งหมดหมุนขึ้นและพร้อมให้บริการ LUN
+3. **ขั้นที่ 3: ค่อยทยอยเปิด Compute Servers ทีละกลุ่ม (Staggered Power-On)** — เมื่อเซิร์ฟเวอร์บูตขึ้นมาจะสามารถต่อเครือข่ายและมองเห็นก้อน Storage ได้ทันที นอกจากนี้การทยอยเปิดเซิร์ฟเวอร์ทีละชุดยังช่วยป้องกัน **กระแสไฟกระชากตอนสตาร์ท (Inrush Current)** ไม่ให้สูงเกินจนเบรกเกอร์ตู้ทริป!
+
+---
+
+## 4. การจัดการทิศทางลมร้อน-ลมเย็น (Hot Aisle / Cold Aisle Containment)
+
+เซิร์ฟเวอร์ทุกเครื่องถูกออกแบบทิศทางพัดลมเป็นมาตรฐานเดียวกันคือ **"ดูดลมเย็นเข้าทางด้านหน้าเครื่อง (Front Intake) และเป่าลมร้อนออกทางด้านหลังเครื่อง (Rear Exhaust)"**
+
+![การจัดวางตู้แร็คแบบ Hot Aisle / Cold Aisle Containment](/images/datacenter/hot-cold-aisle-containment.png)
+
+- **Cold Aisle (ช่องทางเดินลมเย็น)**:
+  - จัดวางตู้แร็คสองแถวให้ **หันด้านหน้าเข้าหากัน** โดยพื้นยก (Raised Floor) ในช่องทางเดินนี้จะเป็นแผ่นพื้นเจาะรู (Perforated Tiles) ให้ลมเย็นจากเครื่องปรับอากาศ **CRAC / CRAH** เป่าขึ้นมาเข้าหน้าเครื่องเซิร์ฟเวอร์โดยตรง
+- **Hot Aisle (ช่องทางเดินลมร้อน)**:
+  - ด้านหลังของตู้แร็คสองแถวจะหันชนกัน ลมร้อนที่เป่าออกจากท้ายเซิร์ฟเวอร์จะรวมกันอยู่ในช่องนี้และถูกดูดกลับขึ้นเพดานไปเข้าเครื่องทำความเย็น โดยไม่ปะปนกับลมเย็น
+- **ความสำคัญของแผ่นปิดช่องว่าง (Blanking Panels)**:
+  - หากในตู้แร็คมีช่อง U ที่ว่างอยู่ (ไม่ได้ใส่เครื่อง) ต้องติดแผ่นพลาสติกทึบที่เรียกว่า **Blanking Panel** ปิดไว้เสมอ เพื่อป้องกันไม่ให้ลมร้อนจากด้านหลังตู้ไหลวนย้อนกลับมาเข้าหน้าเครื่องเซิร์ฟเวอร์ตัวข้างๆ (Hot Air Recirculation)
+
+---
+
+## 5. ระบบดับเพลิงใน Data Center (Clean Agent Fire Suppression)
+
+ในห้องเซิร์ฟเวอร์ **ห้ามใช้น้ำเปล่าหรือถังดับเพลิงชนิดผงเคมีแห้ง** ฉีดใส่ตู้เซิร์ฟเวอร์ เพราะจะทำให้แผงวงจรอิเล็กทรอนิกส์ทั้งหมดพังเสียหายถาวร
+
+![ระบบตรวจจับควันความไวสูง VESDA และถังสารสะอาดดับเพลิง FM-200 / Novec 1230](/images/datacenter/dc-fire-suppression.png)
+
+1. **ระบบตรวจจับควันความไวสูง (VESDA - Very Early Smoke Detection Apparatus)**:
+   - ใช้ท่อดูดอากาศในห้องไปตรวจวัดอนุภาคควันด้วยเลเซอร์ตลอดเวลา สามารถแจ้งเตือนตั้งแต่สายไฟเริ่มร้อนจนมีกลิ่นไหม้จางๆ ก่อนที่จะเกิดเปลวไฟจริง
+2. **สารสะอาดดับเพลิง (Clean Agent Gas: FM-200 / Novec 1230 / Inergen)**:
+   - เมื่อระบบยืนยันเหตุเพลิงไหม้ (Cross-zone detection) และนับถอยหลัง 30–60 วินาทีให้คนออกจากห้อง ระบบจะฉีดแก๊สสารสะอาด เช่น **FM-200 (HFC-227ea)** หรือ **3M Novec 1230** ออกมาดูดซับความร้อนและตัดปฏิกิริยาการเผาไหม้จนไฟดับทันที
+   - **จุดเด่น**: ไม่นำไฟฟ้า ไม่ทิ้งคราบสกปรก และเซิร์ฟเวอร์ยังสามารถทำงานต่อไปได้โดยไม่เสียหาย
+   - บริเวณประตูทางออกจะมีปุ่มสีเหลือง **Emergency Abort / Hold Button** สำหรับกดหน่วงเวลาปล่อยแก๊สหากเจ้าหน้าที่ตรวจสอบแล้วพบว่าเป็นสัญญาณเตือนผิดพลาด (False Alarm)
+', 9, 'intermediate', 4, true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('e2bdf887-4d4b-4710-b6c1-8dd61f020fdc', 10, 'dc-interview-and-mindset', 'ทัศนคติ ความปลอดภัย และเทคนิคพิชิตสัมภาษณ์งาน Data Center (Hosting vs Colocation)', 'วิธีคิดเรื่องความปลอดภัยและสติเมื่อเกิดเหตุฉุกเฉิน, ความซื่อสัตย์ในการตอบสัมภาษณ์, ความต่างของบริษัท Hosting vs Colocation และแนวคำตอบ STAR Method', '
+# ทัศนคติ ความปลอดภัย และเทคนิคพิชิตสัมภาษณ์งาน Data Center
+
+ในการสัมภาษณ์งานสาย **Data Center Technician / Data Center Operations (DC Ops)** สิ่งที่ผู้จัดการทีม (Hiring Manager) ให้ความสำคัญมากที่สุด **ไม่ใช่แค่ว่าคุณท่องจำคำสั่งได้มากแค่ไหน** แต่คือ **"คุณเป็นคนที่ไว้ใจให้ถือบัตรผ่านเข้าไปเดินในห้องที่มีเซิร์ฟเวอร์มูลค่าหลายร้อยล้านบาทโดยไม่ทำระบบล่มได้หรือไม่?"**
+
+---
+
+## 1. ทัศนคติหลักที่ผู้สัมภาษณ์มองหา (Mindset & Safety First)
+
+### 1.1 ความรอบคอบ มีสติ และไม่ตื่นตระหนกเมื่อเกิดวิกฤต (Calmness Under Pressure)
+ผู้จัดการกังวลเรื่อง **Human Error (ความผิดพลาดจากความประมาทหรือความตกใจของคน)** มากที่สุด เพราะการกดปุ่มผิดหรือสับเบรกเกอร์ผิดเพียงครั้งเดียวอาจทำให้ระบบธนาคารหรืออีคอมเมิร์ซล่มทั้งประเทศ
+
+#### กรณีศึกษาคำถามวัดใจในห้องสัมภาษณ์:
+> **คำถาม**: *"สมมติคุณเดินตรวจความเรียบร้อยใน Data Hall แล้วเห็นประกายไฟช็อตสั้นๆ หรือได้กลิ่นไหม้มาจาก Power Supply (PSU) ลูกหนึ่งของเซิร์ฟเวอร์เครื่องหนึ่งในตู้แร็ค คุณจะวิ่งไปสับเบรกเกอร์ไฟหลักของทั้งตู้แร็คลงทันทีเลยไหม?"*
+
+- **คำตอบที่ผิด (ตกสัมภาษณ์ทันที)**: *"รีบวิ่งไปสับเบรกเกอร์ไฟหลักของตู้แร็คหรือกดปุ่ม EPO (Emergency Power Off) ทันทีครับ เพื่อความปลอดภัย"*
+  - **ทำไมถึงผิด?** เพราะในตู้แร็ค 1 ตู้ มีเซิร์ฟเวอร์ของลูกค้าหรือระบบ Production อื่นที่ไม่ได้เกี่ยวข้องด้วยอีก 20–40 เครื่อง การสับไฟหลักของตู้แร็คจะทำให้อุปกรณ์ที่เหลือดับตามไปด้วย (Outage วงกว้างโดยไม่จำเป็น)
+- **แนวทางคำตอบที่ถูกต้องและแสดงถึงสติระดับมืออาชีพ**:
+  1. **ตั้งสติและประเมินสถานการณ์ทันที (Assess without Panic)**: ดูว่ามีเปลวไฟลุกไหม้ต่อเนื่องที่เป็นอันตรายต่อชีวิตหรือไม่ หากเป็นเพียงอาการช็อตภายในตัวลูก PSU ของเซิร์ฟเวอร์เครื่องเดียว (ซึ่งปกติมีวงจรตัดไฟตัวมันเองและมีลูกที่สองเป็น Redundant PSU รับช่วงต่ออยู่) **จะไม่ไปสับเบรกเกอร์หลักของทั้งตู้แร็คเด็ดขาด**
+  2. **ตรวจสอบและจำกัดวงความเสียหาย (Isolate the Fault)**: ตรวจสอบหมายเลขเครื่อง/ตำแหน่ง U และดูสถานะไฟของ PSU ลูกที่มีปัญหา หากปลอดภัยที่จะทำได้ ให้ถอดเฉพาะสายไฟเส้นที่จ่ายเข้า PSU ลูกที่ช็อตออก (เพื่อให้เครื่องรันต่อด้วย PSU อีกลูกบนอีก Feed หนึ่ง)
+  3. **แจ้งเตือนตามลำดับขั้น (Escalate & Document)**: รีบแจ้งหัวหน้ากะ (Shift Lead), ทีม NOC และทีม Facilities ทันทีเพื่อตรวจสอบค่ากระแสไฟบน PDU และวางแผนเปลี่ยนอะไหล่ PSU ตัวใหม่ตามขั้นตอนมาตรฐาน (MOP/SOP)
+
+---
+
+### 1.2 ความซื่อสัตย์ (Integrity & Honesty)
+ในสายงานโครงสร้างพื้นฐาน **การโกหกหรือแสร้งทำเป็นรู้ในสิ่งที่ตัวเองทำไม่เป็น คือสัญญาณอันตรายร้ายแรงที่สุด**
+
+- หากผู้สัมภาษณ์ถามทักษะเฉพาะทางที่คุณยังไม่เคยทำจริง เช่น:
+  - *"คุณเข้าหัวสายไฟเบอร์ด้วยการเชื่อมต่อใยแก้ว (Fusion Fiber Splicing) เป็นไหม?"*
+  - *"คุณเคยตั้งค่า Zoning บนสวิตช์ Brocade Fibre Channel ด้วยตัวเองไหม?"*
+- **วิธีตอบที่ได้คะแนนความน่าเชื่อถือสูงสุด**:
+  > *"สำหรับการใช้เครื่อง Fusion Splicer เชื่อมสายไฟเบอร์โดยตรง ผมยังไม่เคยลงมือทำหน้างานจริงครับ แต่ผมเข้าใจหลักการแยกชนิดสาย Single-mode/Multi-mode การทำความสะอาดหัวสายด้วย One-Click Cleaner และการวัดค่าการสูญเสียแสงด้วย Optical Power Meter ครับ ซึ่งผมเป็นคนเรียนรู้เครื่องมือใหม่ได้เร็วและพร้อมฝึกปฏิบัติตามมาตรฐานของทีมทันทีครับ"*
+- **ทำไมคำตอบนี้ถึงชนะใจผู้สัมภาษณ์?**
+  1. แสดงความซื่อสัตย์ ไม่เสี่ยงไปทำอุปกรณ์ราคาแพงพังหน้างานเพราะไม่กล้าถาม
+  2. แสดงให้เห็นว่ามีความรู้พื้นฐานที่เกี่ยวข้อง และมีความกระตือรือร้นที่จะเรียนรู้ต่อยอด
+
+---
+
+## 2. เข้าใจธรรมชาติของบริษัทที่ไปสัมภาษณ์: Hosting vs Colocation
+
+ก่อนเข้าห้องสัมภาษณ์ ให้ตรวจสอบว่าบริษัทนั้นทำธุรกิจหลักรูปแบบใด เพื่อเน้นจุดแข็งให้ตรงเป้า:
+
+| รูปแบบบริษัท | ลักษณะงานหลัก | หัวข้อที่จะถูกถามเจาะลึก |
+|---|---|---|
+| **1. บริษัท Hosting / Cloud / Enterprise DC ของตัวเอง**<br>*(มีเซิร์ฟเวอร์เป็นของบริษัทเองหลายพันเครื่อง)* | ดูแลตั้งแต่ฮาร์ดแวร์ไปจนถึงการลง OS และแก้ปัญหาให้ระบบกลับมาออนไลน์ | • การติดตั้งและแก้ปัญหา **Linux / Windows Server**<br>• กระบวนการบูตเครื่อง, **PXE Boot**, การตั้งค่า RAID<br>• การใช้ **iDRAC / iLO / IPMI** ดู Log ฮาร์ดแวร์และเปลี่ยน CPU, RAM, Disk<br>• คำสั่งตรวจเช็กเครือข่าย (`ip`, `ping`, `traceroute`, `ss`, `ethtool`) |
+| **2. บริษัท Colocation Data Center**<br>*(เช่น Equinix, NTT, STT GDC, Telehouse — ให้เช่าพื้นที่ตู้แร็ค ไฟ และ Cross-Connect)* | งานบริการลูกค้าหน้าตู้ (**Smart Hands**) และการเดินสายเชื่อมต่อระหว่างตู้ (**Cross-Connect**) โดยไม่ได้ล็อกอินเข้า OS ของลูกค้า | • ความแม่นยำเรื่อง **Cabling & Fiber** (SMF vs MMF, SC/LC/MPO, SR/LR)<br>• การไล่สายบน **Patch Panel**, การสลับขั้วสายไฟเบอร์ (**Rolling Fiber Tx/Rx**)<br>• การใช้เครื่องมือวัดสาย (**Fluke Tester, Visual Fault Locator, Optical Power Meter**)<br>• ระบบไฟ **A/B Feed**, **Hot/Cold Aisle**, และระเบียบความปลอดภัยในการเข้าพื้นที่ลูกค้า |
+
+---
+
+## 3. เทคนิคการตอบคำถามเชิงพฤติกรรม (Behavioral Questions) ด้วย STAR Method
+
+ในการสัมภาษณ์เกือบทุกที่ จะมีคำถามแนวเล่าประสบการณ์จริงที่ขึ้นต้นด้วย **"จงเล่าเหตุการณ์ตอนที่คุณต้องรับมือกับ..."** (*"Tell me about a time when..."*)
+
+ให้จัดระเบียบคำตอบเป็น 4 ส่วนตามโครงสร้าง **STAR Method** เสมอ เพื่อให้เรื่องเล่ากระชับ ชัดเจน และเห็นผลลัพธ์:
+
+- **S — Situation (สถานการณ์)**: เหตุการณ์เกิดขึ้นที่ไหน เมื่อไหร่ และบริบทคืออะไร (เล่าสั้นๆ 1–2 ประโยค)
+- **T — Task (ภารกิจ/โจทย์ที่ต้องแก้)**: ปัญหาหรือความท้าทายที่คุณรับผิดชอบในตอนนั้นคืออะไร
+- **A — Action (สิ่งที่คุณลงมือทำอย่างเป็นระบบ)**: ขั้นตอนการตรวจสอบ การใช้สติ การสื่อสารกับทีม และการป้องกันไม่ให้กระทบส่วนอื่น
+- **R — Result (ผลลัพธ์ที่ได้และบทเรียน)**: แก้ปัญหาสำเร็จอย่างไร ใช้เวลาเท่าไหร่ และได้ปรับปรุงคู่มือ (Runbook) อย่างไรเพื่อไม่ให้เกิดซ้ำ
+
+---
+
+### ตัวอย่างคำถามและแนวคำตอบแบบ STAR Method
+
+#### คำถามที่ 1: "จงเล่าเหตุการณ์ตอนที่คุณต้องทำงานภายใต้ความกดดัน หรือเจอปัญหาหน้างานที่ไม่เคยเจอมาก่อน"
+- **Situation**: *"ในการฝึกซ้อมแล็บจำลองเหตุการณ์วิกฤต (Incident P1) เซิร์ฟเวอร์เว็บหลักไม่สามารถสตาร์ทบริการ Nginx ขึ้นมาได้หลังการอัปเดตระบบ"*
+- **Task**: *"ผมต้องหาสาเหตุที่แท้จริงและทำให้บริการเว็บกลับมาออนไลน์ให้เร็วที่สุดโดยไม่ทำข้อมูลหรือการตั้งค่าเดิมเสียหาย"*
+- **Action**: *"แทนที่จะสุ่มรีบูตเครื่องซ้ำๆ ผมตั้งสติและไล่ตามขั้นตอนมาตรฐาน เริ่มจากเช็ก `systemctl status nginx` และอ่าน Log ด้วย `journalctl -u nginx` จนพบ Error ว่า `Address already in use` บนพอร์ต 80 จากนั้นใช้ `ss -tulnp` ตรวจสอบจนเจอว่ามีบริการ `apache2` แอบรันขึ้นมาแย่งพอร์ต 80 อยู่ จึงสั่งหยุด `apache2` แล้วสตาร์ท `nginx` ใหม่ พร้อมทดสอบด้วย `curl -I http://localhost`"*
+- **Result**: *"ระบบเว็บกลับมาตอบกลับ `200 OK` ได้ภายในเวลาไม่ถึง 5 นาทีโดยไม่ต้องรีบูตเซิร์ฟเวอร์ และผมได้บันทึกขั้นตอนการเช็กพอร์ตชนไว้ใน Runbook เพื่อเป็นแนวทางให้ทีมต่อไปครับ"*
+
+#### คำถามที่ 2: "คุณมีวิธีป้องกันความผิดพลาด (Human Error) เวลาต้องถอดสายหรือปิดเครื่องเซิร์ฟเวอร์ในตู้แร็คอย่างไร?"
+- **แนวคำตอบ**:
+  1. **ตรวจสอบใบงาน (Change Ticket / Work Order)** ให้ตรงกันอย่างน้อย 3 จุดเสมอ: **หมายเลขตู้ (Rack ID) → ตำแหน่งความสูง (U Position) → หมายเลขเครื่อง/Serial Number (Service Tag)**
+  2. สั่งเปิด **ไฟกระพริบสีฟ้า (UID / Chassis Identify LED)** จากระบบ iDRAC/iLO ก่อนเดินไปหลังตู้แร็ค เพื่อให้เห็นเครื่องเป้าหมายชัดเจนทั้งด้านหน้าและด้านหลัง
+  3. ตรวจสอบป้ายกำกับสาย (**Cable Label**) ทั้งฝั่งต้นทางและปลายทาง และยืนยันกับทีม NOC ในสายโทรศัพท์หรือแชตก่อนดึงสายออกจริงทุกครั้ง (**Measure twice, cut once**)
+', 8, 'beginner', 5, true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('5a93786b-3b53-4b51-8232-c77e8324453b', 1, 'linux-cron-schedule', 'การตรวจสอบงานตั้งเวลาด้วย Cron และ Crontab (crontab -l, /etc/cron.d, Cron Log)', 'โครงสร้างเวลา 5 ฟิลด์ของ Crontab ความต่างของบริการ cron บน Ubuntu กับ RHEL และวิธีไล่ปัญหาเมื่อ Batch Job ไม่ทำงานตามเวลา', '
 # การตรวจสอบงานตั้งเวลาด้วย Cron (Scheduled Jobs)
 
 ในระบบองค์กร งานประมวลผลรอบดึก (Batch Job) เช่น การสรุปรายงานประจำวัน การตัดยอดเงิน หรือการสำรองข้อมูล มักถูกตั้งเวลาไว้ด้วยบริการ **Cron** ปัญหาที่ทีม **Application Support และ NOC Tier 1** พบบ่อยคือ *"สคริปต์รันด้วยมือผ่านปกติ แต่พอตั้งเวลาใน Cron แล้วไม่ทำงานหรือได้ผลลัพธ์ไม่ครบ"* การอ่านตาราง Crontab และตรวจสอบ Log ของ Cron จึงเป็นทักษะสำคัญในการวิเคราะห์สาเหตุเบื้องต้น
@@ -2579,18 +2653,8 @@ $ tail -n 10 /var/log/app/settlement.log
 ## อ้างอิง
 - คู่มือในระบบ: `man crontab`, `man 5 crontab`, `man cron`, `man systemd.timer`
 - เอกสาร Ubuntu CronHowto และ Red Hat Configuring Periodic Tasks
-', 9, 'intermediate', 9)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'linux'), 'linux-health-check', 'เช็กสถานะ Service, Port และ Endpoint (systemctl, ss, nc, curl)', 'ชุดคำสั่งตรวจสอบเบื้องต้นตามลำดับ ตั้งแต่ Service รันอยู่ไหม Port เปิดฟังไหม ต่อ Port ปลายทางได้ไหม จนถึง Endpoint ตอบ HTTP ปกติไหม พร้อมวิธีแปลผลและข้อมูลที่ต้องเก็บก่อน Escalate', '
+', 9, 'intermediate', 9, true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 1, 'linux-health-check', 'เช็กสถานะ Service, Port และ Endpoint (systemctl, ss, nc, curl)', 'ชุดคำสั่งตรวจสอบเบื้องต้นตามลำดับ ตั้งแต่ Service รันอยู่ไหม Port เปิดฟังไหม ต่อ Port ปลายทางได้ไหม จนถึง Endpoint ตอบ HTTP ปกติไหม พร้อมวิธีแปลผลและข้อมูลที่ต้องเก็บก่อน Escalate', '
 # เช็กสถานะ Service, Port และ Endpoint
 
 เมื่อมีคนแจ้งว่า "ระบบเข้าไม่ได้" งานแรกของ **Application Support และ NOC Tier 1** คือบอกให้ได้ว่าปัญหาอยู่ชั้นไหน บทนี้ใช้หลักตรวจจากล่างขึ้นบน แล้วหยุดที่ชั้นแรกที่ผิดปกติ
@@ -2721,2935 +2785,8 @@ $ curl -sS -o /dev/null -w "%{http_code} %{time_total}s\n" http://127.0.0.1:8080
 ## อ้างอิง
 - `man ss`, `man systemctl`, `man curl`, `man nc`, `man lsof`
 - curl Exit Codes: https://curl.se/docs/manpage.html
-', 10, 'intermediate', 10)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:permissions:q01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-permissions' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หากต้องการกำหนดสิทธิ์ไฟล์ `deploy.sh` ให้ ''เจ้าของสามารถ อ่าน-เขียน-รันได้'' ส่วน ''กลุ่มและผู้อื่น อ่านและรันได้เท่านั้น'' ต้องใช้คำสั่ง chmod ตัวเลขใด?', NULL, 'easy', 'multiple_choice', 'คำนวณสิทธิ์ตามเลข Octal:
-- Owner (rwx) = 4 + 2 + 1 = 7
-- Group (r-x) = 4 + 0 + 1 = 5
-- Others (r-x) = 4 + 0 + 1 = 5
-ดังนั้นคำตอบคือ chmod 755 deploy.sh', ARRAY['chmod', 'linux', 'permissions']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:permissions:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:permissions:q01'), 'chmod 755 deploy.sh', TRUE, NULL, 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:permissions:q01'), 'chmod 644 deploy.sh', FALSE, NULL, 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:permissions:q01'), 'chmod 777 deploy.sh', FALSE, NULL, 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:permissions:q01'), 'chmod 764 deploy.sh', FALSE, NULL, 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:02-basics:q01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'เจ้าหน้าที่ Support รีโมตเข้าเครื่องเซิร์ฟเวอร์แล้วต้องการตรวจสอบว่าขณะนี้ตนเองกำลังยืนอยู่ที่โฟลเดอร์ใดแบบเส้นทางเต็ม (Absolute Path) ควรใช้คำสั่งใด?', NULL, 'easy', 'multiple_choice', 'คำสั่ง `pwd` (Print Working Directory) ใช้แสดงเส้นทางเต็มของโฟลเดอร์ปัจจุบันตั้งแต่ราก (`/`) ช่วยป้องกันความผิดพลาดก่อนรันคำสั่งจัดการไฟล์', ARRAY['pwd', 'basics', 'navigation']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q01'), 'pwd', TRUE, 'ถูกต้อง — แสดงเส้นทางเต็มของโฟลเดอร์ที่กำลังทำงานอยู่ปัจจุบัน', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q01'), 'cd', FALSE, 'cd ใช้สำหรับเปลี่ยนโฟลเดอร์ หากพิมพ์ cd เปล่าๆ จะพากลับไปยัง Home directory', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q01'), 'whoami', FALSE, 'whoami ใช้แสดงชื่อบัญชีผู้ใช้ปัจจุบัน ไม่ใช่ตำแหน่งโฟลเดอร์', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q01'), 'ls -a', FALSE, 'ls -a ใช้แสดงรายชื่อไฟล์ในโฟลเดอร์ปัจจุบัน ไม่ได้แสดงเส้นทางเต็ม', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:02-basics:q02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หากต้องการดูรายการไฟล์ทั้งหมดในโฟลเดอร์ รวมถึงไฟล์ซ่อนที่ขึ้นต้นด้วยจุด (`.`) พร้อมแสดงสิทธิ์และขนาดไฟล์ในหน่วยที่อ่านง่าย (KB, MB, GB) ควรใช้คำสั่งใด?', NULL, 'easy', 'multiple_choice', 'ตัวเลือก `-l` แสดงรายละเอียดแบบยาว, `-a` แสดงไฟล์ทั้งหมดรวมไฟล์ซ่อน (dotfiles), และ `-h` แปลงหน่วยขนาดไฟล์ให้อ่านง่าย (human-readable) เมื่อรวมกันคือ `ls -lah`', ARRAY['ls', 'basics', 'files']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q02'), 'ls -lah', TRUE, 'ถูกต้อง — รวมตัวเลือกดูรายละเอียด (-l), ไฟล์ซ่อน (-a) และหน่วยอ่านง่าย (-h)', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q02'), 'ls -l', FALSE, 'แสดงรายละเอียดแต่ไม่แสดงไฟล์ซ่อนที่ขึ้นต้นด้วยจุด และขนาดไฟล์ยังเป็นหน่วยไบต์', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q02'), 'ls -r', FALSE, 'ls -r เป็นการเรียงลำดับรายชื่อไฟล์แบบย้อนกลับ (reverse)', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q02'), 'cat -n *', FALSE, 'cat เป็นคำสั่งเปิดอ่านเนื้อหาภายในไฟล์ ไม่ใช่การแสดงรายการไฟล์ในโฟลเดอร์', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:02-basics:q03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'จากผลลัพธ์บนหน้าจอ Terminal ด้านล่าง ทำไมคำสั่ง `tail -n 20 error.log` จึงแจ้งว่า `No such file or directory` และควรแก้ไขอย่างไร?', 'support@web-01:/var/log/nginx$ ls -l
-total 48
--rw-r----- 1 www-data adm 38420 Nov  3 11:00 access.log
--rw-r----- 1 www-data adm  8192 Nov  3 10:55 Error.log
-support@web-01:/var/log/nginx$ tail -n 20 error.log
-tail: cannot open ''error.log'' for reading: No such file or directory', 'easy', 'scenario', 'ระบบไฟล์บน Linux แยกแยะตัวพิมพ์เล็กและตัวพิมพ์ใหญ่ (Case-sensitive) จากผลของ `ls -l` ชื่อไฟล์จริงคือ `Error.log` (ตัว E พิมพ์ใหญ่) ดังนั้นการพิมพ์ `error.log` จึงถือเป็นคนละไฟล์ วิธีป้องกันคือใช้ปุ่ม Tab ช่วยเติมชื่อไฟล์', ARRAY['case-sensitive', 'tail', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q03');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q03'), 'ชื่อไฟล์บน Linux แยกตัวพิมพ์เล็ก-ใหญ่ ต้องระบุเป็น `tail -n 20 Error.log` ให้ตรงกับชื่อไฟล์จริง', TRUE, 'ถูกต้อง — Error.log กับ error.log คือคนละชื่อไฟล์บน Linux', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q03'), 'คำสั่ง tail ไม่สามารถอ่านไฟล์ขนาดต่ำกว่า 10KB ได้ ต้องใช้คำสั่ง less แทน', FALSE, 'tail สามารถอ่านไฟล์ข้อความทุกขนาดได้', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q03'), 'ต้องใส่เครื่องหมาย `/` นำหน้าชื่อไฟล์เป็น `/error.log` เสมอ', FALSE, 'การใส่ `/error.log` จะกลายเป็นอ้างอิงไฟล์ที่รากสุดของระบบ (`/`) ซึ่งผิดตำแหน่ง', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q03'), 'ไฟล์ถูกบีบอัดอยู่ ต้องแตกไฟล์ด้วย gunzip ก่อนเปิดอ่าน', FALSE, 'ไฟล์ไม่ได้มีนามสกุล .gz และสาเหตุเกิดจากการสะกดตัวพิมพ์ใหญ่-เล็กไม่ตรงกัน', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:02-basics:q04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'เมื่อต้องตรวจสอบไฟล์ `application.log` ที่มีขนาดใหญ่ถึง 2.5 GB บนเซิร์ฟเวอร์ Production เหตุใดจึงไม่ควรใช้คำสั่ง `cat application.log`?', NULL, 'medium', 'multiple_choice', '`cat` จะอ่านและพิมพ์เนื้อหาทั้งไฟล์ออกทางหน้าจอรวดเดียว สำหรับไฟล์ขนาดหลาย GB จะทำให้หน้าจอค้าง สิ้นเปลือง I/O และแบนด์วิดท์ของเซสชัน SSH ควรใช้ `less` (อ่านทีละหน้า) หรือ `tail` (ดูเฉพาะท้ายไฟล์) แทน', ARRAY['cat', 'less', 'tail', 'logs']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q04');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q04'), 'เพราะ cat จะเทเนื้อหาทั้งหมดออกหน้าจอรวดเดียว ทำให้เปลืองทรัพยากรและอ่านข้อมูลลำบาก ควรใช้ less หรือ tail แทน', TRUE, 'ถูกต้อง — less และ tail ออกแบบมาให้อ่านเฉพาะส่วนที่ต้องการโดยไม่โหลดทั้งไฟล์ลงหน้าจอ', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q04'), 'เพราะคำสั่ง cat จะทำการล็อกไฟล์ (File lock) ทำให้แอปพลิเคชันเขียน Log ต่อไม่ได้จนระบบล่ม', FALSE, 'cat ไม่ได้ล็อกไฟล์ไม่ให้โปรเซสอื่นเขียนต่อ แต่ปัญหาคือการอ่านและแสดงผลรวดเดียวทั้งหมด', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q04'), 'เพราะ cat จะลบเนื้อหาเก่าในไฟล์ทิ้งหลังจากแสดงผลเสร็จ', FALSE, 'cat เป็นคำสั่งอ่านอย่างเดียว ไม่ได้ลบเนื้อหาในไฟล์', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q04'), 'เพราะ cat รองรับเฉพาะไฟล์ที่มีขนาดไม่เกิน 1 MB เท่านั้นตามข้อจำกัดของ Kernel', FALSE, 'cat ไม่มีข้อจำกัดที่ 1 MB แต่ไม่เหมาะกับการเปิดอ่านไฟล์ใหญ่โต้ตอบบนหน้าจอ', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:02-basics:q05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'จากเหตุการณ์ในหน้าจอ Terminal ด้านล่าง หากผู้ใช้งานกด Enter เพื่อรันคำสั่งดังกล่าว จะเกิดผลกระทบอย่างไร?', 'root@app-prod-01:/var/www/html# pwd
-/var/www/html
-root@app-prod-01:/var/www/html# rm -rf / tmp/cache/*', 'hard', 'scenario', 'สังเกตช่องว่างระหว่าง `/` กับ `tmp/cache/*` คำสั่ง `rm -rf / tmp/cache/*` จะถูก Shell ตีความว่าให้ลบ 2 เป้าหมาย คือ `/` (รากของระบบทั้งหมด) และ `tmp/cache/*` ซึ่งอันตรายร้ายแรงมากในสิทธิ์ root (แม้ว่าระบบสมัยใหม่จะมี `--preserve-root` ป้องกันระดับหนึ่ง แต่หากเผลอพิมพ์เว้นวรรคผิดกับพาธสำคัญอื่น เช่น `/var/www/ html` ก็จะลบทั้ง `/var/www/` ทันที)', ARRAY['rm', 'wildcard', 'safety', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q05');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q05'), 'มีช่องว่างหลังเครื่องหมาย `/` ทำให้คำสั่งถูกตีความว่าสั่งลบตั้งแต่ Root (`/`) และตามด้วย `tmp/cache/*` ซึ่งเสี่ยงทำให้ระบบเสียหายร้ายแรง', TRUE, 'ถูกต้อง — การเว้นวรรคผิดในคำสั่ง rm -rf ทำให้อาร์กิวเมนต์แยกออกเป็น 2 พาธ', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q05'), 'ระบบจะลบเฉพาะไฟล์ใน `/tmp/cache/*` ได้ตามปกติ เพราะ Shell จะตัดช่องว่างออกให้อัตโนมัติ', FALSE, 'Shell ใช้ช่องว่างเป็นตัวคั่นอาร์กิวเมนต์ ไม่ได้ตัดช่องว่างรวมเข้าด้วยกัน', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q05'), 'คำสั่งจะไม่ทำงานเพราะตัวเลือก `-rf` ไม่สามารถใช้ร่วมกับเครื่องหมาย `*` ได้', FALSE, '-rf ใช้ร่วมกับ wildcard * ได้ และนั่นคือสาเหตุที่ทำให้เกิดความเสียหายได้ง่าย', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q05'), 'ระบบจะย้ายไฟล์ทั้งหมดไปไว้ในถังขยะ `~/.Trash` ซึ่งสามารถกู้คืนได้ภายหลัง', FALSE, 'คำสั่ง rm บน Linux CLI จะลบไฟล์ออกจากไดเรกทอรีโดยตรง ไม่ได้ย้ายไปถังขยะ', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:02-basics:q06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ขณะยืนอยู่ที่โฟลเดอร์ `/var/log/nginx` หากต้องการเปลี่ยนโฟลเดอร์ไปยัง `/var/log` โดยใช้เส้นทางแบบ Relative Path ควรพิมพ์คำสั่งใด?', NULL, 'easy', 'multiple_choice', 'สัญลักษณ์ `..` หมายถึงโฟลเดอร์แม่ (Parent Directory) ที่อยู่สูงขึ้นไป 1 ระดับ ดังนั้นเมื่อยืนอยู่ที่ `/var/log/nginx` การรัน `cd ..` จะพาไปยัง `/var/log`', ARRAY['cd', 'path', 'navigation']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q06');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q06'), 'cd ..', TRUE, 'ถูกต้อง — `..` แทนโฟลเดอร์แม่ 1 ชั้น', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q06'), 'cd .', FALSE, '`.` หมายถึงโฟลเดอร์ปัจจุบัน การรัน `cd .` จึงยังคงอยู่ที่เดิม', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q06'), 'cd ~', FALSE, '`~` หมายถึง Home directory ของผู้ใช้ เช่น `/home/support`', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q06'), 'cd /', FALSE, '`cd /` คือการย้ายไปยังรากสุดของระบบ (Root directory) และเป็น Absolute Path', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:02-basics:q07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หากต้องการสำรองไฟล์คอนฟิก `app.conf` เป็น `app.conf.bak` โดยยังคงรักษาค่าเวลาแก้ไขเดิม (Timestamp) และสิทธิ์เจ้าของไฟล์เดิมไว้ทั้งหมด เพื่อใช้เปรียบเทียบภายหลัง ควรใช้คำสั่งใด?', NULL, 'medium', 'multiple_choice', 'คำสั่ง `cp -p` (`--preserve=mode,ownership,timestamps`) จะคัดลอกไฟล์พร้อมเก็บรักษาสิทธิ์ เจ้าของ และเวลาแก้ไขเดิมของไฟล์ต้นฉบับไว้ ซึ่งมีประโยชน์มากในงาน Support เมื่อต้องเก็บหลักฐานเวลาแก้ไขไฟล์', ARRAY['cp', 'backup', 'basics']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q07');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q07'), 'cp -p app.conf app.conf.bak', TRUE, 'ถูกต้อง — `-p` ช่วยคงค่า mode, ownership และ timestamps เดิมไว้', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q07'), 'mv app.conf app.conf.bak', FALSE, 'mv เป็นการย้ายหรือเปลี่ยนชื่อไฟล์ จะทำให้ไฟล์ต้นฉบับ `app.conf` หายไปและกระทบแอปพลิเคชัน', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q07'), 'touch app.conf.bak', FALSE, 'touch จะสร้างเพียงไฟล์เปล่าที่ไม่มีเนื้อหาข้างใน', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:02-basics:q07'), 'mkdir app.conf.bak', FALSE, 'mkdir เป็นคำสั่งสร้างโฟลเดอร์ ไม่ใช่การคัดลอกไฟล์', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:03-file-system:q01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ตามมาตรฐานโครงสร้างไดเรกทอรีของ Linux (FHS) ไฟล์ตั้งค่าระบบ (System Configuration) และไฟล์บันทึกเหตุการณ์ (System Logs) จะถูกจัดเก็บไว้ที่ไดเรกทอรีใดตามลำดับ?', NULL, 'easy', 'multiple_choice', 'ตามมาตรฐาน FHS ไดเรกทอรี `/etc` ใช้เก็บไฟล์ตั้งค่าระบบและบริการต่างๆ ส่วน `/var/log` ใช้เก็บไฟล์บันทึกเหตุการณ์ (Logs) ที่มีขนาดเปลี่ยนแปลงตลอดเวลา', ARRAY['filesystem', 'fhs', 'directories']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q01'), '/etc และ /var/log', TRUE, 'ถูกต้อง — /etc เก็บไฟล์คอนฟิก และ /var/log เก็บไฟล์ Log', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q01'), '/usr และ /tmp', FALSE, '/usr เก็บโปรแกรมและไลบรารี ส่วน /tmp เก็บไฟล์ชั่วคราว', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q01'), '/opt และ /home', FALSE, '/opt เก็บซอฟต์แวร์เสริม ส่วน /home เก็บโฟลเดอร์ส่วนตัวของผู้ใช้', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q01'), '/bin และ /sbin', FALSE, '/bin และ /sbin เก็บไฟล์คำสั่ง Binary ของระบบ', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:03-file-system:q02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'เมื่อได้รับแจ้งเตือนว่าพาร์ทิชัน `/var` กำลังจะเต็ม หากต้องการค้นหาเฉพาะไฟล์ธรรมดา (`-type f`) ใน `/var` ที่มีขนาดใหญ่กว่า 200 MB ต้องใช้คำสั่งใด?', NULL, 'easy', 'multiple_choice', 'คำสั่ง `find /var -type f -size +200M` ใช้ค้นหาเฉพาะไฟล์ปกติ (`-type f`) ภายใน `/var` ที่มีขนาดมากกว่า (`+`) 200 เมกะไบต์ (`M`)', ARRAY['find', 'disk', 'filesystem']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q02'), 'find /var -type f -size +200M', TRUE, 'ถูกต้อง — ระบุโฟลเดอร์ /var กรองเฉพาะไฟล์ด้วย -type f และขนาดเกิน 200M ด้วย -size +200M', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q02'), 'find /var -type d -size -200M', FALSE, '-type d คือการหาโฟลเดอร์ และ -200M คือขนาดน้อยกว่า 200MB', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q02'), 'du -sh /var +200M', FALSE, 'du ไม่รองรับพารามิเตอร์กรองขนาดแบบ +200M', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q02'), 'ls -lah /var --size=200M', FALSE, 'ls ไม่ได้ค้นหาลงไปทุกโฟลเดอร์ย่อยและไม่มีตัวเลือกกรองขนาดแบบนี้', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:03-file-system:q03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'จากผลลัพธ์การตรวจสอบด้านล่าง สาเหตุที่แอปพลิเคชันไม่สามารถอ่านไฟล์คอนฟิกผ่าน `/opt/payment/current/config.yml` ได้คืออะไร?', '$ ls -l /opt/payment/current
-lrwxrwxrwx 1 deploy deploy 31 Nov  2 22:00 /opt/payment/current -> /opt/payment/releases/20261015
-
-$ file /opt/payment/current
-/opt/payment/current: broken symbolic link to /opt/payment/releases/20261015
-
-$ ls -l /opt/payment/releases/
-total 8
-drwxr-xr-x 4 deploy deploy 4096 Nov  1 09:00 20261101
-drwxr-xr-x 4 deploy deploy 4096 Nov  3 08:30 20261103', 'medium', 'scenario', 'จากผลของ `file /opt/payment/current` แจ้งชัดเจนว่าเป็น `broken symbolic link` เพราะชี้ไปยังโฟลเดอร์ `/opt/payment/releases/20261015` ซึ่งถูกลบออกไปแล้ว (ใน `releases/` เหลือเพียง `20261101` และ `20261103`) ต้องแจ้งทีมที่ดูแลทำการอัปเดต Symlink ให้ชี้ไปยัง Release ที่ถูกต้อง', ARRAY['symlink', 'file', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q03');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q03'), 'Symbolic link `/opt/payment/current` ชี้ไปยังโฟลเดอร์ `/opt/payment/releases/20261015` ที่ถูกลบไปแล้ว (Broken link)', TRUE, 'ถูกต้อง — ลิงก์ชี้ไปยังปลายทางที่ไม่มีอยู่จริงในโฟลเดอร์ releases/', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q03'), 'สิทธิ์ของ `/opt/payment/current` เป็น `lrwxrwxrwx` (777) ระบบความปลอดภัยจึงบล็อกการเข้าถึง', FALSE, 'สิทธิ์ของตัว Symbolic link จะแสดงเป็น lrwxrwxrwx เสมอตามปกติ โดยสิทธิ์จริงจะอิงตามไฟล์ปลายทาง', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q03'), 'ผู้ใช้ deploy ไม่มีสิทธิ์อ่านโฟลเดอร์ `20261103`', FALSE, 'ปัญหาไม่ได้อยู่ที่สิทธิ์ของ 20261103 แต่อยู่ที่ตัวลิงก์ current ยังชี้ไปที่ 20261015 ซึ่งไม่มีอยู่แล้ว', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q03'), 'ฮาร์ดดิสก์พาร์ทิชัน `/opt` เสียหาย ต้องรัน fsck ทันที', FALSE, 'เป็นเพียงปัญหา Symbolic link ชี้ผิดโฟลเดอร์หลังการลบ Release เก่า ไม่ใช่ดิสก์เสีย', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:03-file-system:q04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'แอปพลิเคชันบนเครื่อง `app-01` พยายามเชื่อมต่อฐานข้อมูลด้วยชื่อ `db-internal.corp` แต่กลับวิ่งไปยัง IP เก่า (`10.10.1.50`) ทั้งที่ทีม Network ยืนยันว่าอัปเดต DNS Server กลางเป็น IP ใหม่ (`10.10.2.99`) เรียบร้อยแล้ว ควรตรวจสอบไฟล์ใดบนเครื่อง `app-01` เป็นอันดับแรก?', '$ ping -c 1 db-internal.corp
-PING db-internal.corp (10.10.1.50) 56(84) bytes of data.', 'medium', 'scenario', 'โดยค่าเริ่มต้น Linux จะตรวจสอบการจับคู่ชื่อโฮสต์ในไฟล์ `/etc/hosts` ของเครื่องก่อนส่งคำถามไปที่ DNS Server ที่ระบุใน `/etc/resolv.conf` หากมีการผูก IP เก่าค้างไว้ใน `/etc/hosts` เครื่องจะใช้ IP นั้นทันที', ARRAY['hosts', 'dns', 'etc', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q04');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q04'), 'ตรวจสอบไฟล์ `/etc/hosts` ว่ามีการระบุ IP `10.10.1.50` คู่กับชื่อ `db-internal.corp` ค้างไว้หรือไม่', TRUE, 'ถูกต้อง — ระบบจะอ่าน /etc/hosts ก่อนสอบถาม DNS Server เสมอ', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q04'), 'ตรวจสอบไฟล์ `/etc/fstab` ว่ามีการตั้งค่า Network Drive ผิดหรือไม่', FALSE, '/etc/fstab ใช้สำหรับตั้งค่าการ Mount ระบบไฟล์และดิสก์ ไม่เกี่ยวกับการแปลงชื่อโดเมน', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q04'), 'ตรวจสอบไฟล์ `/etc/hostname` เพราะชื่อเครื่องอาจซ้ำกับฐานข้อมูล', FALSE, '/etc/hostname เก็บเฉพาะชื่อของเครื่องตัวเอง ไม่ได้เก็บตารางแปลง IP ของปลายทางอื่น', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q04'), 'ลบไฟล์ทั้งหมดใน `/tmp` เพื่อล้างแคชของระบบไฟล์', FALSE, 'ไฟล์ใน /tmp ไม่ใช่ตาราง Host resolution ของระบบปฏิบัติการ', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:03-file-system:q05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ระบบเกิดความผิดปกติเมื่อ 25 นาทีที่แล้ว หัวหน้าทีมต้องการทราบว่ามีไฟล์ใดใน `/etc/nginx` ถูกแก้ไขเนื้อหาในช่วง 30 นาทีที่ผ่านมาหรือไม่ ควรใช้คำสั่งใดตรวจสอบ?', NULL, 'medium', 'multiple_choice', 'ในคำสั่ง `find` ตัวเลือก `-mmin -30` หมายถึงค้นหาไฟล์ที่มีการแก้ไขเนื้อหา (Modification time in minutes) น้อยกว่า 30 นาทีที่ผ่านมา (ส่วน `-mtime` จะนับเป็นหน่วยวัน/24 ชั่วโมง)', ARRAY['find', 'stat', 'timestamp']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q05');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q05'), 'find /etc/nginx -type f -mmin -30', TRUE, 'ถูกต้อง — `-mmin -30` ค้นหาไฟล์ที่ถูกแก้ไขภายใน 30 นาทีล่าสุด', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q05'), 'find /etc/nginx -type f -mtime +30', FALSE, '`-mtime +30` คือไฟล์ที่ถูกแก้ไขมานานกว่า 30 วันแล้ว', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q05'), 'stat /etc/nginx --minutes 30', FALSE, 'คำสั่ง stat ไม่มีพารามิเตอร์ --minutes สำหรับค้นหาไฟล์', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q05'), 'du -sh /etc/nginx -m 30', FALSE, 'du ใช้สำหรับคำนวณขนาดพื้นที่ดิสก์ ไม่ใช่การค้นหาไฟล์ตามเวลา', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:03-file-system:q06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'เมื่อใช้คำสั่ง `stat config.yml` จะเห็นเวลา 3 ค่า ได้แก่ Access, Modify และ Change ค่า `Modify` กับ `Change` ต่างกันอย่างไร?', NULL, 'hard', 'multiple_choice', 'ในระบบไฟล์ Linux: `Modify` (mtime) คือเวลาที่เนื้อหาภายในไฟล์ถูกแก้ไขครั้งล่าสุด ส่วน `Change` (ctime) คือเวลาที่ข้อมูลกำกับไฟล์ (Metadata เช่น สิทธิ์ `chmod`, เจ้าของ `chown`, หรือจำนวนลิงก์) ถูกเปลี่ยนแปลง', ARRAY['stat', 'inode', 'filesystem']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q06');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q06'), 'Modify คือเวลาที่แก้ไขเนื้อหาภายในไฟล์ ส่วน Change คือเวลาที่แก้ไข Metadata เช่น สิทธิ์หรือเจ้าของไฟล์', TRUE, 'ถูกต้อง — mtime เปลี่ยนเมื่อแก้เนื้อหาไฟล์ ส่วน ctime เปลี่ยนเมื่อแก้เนื้อหาหรือแก้สิทธิ์/เจ้าของ', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q06'), 'Modify คือเวลาที่สร้างไฟล์ครั้งแรก ส่วน Change คือเวลาที่เปิดอ่านไฟล์ล่าสุด', FALSE, 'เวลาเปิดอ่านคือ Access (atime) และเวลาสร้างไฟล์คือ Birth', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q06'), 'Modify ใช้กับไฟล์ข้อความเท่านั้น ส่วน Change ใช้กับไฟล์ Binary เท่านั้น', FALSE, 'ทั้งสองค่ามีอยู่ในทุกไฟล์บนระบบ Linux', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q06'), 'ทั้งสองค่ามีความหมายเหมือนกันทุกประการ แสดงซ้ำเพื่อรองรับระบบเก่า', FALSE, 'ทั้งสองค่าแยกกันชัดเจน เช่น การรัน chmod จะอัปเดตเฉพาะ Change แต่ไม่อัปเดต Modify', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:03-file-system:q07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่ง `file report_2026.gz` มีประโยชน์อย่างไรในการตรวจสอบปัญหาหน้างาน?', NULL, 'easy', 'multiple_choice', 'คำสั่ง `file` จะอ่านข้อมูลส่วนหัว (Magic bytes) ของไฟล์เพื่อบอกชนิดที่แท้จริงของไฟล์โดยไม่เชื่อแค่ชื่อนามสกุล ช่วยให้รู้ว่าไฟล์ `.gz` ที่แตกไม่ได้ แท้จริงแล้วเป็นไฟล์ข้อความธรรมดาหรือไฟล์ว่างหรือไม่', ARRAY['file', 'troubleshooting', 'filesystem']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q07');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q07'), 'ใช้ตรวจสอบชนิดที่แท้จริงของไฟล์จากข้อมูลภายใน โดยไม่ได้ดูแค่ชื่อนามสกุลไฟล์', TRUE, 'ถูกต้อง — ช่วยจับผิดไฟล์ที่ตั้งนามสกุลไม่ตรงกับเนื้อหาจริง เช่น ไฟล์ดาวน์โหลดเสียที่ได้เนื้อหาเป็น HTML', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q07'), 'ใช้แตกไฟล์บีบอัดตระกูล .gz ออกมาเป็นโฟลเดอร์', FALSE, 'การแตกไฟล์ .gz ต้องใช้ gunzip หรือ tar ไม่ใช่คำสั่ง file', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q07'), 'ใช้ซ่อมแซมไฟล์ที่เสียหายให้กลับมาเปิดได้ตามปกติ', FALSE, 'คำสั่ง file เป็นการอ่านเพื่อระบุประเภทไฟล์เท่านั้น ไม่ได้ซ่อมแซมไฟล์', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:03-file-system:q07'), 'ใช้เปลี่ยนเจ้าของไฟล์ให้เป็นของผู้ใช้ปัจจุบัน', FALSE, 'การเปลี่ยนเจ้าของไฟล์คือคำสั่ง chown', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:04-process-service:q01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่ง `kill 14520` กับคำสั่ง `kill -9 14520` มีความแตกต่างกันอย่างไรในแง่ของการจัดการโปรเซส?', NULL, 'easy', 'multiple_choice', '`kill <PID>` โดยไม่ระบุตัวเลขสัญญาณ จะส่งสัญญาณเริ่มต้นคือ `SIGTERM` (15) เพื่อขอให้โปรเซสปิดตัวเองอย่างสุภาพและบันทึกข้อมูลที่ค้างให้เรียบร้อย ส่วน `kill -9 <PID>` ส่งสัญญาณ `SIGKILL` (9) ซึ่งสั่งให้ Kernel ตัดการทำงานของโปรเซสทันทีโดยไม่ให้โอกาสเคลียร์งาน', ARRAY['kill', 'signals', 'process']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q01'), '`kill 14520` ส่งสัญญาณ SIGTERM (15) ให้โปรเซสเคลียร์งานก่อนปิด ส่วน `kill -9 14520` ส่ง SIGKILL (9) บังคับตัดการทำงานทันที', TRUE, 'ถูกต้อง — ควรเริ่มด้วย SIGTERM เสมอเพื่อป้องกันข้อมูลเสียหาย', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q01'), '`kill 14520` ใช้สำหรับหยุดชั่วคราว (Pause) ส่วน `kill -9 14520` ใช้สำหรับรีสตาร์ทโปรเซสใหม่', FALSE, 'ทั้งสองคำสั่งใช้หยุดการทำงานของโปรเซส ไม่ใช่การรีสตาร์ท', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q01'), '`kill -9` จะรอให้โปรเซสทำงานเสร็จอีก 9 วินาทีก่อนปิด ส่วน `kill` ปิดทันที', FALSE, 'เลข 9 คือรหัสสัญญาณ SIGKILL ไม่ใช่จำนวนวินาทีที่รอ', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q01'), 'ไม่มีความแตกต่างกัน เป็นเพียงรูปแบบการเขียนแบบย่อและแบบเต็ม', FALSE, 'ต่างกันอย่างชัดเจนระหว่างการปิดแบบ Graceful (SIGTERM) และการบังคับตัดทันที (SIGKILL)', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:04-process-service:q02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'จากผลลัพธ์ของคำสั่ง `systemctl status payment-worker.service` ด้านล่าง สาเหตุที่ทำให้บริการหยุดทำงานคืออะไร?', '× payment-worker.service - Payment Queue Worker
-     Loaded: loaded (/etc/systemd/system/payment-worker.service; enabled)
-     Active: failed (Result: oom-kill) since Tue 2026-11-03 13:45:02 +07; 3min ago
-    Process: 9412 ExecStart=/usr/bin/python3 /opt/payment/worker.py (code=killed, signal=KILL)
-   Main PID: 9412 (code=killed, signal=KILL)
-
-Nov 03 13:45:02 app-02 systemd[1]: payment-worker.service: A process of this unit has been killed by the OOM killer.
-Nov 03 13:45:02 app-02 systemd[1]: payment-worker.service: Failed with result ''oom-kill''.', 'medium', 'scenario', 'บรรทัด `Active: failed (Result: oom-kill)` และข้อความ `killed by the OOM killer` ระบุชัดเจนว่าเครื่องมีหน่วยความจำ (RAM) ไม่เพียงพอ จนระบบ Out-Of-Memory (OOM) Killer ของ Linux Kernel ต้องส่งสัญญาณ `SIGKILL` มาบังคับปิดโปรเซสนี้', ARRAY['systemctl', 'oom-kill', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q02'), 'หน่วยความจำ (RAM) ของเครื่องไม่เพียงพอ ทำให้ระบบ OOM Killer ของ Kernel บังคับปิดโปรเซส', TRUE, 'ถูกต้อง — Result: oom-kill บ่งชี้ว่าถูก Out-Of-Memory Killer ตัดการทำงาน', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q02'), 'ไฟล์ `/opt/payment/worker.py` ถูกลบออกจากเครื่อง', FALSE, 'หากไฟล์หายจะฟ้องตั้งแต่เริ่มรันด้วย exit-code ไม่ใช่ oom-kill', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q02'), 'พอร์ตเครือข่ายของบริการชนกับโปรแกรมอื่น', FALSE, 'พอร์ตชนจะจบการทำงานด้วย exit-code และฟ้อง Address already in use', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q02'), 'ยังไม่ได้เปิดใช้งาน `systemctl enable` ให้กับบริการนี้', FALSE, 'ในบรรทัด Loaded แสดงว่า enabled อยู่แล้ว และสาเหตุคือหน่วยความจำเต็ม', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:04-process-service:q03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หากต้องการตรวจสอบรายชื่อบริการ (systemd units) ทั้งหมดบนเครื่องที่อยู่ในสถานะ `failed` ในคำสั่งเดียว ควรใช้คำสั่งใด?', NULL, 'easy', 'multiple_choice', 'คำสั่ง `systemctl list-units --failed` (หรือ `systemctl --failed`) จะกรองและแสดงเฉพาะยูนิตบริการที่มีปัญหาอยู่ในสถานะ `failed` ทั้งหมด ช่วยให้ NOC Tier 1 ตรวจภาพรวมของเครื่องได้รวดเร็ว', ARRAY['systemctl', 'systemd', 'service']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q03');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q03'), 'systemctl list-units --failed', TRUE, 'ถูกต้อง — แสดงเฉพาะบริการที่อยู่ในสถานะ failed ทั้งหมด', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q03'), 'systemctl is-active --all', FALSE, 'is-active ใช้ตรวจชื่อบริการที่ระบุ ไม่ใช่การแสดงรายการที่ล่มทั้งหมด', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q03'), 'ps aux --failed', FALSE, 'คำสั่ง ps aux แสดงโปรเซสที่ยังรันอยู่ ไม่มีตัวเลือก --failed', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q03'), 'journalctl --list-failed', FALSE, 'journalctl ใช้เปิดอ่าน Log ไม่มีตัวเลือก --list-failed', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:04-process-service:q04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'จากผลลัพธ์ของคำสั่ง `ps aux` ด้านล่าง โปรเซส PID `24109` ที่มีสถานะ `Z` และมีคำว่า `<defunct>` ต่อท้ายคืออะไร และเหตุใดการใช้ `kill -9 24109` จึงไม่ทำให้รายการนี้หายไป?', '$ ps aux | grep report
-appuser   24100  0.2  1.5 412800 31200 ?  Sl   09:00   0:14 /usr/bin/python3 /opt/app/scheduler.py
-appuser   24109  0.0  0.0      0     0 ?  Z    10:15   0:00 [report_gen.sh] <defunct>', 'hard', 'scenario', 'สถานะ `Z` (`<defunct>`) คือ **Zombie Process** ซึ่งเป็นโปรเซสที่ทำงานจบและคืนหน่วยความจำไปแล้ว แต่โปรเซสแม่ (PPID) ยังไม่ได้เรียก `wait()` เพื่ออ่านค่าสถานะจบงาน เนื่องจากมันจบการทำงานไปแล้ว จึงไม่สามารถฆ่าซ้ำด้วย `kill -9 24109` ได้ การเคลียร์ต้องให้โปรเซสแม่อ่านสถานะ หรือรีสตาร์ทโปรเซสแม่ตาม Runbook', ARRAY['ps', 'zombie', 'process', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q04');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q04'), 'คือ Zombie Process ที่ทำงานจบไปแล้วแต่โปรเซสแม่ยังไม่อ่านสถานะจบงาน จึงไม่สามารถใช้ kill -9 สั่งฆ่าตัวมันซ้ำได้', TRUE, 'ถูกต้อง — Zombie ไม่มีโค้ดรันอยู่แล้ว เหลือเพียงรายการในตารางโปรเซสที่รอโปรเซสแม่มาเก็บกวาด', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q04'), 'คือโปรเซสที่ถูกเข้ารหัสด้วยไวรัส ต้องใช้สิทธิ์ root รัน `pkill -f defunct` เท่านั้น', FALSE, 'Zombie process เป็นกลไกปกติของตารางโปรเซสบน Linux ไม่ใช่ไวรัส', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q04'), 'คือโปรเซสที่กำลังบีบอัดไฟล์แบบ Zip (Z) และห้ามขัดจังหวะจนกว่าจะบีบอัดเสร็จ', FALSE, 'ตัวอักษร Z ในคอลัมน์ STAT หมายถึง Zombie ไม่ใช่การบีบอัดไฟล์', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q04'), 'คือโปรเซสของ Kernel ที่ถูกล็อกด้วยฮาร์ดแวร์ ต้องถอดสายแลนออกก่อนจึงจะ kill ได้', FALSE, 'ไม่เกี่ยวข้องกับสายแลนหรือการล็อกฮาร์ดแวร์', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:04-process-service:q05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หากต้องการดู Log ของบริการ `nginx` ย้อนหลัง 100 บรรทัดล่าสุด และเปิดติดตามบรรทัดใหม่ที่เข้ามาแบบเรียลไทม์ (Real-time follow) ต้องใช้คำสั่งใด?', NULL, 'easy', 'multiple_choice', '`journalctl -u nginx` ระบุชื่อยูนิตบริการ, `-n 100` แสดงย้อนหลัง 100 บรรทัด, และ `-f` (follow) ติดตามข้อความใหม่แบบสด', ARRAY['journalctl', 'logs', 'systemd']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q05');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q05'), 'journalctl -u nginx -n 100 -f', TRUE, 'ถูกต้อง — ระบุยูนิต (-u), จำนวนบรรทัด (-n 100) และติดตามสด (-f)', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q05'), 'systemctl log nginx --tail 100', FALSE, 'systemctl ไม่มีคำสั่งย่อย log', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q05'), 'ps aux -u nginx -n 100', FALSE, 'ps ใช้ดูรายการโปรเซส ไม่ใช่คำสั่งเปิดอ่าน Log ของ systemd', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q05'), 'top -u nginx -f 100', FALSE, 'top ใช้ดูการใช้ CPU/RAM ของโปรเซส ไม่ใช่การอ่าน Log', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:04-process-service:q06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่ง `systemctl enable nginx` ทำหน้าที่อะไร?', NULL, 'medium', 'multiple_choice', '`systemctl enable <service>` เป็นการสร้าง Symbolic link เพื่อให้บริการนั้นเริ่มทำงานอัตโนมัติเมื่อเปิดเครื่อง (Boot) แต่ไม่ได้สั่งสตาร์ทบริการในทันที (หากต้องการสตาร์ททันทีด้วยต้องใช้ `systemctl start` หรือ `systemctl enable --now`)', ARRAY['systemctl', 'systemd', 'boot']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q06');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q06'), 'ตั้งค่าให้บริการ nginx เริ่มทำงานอัตโนมัติเมื่อบูตเครื่องเซิร์ฟเวอร์', TRUE, 'ถูกต้อง — enable คือการผูกบริการเข้ากับเป้าหมายการบูตเครื่อง', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q06'), 'สั่งรีสตาร์ทบริการ nginx ทันทีโดยไม่ตั้งค่าการบูต', FALSE, 'การรีสตาร์ททันทีคือคำสั่ง systemctl restart nginx', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q06'), 'เปิดพอร์ต 80 และ 443 บน Firewall ให้กับ nginx', FALSE, 'systemctl enable จัดการเฉพาะ systemd unit ไม่ได้แก้กฎ Firewall', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q06'), 'อัปเดตโปรแกรม nginx เป็นเวอร์ชันล่าสุด', FALSE, 'การอัปเดตแพ็กเกจต้องใช้ apt หรือ dnf ไม่ใช่ systemctl', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:04-process-service:q07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'เมื่อเปิดโปรแกรม `top` เพื่อดูโปรเซสที่กำลังทำงานอยู่ หากต้องการเรียงลำดับโปรเซสตามปริมาณการใช้หน่วยความจำ (`%MEM`) จากมากไปน้อย ต้องกดปุ่มใดบนคีย์บอร์ด?', NULL, 'medium', 'multiple_choice', 'ในหน้าจอโปรแกรม `top` การกดปุ่ม `M` (ตัวพิมพ์ใหญ่) จะเรียงลำดับตาม `%MEM` จากมากไปน้อย ส่วนการกดปุ่ม `P` (ตัวพิมพ์ใหญ่) จะเรียงตาม `%CPU` และการกด `q` คือออกจากโปรแกรม', ARRAY['top', 'memory', 'process']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q07');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q07'), 'กดปุ่ม M (พิมพ์ใหญ่)', TRUE, 'ถูกต้อง — M रेียงตาม Memory, P เรียงตาม CPU', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q07'), 'กดปุ่ม R (พิมพ์ใหญ่)', FALSE, 'ปุ่ม r/R ใช้สำหรับเปลี่ยนค่า renice หรือสลับทิศทางการเรียง', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q07'), 'กดปุ่ม K (พิมพ์ใหญ่)', FALSE, 'ปุ่ม k ใช้สำหรับส่งสัญญาณ kill โปรเซส', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:04-process-service:q07'), 'กดปุ่ม Z (พิมพ์ใหญ่)', FALSE, 'ปุ่ม Z ใช้ตั้งค่าสีการแสดงผลใน top', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:05-text-tools:q01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หากต้องการค้นหาคำว่า `timeout` ในไฟล์ `app.log` โดยไม่สนใจว่าเป็นตัวพิมพ์เล็กหรือพิมพ์ใหญ่ (`Timeout`, `TIMEOUT`, `timeout`) พร้อมแสดงหมายเลขบรรทัดกำกับ ต้องใช้คำสั่งใด?', NULL, 'easy', 'multiple_choice', 'ในคำสั่ง `grep` ตัวเลือก `-i` หมายถึงไม่สนใจตัวพิมพ์เล็ก-ใหญ่ (ignore case) และ `-n` หมายถึงแสดงหมายเลขบรรทัด (line number) เมื่อรวมกันคือ `grep -in "timeout" app.log`', ARRAY['grep', 'logs', 'text-tools']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q01'), 'grep -in "timeout" app.log', TRUE, 'ถูกต้อง — -i ไม่สนใจตัวพิมพ์เล็ก-ใหญ่ และ -n แสดงเลขบรรทัด', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q01'), 'grep -vr "timeout" app.log', FALSE, '-v คือการกลับเงื่อนไข (ไม่เอาบรรทัดที่มีคำนี้) และ -r คือค้นหาทั้งโฟลเดอร์', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q01'), 'grep -c "timeout" app.log', FALSE, '-c แสดงเฉพาะจำนวนบรรทัดรวมที่พบ ไม่ได้แสดงข้อความและเลขบรรทัด', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q01'), 'find app.log -name "timeout"', FALSE, 'find -name ใช้ค้นหาชื่อไฟล์ ไม่ใช่การค้นหาข้อความภายในไฟล์', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:05-text-tools:q02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ความแตกต่างที่สำคัญระหว่างการรัน `grep "ERROR" app.log > summary.txt` กับ `grep "ERROR" app.log >> summary.txt` คืออะไร?', NULL, 'easy', 'multiple_choice', 'เครื่องหมาย `>` (Single redirect) จะล้างข้อมูลเดิมในไฟล์ `summary.txt` ทิ้งทั้งหมดแล้วเขียนทับใหม่ ส่วน `>>` (Append redirect) จะนำผลลัพธ์ใหม่ไปเขียนต่อท้ายไฟล์เดิมโดยไม่ลบข้อมูลเก่า', ARRAY['redirect', 'bash', 'text-tools']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q02'), '`>` จะเขียนทับข้อมูลเดิมในไฟล์ `summary.txt` ทั้งหมด ส่วน `>>` จะเขียนต่อท้ายไฟล์เดิม', TRUE, 'ถูกต้อง — ต้องระวังการใช้ `>` กับไฟล์ที่มีข้อมูลสำคัญอยู่แล้ว', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q02'), '`>` ใช้สำหรับข้อความสั้นๆ ส่วน `>>` ใช้สำหรับไฟล์ที่มีขนาดเกิน 100 MB', FALSE, 'ทั้งสองตัวไม่ได้จำกัดขนาดไฟล์ แต่ต่างกันที่การเขียนทับหรือเขียนต่อท้าย', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q02'), '`>>` จะเรียงลำดับข้อความจากมากไปน้อยให้อัตโนมัติ ส่วน `>` ไม่เรียง', FALSE, 'การ Redirect ไม่มีการเรียงลำดับข้อความ', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q02'), '`>` จะบันทึกเฉพาะ Standard Output ส่วน `>>` จะบันทึกทั้ง Standard Output และ Standard Error', FALSE, 'ทั้ง `>` และ `>>` บันทึกเฉพาะ stdout (1) หากต้องการรวม stderr ต้องใช้ `2>&1`', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:05-text-tools:q03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'จากตัวอย่างบรรทัดในไฟล์ `access.log` ด้านล่าง หากต้องการหา 5 อันดับ IP Address ที่ส่ง Request เข้ามามากที่สุด พร้อมจำนวนครั้ง เรียงจากมากไปน้อย ควรใช้ชุดคำสั่งใด?', '$ head -n 3 /var/log/nginx/access.log
-203.0.113.50 - - [03/Nov/2026:14:00:01 +0700] "GET /api/v1/items HTTP/1.1" 200 1420
-198.51.100.12 - - [03/Nov/2026:14:00:02 +0700] "POST /api/v1/login HTTP/1.1" 401 85
-203.0.113.50 - - [03/Nov/2026:14:00:02 +0700] "GET /api/v1/items HTTP/1.1" 200 1420', 'medium', 'scenario', 'IP Address อยู่ในคอลัมน์ที่ 1 จึงใช้ `awk ''{print $1}''` ดึงออกมา จากนั้นต้องใช้ `sort` เพื่อให้ IP เดียวกันมาเรียงติดกันก่อนส่งให้ `uniq -c` นับจำนวน แล้วจึงใช้ `sort -nr` เรียงตามตัวเลขจากมากไปน้อย ปิดท้ายด้วย `head -n 5`', ARRAY['awk', 'sort', 'uniq', 'logs']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q03');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q03'), 'awk ''{print $1}'' /var/log/nginx/access.log | sort | uniq -c | sort -nr | head -n 5', TRUE, 'ถูกต้อง — ดึงคอลัมน์แรก เรียงก่อนนับด้วย uniq -c แล้วเรียงตัวเลขจากมากไปน้อย', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q03'), 'awk ''{print $1}'' /var/log/nginx/access.log | uniq -c | head -n 5', FALSE, 'หากไม่รัน sort ก่อน uniq -c บรรทัด IP เดียวกันที่ไม่ได้อยู่ติดกันจะไม่ถูกนับรวมกัน', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q03'), 'grep -c "IP" /var/log/nginx/access.log | sort -r | tail -n 5', FALSE, 'ในไฟล์ log ไม่มีคำว่า "IP" ตรงๆ และ grep -c คืนค่าเป็นตัวเลขรวมบรรทัดเดียว', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q03'), 'cut -d'':'' -f1 /var/log/nginx/access.log | wc -l', FALSE, 'คอลัมน์คั่นด้วยช่องว่างไม่ใช่โคลอน และ wc -l นับเพียงจำนวนบรรทัดทั้งหมด', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:05-text-tools:q04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ในการตรวจสอบไฟล์ `access.log` พบว่ามีบรรทัดของระบบตรวจสอบสุขภาพ `/healthcheck` ปะปนอยู่จำนวนมาก หากต้องการกรองเอาเฉพาะบรรทัดที่ **ไม่มี** คำว่า `healthcheck` ออกมาดู 20 บรรทัดสุดท้าย ควรใช้คำสั่งใด?', NULL, 'medium', 'multiple_choice', 'ตัวเลือก `-v` (invert match) ของ `grep` จะคัดกรองเอาเฉพาะบรรทัดที่ไม่มีคำค้นหานั้น เมื่อส่งผ่าน Pipe ไปยัง `tail -n 20` จะได้ 20 บรรทัดล่าสุดที่ไม่ใช่ healthcheck', ARRAY['grep', 'tail', 'pipe']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q04');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q04'), 'grep -v "healthcheck" access.log | tail -n 20', TRUE, 'ถูกต้อง — grep -v ใช้ตัดบรรทัดที่มีคำว่า healthcheck ออก', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q04'), 'grep -r "healthcheck" access.log | tail -n 20', FALSE, 'จะแสดงเฉพาะบรรทัดที่มีคำว่า healthcheck เท่านั้น (ตรงข้ามกับที่ต้องการ)', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q04'), 'grep -E "healthcheck" access.log | head -n 20', FALSE, 'แสดงเฉพาะบรรทัดที่มีคำว่า healthcheck 20 บรรทัดแรก', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q04'), 'uniq -v "healthcheck" access.log', FALSE, 'คำสั่ง uniq ไม่มีตัวเลือก -v สำหรับกรองข้อความ', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:05-text-tools:q05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'จากคำสั่งและผลลัพธ์ด้านล่าง เหตุใดผลลัพธ์ของคำสั่ง `uniq -c` จึงยังมีชื่อสถานะ `ERROR` แยกกันอยู่ 2 บรรทัดแทนที่จะรวมกันเป็น 3 ครั้ง?', '$ cat status.txt
-ERROR
-INFO
-ERROR
-ERROR
-
-$ cat status.txt | uniq -c
-      1 ERROR
-      1 INFO
-      2 ERROR', 'medium', 'scenario', 'คำสั่ง `uniq` จะเปรียบเทียบและยุบรวมเฉพาะบรรทัดที่ซ้ำกันซึ่ง **อยู่ติดกันเท่านั้น** เนื่องจากมีบรรทัด `INFO` คั่นกลางระหว่าง `ERROR` ตัวแรกกับสองตัวหลัง จึงต้องรัน `sort` ก่อนส่งเข้า `uniq -c` (`sort status.txt | uniq -c`)', ARRAY['uniq', 'sort', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q05');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q05'), 'เพราะคำสั่ง uniq จะรวมเฉพาะบรรทัดซ้ำที่อยู่ติดกันเท่านั้น ต้องใส่ `sort` คั่นก่อน `uniq -c` เสมอ', TRUE, 'ถูกต้อง — การใช้ sort status.txt | uniq -c จะจัดกลุ่มให้คำเดียวกันอยู่ติดกันก่อนนับ', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q05'), 'เพราะคำสั่ง uniq รองรับเฉพาะตัวเลข ไม่รองรับข้อความภาษาอังกฤษ', FALSE, 'uniq รองรับข้อความทุกชนิดแต่ต้องเรียงให้บรรทัดซ้ำอยู่ติดกันก่อน', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q05'), 'เพราะต้องใช้คำสั่ง `wc -l` แทน `uniq -c` ในการแยกนับตามกลุ่มคำ', FALSE, 'wc -l นับจำนวนบรรทัดรวมทั้งหมด ไม่ได้แยกนับตามกลุ่มคำ', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q05'), 'เพราะบรรทัดแรกมีช่องว่างที่มองไม่เห็นต่อท้าย', FALSE, 'ต่อให้ข้อความเหมือนกันทุกประการ หากมีบรรทัดอื่นคั่นกลาง uniq ก็จะไม่รวมให้หากไม่ sort ก่อน', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:05-text-tools:q06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หากต้องการค้นหาบรรทัดที่มีคำว่า `ERROR` หรือ `FATAL` หรือ `CRITICAL` ในไฟล์ `server.log` พร้อมแสดงบรรทัดก่อนหน้าและหลังจุดที่พบอย่างละ 3 บรรทัดเพื่อดูบริบท ต้องใช้คำสั่งใด?', NULL, 'hard', 'multiple_choice', 'ตัวเลือก `-E` เปิดใช้งาน Extended Regular Expressions ทำให้ใช้ `|` แทนคำว่า ''หรือ'' ได้ และตัวเลือก `-C 3` (Context) จะแสดงบรรทัดก่อนหน้า 3 บรรทัด และบรรทัดถัดไป 3 บรรทัดรอบจุดที่พบ', ARRAY['grep', 'regex', 'logs']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q06');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q06'), 'grep -E -C 3 "ERROR|FATAL|CRITICAL" server.log', TRUE, 'ถูกต้อง — -E ใช้ค้นหาหลายเงื่อนไขด้วย | และ -C 3 แสดงบริบทรอบข้าง 3 บรรทัด', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q06'), 'grep -v -n 3 "ERROR|FATAL|CRITICAL" server.log', FALSE, '-v คือการตัดออก และ -n ไม่ได้รับตัวเลขจำนวนบรรทัดบริบท', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q06'), 'awk "ERROR|FATAL|CRITICAL" -C 3 server.log', FALSE, 'ไวยากรณ์ของ awk ไม่ได้ใช้ตัวเลือก -C 3 แบบ grep', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q06'), 'cut -C 3 "ERROR,FATAL,CRITICAL" server.log', FALSE, 'cut ใช้ตัดคอลัมน์ตามตัวคั่น ไม่ใช่คำสั่งค้นหาบรรทัด', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:05-text-tools:q07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ในคำสั่ง `./check_health.sh > /tmp/check.log 2>&1` ส่วนของ `2>&1` มีความหมายว่าอย่างไร?', NULL, 'hard', 'multiple_choice', 'ใน Linux File Descriptor `1` คือ Standard Output (`stdout`) และ `2` คือ Standard Error (`stderr`) การเขียน `2>&1` จึงหมายถึงการส่งข้อความ Error (`2`) ไปรวมที่ช่องทางเดียวกับผลลัพธ์ปกติ (`1`) เพื่อให้ทั้งผลลัพธ์ปกติและข้อความ Error ถูกบันทึกลงในไฟล์ `/tmp/check.log` ครบถ้วน', ARRAY['redirect', 'stderr', 'stdout', 'bash']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q07');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q07'), 'ส่งข้อความข้อผิดพลาด (stderr = 2) ไปรวมกับผลลัพธ์ปกติ (stdout = 1) เพื่อบันทึกลงไฟล์เดียวกัน', TRUE, 'ถูกต้อง — ช่วยให้ไม่พลาดข้อความ Error เวลาเก็บผลรันลงไฟล์', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q07'), 'สั่งให้รันสคริปต์ซ้ำ 2 รอบ และหน่วงเวลา 1 วินาที', FALSE, 'ตัวเลข 2 และ 1 คือหมายเลข File Descriptor ไม่ใช่จำนวนรอบการรัน', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q07'), 'บันทึกเฉพาะ 2 บรรทัดแรกและ 1 บรรทัดสุดท้ายของผลลัพธ์', FALSE, 'การตัดบรรทัดแรกและท้ายต้องใช้ head และ tail', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:05-text-tools:q07'), 'เปรียบเทียบว่าค่าตัวแปรที่ 2 มากกว่าตัวแปรที่ 1 หรือไม่', FALSE, 'ไม่ใช่ตัวดำเนินการเปรียบเทียบทางคณิตศาสตร์', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:06-log-reading:q01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หากต้องการตรวจสอบประวัติการล็อกอิน SSH และการใช้คำสั่ง `sudo` บนเซิร์ฟเวอร์ตระกูล Ubuntu/Debian เทียบกับตระกูล RHEL/Rocky Linux ต้องเปิดดูที่ไฟล์ใดตามลำดับ?', NULL, 'easy', 'multiple_choice', 'บนระบบ Ubuntu/Debian บันทึกเกี่ยวกับการพิสูจน์ตัวตน (Authentication, SSH, sudo) จะอยู่ที่ `/var/log/auth.log` ส่วนบนระบบ RHEL/Rocky/AlmaLinux จะเก็บไว้ที่ `/var/log/secure`', ARRAY['logs', 'auth', 'ubuntu', 'rhel']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q01'), '`/var/log/auth.log` (Ubuntu/Debian) และ `/var/log/secure` (RHEL/Rocky)', TRUE, 'ถูกต้อง — เป็นไฟล์มาตรฐานสำหรับตรวจประวัติ SSH และ sudo ของแต่ละค่าย', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q01'), '`/var/log/syslog` (Ubuntu/Debian) และ `/var/log/httpd` (RHEL/Rocky)', FALSE, 'syslog เป็น log ทั่วไป ส่วน httpd เป็นโฟลเดอร์ log ของ Apache Web Server', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q01'), '`/etc/passwd` (Ubuntu/Debian) และ `/etc/shadow` (RHEL/Rocky)', FALSE, '/etc/passwd และ /etc/shadow เป็นไฟล์เก็บข้อมูลบัญชีผู้ใช้ ไม่ใช่ไฟล์ Log', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q01'), '`/var/log/dmesg` ทั้งสองตระกูล', FALSE, 'dmesg เก็บข้อความจาก Kernel และฮาร์ดแวร์ ไม่ใช่ประวัติการล็อกอิน SSH', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:06-log-reading:q02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'เมื่อต้องการค้นหาคำว่า `ORA-12170` ในไฟล์ Log ของเมื่อวานซึ่งถูก `logrotate` บีบอัดเป็นไฟล์ `/var/log/app/worker.log.1.gz` ไปแล้ว วิธีใดเหมาะสมและปลอดภัยที่สุดบนเครื่อง Production?', NULL, 'easy', 'multiple_choice', 'คำสั่ง `zgrep` สามารถค้นหาข้อความภายในไฟล์ที่ถูกบีบอัดด้วย gzip (`.gz`) ได้โดยตรงในหน่วยความจำ โดยไม่ต้องแตกไฟล์ออกมาเขียนลงดิสก์ จึงไม่เสี่ยงทำให้พาร์ทิชัน `/var/log` เต็ม', ARRAY['zgrep', 'logrotate', 'logs']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q02'), 'ใช้คำสั่ง `zgrep "ORA-12170" /var/log/app/worker.log.1.gz` เพื่อค้นหาโดยไม่ต้องแตกไฟล์ลงดิสก์', TRUE, 'ถูกต้อง — รวดเร็วและไม่ใช้พื้นที่ดิสก์เพิ่ม', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q02'), 'รัน `gunzip /var/log/app/worker.log.1.gz` เพื่อแตกไฟล์ออกมาก่อนทุกครั้ง', FALSE, 'การแตกไฟล์ใหญ่ลงใน /var/log อาจทำให้ดิสก์เต็มทันทีและทำให้ไฟล์ .gz เดิมหายไป', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q02'), 'เปลี่ยนชื่อไฟล์โดยลบ `.gz` ออกด้วยคำสั่ง `mv` แล้วใช้ `cat` เปิดอ่าน', FALSE, 'การเปลี่ยนแค่ชื่อไฟล์ไม่ได้คลายการบีบอัด เนื้อหาข้างในยังเป็นข้อมูลไบนารีที่อ่านไม่ได้', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q02'), 'ลบไฟล์ `.gz` ทิ้งแล้วสั่งให้แอปพลิเคชันสร้าง Log ของเมื่อวานขึ้นมาใหม่', FALSE, 'Log เป็นข้อมูลเหตุการณ์ที่ผ่านไปแล้ว หากลบทิ้งจะไม่สามารถสร้างย้อนหลังได้', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:06-log-reading:q03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ลูกค้าแจ้งว่าทำรายการโอนเงินไม่สำเร็จเมื่อเวลา **15:20 น. (ตามเวลาประเทศไทย)** เมื่อคุณรีโมตเข้าเซิร์ฟเวอร์และรันคำสั่งด้านล่าง คุณควรระบุช่วงเวลาค้นหาใน `journalctl` อย่างไรจึงจะตรงกับเหตุการณ์ที่ลูกค้าแจ้ง?', '$ timedatectl
-               Local time: Tue 2026-11-03 08:45:10 UTC
-           Universal time: Tue 2026-11-03 08:45:10 UTC
-                Time zone: Etc/UTC (UTC, +0000)', 'medium', 'scenario', 'จากผลลัพธ์ของ `timedatectl` เครื่องเซิร์ฟเวอร์ตั้งค่า Timezone เป็น **UTC (+0000)** ซึ่งช้ากว่าเวลาประเทศไทย (GMT+7) อยู่ 7 ชั่วโมง ดังนั้นเวลา 15:20 น. ของไทย จึงตรงกับเวลา **08:20 UTC** บนเครื่องเซิร์ฟเวอร์', ARRAY['timezone', 'journalctl', 'timedatectl', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q03');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q03'), 'ค้นหาช่วงเวลาประมาณ 08:15 ถึง 08:25 (เนื่องจากเครื่องใช้เวลา UTC ซึ่งช้ากว่าเวลาไทย 7 ชั่วโมง)', TRUE, 'ถูกต้อง — 15:20 (GMT+7) ลบ 7 ชั่วโมง = 08:20 UTC', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q03'), 'ค้นหาช่วงเวลา 15:15 ถึง 15:25 ได้ทันที เพราะ journalctl จะแปลงเป็นเวลาไทยให้อัตโนมัติเสมอ', FALSE, 'journalctl อ้างอิงตาม Local time ของเครื่องเซิร์ฟเวอร์ ซึ่งในที่นี้ตั้งเป็น UTC', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q03'), 'ค้นหาช่วงเวลา 22:15 ถึง 22:25 (บวกเพิ่มไปอีก 7 ชั่วโมง)', FALSE, 'UTC ช้ากว่าเวลาไทย ต้องนำเวลาไทยลบออก 7 ชั่วโมง ไม่ใช่บวกเพิ่ม', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q03'), 'เปลี่ยน Timezone ของเซิร์ฟเวอร์ Production ทันทีด้วย `timedatectl set-timezone` ก่อนค้นหา', FALSE, 'ห้ามเปลี่ยน Timezone ของเครื่อง Production โดยพลการเพราะจะกระทบแอปพลิเคชันและ Cron job ทั้งระบบ', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:06-log-reading:q04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'จากผลลัพธ์ของคำสั่ง `dmesg -T` ด้านล่าง เกิดอะไรขึ้นกับโปรเซส `java` (PID 11204) และควรดำเนินการอย่างไร?', '$ dmesg -T | tail -n 3
-[Tue Nov  3 11:02:14 2026] Out of memory: Killed process 11204 (java) total-vm:8421040kB, anon-rss:3812400kB, file-rss:0kB
-[Tue Nov  3 11:02:14 2026] oom_reaper: reaped process 11204 (java), now anon-rss:0kB, file-rss:0kB', 'medium', 'scenario', 'ข้อความจาก Kernel Ring Buffer (`dmesg -T`) ระบุว่าเกิดภาวะหน่วยความจำของระบบหมด (`Out of memory`) ทำให้ Kernel สั่งฆ่าโปรเซส `java` (PID 11204) ที่ใช้หน่วยความจำจริง (`anon-rss`) ไปราว 3.8 GB ในฐานะ Tier 1 ต้องเก็บบรรทัด Log นี้พร้อมผล `free -h` และสถานะบริการเพื่อส่งต่อ (Escalate) ให้ทีมตรวจสอบปัญหา Memory leak หรือการตั้งค่า JVM Heap', ARRAY['dmesg', 'oom', 'kernel', 'logs']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q04');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q04'), 'โปรเซส java ถูก Kernel OOM Killer บังคับปิดเพราะ RAM ไม่พอ ให้เก็บบรรทัด Log นี้พร้อมสถานะหน่วยความจำเพื่อส่งต่อตาม Runbook', TRUE, 'ถูกต้อง — dmesg -T เป็นหลักฐานสำคัญที่สุดเมื่อโปรเซสดับจาก OOM โดยไม่มี Error ใน application log', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q04'), 'การ์ดเครือข่ายของเครื่องหลุดการเชื่อมต่อ ต้องรีสตาร์ทระบบเครือข่าย', FALSE, 'ข้อความระบุชัดเจนว่าเป็น Out of memory ไม่ใช่ปัญหาเครือข่าย', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q04'), 'พื้นที่ฮาร์ดดิสก์เต็ม 100% ต้องลบไฟล์โปรแกรม java ทิ้ง', FALSE, 'Out of memory หมายถึงหน่วยความจำหลัก (RAM/Swap) ไม่พอ ไม่ใช่พื้นที่ดิสก์', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q04'), 'ผู้ดูแลระบบคนอื่นสั่งรันคำสั่ง `systemctl stop` ตามปกติ', FALSE, 'การหยุดปกติจะไม่ขึ้นข้อความ Out of memory: Killed process ใน dmesg', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:06-log-reading:q05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่ง `journalctl -u api-gateway --since "2026-11-03 09:00:00" --until "2026-11-03 09:30:00" -p err` จะแสดงผลลัพธ์อย่างไร?', NULL, 'medium', 'multiple_choice', 'ตัวเลือก `-u api-gateway` กรองเฉพาะบริการนั้น, `--since` และ `--until` กำหนดกรอบเวลา 09:00 ถึง 09:30 และ `-p err` กรองเฉพาะข้อความที่มีระดับความรุนแรงตั้งแต่ Error ขึ้นไป (`err`, `crit`, `alert`, `emerg`)', ARRAY['journalctl', 'systemd', 'logs']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q05');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q05'), 'แสดง Log ของบริการ api-gateway ในช่วงเวลา 09:00 ถึง 09:30 เฉพาะระดับ Error ขึ้นไปเท่านั้น', TRUE, 'ถูกต้อง — ช่วยจำกัดวงค้นหาเฉพาะช่วงเกิดเหตุและตัดข้อความ INFO/DEBUG ออก', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q05'), 'ลบ Log ของบริการ api-gateway ในช่วงเวลา 09:00 ถึง 09:30 ทิ้งทั้งหมด', FALSE, 'เป็นคำสั่งเปิดอ่านและกรองข้อมูล ไม่ได้ลบ Log', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q05'), 'แสดง Log ทุกบริการในเครื่องยกเว้น api-gateway', FALSE, '-u เป็นการเลือกเฉพาะยูนิตที่ระบุ ไม่ใช่การยกเว้น', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q05'), 'แสดงเฉพาะ Log ระดับ INFO และ DEBUG เท่านั้น', FALSE, '-p err จะกรองเอาเฉพาะระดับ error, crit, alert และ emerg', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:06-log-reading:q06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ตัวเลือก `-T` ในคำสั่ง `dmesg -T` ช่วยให้การอ่าน Log ของเจ้าหน้าที่ Support ง่ายขึ้นอย่างไร?', NULL, 'easy', 'multiple_choice', 'โดยค่าเริ่มต้น `dmesg` จะแสดงเวลาเป็นตัวเลขวินาทีนับจากตอนเปิดเครื่อง (เช่น `[14250.120411]`) ซึ่งเทียบกับเวลาที่เกิดเหตุจริงได้ยาก การใส่ `-T` (`--ctime`) จะแปลงเป็นวันที่และเวลาที่มนุษย์อ่านเข้าใจได้ง่าย (เช่น `[Tue Nov 3 11:02:14 2026]`)', ARRAY['dmesg', 'timestamp', 'logs']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q06');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q06'), 'แปลงเวลานับจากตอนบูตเครื่อง (วินาที) ให้เป็นรูปแบบวันที่และเวลาปกติที่อ่านเข้าใจง่าย', TRUE, 'ถูกต้อง — ช่วยให้เทียบเวลาเกิดเหตุกับ Log อื่นๆ ได้ทันที (แม้เวลาจาก dmesg -T อาจคลาดเคลื่อนเล็กน้อยหากเครื่องเคย suspend)', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q06'), 'แปลข้อความภาษาอังกฤษใน Kernel ให้เป็นภาษาไทยทั้งหมด', FALSE, '-T ย่อมาจาก human-readable timestamp ไม่ใช่การแปลภาษา', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q06'), 'ส่งข้อความ Log ไปยังโปรแกรม Telegram อัตโนมัติ', FALSE, 'dmesg ไม่มีฟีเจอร์ส่งแจ้งเตือนออกภายนอก', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q06'), 'กรองเฉพาะข้อความที่เกี่ยวกับโปรโตคอล TCP เท่านั้น', FALSE, '-T เกี่ยวกับการแสดงผลเวลา ไม่ใช่การกรองโปรโตคอล', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:06-log-reading:q07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'เมื่อต้องรวบรวมข้อมูล Log ส่งต่อ (Escalate) ให้ทีม Tier 2 หรือทีมนักพัฒนา ข้อมูลชุดใดครบถ้วนและมีประโยชน์มากที่สุด?', NULL, 'easy', 'multiple_choice', 'การส่งต่อ Ticket ที่มีคุณภาพควรระบุชื่อเครื่อง (Hostname), พาธของไฟล์ Log, ช่วงเวลาที่เกิดเหตุพร้อมระบุ Timezone ของเครื่อง (เช่น UTC หรือ +07), ข้อความ Error พร้อมบรรทัดบริบทรอบข้าง (`grep -C`) และรหัสรายการ (Transaction/Request ID) หากมี', ARRAY['escalate', 'troubleshooting', 'logs']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q07');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q07'), 'ชื่อเครื่อง, พาธไฟล์ Log, ช่วงเวลาพร้อม Timezone, บรรทัด Error พร้อมบริบทรอบข้าง และ Request/Transaction ID', TRUE, 'ถูกต้อง — ช่วยให้ทีม Tier 2 วิเคราะห์ต่อได้ทันทีโดยไม่ต้องกลับมานั่งไล่หาพื้นฐานใหม่', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q07'), 'แคปภาพหน้าจอเฉพาะคำว่า Error คำเดียวโดยตัดเวลาและชื่อเครื่องออก', FALSE, 'ภาพแคปที่ไม่มีเวลา ชื่อเครื่อง และบริบทรอบข้างทำให้ตรวจสอบต่อไม่ได้', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q07'), 'คัดลอกไฟล์ Log ขนาด 5 GB ทั้งไฟล์วางลงในช่องแชต', FALSE, 'ไฟล์ใหญ่เกินไปและไม่ได้คัดกรองช่วงเวลาที่เกิดเหตุ', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:06-log-reading:q07'), 'แจ้งแค่ว่า ''ระบบเสีย รบกวนเช็กให้ด้วย'' โดยไม่แนบ Log ใดๆ', FALSE, 'ขาดข้อมูลหลักฐานเบื้องต้นที่ Tier 1 ต้องตรวจสอบก่อนส่งต่อ', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:07-disk-memory-cpu:q01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'จากผลลัพธ์ของคำสั่ง `free -h` ด้านล่าง ข้อใดอธิบายสถานะหน่วยความจำของเซิร์ฟเวอร์เครื่องนี้ได้ถูกต้องที่สุด?', '$ free -h
-               total        used        free      shared  buff/cache   available
-Mem:            15Gi       3.1Gi       380Mi        95Mi        12Gi        11Gi
-Swap:          4.0Gi          0B       4.0Gi', 'easy', 'scenario', 'แม้คอลัมน์ `free` จะแสดงเพียง `380Mi` แต่ Linux นำหน่วยความจำที่ว่างไปพักแคชไฟล์ใน `buff/cache` ถึง `12Gi` ซึ่งพร้อมคืนให้แอปพลิเคชันใช้งานทันที โดยดูได้จากคอลัมน์ `available` ที่มีอยู่ถึง `11Gi` (จาก `15Gi`) และ `Swap` ยังเป็น `0B` ดังนั้นหน่วยความจำของเครื่องนี้ยังเหลือใช้งานได้อย่างสบาย', ARRAY['free', 'memory', 'ram']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q01'), 'หน่วยความจำยังเหลือพร้อมใช้งานอีกประมาณ 11 GiB (ดูจากคอลัมน์ available) โดยส่วนที่เหลือถูกนำไปทำ buff/cache ตามปกติ', TRUE, 'ถูกต้อง — ใน Linux ต้องดูค่า available เป็นหลัก ไม่ใช่ค่า free', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q01'), 'หน่วยความจำกำลังจะหมดวิกฤต เพราะเหลือพื้นที่ว่างจริงเพียง 380 MiB ต้องรีบูตเครื่องทันที', FALSE, 'เข้าใจผิดเพราะดูเฉพาะคอลัมน์ free โดยไม่ดู available ที่รวมหน่วยความจำซึ่งพร้อมคืนจาก cache แล้ว', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q01'), 'เกิดปัญหา Memory Leak ในระบบแคชจนกิน RAM ไปถึง 12 GiB', FALSE, 'การใช้ RAM ว่างมาทำ Page cache (buff/cache) เป็นกลไกเพิ่มความเร็วปกติของ Linux Kernel', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q01'), 'Swap เสียหายเพราะค่า used แสดงเป็น 0B', FALSE, 'Swap used เป็น 0B แปลว่า RAM มีเพียงพอจนไม่ต้องนำข้อมูลไปพักลง Swap บนดิสก์', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:07-disk-memory-cpu:q02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'แอปพลิเคชันไม่สามารถสร้างไฟล์ใหม่ในพาร์ทิชัน `/var` ได้และฟ้อง `No space left on device` แต่เมื่อรัน `df -h` พบว่าพื้นที่ดิสก์ยังว่างอีก 40 GB เมื่อตรวจสอบต่อด้วย `df -i` ได้ผลดังด้านล่าง สาเหตุเกิดจากอะไร?', '$ df -h /var
-Filesystem      Size  Used Avail Use% Mounted on
-/dev/sdb1        80G   40G   40G  50% /var
-
-$ df -i /var
-Filesystem      Inodes   IUsed   IFree IUse% Mounted on
-/dev/sdb1      5242880 5242880       0  100% /var', 'medium', 'scenario', 'จากผลของ `df -i /var` พบว่า `IFree` เป็น `0` และ `IUse%` เป็น `100%` แสดงว่าหมายเลข **Inode เต็ม** (มักเกิดจากการมีไฟล์ขนาดเล็กจำนวนหลายล้านไฟล์ เช่น ไฟล์ Session หรือไฟล์ชั่วคราวที่ไม่ถูกลบ) ทำให้ระบบไฟล์ไม่สามารถสร้างไฟล์ใหม่เพิ่มได้แม้พื้นที่ความจุ (GB) จะยังว่างอยู่', ARRAY['df', 'inode', 'disk', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q02'), 'จำนวน Inode ของพาร์ทิชัน `/var` ถูกใช้จนเต็ม 100% เพราะมีไฟล์ย่อยจำนวนมากเกินไป', TRUE, 'ถูกต้อง — เมื่อ IFree = 0 ระบบจะไม่สามารถสร้างไฟล์หรือโฟลเดอร์ใหม่ได้เลย', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q02'), 'คำสั่ง `df -h` แสดงผลผิดพลาดเพราะไม่ได้รันด้วยสิทธิ์ root', FALSE, 'df -h แสดงความจุถูกต้องแล้ว แต่ปัญหาเกิดจากจำนวน Inode เต็ม', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q02'), 'แรมของเครื่องเต็มทำให้สร้างไฟล์ลงดิสก์ไม่ได้', FALSE, 'ผลลัพธ์ชี้ชัดเจนที่ IUse% = 100% ซึ่งเป็นเรื่องของ Inode บนระบบไฟล์', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q02'), 'พาร์ทิชัน `/var` จำกัดให้เก็บข้อมูลได้สูงสุดเพียง 50% ของขนาดจริง', FALSE, 'ไม่ได้จำกัดที่ 50% แต่ติดที่จำนวน Inode หมด (5,242,880 Inodes)', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:07-disk-memory-cpu:q03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หลังจากมีการลบไฟล์ Log ขนาด 30 GB ด้วยคำสั่ง `rm` ไปแล้ว แต่เมื่อตรวจด้วย `df -h` พื้นที่ดิสก์ยังไม่ลดลง คำสั่งใดใช้ตรวจสอบว่ามีโปรเซสใดยังคงเปิดถือไฟล์ที่ถูกลบไปแล้วค้างอยู่?', NULL, 'medium', 'multiple_choice', 'คำสั่ง `lsof +L1` ใช้แสดงรายการไฟล์ที่ถูกเปิดอยู่ซึ่งมีจำนวนลิงก์ (Link count) น้อยกว่า 1 (กล่าวคือชื่อไฟล์ถูกลบออกจากไดเรกทอรีไปแล้ว แต่โปรเซสยังเปิด File descriptor ค้างอยู่ ทำให้พื้นที่ดิสก์ยังไม่ถูกคืน)', ARRAY['lsof', 'disk', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q03');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q03'), 'lsof +L1', TRUE, 'ถูกต้อง — แสดงโปรเซสและ PID ที่ยังเปิดไฟล์ซึ่งถูกลบชื่อไปแล้ว (unlinked open files)', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q03'), 'df -i', FALSE, 'df -i ใช้ดูจำนวน Inode ไม่ได้แสดงรายชื่อโปรเซสที่เปิดไฟล์ค้าง', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q03'), 'free -h', FALSE, 'free -h ใช้ดูหน่วยความจำ RAM และ Swap', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q03'), 'uptime', FALSE, 'uptime ใช้ดูเวลาที่เปิดเครื่องและค่า Load Average', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:07-disk-memory-cpu:q04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'เมื่อรันคำสั่ง `uptime` ได้ผลว่า `load average: 0.80, 1.10, 1.25` ตัวเลขทั้ง 3 ค่านี้แทนช่วงเวลาใดตามลำดับ?', NULL, 'easy', 'multiple_choice', 'ค่า Load Average ทั้ง 3 ตัวเลขในคำสั่ง `uptime` และ `top` แทนค่าเฉลี่ยของโหลดงานในระบบย้อนหลัง **1 นาที, 5 นาที และ 15 นาที** ตามลำดับ', ARRAY['uptime', 'load-average', 'cpu']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q04');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q04'), 'ค่าเฉลี่ยย้อนหลัง 1 นาที, 5 นาที และ 15 นาที ตามลำดับ', TRUE, 'ถูกต้อง — หากค่า 1 นาทีต่ำกว่า 15 นาที แสดงว่าโหลดกำลังลดลง', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q04'), 'ค่าเฉลี่ยย้อนหลัง 1 ชั่วโมง, 5 ชั่วโมง และ 15 ชั่วโมง ตามลำดับ', FALSE, 'หน่วยของ Load Average เป็นนาที (1, 5, 15 นาที) ไม่ใช่ชั่วโมง', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q04'), 'เปอร์เซ็นต์การใช้ CPU, RAM และ Disk ตามลำดับ', FALSE, 'ทั้ง 3 ตัวเลขคือค่า Load Average ในแต่ละช่วงเวลา ไม่ใช่ CPU/RAM/Disk', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q04'), 'ค่าต่ำสุด, ค่าเฉลี่ย และค่าสูงสุดของวันนี้', FALSE, 'ไม่ใช่ค่า Min/Avg/Max ของวัน แต่เป็นค่าเฉลี่ย 1, 5 และ 15 นาทีล่าสุด', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:07-disk-memory-cpu:q05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ในการประเมินว่าค่า `load average: 6.50` สูงเกินกำลังของเครื่องหรือไม่ ต้องใช้คำสั่งใดเพื่อดูจำนวน CPU Core ของเครื่องมาเปรียบเทียบ?', NULL, 'easy', 'multiple_choice', 'คำสั่ง `nproc` จะแสดงจำนวนหน่วยประมวลผล (CPU Cores/Threads) ที่มีให้ใช้งาน เช่น หาก `nproc` ได้ `2` ค่าโหลด `6.50` ถือว่าสูงเกินจำนวน Core มาก แต่หาก `nproc` ได้ `16` ค่าโหลด `6.50` ถือว่ายังมีกำลังเหลือ', ARRAY['nproc', 'cpu', 'load-average']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q05');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q05'), 'nproc', TRUE, 'ถูกต้อง — แสดงจำนวนหน่วยประมวลผล (processing units/cores) ของเครื่องทันที', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q05'), 'du -sh', FALSE, 'du -sh ใช้ดูขนาดไฟล์และโฟลเดอร์บนดิสก์', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q05'), 'df -h', FALSE, 'df -h ใช้ดูพื้นที่พาร์ทิชันบนดิสก์', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q05'), 'pwd', FALSE, 'pwd ใช้ดูโฟลเดอร์ที่ยืนอยู่ปัจจุบัน', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:07-disk-memory-cpu:q06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หากพบว่าเซิร์ฟเวอร์มีค่า Load Average สูงมาก แต่เมื่อตรวจสอบด้วย `vmstat 1 5` หรือ `top` กลับพบว่าค่าการใช้ CPU ของโปรแกรม (`us`) ต่ำมาก แต่ค่า `wa` สูงถึง 75% พร้อมมีโปรเซสติดสถานะ `D` จำนวนมาก บ่งชี้ถึงปัญหาใด?', NULL, 'hard', 'multiple_choice', 'คอลัมน์ `wa` คือ **I/O Wait** (เวลาที่ CPU ต้องรอการอ่าน/เขียนดิสก์หรือเครือข่ายสตอเรจ) และสถานะโปรเซส `D` คือ Uninterruptible sleep ที่รอ I/O บน Linux โปรเซสในสถานะ `D` จะถูกนับรวมใน Load Average ด้วย จึงทำให้ Load สูงทั้งที่ CPU ไม่ได้คำนวณหนัก', ARRAY['vmstat', 'iowait', 'load-average', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q06');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q06'), 'เกิดคอขวดที่การอ่านเขียนดิสก์หรือสตอเรจ (High Disk I/O Wait) ทำให้โปรเซสรอคิว I/O ค้างอยู่', TRUE, 'ถูกต้อง — ค่า wa สูงและโปรเซสสถานะ D เป็นสัญญาณชัดเจนของปัญหา Disk/Storage I/O', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q06'), 'พัดลมระบายความร้อนของ CPU หยุดหมุน', FALSE, 'ค่า wa ย่อมาจาก I/O Wait ไม่เกี่ยวกับพัดลม CPU', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q06'), 'ไฟล์ `/etc/hosts` ถูกลบ', FALSE, 'ไม่เกี่ยวกับค่า I/O Wait ใน vmstat', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q06'), 'มีผู้ใช้เปิดหน้าต่าง Terminal ทิ้งไว้เฉยๆ หลายคน', FALSE, 'หน้าต่าง Terminal ที่ไม่ได้รันงานจะอยู่ในสถานะ S (Sleeping) ซึ่งไม่เพิ่มค่า Load Average และไม่เพิ่ม wa', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:07-disk-memory-cpu:q07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หากต้องการตรวจสอบขนาดของทุกโฟลเดอร์ย่อยในตำแหน่งปัจจุบันและเรียงลำดับตามขนาดจากน้อยไปมาก (โดยเข้าใจหน่วย K, M, G อย่างถูกต้อง) ควรใช้คำสั่งใด?', NULL, 'medium', 'multiple_choice', '`du -sh *` จะสรุปขนาดของแต่ละรายการในหน่วย Human-readable (K, M, G) และเมื่อส่งผ่าน Pipe ไปยัง `sort -h` (`--human-numeric-sort`) จะสามารถเรียงลำดับโดยเข้าใจว่า `2G` ใหญ่กว่า `500M` ได้อย่างถูกต้อง', ARRAY['du', 'sort', 'disk']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q07');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q07'), 'du -sh * | sort -h', TRUE, 'ถูกต้อง — sort -h สามารถเปรียบเทียบหน่วย K, M, G จากผลลัพธ์ของ du -sh ได้อย่างแม่นยำ', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q07'), 'df -h * | uniq -c', FALSE, 'df ใช้ดูระดับพาร์ทิชัน และ uniq -c ไม่ใช่การเรียงขนาด', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q07'), 'free -h | sort -n', FALSE, 'free -h ใช้ดูหน่วยความจำ RAM ไม่ใช่ขนาดโฟลเดอร์บนดิสก์', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:07-disk-memory-cpu:q07'), 'lsof +L1 | wc -l', FALSE, 'lsof +L1 ใช้ดูไฟล์ที่ถูกลบแต่ยังเปิดค้าง ไม่ใช่การเรียงขนาดโฟลเดอร์', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:08-remote-access:q01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'เพื่อให้การล็อกอินแบบ SSH Key-based ทำงานได้โดยไม่ถูก `sshd` ปฏิเสธ สิทธิ์ (Octal Permission) ที่ถูกต้องของโฟลเดอร์ `~/.ssh` และไฟล์ `~/.ssh/authorized_keys` คือข้อใดตามลำดับ?', NULL, 'easy', 'multiple_choice', 'บริการ `sshd` มีโหมด `StrictModes` ซึ่งกำหนดให้โฟลเดอร์ `~/.ssh` ต้องมีสิทธิ์ `700` (`drwx------` เจ้าของเข้าได้คนเดียว) และไฟล์ `~/.ssh/authorized_keys` ต้องมีสิทธิ์ `600` (`-rw-------` เจ้าของอ่าน/เขียนได้คนเดียว) หากเปิดสิทธิ์ให้กลุ่มหรือผู้อื่นแก้ไขได้ `sshd` จะปฏิเสธการใช้ Key ทันที', ARRAY['ssh', 'permissions', 'security']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q01'), '`~/.ssh` เป็น 700 และ `~/.ssh/authorized_keys` เป็น 600', TRUE, 'ถูกต้อง — เป็นสิทธิ์มาตรฐานที่ปลอดภัยและผ่านการตรวจสอบของ sshd', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q01'), '`~/.ssh` เป็น 777 และ `~/.ssh/authorized_keys` เป็น 666', FALSE, 'สิทธิ์ 777 และ 666 เปิดให้ผู้อื่นเขียนทับกุญแจได้ จึงถูก sshd บล็อกการล็อกอินทันที', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q01'), '`~/.ssh` เป็น 644 และ `~/.ssh/authorized_keys` เป็น 755', FALSE, 'โฟลเดอร์ต้องมีสิทธิ์ x (700) จึงจะเข้าถึงไฟล์ข้างในได้ ส่วนไฟล์กุญแจไม่ควรมีสิทธิ์ x', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q01'), '`~/.ssh` เป็น 400 และ `~/.ssh/authorized_keys` เป็น 000', FALSE, 'โฟลเดอร์ที่ไม่มีสิทธิ์ x (400) จะไม่สามารถเปิดอ่านไฟล์ข้างในได้ และสิทธิ์ 000 อ่านไม่ได้เลย', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:08-remote-access:q02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'เมื่อพยายามเชื่อมต่อ SSH ด้วยคำสั่งด้านล่างแล้วได้รับข้อความแจ้งเตือนดังภาพ สาเหตุเกิดจากอะไรและควรแก้ไขอย่างไร?', '$ ssh -i ~/.ssh/id_ed25519 support@10.20.1.50
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-Permissions 0644 for ''/home/user/.ssh/id_ed25519'' are too open.
-It is required that your private key files are NOT accessible by others.
-This private key will be ignored.', 'easy', 'scenario', 'ข้อความ `Permissions 0644 for ''/home/user/.ssh/id_ed25519'' are too open` ระบุว่าไฟล์ Private Key บนเครื่องต้นทางมีสิทธิ์เปิดกว้างเกินไป (`644` ทำให้คนอื่นในเครื่องอ่านไฟล์กุญแจส่วนตัวได้) โปรแกรม `ssh` จึงเพิกเฉยไม่ยอมใช้กุญแจนี้ วิธีแก้คือรัน `chmod 600 ~/.ssh/id_ed25519`', ARRAY['ssh', 'permissions', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q02'), 'ไฟล์ Private Key มีสิทธิ์เปิดกว้างเกินไป (0644) ให้แก้ไขด้วยคำสั่ง `chmod 600 ~/.ssh/id_ed25519`', TRUE, 'ถูกต้อง — กุญแจส่วนตัวต้องจำกัดให้เจ้าของอ่านได้คนเดียวเท่านั้น (600 หรือ 400)', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q02'), 'ไฟล์ Private Key หมดอายุ ต้องสร้างใหม่ด้วย `ssh-keygen` ทุก 30 วัน', FALSE, 'กุญแจ SSH มาตรฐานไม่ได้หมดอายุตามข้อความนี้ แต่ติดเรื่อง Permission 0644', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q02'), 'ต้องเปลี่ยนสิทธิ์เป็น `chmod 777 ~/.ssh/id_ed25519` เพื่อให้โปรแกรม ssh อ่านไฟล์ได้', FALSE, 'ยิ่งเปลี่ยนเป็น 777 จะยิ่งเปิดกว้างและยังติดข้อผิดพลาดเดิม', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q02'), 'เซิร์ฟเวอร์ปลายทาง `10.20.1.50` ปิดพอร์ต 22 อยู่', FALSE, 'ปัญหานี้เกิดที่การตรวจสิทธิ์ไฟล์ Private Key บนเครื่องต้นทางของเราเอง', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:08-remote-access:q03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ข้อผิดพลาด `Connection refused` กับ `Connection timed out` ขณะรันคำสั่ง `ssh user@10.20.1.50` บ่งชี้สาเหตุต่างกันอย่างไร?', NULL, 'medium', 'multiple_choice', '`Connection refused` แปลว่าแพ็กเก็ตเดินทางไปถึงเครื่อง `10.20.1.50` แล้ว แต่ปลายทางตอบปฏิเสธกลับมาทันทีเพราะพอร์ต 22 ไม่มีบริการ `sshd` เปิดฟังอยู่ (เช่น `sshd` หยุดทำงาน หรือเปลี่ยนไปฟังพอร์ตอื่น) ส่วน `Connection timed out` แปลว่าส่งแพ็กเก็ตไปแล้วไม่ได้รับการตอบกลับเลย มักเกิดจากติด Firewall, Security Group, Routing หรือยังไม่ได้ต่อ VPN', ARRAY['ssh', 'network', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q03');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q03'), 'Connection refused คือไปถึงเครื่องแล้วแต่พอร์ตไม่มีบริการ sshd เปิดรับ ส่วน Connection timed out คือแพ็กเก็ตไปไม่ถึงหรือถูก Firewall ดรอปเงียบๆ', TRUE, 'ถูกต้อง — ช่วยแยกแยะได้ทันทีว่าปัญหาอยู่ที่ตัวบริการ sshd หรืออยู่ที่ระดับเครือข่าย/Firewall', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q03'), 'Connection refused คือใส่รหัสผ่านผิด ส่วน Connection timed out คือใส่ชื่อผู้ใช้ผิด', FALSE, 'หากใส่รหัสผ่านหรือกุญแจผิดจะขึ้นว่า Permission denied ไม่ใช่ Connection refused', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q03'), 'ทั้งสองข้อความมีความหมายเหมือนกัน ขึ้นอยู่กับเวอร์ชันของ Ubuntu หรือ RHEL', FALSE, 'เป็นรหัสข้อผิดพลาดระดับ TCP ที่ต่างกันอย่างชัดเจนในทุกระบบปฏิบัติการ', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q03'), 'Connection refused เกิดจากสายแลนหลุด ส่วน Connection timed out เกิดจากฮาร์ดดิสก์เต็ม', FALSE, 'สายแลนหลุดจะไม่สามารถส่งแพ็กเก็ตไปรับคำตอบ RST (Refused) จากปลายทางได้', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:08-remote-access:q04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ทีม Infrastructure แจ้งว่าเพิ่งติดตั้ง OS ใหม่ให้กับเซิร์ฟเวอร์ `10.20.1.88` เสร็จเรียบร้อย เมื่อคุณสั่ง `ssh support@10.20.1.88` จึงพบข้อความเตือนด้านล่าง หลังจากยืนยันกับทีม Infra แล้วว่าเป็นการลงเครื่องใหม่จริง คุณควรรันคำสั่งใดเพื่อล้างค่า Host key เก่าของ IP นี้ออกจากไฟล์ `known_hosts`?', '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
-Host key for 10.20.1.88 has changed and you have requested strict checking.
-Host key verification failed.', 'medium', 'scenario', 'เมื่อเซิร์ฟเวอร์ถูกติดตั้ง OS ใหม่ที่ IP เดิม ลายนิ้วมือของเครื่อง (Host key) จะเปลี่ยนไป ทำให้ไม่ตรงกับค่าเก่าที่บันทึกไว้ใน `~/.ssh/known_hosts` คำสั่งที่ปลอดภัยและตรงจุดที่สุดในการลบเฉพาะบรรทัดของโฮสต์นั้นคือ `ssh-keygen -R 10.20.1.88`', ARRAY['ssh', 'known_hosts', 'ssh-keygen', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q04');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q04'), 'ssh-keygen -R 10.20.1.88', TRUE, 'ถูกต้อง — ลบเฉพาะรายการ Host key ของ 10.20.1.88 ออกจาก ~/.ssh/known_hosts อย่างปลอดภัย', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q04'), 'ssh-copy-id 10.20.1.88', FALSE, 'ssh-copy-id ใช้ส่ง Public key ของเราไปปลายทาง ซึ่งจะติดปัญหา Host key verification failed เช่นเดียวกัน', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q04'), 'rm -rf ~/.ssh', FALSE, 'การลบทั้งโฟลเดอร์ ~/.ssh จะทำให้ Private Key และคอนฟิกทั้งหมดของเราหายไปด้วย!', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q04'), 'chmod 777 ~/.ssh/known_hosts', FALSE, 'การเปลี่ยนสิทธิ์ไฟล์ไม่ได้ลบค่า Host key เก่าที่ขัดแย้งกันออก', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:08-remote-access:q05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หากเซิร์ฟเวอร์ปลายทางเปิดรับ SSH ที่พอร์ต `2222` และคุณต้องการคัดลอกไฟล์ `/tmp/report.txt` จากเซิร์ฟเวอร์มาไว้ที่โฟลเดอร์ปัจจุบันด้วยคำสั่ง `scp` ต้องระบุตัวเลือกพอร์ตอย่างไร?', NULL, 'medium', 'multiple_choice', 'ข้อควรระวังยอดฮิต: คำสั่ง `ssh` ใช้ `-p` (ตัวพิมพ์เล็ก) สำหรับระบุพอร์ต แต่คำสั่ง `scp` ใช้ **`-P` (ตัวพิมพ์ใหญ่)** สำหรับระบุพอร์ต (เนื่องจาก `-p` พิมพ์เล็กใน `scp` ถูกใช้สำหรับ preserve timestamps/modes เหมือนใน `cp -p`)', ARRAY['scp', 'ssh', 'ports']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q05');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q05'), 'scp -P 2222 support@10.20.1.50:/tmp/report.txt ./', TRUE, 'ถูกต้อง — คำสั่ง scp ต้องใช้ -P (ตัวพิมพ์ใหญ่) ในการระบุหมายเลขพอร์ต', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q05'), 'scp -p 2222 support@10.20.1.50:/tmp/report.txt ./', FALSE, '-p (ตัวพิมพ์เล็ก) ใน scp หมายถึงการคงค่าเวลาและสิทธิ์ของไฟล์ ไม่ใช่การระบุพอร์ต', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q05'), 'scp --port=2222 support@10.20.1.50:/tmp/report.txt ./', FALSE, 'scp มาตรฐานไม่รองรับตัวเลือก --port=', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q05'), 'scp -i 2222 support@10.20.1.50:/tmp/report.txt ./', FALSE, '-i ใช้สำหรับระบุไฟล์ Private Key (identity file) ไม่ใช่หมายเลขพอร์ต', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:08-remote-access:q06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'เหตุใดการใช้โปรแกรม `tmux` บนเซิร์ฟเวอร์จึงมีประโยชน์อย่างมากสำหรับเจ้าหน้าที่ Support เวลาต้องติดตาม Log หรือรันสคริปต์ตรวจสอบที่ใช้เวลานาน?', NULL, 'easy', 'multiple_choice', '`tmux` สร้างเซสชันเทอร์มินัลที่รันอยู่บนฝั่งเซิร์ฟเวอร์ หากสัญญาณอินเทอร์เน็ตของเจ้าหน้าที่หลุดหรือหน้าต่าง SSH ปิดลง งานที่รันอยู่ใน `tmux` จะไม่ถูกตัดจบ และสามารถใช้คำสั่ง `tmux attach` กลับเข้ามาดูหน้าจอเดิมต่อได้ทันที', ARRAY['tmux', 'ssh', 'remote-access']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q06');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q06'), 'ช่วยให้โปรเซสและหน้าจอทำงานต่อไปบนเซิร์ฟเวอร์แม้การเชื่อมต่อ SSH จะหลุด และสามารถกลับเข้าเซสชันเดิมได้ด้วย `tmux attach`', TRUE, 'ถูกต้อง — ป้องกันงานค้างหรือตัดจบกลางคันเมื่อเน็ตหลุด', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q06'), 'ช่วยเร่งความเร็วของ CPU บนเซิร์ฟเวอร์ให้ทำงานเร็วขึ้น 2 เท่า', FALSE, 'tmux เป็น Terminal Multiplexer ไม่ได้เร่งความเร็วฮาร์ดแวร์ CPU', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q06'), 'ช่วยข้ามการตรวจสอบรหัสผ่านและ SSH Key ทั้งหมด', FALSE, 'ต้องล็อกอินผ่าน SSH ตามปกติก่อนจึงจะรัน tmux บนเซิร์ฟเวอร์ได้', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q06'), 'ช่วยบีบอัดไฟล์ Log ทั้งหมดใน `/var/log` เป็น `.gz` อัตโนมัติ', FALSE, 'หน้าที่บีบอัดไฟล์ Log ตามรอบคือ logrotate ไม่ใช่ tmux', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:08-remote-access:q07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'เมื่อต้องการซิงก์โฟลเดอร์ไฟล์ Log ขนาดใหญ่จากเซิร์ฟเวอร์ปลายทางมาที่เครื่องโลคอล โดยต้องการให้ส่งเฉพาะส่วนที่เปลี่ยนแปลง คงค่าสิทธิ์/เวลาเดิม และบีบอัดข้อมูลระหว่างส่งผ่านเครือข่าย ควรใช้คำสั่งใด?', NULL, 'medium', 'multiple_choice', 'คำสั่ง `rsync -avz` เหมาะสมที่สุด โดย `-a` (archive) คัดลอกทั้งโฟลเดอร์พร้อมคงสิทธิ์และเวลาเดิม, `-v` (verbose) แสดงรายการไฟล์ที่ส่ง, และ `-z` (compress) บีบอัดข้อมูลขณะส่งผ่านเครือข่าย และหากหลุดกลางคันสามารถรันซ้ำเพื่อส่งต่อเฉพาะส่วนที่ยังขาดได้', ARRAY['rsync', 'scp', 'remote-access']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q07');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q07'), 'rsync -avz support@10.20.1.50:/var/log/app/ ./app-logs/', TRUE, 'ถูกต้อง — ประหยัดแบนด์วิดท์ด้วย -z และส่งเฉพาะส่วนที่ต่างกัน', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q07'), 'ssh -v support@10.20.1.50 /var/log/app/', FALSE, 'เป็นการสั่งรันพาธโฟลเดอร์ผ่าน ssh ซึ่งจะฟ้องว่าเป็นไดเรกทอรี ไม่ใช่การโอนไฟล์', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q07'), 'tmux -avz support@10.20.1.50:/var/log/app/', FALSE, 'tmux ใช้จัดการเซสชันหน้าจอ ไม่ใช่คำสั่งโอนถ่ายไฟล์', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:08-remote-access:q07'), 'cp -p support@10.20.1.50:/var/log/app/ ./', FALSE, 'คำสั่ง cp มาตรฐานใช้คัดลอกไฟล์ภายในเครื่องเดียวกัน ไม่รองรับการส่งข้ามเครื่องผ่าน SSH', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:09-cron-schedule:q01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ในตาราง Crontab บรรทัดตั้งเวลา `30 3 * * 1-5 /opt/app/backup.sh` หมายถึงการสั่งรันสคริปต์ในเวลาใด?', NULL, 'easy', 'multiple_choice', 'ฟิลด์ที่ 1 คือนาที (`30`), ฟิลด์ที่ 2 คือชั่วโมง (`3` = 03:30 น.), ฟิลด์ที่ 3 คือวันที่ (`*` = ทุกวันที่), ฟิลด์ที่ 4 คือเดือน (`*` = ทุกเดือน), และฟิลด์ที่ 5 คือวันในสัปดาห์ (`1-5` = วันจันทร์ถึงวันศุกร์) ดังนั้นหมายถึงรันเวลา 03:30 น. ของทุกวันจันทร์ถึงศุกร์', ARRAY['cron', 'crontab', 'schedule']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q01'), 'เวลา 03:30 น. ของทุกวันจันทร์ถึงวันศุกร์', TRUE, 'ถูกต้อง — 30 = นาทีที่ 30, 3 = ชั่วโมงที่ 3, 1-5 = จันทร์ถึงศุกร์', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q01'), 'ทุกๆ 30 นาที ในช่วงเวลา 01:00 น. ถึง 05:00 น.', FALSE, 'ทุกๆ 30 นาทีต้องเขียนเป็น */30 ไม่ใช่ 30 เฉยๆ', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q01'), 'เวลา 15:03 น. ของวันที่ 1 ถึงวันที่ 5 ของทุกเดือน', FALSE, 'ฟิลด์แรกคือนาทีไม่ใช่ชั่วโมง และ 1-5 อยู่ในฟิลด์ที่ 5 (วันในสัปดาห์) ไม่ใช่ฟิลด์ที่ 3 (วันที่)', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q01'), 'รันเพียง 3 ครั้งต่อเดือน ในเดือนมกราคมถึงพฤษภาคม', FALSE, 'ฟิลด์เดือนคือฟิลด์ที่ 4 ซึ่งในที่นี้เป็น *', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:09-cron-schedule:q02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หากต้องการตรวจสอบรายการงานตั้งเวลา (Crontab) ของผู้ใช้ปัจจุบันโดยไม่เสี่ยงเผลอแก้ไขหรือลบข้อมูล ต้องใช้คำสั่งใด และควรระวังห้ามพิมพ์สลับกับคำสั่งใดมากที่สุด?', NULL, 'easy', 'multiple_choice', '`crontab -l` (list) ใช้แสดงรายการ Crontab ออกทางหน้าจออย่างปลอดภัย และต้องระวังห้ามพิมพ์ `crontab -r` (remove) เพราะจะลบตาราง Crontab ทั้งหมดทิ้งทันทีโดยไม่ถามยืนยัน', ARRAY['crontab', 'safety', 'cron']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q02'), 'ใช้ `crontab -l` เพื่อดูรายการ และห้ามพิมพ์ `crontab -r` เพราะจะลบตาราง Crontab ทั้งหมดทันที', TRUE, 'ถูกต้อง — -l คือ list ส่วน -r คือ remove', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q02'), 'ใช้ `crontab -r` เพื่ออ่านรายการ และห้ามพิมพ์ `crontab -l` เพราะจะล็อกตารางงาน', FALSE, 'สลับกัน! การรัน crontab -r จะลบ Crontab หายทั้งหมดทันที', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q02'), 'ใช้ `crontab -e` เพื่อดูอย่างเดียว และห้ามพิมพ์ `crontab -u`', FALSE, '-e คือเปิดแก้ไข (edit) ส่วน -u คือระบุชื่อผู้ใช้', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q02'), 'ใช้ `cron --show` เพื่อดูรายการ', FALSE, 'คำสั่งมาตรฐานในการจัดการตารางของผู้ใช้คือ crontab -l', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:09-cron-schedule:q03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'นักพัฒนาแจ้งว่าเมื่อล็อกอินเข้าเครื่องแล้วรัน `/opt/report/gen.sh` ด้วยตนเอง สคริปต์ทำงานสำเร็จปกติ แต่เมื่อตั้งเวลาใน Crontab ให้รันตอนเที่ยงคืนกลับล้มเหลวและพบข้อความในไฟล์ Log ดังด้านล่าง สาเหตุเกิดจากอะไร?', '$ sudo crontab -u appuser -l
-0 0 * * * /opt/report/gen.sh >> /var/log/report.log 2>&1
-
-$ tail -n 3 /var/log/report.log
-Starting daily report generation...
-/opt/report/gen.sh: line 14: node: command not found
-Report generation failed with exit code 127.', 'medium', 'scenario', 'เมื่อ Cron สั่งรันงาน จะใช้สภาพแวดล้อม (Environment) พื้นฐานที่มีค่าตัวแปร `PATH` สั้นมาก (เช่น `/usr/bin:/bin`) ต่างจากตอนล็อกอินผ่าน Shell ปกติ หากโปรแกรม `node` ติดตั้งอยู่ที่ `/usr/local/bin/node` หรือในโฟลเดอร์ของ `nvm` ตัวสคริปต์ที่เรียกแค่ `node` เฉยๆ จึงหาคำสั่งไม่เจอ (`command not found`, exit code 127) ต้องแก้ไขโดยระบุ Absolute Path เต็มของคำสั่งหรือกำหนด `PATH` ในสคริปต์', ARRAY['cron', 'path', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q03');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q03'), 'สภาพแวดล้อมของ Cron มีค่า PATH จำกัดกว่า Shell ปกติ ทำให้หาคำสั่ง `node` ไม่เจอ ต้องระบุพาธเต็มเช่น `/usr/local/bin/node`', TRUE, 'ถูกต้อง — เป็นสาเหตุอันดับ 1 ที่สคริปต์รันมือผ่านแต่รันใน Cron แล้วขึ้น command not found', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q03'), 'โปรแกรม Node.js ไม่สามารถทำงานในช่วงเวลาเที่ยงคืน (00:00) ได้', FALSE, 'Node.js ทำงานได้ทุกเวลา แต่ติดที่หาไฟล์คำสั่ง node ไม่เจอจากตัวแปร PATH', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q03'), 'บริการ Cron อนุญาตให้รันเฉพาะคำสั่งภาษา Python เท่านั้น', FALSE, 'Cron สามารถรันโปรแกรมและสคริปต์ได้ทุกภาษาหากระบุพาธถูกต้อง', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q03'), 'ไฟล์ `/var/log/report.log` ถูกล็อกทำให้คำสั่ง node ถูกลบออกจากเครื่อง', FALSE, 'ไฟล์ Log บันทึกข้อความได้ตามปกติ แต่ฟ้องว่าหาคำสั่ง node ไม่พบในบรรทัดที่ 14', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:09-cron-schedule:q04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'จากบรรทัด Crontab และบันทึกใน `/var/log/syslog` ด้านล่าง เหตุใดคำสั่งสำรองไฟล์จึงล้มเหลวและเห็นคำสั่งถูกตัดจบแค่คำว่า `backup_`?', '$ crontab -l
-0 1 * * * cp /opt/app/config.yml /opt/backup/config_$(date +%Y%m%d).yml
-
-$ grep CRON /var/log/syslog | tail -n 1
-Nov  3 01:00:01 app-01 CRON[19022]: (support) CMD (cp /opt/app/config.yml /opt/backup/config_$(date +)', 'hard', 'scenario', 'ในไฟล์ Crontab เครื่องหมายเปอร์เซ็นต์ (`%`) มีความหมายพิเศษคือถูกแปลงเป็น **การขึ้นบรรทัดใหม่ (Newline)** และข้อความหลัง `%` ตัวแรกจะถูกส่งเป็น Standard Input แทนที่จะเป็นส่วนหนึ่งของคำสั่ง ดังนั้นหากต้องใช้ `%` ในบรรทัด Crontab (เช่นใน `date +\%Y\%m\%d`) ต้องใส่เครื่องหมาย Backslash (`\`) นำหน้า `%` ทุกตัว หรือย้ายคำสั่งไปไว้ในไฟล์สคริปต์ `.sh`', ARRAY['crontab', 'percent', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q04');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q04'), 'ใน Crontab เครื่องหมาย `%` จะถูกตีความเป็นการตัดขึ้นบรรทัดใหม่ ต้องใส่ Backslash นำหน้าเป็น `\%` หรือย้ายคำสั่งเข้าไฟล์สคริปต์', TRUE, 'ถูกต้อง — สังเกตจาก Log ของ CRON ที่คำสั่งถูกตัดจบตรงเครื่องหมาย % ตัวแรกพอดี', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q04'), 'คำสั่ง `cp` ไม่สามารถทำงานร่วมกับคำสั่ง `date` บน Linux ได้', FALSE, 'บน Shell ปกติรันได้ แต่ในไฟล์ Crontab ติดกฎพิเศษของเครื่องหมาย %', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q04'), 'บริการ Cron ห้ามตั้งเวลาทำงานตอนตี 1 (01:00 น.)', FALSE, 'Cron สั่งรันงานตอน 01:00:01 แล้วตามที่ปรากฏใน syslog', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q04'), 'ชื่อไฟล์ใน Linux ห้ามมีตัวเลขปี ค.ศ. อยู่ในชื่อไฟล์', FALSE, 'ชื่อไฟล์ใส่ตัวเลขวันที่ได้ตามปกติ', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:09-cron-schedule:q05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หากต้องการตรวจสอบว่าบริการ Cron ได้สั่งปลุกงานตามเวลาที่ตั้งไว้จริงหรือไม่ บนเซิร์ฟเวอร์ **Ubuntu/Debian** เทียบกับ **RHEL/Rocky Linux** ต้องตรวจสอบที่ไฟล์ Log ใดตามลำดับ?', NULL, 'medium', 'multiple_choice', 'บน Ubuntu/Debian บันทึกการทำงานของบริการ `cron` จะถูกรวมอยู่ใน `/var/log/syslog` (ใช้ `grep CRON /var/log/syslog`) ส่วนบน RHEL/Rocky Linux บริการ `crond` จะแยกไฟล์ Log เฉพาะไว้ที่ `/var/log/cron`', ARRAY['cron', 'logs', 'ubuntu', 'rhel']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q05');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q05'), '`/var/log/syslog` (Ubuntu/Debian) และ `/var/log/cron` (RHEL/Rocky)', TRUE, 'ถูกต้อง — เป็นตำแหน่งมาตรฐานของบันทึกการทำงาน Cron ในแต่ละค่าย', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q05'), '`/var/log/auth.log` (Ubuntu/Debian) และ `/var/log/secure` (RHEL/Rocky)', FALSE, 'auth.log และ secure เก็บเรื่องการล็อกอินและสิทธิ์เป็นหลัก (แม้จะมี session ของ pam_unix บ้าง แต่รายการคำสั่ง CMD ของ RHEL อยู่ที่ /var/log/cron)', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q05'), '`/etc/crontab` ทั้งสองตระกูล', FALSE, '/etc/crontab คือไฟล์ตั้งค่าตารางงาน ไม่ใช่ไฟล์บันทึกผลการทำงาน (Log)', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q05'), '`/var/log/dmesg` ทั้งสองตระกูล', FALSE, 'dmesg เป็นบันทึกของ Kernel ไม่ได้เก็บประวัติการรัน Cron job', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:09-cron-schedule:q06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ความแตกต่างทางโครงสร้างบรรทัดระหว่างการตั้งเวลาใน User Crontab (`crontab -e`) กับการตั้งเวลาในไฟล์ภายใต้ `/etc/cron.d/` คืออะไร?', NULL, 'medium', 'multiple_choice', 'ไฟล์ตารางงานระดับระบบใน `/etc/crontab` และ `/etc/cron.d/` จะต้องระบุ **ชื่อบัญชีผู้ใช้ (username)** แทรกเป็นฟิลด์ที่ 6 (หลังฟิลด์เวลา 5 ตัว และก่อนตัวคำสั่ง) เพื่อบอกว่าจะให้รันคำสั่งนั้นภายใต้สิทธิ์ของใคร ส่วนใน `crontab -e` เป็นของใครของมันอยู่แล้วจึงไม่มีฟิลด์ชื่อผู้ใช้', ARRAY['crontab', 'cron.d', 'system']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q06');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q06'), 'ไฟล์ใน `/etc/cron.d/` ต้องระบุชื่อผู้ใช้ (username) แทรกเป็นคอลัมน์ที่ 6 ก่อนคำสั่ง ส่วน User Crontab ไม่ต้องระบุชื่อผู้ใช้', TRUE, 'ถูกต้อง — หากลืมใส่ชื่อผู้ใช้ในไฟล์ภายใต้ /etc/cron.d/ งานนั้นจะรันไม่ทำงานเพราะถือว่าชื่อคำสั่งผิด', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q06'), 'ไฟล์ใน `/etc/cron.d/` มีฟิลด์เวลาเพียง 3 ฟิลด์ ส่วน User Crontab มี 5 ฟิลด์', FALSE, 'ทั้งสองแบบใช้ฟิลด์เวลา 5 ฟิลด์เหมือนกัน', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q06'), 'User Crontab รันได้เฉพาะวันจันทร์ถึงศุกร์ ส่วน `/etc/cron.d/` รันได้ทุกวัน', FALSE, 'ทั้งสองแบบตั้งเวลารันได้ทุกวันเหมือนกัน', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q06'), 'ไม่มีความแตกต่างกัน สามารถคัดลอกบรรทัดวางสลับกันได้ทันที', FALSE, 'วางสลับกันตรงๆ ไม่ได้ เพราะต่างกันที่คอลัมน์ระบุชื่อผู้ใช้ (User field)', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:09-cron-schedule:q07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'บนเซิร์ฟเวอร์ Linux สมัยใหม่ หากตรวจสอบทั้ง `crontab -l` และ `/etc/cron*` แล้วไม่พบงานตั้งเวลาที่ตามหา แต่ยังมีงานรันอัตโนมัติตามรอบเวลาอยู่ ควรใช้คำสั่งใดเพื่อตรวจสอบกลไกตั้งเวลาของ `systemd`?', NULL, 'easy', 'multiple_choice', 'นอกเหนือจาก Cron แล้ว ระบบที่ใช้ `systemd` สามารถตั้งเวลางานด้วย **systemd timer** ได้ โดยตรวจสอบรายการทั้งหมดพร้อมเวลาที่จะรันรอบถัดไปและรอบล่าสุดได้ด้วยคำสั่ง `systemctl list-timers` (หรือ `systemctl list-timers --all`)', ARRAY['systemd', 'timers', 'cron']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q07');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q07'), 'systemctl list-timers', TRUE, 'ถูกต้อง — แสดงรายการ systemd timers ทั้งหมดพร้อมเวลารันครั้งล่าสุดและครั้งถัดไป', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q07'), 'systemctl list-sockets', FALSE, 'list-sockets ใช้ดูรายการ Socket units ไม่ใช่การตั้งเวลา', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q07'), 'ps aux --timers', FALSE, 'คำสั่ง ps aux ไม่มีตัวเลือก --timers', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:09-cron-schedule:q07'), 'dmesg --cron', FALSE, 'dmesg ไม่มีตัวเลือก --cron', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:10-health-check:q01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'เมื่อมีคนแจ้งว่าเว็บเข้าไม่ได้ ลำดับการตรวจแบบล่างขึ้นบนที่เหมาะสมที่สุดคือข้อใด?', NULL, 'easy', 'multiple_choice', 'ตรวจจากชั้นล่างขึ้นบนเพื่อหาชั้นแรกที่ผิดปกติ: Service รันอยู่ไหม (systemctl) → Process ฟัง Port ถูกต้องไหม (ss) → ต่อ Port จากภายนอกได้ไหม (nc) → Endpoint ตอบ HTTP ปกติไหม (curl)', ARRAY['troubleshooting', 'systemctl', 'ss', 'curl']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q01'), 'systemctl → ss → nc → curl', TRUE, 'ถูกต้อง — ไล่จาก Service, Port ในเครื่อง, การต่อจากภายนอก ไปจนถึง HTTP', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q01'), 'curl → ss → systemctl → nc', FALSE, 'เริ่มที่ชั้นบนสุดทำให้ไม่รู้ว่าปัญหาอยู่ชั้นไหนจริงๆ', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q01'), 'reboot เครื่องก่อน แล้วค่อยตรวจตามลำดับ', FALSE, 'การรีบูตทำให้หลักฐานหาย และอาจกระทบผู้ใช้อื่น', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q01'), 'nc → reboot → ss → systemctl', FALSE, 'ไม่มีเหตุผลที่จะข้ามการตรวจ Service และมีการรีบูตโดยไม่จำเป็น', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:10-health-check:q02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งใดแสดงทุก Port ที่ฟังอยู่ (TCP และ UDP) พร้อมชื่อ Process และแสดงเป็นตัวเลข?', NULL, 'easy', 'multiple_choice', 'ss -tulpn: t = TCP, u = UDP, l = Listening, p = แสดง Process, n = ตัวเลข ไม่แปลงเป็นชื่อ ควรใช้ sudo เพื่อเห็น Process ของผู้ใช้อื่น', ARRAY['ss', 'port']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q02'), 'sudo ss -tulpn', TRUE, 'ถูกต้อง — จำเป็นต้องมี sudo ถึงจะเห็น Process ของผู้ใช้อื่นครบ', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q02'), 'ss -s', FALSE, 'แสดงสรุปจำนวน Socket ไม่ใช่รายการ Port ที่ฟัง', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q02'), 'systemctl list-sockets', FALSE, 'แสดง systemd socket unit ไม่ใช่ทุก Port ที่ฟังอยู่ในเครื่อง', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q02'), 'curl -v localhost', FALSE, 'ทดสอบการเรียก HTTP ไม่ได้แสดงรายการ Port', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:10-health-check:q03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'จากผลลัพธ์ด้านล่าง ทำไมเครื่อง app-02 จึงต่อ Port 8080 ของเครื่องนี้ไม่ได้ ทั้งที่ Service รันปกติ?', '$ systemctl is-active order-api
-active
-
-$ sudo ss -ltnp ''sport = :8080''
-State   Recv-Q  Send-Q  Local Address:Port  Peer Address:Port  Process
-LISTEN  0       511         127.0.0.1:8080       0.0.0.0:*      users:(("node",pid=18420,fd=19))
-
-# จาก app-02
-$ nc -zv 10.20.1.50 8080
-nc: connect to 10.20.1.50 port 8080 (tcp) failed: Connection refused', 'medium', 'scenario', 'Local Address เป็น 127.0.0.1:8080 แปลว่าแอปฟังเฉพาะภายในเครื่อง เครื่องอื่นจึงได้ Connection refused ต้องแจ้งทีมที่ดูแลแอปให้ตรวจ Config ว่ากำหนดให้ฟังที่ 0.0.0.0 หรือ IP ของเครื่อง ไม่ใช่ปัญหา Firewall หรือ Network', ARRAY['ss', 'bind-address', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q03');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q03'), 'แอปฟังเฉพาะ 127.0.0.1 จึงรับเฉพาะการเชื่อมต่อจากในเครื่อง ต้องส่งต่อทีมแอปให้ตรวจ bind address', TRUE, 'ถูกต้อง — ดู Local Address ใน ss เป็นอันดับแรก', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q03'), 'Firewall ของ Network ดรอปแพ็กเก็ต จึงต้องส่งต่อทีม Network', FALSE, 'ถ้าถูก Firewall ดรอปมักได้ timed out ไม่ใช่ refused', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q03'), 'Service order-api ล่ม ต้องรีสตาร์ททันที', FALSE, 'systemctl แสดงว่า active และ ss เห็น Process ฟังอยู่', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q03'), 'Port 8080 ถูกโปรเซสอื่นใช้อยู่แล้ว', FALSE, 'Process ที่ฟังคือ node PID 18420 ซึ่งเป็นตัวแอปเอง', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:10-health-check:q04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ความหมายของ Connection refused กับ Connection timed out ต่างกันอย่างไร?', NULL, 'easy', 'multiple_choice', 'refused: แพ็กเก็ตถึงเครื่องปลายทางแล้ว แต่ไม่มีโปรแกรมฟัง Port นั้น (หรือถูก reject) ส่วน timed out: ไม่มีคำตอบกลับมา มักเกิดจาก Firewall/Security Group ดรอปเงียบๆ หรือไม่มีเส้นทาง', ARRAY['tcp', 'curl', 'nc']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q04');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q04'), 'refused = ไม่มีโปรแกรมฟัง Port, timed out = ไม่มีคำตอบกลับ มักถูกบล็อกหรือไม่มีเส้นทาง', TRUE, 'ถูกต้อง', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q04'), 'refused = DNS ผิด, timed out = รหัสผ่านผิด', FALSE, 'DNS ผิดจะขึ้น Could not resolve host และรหัสผ่านผิดไม่เกี่ยวกับ TCP', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q04'), 'ทั้งสองคำเหมือนกัน', FALSE, 'บ่งชี้ปัญหาคนละชั้น', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q04'), 'refused = ดิสก์เต็ม, timed out = RAM เต็ม', FALSE, 'ไม่เกี่ยวกับทรัพยากรเครื่อง', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:10-health-check:q05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ต้องการดูเฉพาะ HTTP Status Code และเวลาที่ใช้ของ https://api.example.com/health โดยไม่แสดง Body และไม่ให้ค้างเกิน 10 วินาที ควรใช้คำสั่งใด?', NULL, 'medium', 'multiple_choice', '-sS ปิด Progress แต่ยังแสดง Error, -o /dev/null ทิ้ง Body, -w กำหนดรูปแบบผลลัพธ์ และ --max-time จำกัดเวลารวม', ARRAY['curl', 'health-check']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q05');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q05'), 'curl -sS -o /dev/null -w "%{http_code} %{time_total}s\n" --max-time 10 https://api.example.com/health', TRUE, 'ถูกต้อง', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q05'), 'curl -v https://api.example.com/health > /dev/null', FALSE, 'ไม่ได้จำกัดเวลาและพิมพ์ข้อความ Verbose จำนวนมาก', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q05'), 'curl -k https://api.example.com/health', FALSE, '-k ข้ามการตรวจใบรับรอง ไม่ได้ช่วยให้ได้ Status Code ตามต้องการ', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q05'), 'ping https://api.example.com/health', FALSE, 'ping ใช้ไม่ได้กับ URL และไม่ตรวจ HTTP', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:10-health-check:q06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'จากผลลัพธ์ด้านล่าง การสตาร์ท Service ไม่สำเร็จเพราะอะไร และควรทำอะไรต่อ?', '$ sudo systemctl start report-api
-Job for report-api.service failed.
-
-$ journalctl -u report-api -n 3 --no-pager
-Nov 03 14:20:11 app-prod-01 node[22011]: Error: listen EADDRINUSE: address already in use :::9000
-Nov 03 14:20:11 app-prod-01 systemd[1]: report-api.service: Main process exited, code=exited, status=1/FAILURE
-
-$ sudo ss -ltnp ''sport = :9000''
-LISTEN 0 511 *:9000 *:* users:(("java",pid=1544,fd=77))', 'medium', 'scenario', 'EADDRINUSE แปลว่า Port 9000 ถูกใช้อยู่แล้ว จาก ss พบว่า Process java PID 1544 ถือ Port นี้ Tier 1 ควรเก็บชื่อและ PID ของ Process และ Log แล้วส่งต่อตาม Runbook ไม่ kill Process ที่ไม่รู้ที่มา', ARRAY['EADDRINUSE', 'ss', 'lsof', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q06');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q06'), 'Port 9000 ถูก Process java (PID 1544) ใช้อยู่ ให้เก็บข้อมูลแล้วส่งต่อตาม Runbook ก่อนตัดสินใจจัดการ', TRUE, 'ถูกต้อง — รู้ตัวผู้ถือ Port แล้ว แต่ต้องยืนยันก่อนว่าเป็น Process ที่ควรอยู่หรือไม่', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q06'), 'ไฟล์ Config สะกดผิด ให้แก้ไฟล์ทันที', FALSE, 'Log ชี้ที่ Port ถูกใช้ ไม่ใช่ Config ผิดรูปแบบ', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q06'), 'ดิสก์เต็ม ให้ลบ Log', FALSE, 'ไม่มีหลักฐานเรื่องดิสก์ใน Log', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q06'), 'ใช้ kill -9 1544 ทันทีเพื่อให้ Service สตาร์ทได้', FALSE, 'อาจฆ่าบริการสำคัญอื่น ต้องทำตาม Runbook', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('linux:10-health-check:q07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่ง curl ได้ผลลัพธ์ HTTP 502 Bad Gateway จาก Nginx ควรตรวจอะไรเป็นอันดับแรก?', '$ curl -I https://shop.example.com
-HTTP/2 502
-server: nginx/1.24.0', 'hard', 'scenario', '502 หมายถึง Nginx ทำงานอยู่แต่ได้คำตอบที่ใช้ไม่ได้หรือต่อ Upstream ไม่ได้ จึงควรตรวจ Service และ Port ของ Backend และอ่าน error.log ของ Nginx เพื่อดูข้อความ upstream', ARRAY['nginx', '502', 'curl', 'upstream']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q07');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q07'), 'ตรวจสถานะและ Port ของ Backend (systemctl, ss) และอ่าน error.log ของ Nginx หาบรรทัด upstream', TRUE, 'ถูกต้อง — 502 มักมาจาก Backend ล่มหรือต่อไม่ได้', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q07'), 'รีสตาร์ท Nginx ทันที', FALSE, 'Nginx ตอบอยู่แล้ว การรีสตาร์ทยังไม่แก้สาเหตุ', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q07'), 'ตรวจ DNS ของผู้ใช้', FALSE, 'curl ได้ Response จาก Nginx แล้ว แปลว่า DNS ใช้ได้', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'linux:10-health-check:q07'), 'ลบแคชเบราว์เซอร์ของผู้ใช้', FALSE, 'curl ไม่ผ่านแคชเบราว์เซอร์และเจอ 502 เหมือนกัน', 4);
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:fc:ss-listen', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-permissions' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งตรวจสอบว่า Process ใดกำลังฟังพอร์ต (Listen) อยู่บน Linux', 'ss -tulpn หรือ netstat -tulpn
-
--t: TCP
--u: UDP
--l: Listening
--p: Show process/PID
--n: Numeric port', 'จำตัวย่อ TULPN', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:02-basics:fc01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งแสดงเส้นทางเต็มของโฟลเดอร์ที่กำลังยืนอยู่ปัจจุบัน', 'pwd
-(Print Working Directory)', 'ตัวย่อ 3 ตัวอักษร', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:02-basics:fc02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งดูรายการไฟล์ทั้งหมดรวมไฟล์ซ่อน พร้อมแสดงสิทธิ์และขนาดแบบอ่านง่าย (KB/MB/GB)', 'ls -lah
-
--l: แสดงรายละเอียดแบบยาว
--a: รวมไฟล์ซ่อนที่ขึ้นต้นด้วย .
--h: แสดงขนาดไฟล์แบบ Human-readable', 'ls ตามด้วย 3 ตัวเลือกยอดนิยม', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:02-basics:fc03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ความแตกต่างระหว่าง Absolute Path กับ Relative Path', '• Absolute Path: ขึ้นต้นด้วย / เสมอ (อ้างอิงจากรากสุดของระบบ เช่น /var/log/syslog)
-• Relative Path: ไม่ขึ้นต้นด้วย / (อ้างอิงจากตำแหน่งปัจจุบัน เช่น ./app.log หรือ ../config)', 'ดูที่ตัวอักษรแรกของเส้นทาง', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:02-basics:fc04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'สัญลักษณ์ . , .. และ ~ ในเส้นทาง Linux หมายถึงอะไร?', '• . = โฟลเดอร์ปัจจุบัน
-• .. = โฟลเดอร์แม่ (ถอยขึ้น 1 ชั้น)
-• ~ = โฟลเดอร์ Home ของผู้ใช้ปัจจุบัน', 'จุดเดียว สองจุด และตัวหนอน', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:02-basics:fc05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งสลับกลับไปยังโฟลเดอร์ก่อนหน้าที่เพิ่งจากมา', 'cd -', 'ใช้เครื่องหมายขีดกลาง', 5)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:02-basics:fc06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ทำไมไม่ควรใช้ cat เปิดอ่านไฟล์ Log ขนาดใหญ่ และควรใช้คำสั่งใดแทน?', 'เพราะ cat จะแสดงเนื้อหาทั้งไฟล์รวดเดียวทำให้หน้าจอค้างและเปลือง I/O
-ควรใช้:
-• less <file> (อ่านทีละหน้า ค้นหาด้วย /)
-• tail -n 50 <file> (ดูเฉพาะ 50 บรรทัดสุดท้าย)', 'ใช้โปรแกรมแบ่งหน้าหรือดูท้ายไฟล์', 6)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:02-basics:fc07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ปุ่มลัดสำคัญเมื่อเปิดอ่านไฟล์ด้วยคำสั่ง less', '• /คำค้นหา : ค้นหาข้อความไปข้างหน้า (กด n ไปจุดถัดไป)
-• G (พิมพ์ใหญ่) : กระโดดไปบรรทัดสุดท้ายของไฟล์
-• g (พิมพ์เล็ก) : กระโดดไปบรรทัดแรกของไฟล์
-• q : ออกจากโปรแกรม less', 'คล้ายปุ่มในโปรแกรม vi', 7)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:02-basics:fc08', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งดูเฉพาะ 20 บรรทัดแรก และ 50 บรรทัดสุดท้ายของไฟล์ app.log', '• 20 บรรทัดแรก: head -n 20 app.log
-• 50 บรรทัดสุดท้าย: tail -n 50 app.log', 'ส่วนหัวและส่วนหาง', 8)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:02-basics:fc09', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งคัดลอกโฟลเดอร์ทั้งก้อน และคำสั่งคัดลอกไฟล์โดยคงเวลาแก้ไขเดิม (Timestamp)', '• คัดลอกโฟลเดอร์: cp -r src_dir/ dest_dir/
-• คงสิทธิ์และเวลาเดิม: cp -p file.conf file.conf.bak', '-r (recursive) และ -p (preserve)', 9)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:02-basics:fc10', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ความแตกต่างของ Wildcard * กับ ? ใน Shell', '• * แทนตัวอักษรใดๆ กี่ตัวก็ได้ (รวมถึง 0 ตัว) เช่น *.log
-• ? แทนตัวอักษรใดๆ เพียง 1 ตัวอักษรเท่านั้น เช่น app-0?.log', 'ดอกจัน = กี่ตัวก็ได้, ปรัศนี = 1 ตัว', 10)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:02-basics:fc11', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'วิธีเปิดดูคู่มือการใช้งานคำสั่งบนเครื่อง Linux เมื่อจำ Option ไม่ได้', '• man <คำสั่ง>  (เปิดคู่มือฉบับเต็ม กด q เพื่อออก)
-• <คำสั่ง> --help  (แสดงสรุป Option แบบย่อบนหน้าจอ)', 'ย่อมาจาก manual', 11)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:02-basics:fc12', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-basics' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งสร้างโฟลเดอร์ซ้อนกันหลายชั้นในครั้งเดียว (เช่น /tmp/incident/2026/logs)', 'mkdir -p /tmp/incident/2026/logs
-(-p จะสร้างโฟลเดอร์แม่ที่ยังไม่มีให้อัตโนมัติ และไม่ฟ้อง Error ถ้ามีอยู่แล้ว)', 'ใช้ออปชัน -p (parents)', 12)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:03-file-system:fc01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ไดเรกทอรี /etc, /var/log, /opt และ /tmp ใช้เก็บข้อมูลประเภทใด?', '• /etc : ไฟล์ตั้งค่าระบบและบริการ (Config)
-• /var/log : ไฟล์บันทึกเหตุการณ์ (Log)
-• /opt : โปรแกรมเสริมหรือซอฟต์แวร์องค์กรที่ติดตั้งแยก
-• /tmp : ไฟล์ชั่วคราว', 'มาตรฐาน FHS ของ Linux', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:03-file-system:fc02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ไฟล์ /etc/hosts และ /etc/resolv.conf ทำหน้าที่อะไร?', '• /etc/hosts : จับคู่ IP กับชื่อโดเมนภายในเครื่อง (ระบบอ่านก่อนถาม DNS)
-• /etc/resolv.conf : ระบุ IP ของ DNS Server ที่เครื่องใช้แปลงชื่อโดเมน (nameserver)', 'เกี่ยวกับการแปลงชื่อโดเมนเป็น IP', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:03-file-system:fc03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ไฟล์ /etc/fstab คืออะไร และทำไมห้ามแก้ไขเองโดยพลการ?', 'ไฟล์กำหนดรายการดิสก์และพาร์ทิชันที่จะถูก Mount อัตโนมัติตอนบูตเครื่อง
-หากเขียนผิดจะทำให้เซิร์ฟเวอร์บูตไม่ขึ้นในรอบถัดไป', 'File System Table', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:03-file-system:fc04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งค้นหาเฉพาะไฟล์ธรรมดาใน /var ที่มีขนาดใหญ่กว่า 100 MB', 'find /var -type f -size +100M', 'ใช้ -type f และ -size', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:03-file-system:fc05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งค้นหาไฟล์ใน /etc ที่ถูกแก้ไขเนื้อหาภายใน 60 นาทีที่ผ่านมา', 'find /etc -type f -mmin -60
-(หากต้องการนับเป็นวันใช้ -mtime เช่น -mtime -1 คือภายใน 24 ชม.)', 'mmin = modified minutes', 5)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:03-file-system:fc06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งค้นหาไฟล์ตามชื่อแบบไม่สนใจตัวพิมพ์เล็ก-ใหญ่ (Case-insensitive)', 'find /var/log -iname "*error*.log"', 'เติมตัว i หน้าคำว่า name', 6)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:03-file-system:fc07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งสร้าง Symbolic Link (Soft Link) และวิธีดูว่าชี้ไปที่ไหน', '• สร้างลิงก์: ln -s <พาธต้นทางจริง> <ชื่อลิงก์>
-• ตรวจสอบปลายทาง: ls -l <ชื่อลิงก์> หรือ file <ชื่อลิงก์>', 'ตัวเลือก -s ย่อมาจาก symbolic', 7)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:03-file-system:fc08', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'Symbolic Link (Soft Link) ต่างจาก Hard Link อย่างไร?', '• Symbolic Link (ln -s): ชี้ไปยังชื่อพาธ ข้ามพาร์ทิชันได้ ชี้โฟลเดอร์ได้ ถ้าลบต้นทางลิงก์จะเสีย (Broken link)
-• Hard Link (ln): ชี้ไปยังเลข Inode เดียวกันโดยตรง ข้ามพาร์ทิชันไม่ได้ ลบชื่อไฟล์ต้นทางข้อมูลยังอยู่', 'เปรียบเทียบการชี้ไปที่ชื่อพาธ กับ ชี้ไปที่ Inode', 8)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:03-file-system:fc09', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งดูเวลาแก้ไขไฟล์อย่างละเอียด (Access, Modify, Change) และหมายเลข Inode', 'stat <ชื่อไฟล์>', 'ย่อมาจาก status ของไฟล์', 9)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:03-file-system:fc10', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งตรวจสอบชนิดที่แท้จริงของไฟล์โดยไม่ดูจากนามสกุล', 'file <ชื่อไฟล์>
-(เช่นตรวจว่าไฟล์ .gz เป็น gzip จริงหรือเป็นเพียงข้อความ HTML/ASCII)', 'คำสั่งตรงตัว 4 ตัวอักษร', 10)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:03-file-system:fc11', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งสรุปขนาดพื้นที่ของแต่ละโฟลเดอร์ย่อยใน /var/log แบบอ่านง่าย', 'du -sh /var/log/*
-
--s: สรุปรวมแต่ละรายการ (summary)
--h: หน่วยอ่านง่าย (KB, MB, GB)', 'Disk Usage', 11)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:03-file-system:fc12', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-file-system' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'วิธีซ่อนข้อความ Permission denied เวลาใช้คำสั่ง find ด้วยสิทธิ์ผู้ใช้ทั่วไป', 'ต่อท้ายคำสั่งด้วย 2>/dev/null
-เช่น: find /var -name "*.log" 2>/dev/null', 'Redirect standard error (2) ไปทิ้งที่ /dev/null', 12)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:04-process-service:fc01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ความแตกต่างระหว่างสัญญาณ SIGTERM (15) กับ SIGKILL (9)', '• SIGTERM (kill <PID> หรือ kill -15): ขอให้โปรเซสปิดตัวเองอย่างสุภาพ มีเวลาเคลียร์งานและบันทึกข้อมูล
-• SIGKILL (kill -9 <PID>): บังคับตัดการทำงานทันทีที่ระดับ Kernel โปรเซสไม่มีโอกาสเคลียร์งาน', 'ควรเริ่มจาก 15 ก่อนใช้ 9 เสมอ', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:04-process-service:fc02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งแสดงโปรเซสทั้งหมดที่กำลังทำงานอยู่ในเครื่องพร้อม %CPU, %MEM และ PID', 'ps aux
-(มักใช้คู่กับ grep เช่น ps aux | grep nginx)', 'Process Status', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:04-process-service:fc03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ปุ่มลัดในโปรแกรม top สำหรับเรียงตามการใช้ CPU และเรียงตามการใช้ RAM', '• กด P (พิมพ์ใหญ่): เรียงตาม %CPU จากมากไปน้อย
-• กด M (พิมพ์ใหญ่): เรียงตาม %MEM จากมากไปน้อย
-• กด q: ออกจากโปรแกรม top', 'P = Processor, M = Memory', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:04-process-service:fc04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'รหัสสถานะโปรเซส R, S, D, Z ในคอลัมน์ STAT ของ ps aux หมายถึงอะไร?', '• R (Running): กำลังทำงานบน CPU
-• S (Sleeping): รอเหตุการณ์หรือคำขอ
-• D (Uninterruptible sleep): รอ Disk/Network I/O
-• Z (Zombie): โปรเซสจบแล้วแต่โปรเซสแม่ยังไม่อ่าน exit status', 'ระวังสถานะ D (I/O ค้าง) และ Z (Zombie)', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:04-process-service:fc05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ทำไม Zombie Process (สถานะ Z / <defunct>) จึงฆ่าด้วย kill -9 ไม่ได้?', 'เพราะโปรเซสนั้นทำงานจบและคืนหน่วยความจำไปแล้ว เหลือเพียงรายการ PID ในตารางที่รอโปรเซสแม่ (PPID) มาอ่านสถานะจบงาน', 'สิ่งที่ตายไปแล้วฆ่าซ้ำไม่ได้', 5)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:04-process-service:fc06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งตรวจรายชื่อบริการ systemd ทั้งหมดที่อยู่ในสถานะ failed', 'systemctl list-units --failed
-(หรือย่อว่า systemctl --failed)', 'ใช้ดูภาพรวมว่ามีบริการใดล่มอยู่บ้าง', 6)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:04-process-service:fc07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งตรวจสถานะละเอียด และคำสั่งเช็กสถานะแบบสั้นของบริการ systemd', '• ดูสถานะละเอียด: systemctl status <service>
-• เช็กสั้นๆ (active/failed): systemctl is-active <service>', 'status เทียบกับ is-active', 7)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:04-process-service:fc08', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ความแตกต่างระหว่าง systemctl start กับ systemctl enable', '• systemctl start <service>: สั่งให้เริ่มทำงานทันทีในตอนนี้
-• systemctl enable <service>: ตั้งค่าให้เริ่มทำงานอัตโนมัติเมื่อเปิดเครื่อง (Boot)', 'รันตอนนี้ เทียบกับ รันตอนบูต', 8)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:04-process-service:fc09', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งดู Log ของบริการ nginx ย้อนหลัง 100 บรรทัด และติดตามแบบเรียลไทม์', 'journalctl -u nginx -n 100 -f
-
--u: ระบุชื่อ unit บริการ
--n 100: ย้อนหลัง 100 บรรทัด
--f: ติดตามสด (follow)', 'ใช้ journalctl คู่กับ -u, -n, -f', 9)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:04-process-service:fc10', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งดู Log ของบริการเฉพาะช่วงเวลา 30 นาทีล่าสุดด้วย journalctl', 'journalctl -u <service> --since "30 minutes ago"', 'ใช้ออปชัน --since', 10)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:04-process-service:fc11', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ชื่อบริการ Apache Web Server บน Ubuntu/Debian ต่างจาก RHEL/Rocky อย่างไร?', '• Ubuntu / Debian: apache2
-• RHEL / Rocky Linux: httpd', 'จำว่าตระกูล Red Hat เรียกตามชื่อ daemon', 11)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:04-process-service:fc12', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-process-service' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งส่งสัญญาณปิดโปรเซสโดยระบุจากชื่อโปรแกรมแทนเลข PID', 'pkill <ชื่อโปรเซส>
-(ก่อนรันควรตรวจด้วย pgrep -l <ชื่อโปรเซส> ก่อนเสมอว่าตรงกับตัวไหนบ้าง)', 'Process Kill by name', 12)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:05-text-tools:fc01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ความแตกต่างระหว่างเครื่องหมาย > กับ >> ในการ Redirect ผลลัพธ์', '• > : เขียนทับไฟล์เดิมทั้งหมดทันที (Overwrite)
-• >> : เขียนต่อท้ายไฟล์เดิมโดยไม่ลบข้อมูลเก่า (Append)', 'ลูกศรเดียวทับ ลูกศรคู่ต่อท้าย', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:05-text-tools:fc02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ความหมายของ 2>&1 ท้ายคำสั่ง Linux', 'รวมข้อความ Error (stderr = 2) เข้ากับช่องทางผลลัพธ์ปกติ (stdout = 1) เพื่อส่งต่อหรือบันทึกลงไฟล์เดียวกัน', '1 = stdout, 2 = stderr', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:05-text-tools:fc03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ตัวเลือก -i, -n, -r, -v ของคำสั่ง grep ทำหน้าที่อะไร?', '• -i : ไม่สนใจตัวพิมพ์เล็ก-ใหญ่ (ignore case)
-• -n : แสดงเลขบรรทัด
-• -r : ค้นหาทุกไฟล์ในโฟลเดอร์ย่อย (recursive)
-• -v : เอาเฉพาะบรรทัดที่ไม่มีคำนั้น (invert match)', '4 ตัวเลือกที่ใช้บ่อยที่สุดของ grep', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:05-text-tools:fc04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งค้นหาหลายคำพร้อมกัน (เช่น ERROR หรือ FATAL) ด้วย grep', 'grep -E "ERROR|FATAL" app.log', 'ใช้ออปชัน -E (Extended Regex) คู่กับเครื่องหมาย |', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:05-text-tools:fc05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งแสดงบรรทัดก่อนหน้าและหลังบรรทัดที่ค้นพบอย่างละ 3 บรรทัดด้วย grep', 'grep -C 3 "Exception" app.log
-(-B 3 = ก่อนหน้า 3 บรรทัด, -A 3 = หลัง 3 บรรทัด, -C 3 = ทั้งก่อนและหลัง)', 'C ย่อมาจาก Context', 5)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:05-text-tools:fc06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งนับจำนวนบรรทัดที่มีคำว่า ERROR ในไฟล์ app.log', 'grep "ERROR" app.log | wc -l
-(หรือใช้ grep -c "ERROR" app.log)', 'wc -l = Word Count (lines)', 6)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:05-text-tools:fc07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งดึงเฉพาะคอลัมน์ที่ 1 (เช่น IP Address) จากไฟล์ access.log ด้วย awk', 'awk ''{print $1}'' access.log
-($1 คือคอลัมน์ที่ 1, $2 คือคอลัมน์ที่ 2 โดยแยกตามช่องว่างอัตโนมัติ)', 'ใช้เครื่องหมายดอลลาร์ตามด้วยเลขคอลัมน์ในเครื่องหมาย '' ''', 7)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:05-text-tools:fc08', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ทำไมต้องใช้คำสั่ง sort ก่อนส่งข้อมูลเข้าคำสั่ง uniq -c เสมอ?', 'เพราะ uniq จะยุบรวมและนับเฉพาะบรรทัดซ้ำที่อยู่ติดกันเท่านั้น หากไม่ sort ก่อน บรรทัดที่ซ้ำแต่อยู่ห่างกันจะไม่ถูกนับรวมกัน', 'uniq ดูเฉพาะบรรทัดที่ติดกัน', 8)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:05-text-tools:fc09', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'สูตรคำสั่งหา Top 5 IP ที่เรียกเข้ามามากที่สุดจาก access.log', 'awk ''{print $1}'' access.log | sort | uniq -c | sort -nr | head -n 5', 'ดึงคอลัมน์ -> เรียงตัวอักษร -> นับซ้ำ -> เรียงตัวเลขมากไปน้อย -> ตัด 5 บรรทัดแรก', 9)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:05-text-tools:fc10', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งตัดข้อความคอลัมน์ที่ 1 โดยใช้เครื่องหมาย : เป็นตัวคั่น (เช่นใน /etc/passwd)', 'cut -d'':'' -f1 /etc/passwd
-
--d'':'' : กำหนดตัวคั่น (delimiter)
--f1 : เลือกฟิลด์ที่ 1', 'cut คู่กับ -d และ -f', 10)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:05-text-tools:fc11', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งแสดงผลลัพธ์ออกหน้าจอพร้อมกับบันทึกเขียนลงไฟล์ในเวลาเดียวกัน', '<คำสั่ง> | tee output.log
-(หากต้องการเขียนต่อท้ายไฟล์เดิมใช้ tee -a output.log)', 'ชื่อเหมือนข้อต่อท่อรูปตัว T', 11)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:05-text-tools:fc12', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-text-tools' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งติดตามไฟล์ Log แบบสดๆ พร้อมกรองเฉพาะบรรทัดที่มีคำว่า ERROR', 'tail -f /var/log/app.log | grep "ERROR"', 'tail -f ส่งผ่าน pipe ไปยัง grep', 12)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:06-log-reading:fc01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ไฟล์ System Log หลักของ Ubuntu/Debian เทียบกับ RHEL/Rocky Linux', '• Ubuntu / Debian: /var/log/syslog
-• RHEL / Rocky Linux: /var/log/messages', 'syslog กับ messages', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:06-log-reading:fc02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ไฟล์เก็บประวัติการล็อกอิน SSH และ sudo ของ Ubuntu เทียบกับ RHEL', '• Ubuntu / Debian: /var/log/auth.log
-• RHEL / Rocky Linux: /var/log/secure', 'auth.log กับ secure', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:06-log-reading:fc03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งกรอง Log ของบริการด้วย journalctl เฉพาะช่วงเวลาที่กำหนด', 'journalctl -u <service> --since "2026-11-03 10:00:00" --until "2026-11-03 10:30:00"', 'ใช้ --since และ --until', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:06-log-reading:fc04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งดูเฉพาะ Log ระดับ Error ขึ้นไปของรอบการบูตปัจจุบันด้วย journalctl', 'journalctl -p err -b
-(-p err จะแสดงระดับ err, crit, alert, emerg)', '-p ย่อมาจาก priority, -b ย่อมาจาก boot', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:06-log-reading:fc05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งดูบันทึกของ Kernel (เช่น OOM Killer หรือ Disk Error) พร้อมแสดงเวลาที่อ่านง่าย', 'dmesg -T
-(หรือกรองด้วย dmesg -T | grep -iE "oom|error")', '-T แปลงเวลาวินาทีเป็นวันที่และเวลา', 5)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:06-log-reading:fc06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งค้นหาข้อความและเปิดอ่านไฟล์ Log ที่ถูกบีบอัดเป็น .gz โดยไม่ต้องแตกไฟล์', '• ค้นหาข้อความ: zgrep "ERROR" /var/log/app.log.1.gz
-• เปิดอ่านทีละหน้า: zless /var/log/app.log.1.gz
-• แสดงเนื้อหา: zcat /var/log/app.log.1.gz', 'เติมตัว z นำหน้าคำสั่งปกติ', 6)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:06-log-reading:fc07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'logrotate ทำหน้าที่อะไรในระบบ Linux?', 'ตัดรอบไฟล์ Log เก่าตามเวลาหรือขนาดที่กำหนด เปลี่ยนชื่อต่อท้าย และบีบอัดเป็น .gz พร้อมลบไฟล์เก่าเกินกำหนดเพื่อป้องกันดิสก์เต็ม', 'ป้องกันไม่ให้ไฟล์ Log ไฟล์เดียวโตจนดิสก์เต็ม', 7)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:06-log-reading:fc08', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งตรวจสอบเวลาปัจจุบันและ Timezone ของเครื่องเซิร์ฟเวอร์', 'timedatectl หรือ date', 'ต้องเช็กเสมอก่อนเทียบเวลา Log กับเวลาที่ผู้ใช้แจ้ง', 8)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:06-log-reading:fc09', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หากเครื่องเซิร์ฟเวอร์ตั้งเวลาเป็น UTC แล้วผู้ใช้แจ้งว่าเกิดปัญหาเวลา 14:00 น. (เวลาไทย) ต้องดู Log เวลาใด?', 'เวลา 07:00 UTC
-(เวลาไทย GMT+7 เร็วกว่า UTC 7 ชั่วโมง ดังนั้นต้องลบออก 7 ชั่วโมง)', 'UTC + 7 = เวลาไทย', 9)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:06-log-reading:fc10', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ไฟล์ access.log กับ error.log ของ Web Server (เช่น Nginx) เก็บข้อมูลต่างกันอย่างไร?', '• access.log: บันทึกทุก HTTP Request ที่เรียกเข้ามา (IP, URL, HTTP Status 200/404/500, เวลาตอบสนอง)
-• error.log: บันทึกข้อผิดพลาดของตัว Web Server หรือการเชื่อมต่อ Upstream ไม่สำเร็จ', 'ประวัติการเข้าชม เทียบกับ ข้อผิดพลาดของระบบ', 10)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:06-log-reading:fc11', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หากโปรเซสฐานข้อมูลดับไปเองโดยไม่มี Error ในไฟล์ Log ของแอปเลย ควรตรวจที่ไหน?', 'ตรวจ Kernel Log ด้วยคำสั่ง:
-dmesg -T | grep -iE "oom|killed"
-เพราะอาจถูก Kernel OOM Killer ส่ง SIGKILL ตัดการทำงานกะทันหัน', 'โปรเซสไม่มีโอกาสเขียน Log ของตัวเองเพราะถูก Kernel ตัดทันที', 11)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:06-log-reading:fc12', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-log-reading' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'สิ่งที่ต้องแนบเมื่อส่งต่อ (Escalate) ปัญหาจาก Log ให้ทีม Tier 2', '1. ชื่อเครื่อง (Hostname) และพาธไฟล์ Log
-2. ช่วงเวลาที่เกิดเหตุพร้อมระบุ Timezone (เช่น UTC หรือ +07)
-3. ข้อความ Error พร้อมบริบทรอบข้าง (grep -C)
-4. Request ID / Transaction ID ที่เกี่ยวข้อง', 'ครบ 4 องค์ประกอบหลัก', 12)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:07-disk-memory-cpu:fc01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ความแตกต่างระหว่างคำสั่ง df -h กับ df -i', '• df -h : ตรวจสอบความจุพื้นที่ดิสก์ในหน่วย KB/MB/GB (Use%)
-• df -i : ตรวจสอบจำนวน Inode หรือสารบัญไฟล์ที่ใช้ไป (IUse%)', 'h = human-readable size, i = inodes', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:07-disk-memory-cpu:fc02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ทำไมระบบถึงฟ้อง No space left on device ทั้งที่ df -h ยังมีพื้นที่ว่างเหลือหลาย GB?', 'เพราะจำนวน Inode เต็ม 100% (ตรวจด้วย df -i) มักเกิดจากการมีไฟล์ขนาดเล็กจำนวนมหาศาลอยู่ในพาร์ทิชันนั้น', '1 ไฟล์ต้องใช้ 1 Inode เสมอ', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:07-disk-memory-cpu:fc03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งเรียงลำดับขนาดโฟลเดอร์ย่อยจากน้อยไปมากในหน่วยอ่านง่าย', 'du -sh * | sort -h
-(-h ใน sort ช่วยให้เรียงลำดับหน่วย K, M, G ได้ถูกต้อง)', 'du -sh คู่กับ sort -h', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:07-disk-memory-cpu:fc04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ลบไฟล์ Log ขนาดใหญ่ด้วย rm ไปแล้ว แต่ทำไม df -h พื้นที่ดิสก์ยังไม่คืน และเช็กอย่างไร?', 'เพราะยังมีโปรเซสเปิดถือไฟล์นั้นค้างอยู่ (Held open)
-วิธีตรวจ: รัน lsof +L1 (หรือ lsof | grep deleted) เพื่อดูว่าโปรเซสใดถือไฟล์อยู่', 'List Open Files ที่มี link count < 1', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:07-disk-memory-cpu:fc05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'เวลาดูหน่วยความจำด้วยคำสั่ง free -h ควรดูที่คอลัมน์ใดเป็นหลัก?', 'ดูที่คอลัมน์ available เป็นหลัก (ไม่ใช่คอลัมน์ free)
-เพราะ Linux นำ RAM ว่างไปทำ buff/cache ซึ่งพร้อมคืนให้แอปพลิเคชันได้ทันทีเมื่อจำเป็น', 'available = พร้อมให้แอปใช้งานจริง', 5)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:07-disk-memory-cpu:fc06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งตรวจว่าเคยมีโปรเซสถูก OOM Killer ของ Kernel สั่งปิดเพราะ RAM หมดหรือไม่', 'dmesg -T | grep -i oom
-(หรือ journalctl -k | grep -i oom)', 'ค้นหาคำว่า oom ใน Kernel log', 6)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:07-disk-memory-cpu:fc07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ตัวเลข Load Average 3 ค่าจากคำสั่ง uptime แทนช่วงเวลาใด?', 'ค่าเฉลี่ยโหลดย้อนหลัง 1 นาที, 5 นาที และ 15 นาที ตามลำดับ', '1, 5, 15 นาที', 7)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:07-disk-memory-cpu:fc08', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งแสดงจำนวน CPU Core ของเครื่องเพื่อนำมาเทียบกับค่า Load Average', 'nproc
-(หาก Load Average สูงเกินค่าจาก nproc แสดงว่าเริ่มมีงานรอคิว)', 'Number of Processing Units', 8)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:07-disk-memory-cpu:fc09', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หาก Load Average สูงมาก แต่ดู CPU Usage แล้วต่ำมาก มักเกิดจากสาเหตุใด?', 'เกิดจากปัญหา Disk I/O Wait สูง (%wa สูง และโปรเซสค้างในสถานะ D) เพราะ Linux นับโปรเซสที่รอ I/O รวมใน Load Average ด้วย', 'รอการอ่านเขียนดิสก์หรือ NFS', 9)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:07-disk-memory-cpu:fc10', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คอลัมน์ us, sy, id, wa ในคำสั่ง vmstat หรือ top หมายถึงอะไร?', '• us (user): CPU ที่ใช้รันโปรแกรมทั่วไป
-• sy (system): CPU ที่ใช้ทำงานระดับ Kernel
-• id (idle): CPU ที่ว่างอยู่
-• wa (iowait): เวลาที่ CPU รอการอ่านเขียนดิสก์/เครือข่าย', 'User, System, Idle, Wait', 10)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:07-disk-memory-cpu:fc11', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งดูสถิติ Memory, Swap, I/O และ CPU ทุก 1 วินาที จำนวน 5 ครั้ง', 'vmstat 1 5
-(บรรทัดแรกคือค่าเฉลี่ยตั้งแต่เปิดเครื่อง ให้ดูตั้งแต่บรรทัดที่ 2 เป็นต้นไป)', 'Virtual Memory Statistics', 11)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:07-disk-memory-cpu:fc12', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-disk-memory-cpu' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'กฎเหล็กของ Tier 1 เมื่อตรวจพบว่าดิสก์เซิร์ฟเวอร์ Production เต็ม', 'ห้ามลบไฟล์ด้วยตัวเองโดยไม่อยู่ใน Runbook ให้เก็บผลลัพธ์จาก df -h, df -i, du -sh และ lsof +L1 แล้วส่งต่อ (Escalate) ทันที', 'ตรวจและเก็บหลักฐาน ไม่ลบสุ่มสี่สุ่มห้า', 12)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:08-remote-access:fc01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'สิทธิ์ (Octal Permission) ที่บังคับสำหรับโฟลเดอร์ ~/.ssh และไฟล์ ~/.ssh/authorized_keys', '• ~/.ssh : 700 (drwx------)
-• ~/.ssh/authorized_keys : 600 (-rw-------)
-• Private Key (เช่น ~/.ssh/id_ed25519) : 600 (-rw-------)', 'โฟลเดอร์ 700, ไฟล์กุญแจ 600', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:08-remote-access:fc02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งเชื่อมต่อ SSH โดยระบุพอร์ต 2222 และระบุไฟล์ Private Key', 'ssh -p 2222 -i ~/.ssh/my_key user@host
-
--p (พิมพ์เล็ก): ระบุพอร์ต
--i: ระบุไฟล์ Identity (Private Key)', 'ssh ใช้ -p ตัวพิมพ์เล็ก', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:08-remote-access:fc03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งเปิดโหมด Verbose ใน SSH เพื่อไล่หาสาเหตุเวลาล็อกอินไม่ผ่าน', 'ssh -v user@host
-(สามารถเพิ่มเป็น -vv หรือ -vvv เพื่อดูรายละเอียดมากขึ้น)', '-v ย่อมาจาก verbose', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:08-remote-access:fc04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ความต่างของตัวเลือกระบุพอร์ตระหว่างคำสั่ง ssh กับคำสั่ง scp', '• ssh ใช้ -p (ตัวพิมพ์เล็ก): ssh -p 2222 user@host
-• scp ใช้ -P (ตัวพิมพ์ใหญ่): scp -P 2222 file.txt user@host:/tmp/', 'scp ใช้ -p พิมพ์เล็กสำหรับ preserve timestamps ไปแล้ว จึงต้องใช้ -P พิมพ์ใหญ่สำหรับพอร์ต', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:08-remote-access:fc05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งสร้างคู่กุญแจ SSH แบบ Ed25519 และคำสั่งส่ง Public Key ไปยังเซิร์ฟเวอร์', '• สร้างกุญแจ: ssh-keygen -t ed25519
-• ส่ง Public Key: ssh-copy-id user@host', 'สร้างด้วย ssh-keygen ส่งด้วย ssh-copy-id', 5)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:08-remote-access:fc06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'เมื่อเซิร์ฟเวอร์ปลายทางถูกลง OS ใหม่แล้วขึ้น REMOTE HOST IDENTIFICATION HAS CHANGED แก้ด้วยคำสั่งใด?', 'ssh-keygen -R <hostname_หรือ_IP>
-(ต้องยืนยันกับทีม Infra ก่อนเสมอว่ามีการ Rebuild เครื่องจริง)', '-R = Remove host key จาก known_hosts', 6)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:08-remote-access:fc07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'เมื่อรัน ssh แล้วขึ้น Permission denied (publickey) เกิดจากสาเหตุใดได้บ้าง?', '1. ใช้ชื่อ user ผิด หรือระบุไฟล์กุญแจ (-i) ผิดดอก
-2. ยังไม่ได้นำ Public Key ไปใส่ใน ~/.ssh/authorized_keys ของปลายทาง
-3. สิทธิ์ของ ~/.ssh (ต้อง 700) หรือ authorized_keys (ต้อง 600) เปิดกว้างเกินไป', 'ตรวจทั้งฝั่งเรากับฝั่งปลายทางด้วย ssh -v', 7)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:08-remote-access:fc08', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ความแตกต่างระหว่าง scp กับ rsync -avz ในการโอนไฟล์', '• scp: คัดลอกไฟล์ทั้งหมดตั้งแต่ต้นใหม่ทุกครั้ง เหมาะกับไฟล์เดียวขนาดไม่ใหญ่
-• rsync -avz: เปรียบเทียบและส่งเฉพาะส่วนที่ต่างกัน บีบอัดข้อมูลระหว่างส่ง (-z) และต่อไฟล์ที่ค้างได้', 'rsync เหมาะกับโฟลเดอร์ใหญ่หรือการซิงก์ซ้ำ', 8)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:08-remote-access:fc09', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ตัวเลือก -a, -v, -z ในคำสั่ง rsync -avz หมายถึงอะไร?', '• -a (archive): คัดลอกทั้งโฟลเดอร์ย่อยพร้อมคงสิทธิ์ เจ้าของ และเวลาเดิม
-• -v (verbose): แสดงรายชื่อไฟล์ที่กำลังโอน
-• -z (compress): บีบอัดข้อมูลระหว่างส่งผ่านเครือข่าย', 'Archive, Verbose, Compress', 9)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:08-remote-access:fc10', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งพื้นฐานของ tmux: สร้างเซสชันใหม่, ดูรายการเซสชัน และกลับเข้าเซสชันเดิม', '• สร้างเซสชัน: tmux new -s <ชื่อ>
-• ดูรายการเซสชัน: tmux ls
-• กลับเข้าเซสชันเดิม: tmux attach -t <ชื่อ> (หรือ tmux a -t <ชื่อ>)', 'new, ls, attach', 10)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:08-remote-access:fc11', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ปุ่มลัดสำหรับถอยออกจากหน้าจอ tmux (Detach) โดยปล่อยให้โปรแกรมทำงานต่อเบื้องหลัง', 'กด Ctrl + b (แล้วปล่อยมือ) จากนั้นกดปุ่ม d', 'd ย่อมาจาก detach', 11)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:08-remote-access:fc12', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-remote-access' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ชื่อบริการ SSH Daemon บน Ubuntu/Debian เทียบกับ RHEL/Rocky Linux', '• Ubuntu / Debian: systemctl status ssh
-• RHEL / Rocky Linux: systemctl status sshd', 'ssh กับ sshd', 12)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:09-cron-schedule:fc01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ลำดับความหมายของเวลา 5 ฟิลด์ใน Crontab (* * * * *)', '1. นาที (0 - 59)
-2. ชั่วโมง (0 - 23)
-3. วันที่ในเดือน (1 - 31)
-4. เดือน (1 - 12)
-5. วันในสัปดาห์ (0 - 7 โดย 0 และ 7 คือวันอาทิตย์)', 'นาที -> ชั่วโมง -> วันที่ -> เดือน -> วันในสัปดาห์', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:09-cron-schedule:fc02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'รูปแบบเวลา Crontab สำหรับรันทุกๆ 15 นาที และรันทุกวันเวลา 02:30 น.', '• ทุกๆ 15 นาที: */15 * * * *
-• ทุกวันเวลา 02:30 น.: 30 2 * * *', 'ใช้ */15 ในฟิลด์นาที', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:09-cron-schedule:fc03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ความหมายของคำย่อ @reboot และ @daily ใน Crontab', '• @reboot : รัน 1 ครั้งหลังจากเครื่องบูตเสร็จ
-• @daily (หรือ @midnight) : รันวันละครั้งตอนเวลา 00:00 น. (เทียบเท่า 0 0 * * *)', 'ใช้แทนตัวเลข 5 ฟิลด์ได้', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:09-cron-schedule:fc04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งดูรายการ Crontab ของตัวเอง และคำสั่งดูของ user อื่น (เช่น appuser)', '• ของตัวเอง: crontab -l
-• ของผู้ใช้คนอื่น: sudo crontab -u appuser -l', '-l = list, -u = user', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:09-cron-schedule:fc05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ทำไมห้ามเผลอพิมพ์คำสั่ง crontab -r เด็ดขาด?', 'เพราะ -r (remove) จะลบตาราง Crontab ทั้งหมดของผู้ใช้นั้นทิ้งทันทีโดยไม่ถามยืนยัน (ให้ใช้เฉพาะ crontab -l ในการตรวจสอบ)', 'ปุ่ม r อยู่ติดกับปุ่ม e บนคีย์บอร์ด', 5)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:09-cron-schedule:fc06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ความต่างระหว่างบรรทัดใน User Crontab (crontab -e) กับไฟล์ใน /etc/cron.d/', '• User Crontab: มี 5 ฟิลด์เวลา ตามด้วยคำสั่งทันที
-• /etc/cron.d/ และ /etc/crontab: ต้องระบุชื่อผู้ใช้ (username) แทรกเป็นคอลัมน์ที่ 6 ก่อนคำสั่งเสมอ', 'ระดับระบบต้องระบุว่ารันในสิทธิ์ของ user ใด', 6)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:09-cron-schedule:fc07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ชื่อบริการและตำแหน่งไฟล์ Log ของ Cron บน Ubuntu เทียบกับ RHEL', '• Ubuntu / Debian:
-  - บริการ: systemctl status cron
-  - Log: grep CRON /var/log/syslog
-• RHEL / Rocky Linux:
-  - บริการ: systemctl status crond
-  - Log: /var/log/cron', 'cron/syslog เทียบกับ crond/cron', 7)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:09-cron-schedule:fc08', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ทำไมสคริปต์ที่รันด้วยมือผ่านปกติ พอนำไปใส่ใน Cron แล้วมักฟ้อง command not found?', 'เพราะสภาพแวดล้อมของ Cron มีค่าตัวแปร PATH จำกัดมาก (มักมีแค่ /usr/bin:/bin)
-วิธีแก้: ต้องระบุ Absolute Path เต็มของทุกคำสั่งและทุกไฟล์ในสคริปต์', 'ปัญหาเรื่องตัวแปร PATH', 8)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:09-cron-schedule:fc09', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ทำไมควรต่อท้ายบรรทัด Crontab ด้วย >> /var/log/app/job.log 2>&1 เสมอ?', 'เพื่อบันทึกทั้งผลลัพธ์ปกติ (stdout) และข้อความ Error (stderr) ลงไฟล์ Log มิฉะนั้นเมื่อสคริปต์รันพังจะไม่มีข้อความ Error เก็บไว้ตรวจสอบ', 'Log ของระบบ Cron บอกแค่ว่าสั่งรันหรือยัง แต่ไม่บอก Error ข้างในสคริปต์', 9)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:09-cron-schedule:fc10', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ข้อควรระวังเมื่อใช้เครื่องหมาย % (เช่น date +%Y%m%d) ในบรรทัด Crontab', 'ใน Crontab เครื่องหมาย % จะถูกตีความเป็นการขึ้นบรรทัดใหม่ (Newline)
-ต้องใส่ Backslash นำหน้าเป็น \% ทุกตัว (เช่น date +\%Y\%m\%d) หรือย้ายคำสั่งเข้าไฟล์ .sh', 'ต้อง Escape เครื่องหมาย % ด้วย \', 10)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:09-cron-schedule:fc11', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งตรวจสอบรายการงานตั้งเวลาที่ทำงานผ่าน systemd timer', 'systemctl list-timers --all', 'ใช้เมื่อหาใน crontab ไม่เจอ', 11)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:09-cron-schedule:fc12', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-cron-schedule' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'หากตั้งเวลาใน Cron เป็น 02:00 น. แต่งานกลับรันตอน 09:00 น. เวลาไทย เกิดจากอะไร?', 'Timezone ของเครื่องเซิร์ฟเวอร์ตั้งเป็น UTC (+0000) ซึ่งช้ากว่าเวลาไทย 7 ชั่วโมง (02:00 UTC = 09:00 เวลาไทย)
-ตรวจด้วยคำสั่ง timedatectl', 'Cron ยึดเวลาตาม Timezone ของเครื่อง', 12)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:10-health-check:fc01', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ลำดับตรวจเมื่อระบบเข้าไม่ได้', '1. Service รันไหม: systemctl is-active
-2. Port ฟังไหม: ss -tulpn
-3. ต่อจากภายนอกได้ไหม: nc -zv
-4. HTTP ตอบไหม: curl -I', 'ล่างขึ้นบน หยุดที่ชั้นแรกที่ผิด', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:10-health-check:fc02', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'systemctl is-active กับ is-enabled ต่างกันอย่างไร', '• is-active: ตอนนี้รันอยู่ไหม (active/inactive/failed)
-• is-enabled: เริ่มอัตโนมัติตอนบูตไหม (enabled/disabled)', 'ตอนนี้ เทียบกับ ตอนบูต', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:10-health-check:fc03', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งดูทุก Port ที่ฟังอยู่พร้อมชื่อ Process', 'sudo ss -tulpn
-
-t TCP, u UDP, l Listening, p Process, n ตัวเลข', 'จำคำว่า tulpn', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:10-health-check:fc04', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งกรองเฉพาะ Port 8080 ที่ฟังอยู่', 'sudo ss -ltnp ''sport = :8080''', 'ใช้ตัวกรอง sport', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:10-health-check:fc05', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'Local Address 127.0.0.1:8080 กับ 0.0.0.0:8080 ต่างกันอย่างไร', '• 127.0.0.1:8080: รับเฉพาะการเชื่อมต่อในเครื่องตัวเอง
-• 0.0.0.0:8080: ฟังทุก Interface เครื่องอื่นต่อเข้ามาได้ (ถ้า Firewall ไม่บล็อก)', 'ดูว่ารับจากใคร', 5)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:10-health-check:fc06', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งหาว่า Process ไหนใช้ Port 8080', 'sudo lsof -i :8080
-(หรือ sudo ss -ltnp ''sport = :8080'')', 'List Open Files แบบ Network', 6)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:10-health-check:fc07', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'คำสั่งทดสอบต่อ TCP Port ปลายทางโดยไม่ส่งข้อมูล', 'nc -zv <host> <port>
-
-z = สแกนเฉยๆ, v = แสดงผล', 'netcat', 7)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:10-health-check:fc08', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ถ้าไม่มี nc จะทดสอบต่อ Port ได้อย่างไร', 'timeout 3 bash -c ''</dev/tcp/<host>/<port>'' && echo open', 'ใช้ bash ต่อ TCP เอง', 8)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:10-health-check:fc09', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'curl พิมพ์เฉพาะ Status Code กับเวลาที่ใช้', 'curl -sS -o /dev/null -w "%{http_code} %{time_total}s\n" --max-time 10 <URL>', '-w กำหนดรูปแบบผลลัพธ์', 9)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:10-health-check:fc10', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'curl exit code 6, 7, 28 และ 60 หมายถึงอะไร', '• 6: Resolve host ไม่ได้ (DNS)
-• 7: Connect ไม่ได้ (refused)
-• 28: Timeout
-• 60: ปัญหาใบรับรอง SSL', 'DNS, Connect, Timeout, Cert', 10)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:10-health-check:fc11', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'HTTP 502, 503 และ 504 ต่างกันอย่างไร', '• 502: Backend ตอบไม่ถูกต้องหรือต่อไม่ได้
-• 503: Service ไม่พร้อม (ล้น/ปิดปรับปรุง)
-• 504: Backend ตอบช้าจนเกิน Timeout', 'Bad Gateway, Unavailable, Gateway Timeout', 11)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('linux:10-health-check:fc12', (SELECT id FROM topics WHERE slug = 'linux'), (SELECT id FROM lessons WHERE slug = 'linux-health-check' AND topic_id = (SELECT id FROM topics WHERE slug = 'linux')), 'ข้อควรระวังเรื่อง curl -k และการใส่ข้อมูลลับในคำสั่ง', '• -k ข้ามการตรวจใบรับรอง ใช้แยกปัญหาเท่านั้น และต้องบอกใน Ticket
-• ห้ามใส่ Token หรือรหัสผ่านจริงในคำสั่งที่จะแปะ Ticket', 'ความปลอดภัยก่อนความสะดวก', 12)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
--- --------------------------------------------------------------------
--- TOPIC: Network Troubleshooting (network)
--- --------------------------------------------------------------------
-INSERT INTO topics (slug, title, description, icon, color, display_order)
-VALUES ('network', 'Network Troubleshooting', 'TCP/IP, IP/Subnet, DNS, Routing, Port, Firewall และเครื่องมือวิเคราะห์เครือข่าย', 'Network', 'from-blue-500 to-cyan-600', 2)
-ON CONFLICT (slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  description = EXCLUDED.description,
-  icon = EXCLUDED.icon,
-  color = EXCLUDED.color,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'network'), 'network-ip-subnetting', 'ทำความเข้าใจ IP, Subnet Mask และ CIDR สำหรับงาน Support', 'เจาะลึกโครงสร้าง IPv4, การแบ่ง Private vs Public IP, คำนวณ CIDR (/24, /28, /30) และการตั้งค่า Network Interface', '
+', 10, 'intermediate', 10, true, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('d8929572-6865-40b4-bf65-a32bfcdb15a5', 2, 'network-ip-subnetting', 'ทำความเข้าใจ IP, Subnet Mask และ CIDR สำหรับงาน Support', 'เจาะลึกโครงสร้าง IPv4, การแบ่ง Private vs Public IP, คำนวณ CIDR (/24, /28, /30) และการตั้งค่า Network Interface', '
 # ทำความเข้าใจ IP, Subnet Mask และ CIDR สำหรับงาน Support
 
 ในฐานะ Application Support หรือ NOC (Network Operations Center) หน้าที่หลักคือการตรวจสอบว่าเครื่องแม่ข่ายหรืออุปกรณ์ปลายทางเชื่อมต่อเครือข่ายถูกต้องหรือไม่ หากตั้งค่า IP หรือ Subnet ผิดพลาด เซิร์ฟเวอร์จะไม่สามารถติดต่อ Gateway หรือออกอินเทอร์เน็ตได้เลย
@@ -5721,18 +2858,8 @@ ip route show
 2. **มี IP Address ถูกต้องหรือไม่**: ดูว่าได้ IP วงที่ถูกต้อง ไม่ใช่ `169.254.x.x`
 3. **มี Default Gateway หรือไม่**: ตรวจสอบด้วย `ip route show`
 4. **Ping Gateway เจอหรือไม่**: `ping -c 3 <Gateway_IP>`
-', 8, 'beginner', 1)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'network'), 'network-dns-resolution', 'การทำงานของระบบ DNS และเทคนิคการสืบค้น (dig, nslookup)', 'ลำดับการ Resolve โดเมน, ไฟล์ /etc/hosts vs /etc/resolv.conf, ประเภท Record ยอดนิยม และการใช้ dig เจาะหาปัญหา', '
+', 8, 'beginner', 1, true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('04cb05e0-09ef-4ee4-8cf5-1ed7d502bbfe', 2, 'network-dns-resolution', 'การทำงานของระบบ DNS และเทคนิคการสืบค้น (dig, nslookup)', 'ลำดับการ Resolve โดเมน, ไฟล์ /etc/hosts vs /etc/resolv.conf, ประเภท Record ยอดนิยม และการใช้ dig เจาะหาปัญหา', '
 # การทำงานของระบบ DNS และเทคนิคการสืบค้น (dig, nslookup)
 
 คำกล่าวคลาสสิกของชาว Sysadmin และ Support คือ **"It''s always DNS"** เพราะเกือบทุก Application ต้องเชื่อมต่อ API หรือ Database ผ่าน Domain Name หาก DNS ล่มหรือ Resolve ไม่ตรง IP ระบบจะหยุดชะงักทันที
@@ -5805,18 +2932,8 @@ nslookup api.example.com 8.8.8.8
 
 > ⚠️ **ข้อควรระวัง (Warning)**:
 > หากต้องการแก้ปัญหาด่วนระหว่างรอ DNS Propagate สามารถใส่ค่าชั่วคราวใน `/etc/hosts` ของเซิร์ฟเวอร์ได้โดยตรง แต่ต้องอย่าลืมลบออกเมื่อ DNS ทั่วโลกอัปเดตเรียบร้อยแล้ว
-', 8, 'beginner', 2)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'network'), 'network-routing-latency', 'วิเคราะห์เส้นทางและ Latency ด้วย ping, traceroute และ mtr', 'เข้าใจโปรโตคอล ICMP, การอ่านผล Packet Loss, วิธีแกะรอยปัญหาเครือข่ายด้วย traceroute และการใช้ mtr แบบมืออาชีพ', '
+', 8, 'beginner', 2, true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('240e3caf-58b9-4b37-9d41-8d7a2830fe79', 2, 'network-routing-latency', 'วิเคราะห์เส้นทางและ Latency ด้วย ping, traceroute และ mtr', 'เข้าใจโปรโตคอล ICMP, การอ่านผล Packet Loss, วิธีแกะรอยปัญหาเครือข่ายด้วย traceroute และการใช้ mtr แบบมืออาชีพ', '
 # วิเคราะห์เส้นทางและ Latency ด้วย ping, traceroute และ mtr
 
 เมื่อผู้ใช้งานรายงานว่า **"ระบบช้ามาก"** หรือ **"เชื่อมต่อหลุดๆ ติดๆ"** ปัญหามักเกิดจาก Latency สูงหรือ Packet Loss ในเส้นทางเครือข่าย เครื่องมือพื้นฐานอย่าง `ping`, `traceroute` และ `mtr` จึงเป็นอาวุธสำคัญของทีม Support
@@ -5884,18 +3001,8 @@ mtr -n -c 10 --report 8.8.8.8
 - แสดง Packet Loss (%) และสถิติ Avg/Best/Worst ของแต่ละ Hop ชัดเจน
 - หากเกิด Packet Loss เริ่มต้นที่ Hop 4 และส่งผลให้ Hop 5, 6, 7 มี Loss ตามมาด้วย แสดงว่าปัญหาอยู่ที่ Hop 4 แน่นอน
 - หาก Loss เกิดขึ้นเฉพาะ Hop 4 แต่ Hop 5 และปลายทางเป็น 0% Loss แสดงว่า Hop 4 แค่จำกัด ICMP ของตัวมันเอง แต่ส่งผ่านข้อมูลตามปกติ
-', 8, 'beginner', 3)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'network'), 'network-tcp-ports-firewall', 'TCP Handshake, สถานะพอร์ต และความต่าง Connection Refused vs Timed Out', 'เข้าใจกลไก TCP 3-Way Handshake, สถานะพอร์ต, ถอดรหัสข้อผิดพลาด Connection Refused vs Timed Out และวิธีใช้ ss, nc, ufw', '
+', 8, 'beginner', 3, true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('3ff8610b-94c3-43a7-8e1f-436f27946647', 2, 'network-tcp-ports-firewall', 'TCP Handshake, สถานะพอร์ต และความต่าง Connection Refused vs Timed Out', 'เข้าใจกลไก TCP 3-Way Handshake, สถานะพอร์ต, ถอดรหัสข้อผิดพลาด Connection Refused vs Timed Out และวิธีใช้ ss, nc, ufw', '
 # TCP Handshake, สถานะพอร์ต และความต่าง Connection Refused vs Timed Out
 
 นี่คือหนึ่งในหัวข้อสัมภาษณ์ยอดฮิตที่สุดของสาย Application Support และ DevOps: เมื่อผู้ใช้แจ้งว่า **"ต่อ Database ไม่ได้"** หรือ **"เรียก API ไม่ติด"** ข้อความ Error ที่แสดงบอกสาเหตุของปัญหาได้อย่างแม่นยำหากเราเข้าใจกลไกของ TCP
@@ -5980,526 +3087,8 @@ sudo ufw allow 80/tcp
 # อนุญาตพอร์ต 5432 เฉพาะจาก IP 10.0.1.50
 sudo ufw allow from 10.0.1.50 to any port 5432 proto tcp
 ```
-', 9, 'intermediate', 4)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('network:01-ip-subnetting:q01', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-ip-subnetting' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'Subnet ขนาด /28 มีจำนวน IP Address ที่สามารถนำไปกำหนดให้กับ Host ใช้งานได้จริงกี่ IP?', 'ทีม Network แจ้งว่าได้จัดสรรวง Subnet 192.168.10.64/28 ให้กับเซิร์ฟเวอร์ชุดใหม่ใน DMZ', 'medium', 'multiple_choice', '/28 มีบิตเหลือสำหรับ Host คือ 32 - 28 = 4 บิต จำนวน IP ทั้งหมดคือ 2^4 = 16 IP แต่ต้องหัก Network ID (ตัวแรก) และ Broadcast ID (ตัวสุดท้าย) ออก 2 ค่าเสมอ จึงเหลือ Host ใช้งานได้จริง 14 IP', ARRAY['network', 'subnetting', 'cidr']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q01'), '14 IP', TRUE, 'ถูกต้อง /28 มี 16 IP ลบ 2 (Network + Broadcast) = 14 IP', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q01'), '16 IP', FALSE, '16 คือจำนวน IP ทั้งหมด แต่ยังไม่ได้หัก Network และ Broadcast IP', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q01'), '30 IP', FALSE, '30 IP คือจำนวนของ /27', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q01'), '6 IP', FALSE, '6 IP คือจำนวนของ /29', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('network:01-ip-subnetting:q02', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-ip-subnetting' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'หากเครื่องเซิร์ฟเวอร์เปิดขึ้นมาแล้วรัน ip addr พบว่าได้รับ IP เป็น 169.254.12.34 ปัญหาน่าจะเกิดจากอะไร?', 'ได้รับแจ้งจากลูกค้าว่าตู้ Kiosk ไม่สามารถเชื่อมต่อกับ Backend API ได้ ตรวจสอบพบ IP 169.254.x.x', 'easy', 'multiple_choice', 'IP ในช่วง 169.254.0.0/16 คือ APIPA (Automatic Private IP Addressing) ซึ่งระบบปฏิบัติการจะกำหนดขึ้นเองเมื่อไม่สามารถขอ IP จาก DHCP Server ได้ หรือสาย LAN หลุด/ไม่เชื่อมต่อ', ARRAY['network', 'ip', 'dhcp', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q02'), 'เครื่องไม่ได้รับ IP จาก DHCP Server หรือการเชื่อมต่อระดับสาย LAN มีปัญหา', TRUE, 'ถูกต้อง ช่วง 169.254.x.x บ่งชี้ว่า DHCP Request ล้มเหลว', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q02'), 'DNS Server ตอบกลับช้า ทำให้ได้ IP สำรอง', FALSE, 'DNS มีหน้าที่แปลงชื่อโดเมน ไม่ได้จ่าย IP ให้เครื่อง', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q02'), 'เป็น Public IP ปกติที่ออกเน็ตได้โดยตรง', FALSE, '169.254.x.x เป็น Link-Local IP ไม่สามารถออกเน็ตได้', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q02'), 'เกิด IP ชนกัน (IP Conflict) บน Switch', FALSE, 'IP ชนกันเครื่องมักจะตัดการเชื่อมต่อหรือขึ้น Warning IP conflict แต่จะไม่เปลี่ยนเป็น 169.254 โดยอัตโนมัติ', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('network:01-ip-subnetting:q03', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-ip-subnetting' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'IP Address ใดต่อไปนี้จัดเป็น Public IP ที่สามารถวิ่งบน Public Internet ได้จริง?', 'คุณต้องตรวจสอบ Whitelist ใน Firewall ของลูกค้าว่าไอพีที่เข้ามาเป็น Private IP หรือ Public IP', 'easy', 'multiple_choice', 'Private IP ตาม RFC 1918 คือ 10.0.0.0/8, 172.16.0.0/12 (172.16-172.31), 192.168.0.0/16 ดังนั้น 172.32.1.1 จึงอยู่นอกช่วง Private และเป็น Public IP', ARRAY['network', 'ip', 'rfc1918']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q03');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q03'), '172.32.1.1', TRUE, 'ถูกต้อง Private Class B สิ้นสุดที่ 172.31.255.255 ดังนั้น 172.32.1.1 คือ Public IP', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q03'), '10.240.1.5', FALSE, '10.0.0.0/8 เป็น Private IP Class A', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q03'), '172.20.10.5', FALSE, '172.16.0.0 - 172.31.255.255 เป็น Private IP Class B', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q03'), '192.168.100.1', FALSE, '192.168.0.0/16 เป็น Private IP Class C', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('network:01-ip-subnetting:q04', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-ip-subnetting' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'เมื่อสั่ง ip route show แล้วไม่พบข้อความ ''default via ...'' ผลกระทบที่จะเกิดขึ้นกับเซิร์ฟเวอร์คือข้อใด?', 'เครื่องเซิร์ฟเวอร์เพิ่งถูกแก้ไขคอนฟิกเน็ตเวิร์ก หลังจากรีสตาร์ทสามารถ ping เครื่องข้างเคียงในวงเดียวกันเจอ แต่ออกเน็ตไม่ได้', 'medium', 'multiple_choice', 'default via ระบุ Default Gateway หากไม่มี จะทำให้เซิร์ฟเวอร์คุยได้เฉพาะเครื่องใน Local Subnet เดียวกันเท่านั้น แต่ไม่สามารถส่ง Packet ข้ามวงหรือออกอินเทอร์เน็ตได้', ARRAY['network', 'routing', 'gateway']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q04');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q04'), 'เครื่องสื่อสารได้เฉพาะภายใน Subnet เดียวกัน แต่ออกนอกวงหรือออกอินเทอร์เน็ตไม่ได้', TRUE, 'ถูกต้อง ขาด Default Gateway ทำให้ไม่รู้จะส่ง Packet ออกนอกวงไปที่ใด', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q04'), 'เครื่องจะตัดการเชื่อมต่อเครือข่ายทั้งหมด แม้แต่วงเดียวกันก็คุยไม่ได้', FALSE, 'ในวงเดียวกันคุยผ่าน ARP และ Switch Layer 2 ได้โดยตรงโดยไม่ต้องพึ่ง Gateway', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q04'), 'บริการ SSH จะหยุดทำงานทันที', FALSE, 'SSH ยังเปิดรับการเชื่อมต่อจากเครื่องใน Subnet เดียวกันได้', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:01-ip-subnetting:q04'), 'เครื่องจะสลับไปใช้ IP 127.0.0.1 อัตโนมัติ', FALSE, 'Loopback 127.0.0.1 ทำงานแยกกัน ไม่เกี่ยวกับ Default Gateway', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('network:02-dns-resolution:q01', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-dns-resolution' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'คำสั่ง dig ใดต่อไปนี้ใช้สำหรับสอบถาม A Record ไปยัง Google DNS (8.8.8.8) โดยตรงและให้แสดงผลลัพธ์เฉพาะ IP แบบย่อ?', 'คุณต้องการทดสอบว่าปัญหาโดเมน resolve ไม่ได้เกิดจาก DNS Server ในองค์กรหรือเกิดจาก Cloudflare กันแน่', 'medium', 'multiple_choice', 'ไวยากรณ์ของ dig ในการระบุ DNS Server ปลายทางจะใช้เครื่องหมาย @ นำหน้า (@8.8.8.8) และการแสดงเฉพาะคำตอบสั้นๆ จะใช้ flag +short', ARRAY['network', 'dns', 'dig']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'network:02-dns-resolution:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:02-dns-resolution:q01'), 'dig @8.8.8.8 api.example.com +short', TRUE, 'ถูกต้อง @ ระบุเซิร์ฟเวอร์ และ +short จะแสดงเฉพาะค่า IP ที่ตอบกลับ', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:02-dns-resolution:q01'), 'dig api.example.com --server 8.8.8.8 -q', FALSE, 'dig ไม่ใช้ option --server หรือ -q', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:02-dns-resolution:q01'), 'nslookup -short api.example.com @8.8.8.8', FALSE, 'nslookup ไม่ใช้ @ หรือ -short', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:02-dns-resolution:q01'), 'dig -ip 8.8.8.8 api.example.com', FALSE, 'dig ไม่ใช้ flag -ip ในการระบุ DNS server', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('network:02-dns-resolution:q02', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-dns-resolution' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'หากเครื่องเซิร์ฟเวอร์ resolve ชื่อโดเมนได้เป็น IP เดิมที่เลิกใช้ไปแล้ว ทั้งๆ ที่ผู้ให้บริการ DNS ยืนยันว่าเปลี่ยน IP แล้ว สาเหตุที่น่าจะเป็นไปได้มากที่สุดคืออะไร?', 'ระบบเพิ่ง Migrate เซิร์ฟเวอร์และเปลี่ยน IP ใน Cloudflare เมื่อ 10 นาทีที่แล้ว แต่ Web Server เครื่องหนึ่งยังยิงไป IP เก่า', 'easy', 'multiple_choice', 'DNS Resolver ฝั่ง Local หรือ ISP จะแคชค่าไว้จนกว่าค่า TTL (Time-To-Live) ของ Record นั้นจะหมดอายุลง เรียกว่าระยะ DNS Propagation', ARRAY['network', 'dns', 'ttl', 'caching']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'network:02-dns-resolution:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:02-dns-resolution:q02'), 'DNS Resolver ยังคงติดแคชตามระยะเวลา TTL ของ Record เดิม', TRUE, 'ถูกต้อง Resolver จะไม่ร้องขอ IP ใหม่จนกว่า TTL เดิมจะนับถอยหลังหมด', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:02-dns-resolution:q02'), 'พอร์ต 53 บนเซิร์ฟเวอร์ถูกบล็อก', FALSE, 'ถ้าพอร์ต 53 ถูกบล็อก จะเกิด Timeout ไม่ใช่ได้ IP เก่ากลับมา', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:02-dns-resolution:q02'), 'Default Gateway ของเครื่องล่ม', FALSE, 'ถ้า Gateway ล่มจะไม่สามารถออกเน็ตหรือคุยข้ามวงได้', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:02-dns-resolution:q02'), 'A Record ไม่รองรับ IPv4', FALSE, 'A Record คือมาตรฐานสำหรับ IPv4 โดยเฉพาะ', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('network:02-dns-resolution:q03', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-dns-resolution' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'หากต้องการตรวจสอบว่า IP 203.0.113.50 ผูกกับชื่อโฮสต์ใด (Reverse DNS Lookup) ควรใช้คำสั่งใด?', 'คุณได้รับ Alert จาก Firewall แจ้ง IP ต้องสงสัยเข้ามาและต้องการตรวจสอบย้อนกลับว่าเป็นชื่อโดเมนอะไร', 'medium', 'multiple_choice', 'การทำ Reverse DNS (PTR Record) ด้วย dig จะใช้แฟล็ก -x ตามด้วย IP เช่น dig -x 203.0.113.50', ARRAY['network', 'dns', 'ptr', 'reverse-dns']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'network:02-dns-resolution:q03');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:02-dns-resolution:q03'), 'dig -x 203.0.113.50', TRUE, 'ถูกต้อง flag -x ย่อมาจาก reverse query (PTR record lookup)', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:02-dns-resolution:q03'), 'dig -r 203.0.113.50', FALSE, '-r ไม่ใช่แฟล็กสำหรับ reverse dns', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:02-dns-resolution:q03'), 'nslookup -reverse 203.0.113.50', FALSE, 'nslookup ทำ reverse lookup โดยพิมพ์ IP ตรงๆ ไม่ต้องใส่ -reverse', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:02-dns-resolution:q03'), 'host -a 203.0.113.50', FALSE, 'host สามารถใส่ IP ตรงๆ ได้ แต่ dig -x เป็นคำสั่งมาตรฐานที่นิยมใช้', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('network:03-routing-latency:q01', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-routing-latency' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'หากรัน mtr แล้วพบว่า Hop ที่ 4 มี Loss 40% แต่ Hop ที่ 5, 6 และปลายทางมี Loss 0% และ Latency ปกติ ข้อใดคือการวิเคราะห์ที่ถูกต้องที่สุด?', 'ผู้ใช้งานแจ้งว่าระบบช้า คุณทดสอบ mtr เพื่อนำข้อมูลไปแจ้งผู้ให้บริการ ISP', 'hard', 'multiple_choice', 'เราเตอร์กลางทาง (Hop 4) มักจะตั้งค่า ICMP Rate-limiting เพื่อป้องกัน CPU Overload ซึ่งจะดรอปเฉพาะ ICMP ที่วิ่งมาหาตัวมันเอง แต่ยัง Forward ทราฟฟิกจริงไปยัง Hop ถัดไปได้อย่างสมบูรณ์ จึงไม่ถือว่าเครือข่ายมีปัญหา', ARRAY['network', 'mtr', 'icmp', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'network:03-routing-latency:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:03-routing-latency:q01'), 'Hop ที่ 4 มีการทำ ICMP Rate-limiting แต่ไม่ได้ส่งผลกระทบต่อทราฟฟิกจริงเพราะ Hop ปลายทางไม่มี Loss', TRUE, 'ถูกต้อง ถ้าปัญหาเกิดจริง Loss จะต้องลุกลามต่อไปยังทุก Hop ข้างหลัง', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:03-routing-latency:q01'), 'เราเตอร์ตัวที่ 4 ชำรุด ต้องติดต่อให้ผู้ดูแลเปลี่ยนฮาร์ดแวร์ทันที', FALSE, 'ถ้าฮาร์ดแวร์พัง Hop 5 และปลายทางจะไม่สามารถส่งข้อมูลผ่านได้แบบ 0% loss', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:03-routing-latency:q01'), 'สาย LAN ของเครื่องเซิร์ฟเวอร์หลวม', FALSE, 'ถ้าสาย LAN หลวม ปัญหาจะเริ่มแสดงที่ Hop ที่ 1 (Local Gateway) ทันที', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:03-routing-latency:q01'), 'เป็นผลมาจากการทำ DNS Cache ล้มเหลว', FALSE, 'mtr ทำงานบนระดับ IP Layer 3 ไม่เกี่ยวกับ DNS Cache', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('network:03-routing-latency:q02', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-routing-latency' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'ทำไมการทดสอบ ping ไปยังเซิร์ฟเวอร์ปลายทางแล้วได้ Request Timed Out จึงไม่สามารถฟันธงได้ว่าเซิร์ฟเวอร์ล่ม?', 'ลูกค้าแจ้งว่าเซิร์ฟเวอร์เว็บล่มเพราะลอง ping แล้วไม่ตอบกลับ', 'easy', 'multiple_choice', 'ping ใช้โปรโตคอล ICMP ซึ่งเซิร์ฟเวอร์และ Firewall ส่วนใหญ่ปิดการตอบรับ ICMP เพื่อป้องกันการสแกนและการโจมตี แต่เว็บเซิร์ฟเวอร์ที่เปิด Port 80/443 (TCP) อาจยังทำงานได้ตามปกติ', ARRAY['network', 'ping', 'icmp', 'firewall']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'network:03-routing-latency:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:03-routing-latency:q02'), 'Firewall หรือ OS ปลายทางอาจบล็อกโปรโตคอล ICMP ไว้ แต่พอร์ตของแอปพลิเคชัน (TCP 80/443) ยังเปิดให้บริการอยู่', TRUE, 'ถูกต้อง ICMP ปิดกั้นได้ง่าย จึงต้องเช็คด้วย TCP port (เช่น curl หรือ nc) เพิ่มเติม', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:03-routing-latency:q02'), 'ping สามารถใช้ทดสอบได้เฉพาะเครื่องในวง LAN เดียวกันเท่านั้น', FALSE, 'ping ใช้งานข้ามเครือข่ายอินเทอร์เน็ตได้ทั่วโลกหากไม่มีการบล็อก', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:03-routing-latency:q02'), 'ping ต้องการสิทธิ์ root เสมอจึงไม่แสดงผล', FALSE, 'คำสั่ง ping ทั่วไปผู้ใช้ธรรมดาก็รันได้', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:03-routing-latency:q02'), 'สาย Fiber Optic ไม่รองรับการส่งข้อมูลแบบ Echo Request', FALSE, 'สายสัญญาณทุกประเภทรองรับ IP packet ทุกชนิด', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('network:04-tcp-ports-firewall:q01', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-tcp-ports-firewall' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'เมื่อสั่ง nc -zv db-server 5432 แล้วได้รับผลลัพธ์ว่า ''Connection refused'' สาเหตุที่เป็นไปได้มากที่สุดคือข้อใด?', 'แอปพลิเคชันขึ้น Error ไม่สามารถเชื่อมต่อกับฐานข้อมูล PostgreSQL บนเครื่อง db-server ได้', 'medium', 'multiple_choice', 'Connection refused หมายถึงแพ็กเก็ตวิ่งไปถึงเครื่องปลายทางแล้ว แต่ OS ฝั่งปลายทางส่ง TCP RST กลับมาเพราะไม่มี Service ใดเปิด LISTEN อยู่ที่พอร์ต 5432 หรือ Service ดับอยู่', ARRAY['network', 'tcp', 'ports', 'connection-refused']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'network:04-tcp-ports-firewall:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:04-tcp-ports-firewall:q01'), 'Service PostgreSQL บนเครื่อง db-server หยุดทำงาน หรือไม่ได้เปิดพอร์ต LISTEN อยู่', TRUE, 'ถูกต้อง Kernel ปลายทางจะส่ง RST ปฏิเสธทันทีเมื่อไม่มีโปรเซสรอรับที่พอร์ตนั้น', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:04-tcp-ports-firewall:q01'), 'Firewall หรือ Security Group สั่ง DROP แพ็กเก็ตทิ้ง', FALSE, 'ถ้า Firewall สั่ง DROP จะเกิด Connection Timed Out ไม่ใช่ Connection Refused', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:04-tcp-ports-firewall:q01'), 'สาย LAN ของเครื่อง Client ขาด', FALSE, 'ถ้าสาย LAN ขาด จะขึ้น Network is unreachable', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:04-tcp-ports-firewall:q01'), 'DNS Server ล่มไม่สามารถแปลงชื่อ db-server ได้', FALSE, 'ถ้า DNS ล่ม จะขึ้น Name or service not known ก่อนที่จะเริ่มส่ง TCP SYN', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('network:04-tcp-ports-firewall:q02', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-tcp-ports-firewall' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'หากรันคำสั่ง ss -tulpn บนเซิร์ฟเวอร์ฐานข้อมูลแล้วพบว่า Local Address คือ ''127.0.0.1:5432'' จะส่งผลอย่างไรต่อการเชื่อมต่อ?', 'เครื่อง Backend Server ที่อยู่คนละเครื่องพยายามต่อ Database เครื่องนี้แต่ล้มเหลว', 'medium', 'multiple_choice', '127.0.0.1 คือ Loopback Interface การ Bind ที่ IP นี้จะทำให้รับการเชื่อมต่อได้เฉพาะจากภายในเครื่องตัวเองเท่านั้น หากต้องการให้เครื่องภายนอกเชื่อมต่อได้ ต้องตั้งค่าใน postgresql.conf ให้ listen_addresses = ''*'' หรือ bind ที่ 0.0.0.0', ARRAY['network', 'tcp', 'bind', 'postgresql']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'network:04-tcp-ports-firewall:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:04-tcp-ports-firewall:q02'), 'เครื่องภายนอกจะไม่สามารถเชื่อมต่อได้เลย จะเชื่อมต่อได้เฉพาะแอปพลิเคชันที่รันอยู่ในเครื่องตัวเองเท่านั้น', TRUE, 'ถูกต้อง 127.0.0.1 จำกัดเฉพาะ Localhost ต้องเปลี่ยนเป็น 0.0.0.0 จึงจะรับจากภายนอกได้', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:04-tcp-ports-firewall:q02'), 'เครื่องภายนอกเชื่อมต่อได้ตามปกติหากมี Firewall อนุญาต', FALSE, 'แม้ Firewall จะเปิด แต่ OS จะไม่รับฟังทราฟฟิกภายนอกเข้ามาที่ 127.0.0.1', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:04-tcp-ports-firewall:q02'), 'Service PostgreSQL จะทำงานแบบ Read-only', FALSE, 'ไม่เกี่ยวกับการจำกัดสิทธิ์ Read/Write', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:04-tcp-ports-firewall:q02'), 'พอร์ต 5432 จะสลับไปใช้ UDP อัตโนมัติ', FALSE, 'PostgreSQL ใช้ TCP เท่านั้น', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('network:04-tcp-ports-firewall:q03', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-tcp-ports-firewall' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'ความแตกต่างหลักระหว่างข้อผิดพลาด ''Connection Refused'' และ ''Connection Timed Out'' คืออะไร?', 'คำถามสัมภาษณ์งานตำแหน่ง Junior Application Support', 'easy', 'multiple_choice', 'Connection Refused ได้รับคำตอบปฏิเสธ (TCP RST) จากเครื่องปลายทาง แสดงว่าเครื่องปลายทางยังเปิดอยู่แต่ไม่มี Service รอรับ ส่วน Timed Out ไม่มีสัญญาณตอบกลับใดๆ เลยจนหมดเวลา มักเกิดจาก Firewall บล็อกทิ้ง (DROP) หรือเครื่องปลายทางดับ', ARRAY['network', 'tcp', 'interview', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'network:04-tcp-ports-firewall:q03');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:04-tcp-ports-firewall:q03'), 'Refused เกิดจากเครื่องปลายทางตอบปฏิเสธ (Service ดับ/ไม่ฟังพอร์ต), ส่วน Timed Out เกิดจากการไม่ได้รับการตอบกลับใดๆ เลย (Firewall ดรอปทิ้งหรือเครื่องดับ)', TRUE, 'ถูกต้อง นี่คือคำตอบที่ตรงตามกลไก TCP และคำถามสัมภาษณ์งาน', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:04-tcp-ports-firewall:q03'), 'Refused คือรหัสผ่านผิด, ส่วน Timed Out คือชื่อผู้ใช้ผิด', FALSE, 'Authentication เกิดขึ้นที่ Application Layer หลังจาก TCP Handshake สำเร็จแล้ว', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:04-tcp-ports-firewall:q03'), 'Refused เกิดขึ้นบน IPv4 เท่านั้น ส่วน Timed Out เกิดบน IPv6', FALSE, 'ทั้งสองข้อผิดพลาดเกิดขึ้นได้ทั้งบน IPv4 และ IPv6', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'network:04-tcp-ports-firewall:q03'), 'Refused เกิดจากฮาร์ดแวร์ เราเตอร์พัง ส่วน Timed Out เกิดจากซอฟต์แวร์', FALSE, 'ไม่ถูกต้องตามหลักการทำงานของเครือข่าย', 4);
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:01-ip-subnetting:fc01', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-ip-subnetting' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'Subnet Mask มีหน้าที่อะไรในระบบเครือข่าย?', 'แยกแยะว่าส่วนใดของ IP Address คือ Network ID (บอกเครือข่าย) และส่วนใดคือ Host ID (บอกเครื่องปลายทาง)', 'Network ID vs Host ID', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:01-ip-subnetting:fc02', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-ip-subnetting' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'ช่วง Private IP Address ตาม RFC 1918 ทั้ง 3 Class คือช่วงใดบ้าง?', 'Class A: 10.0.0.0/8
-Class B: 172.16.0.0/12 (172.16 - 172.31)
-Class C: 192.168.0.0/16', '10.x, 172.16-31.x, 192.168.x', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:01-ip-subnetting:fc03', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-ip-subnetting' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'ทำไม Subnet /24 (256 IP) จึงใช้งานเป็น Host ได้จริงเพียง 254 IP?', 'เพราะต้องหักออก 2 ค่าเสมอ คือ:
-1. Network IP (IP แรก เช่น .0)
-2. Broadcast IP (IP สุดท้าย เช่น .255)', 'Network ID และ Broadcast ID', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:01-ip-subnetting:fc04', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-ip-subnetting' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'IP ขึ้นต้นด้วย 169.254.x.x คืออะไรและเกิดขึ้นเมื่อใด?', 'APIPA (Automatic Private IP Addressing) เกิดขึ้นเมื่อเครื่องขอ IP จาก DHCP Server ไม่สำเร็จ หรือสาย LAN ไม่เชื่อมต่อ', 'DHCP Request Failed', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:01-ip-subnetting:fc05', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-ip-subnetting' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'คำสั่งใดบน Linux ใช้ตรวจสอบ Routing Table และ Default Gateway?', 'ip route show หรือ ip route', 'ip route', 5)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:02-dns-resolution:fc01', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-dns-resolution' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'ลำดับแรกที่ระบบปฏิบัติการ Linux ตรวจสอบเมื่อ Resolve โดเมนคือที่ใด?', 'ไฟล์ Local Hosts (`/etc/hosts`)', '/etc/hosts', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:02-dns-resolution:fc02', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-dns-resolution' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'A Record กับ CNAME Record ต่างกันอย่างไร?', 'A Record แมปชื่อโดเมนเข้ากับ IPv4 Address โดยตรง
-CNAME (Canonical Name) เป็นชื่อ Alias ที่ชี้ไปยังอีกชื่อโดเมนหนึ่ง', 'IP vs Alias domain', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:02-dns-resolution:fc03', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-dns-resolution' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'คำสั่ง dig ใดใช้บังคับ query ไปยัง DNS 1.1.1.1 เพื่อดึงค่า A record แบบสั้น?', 'dig @1.1.1.1 domain.com +short', 'dig @server +short', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:02-dns-resolution:fc04', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-dns-resolution' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'DNS TTL (Time-To-Live) ส่งผลต่อการเปลี่ยน IP อย่างไร?', 'Resolver จะจำ IP เดิมไว้จนกว่าเวลา TTL จะนับถอยหลังหมดลง จึงเกิดช่วงหน่วงที่เรียกว่า DNS Propagation Delay', 'Caching expiration time', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:02-dns-resolution:fc05', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-dns-resolution' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'ไฟล์คอนฟิกใดบน Linux ที่เก็บรายชื่อ DNS Nameserver ของระบบ?', '/etc/resolv.conf (ระบุด้วยบรรทัด nameserver X.X.X.X)', '/etc/resolv.conf', 5)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:03-routing-latency:fc01', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-routing-latency' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'คำสั่ง ping ใช้โปรโตคอลใดในการส่งข้อความตรวจสอบเครือข่าย?', 'ICMP (Internet Control Message Protocol) โดยส่ง Echo Request (Type 8) และรอรับ Echo Reply (Type 0)', 'ICMP', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:03-routing-latency:fc02', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-routing-latency' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'traceroute ใช้กลไกใดของ IP Packet ในการระบุแต่ละ Hop ตลอดเส้นทาง?', 'ตั้งค่า TTL (Time-To-Live) เริ่มจาก 1 แล้วเพิ่มทีละ 1 เพื่อให้เราเตอร์ส่ง ICMP Time Exceeded กลับมา', 'TTL (Time-To-Live)', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:03-routing-latency:fc03', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-routing-latency' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'เครื่องมือ mtr มีข้อดีเหนือกว่า traceroute ทั่วไปอย่างไร?', 'รวมความสามารถของ ping และ traceroute เข้าด้วยกัน โดยส่งแพ็กเก็ตทดสอบต่อเนื่องแบบ Real-time และสรุปค่า Packet Loss/Latency ของแต่ละ Hop ได้แม่นยำ', 'Real-time + Packet Loss per Hop', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:03-routing-latency:fc04', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-routing-latency' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'ทำไมการรัน traceroute จึงควรใส่แฟล็ก -n?', 'เพื่อไม่ให้เสียเวลา Reverse DNS แปลง IP เป็นชื่อโฮสต์ ทำให้แสดงผลได้เร็วขึ้นทันที', 'Numeric output (No DNS lookup)', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:04-tcp-ports-firewall:fc01', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-tcp-ports-firewall' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'ขั้นตอน 3 ลำดับของ TCP 3-Way Handshake มีอะไรบ้าง?', '1. Client ส่ง SYN
-2. Server ตอบ SYN-ACK
-3. Client ส่ง ACK ยืนยัน
-(จากนั้นเข้าสู่สถานะ ESTABLISHED)', 'SYN -> SYN-ACK -> ACK', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:04-tcp-ports-firewall:fc02', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-tcp-ports-firewall' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'เมื่อใดที่เซิร์ฟเวอร์จะส่งแพ็กเก็ต TCP RST กลับมายัง Client?', 'เมื่อมี Client พยายามเชื่อมต่อมาที่พอร์ตที่ไม่มีแอปพลิเคชันใดเปิดรับ (LISTEN) อยู่ ทำให้ Client ได้รับข้อความ Connection Refused', 'ไม่มีใครฟังพอร์ต หรือ Service ปลายทางดับ', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:04-tcp-ports-firewall:fc03', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-tcp-ports-firewall' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'คำสั่งใดบน Linux ใช้ตรวจสอบพอร์ต TCP/UDP ที่เปิดฟังอยู่พร้อมระบุ Process Name?', 'sudo ss -tulpn
-(-t: TCP, -u: UDP, -l: Listen, -p: Process, -n: Numeric)', 'ss -tulpn', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:04-tcp-ports-firewall:fc04', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-tcp-ports-firewall' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'หากแอปพลิเคชัน bind อยู่ที่ 127.0.0.1 ต่างจาก 0.0.0.0 อย่างไร?', '127.0.0.1 รับการเชื่อมต่อเฉพาะภายในเครื่องตัวเอง (Localhost) เท่านั้น
-0.0.0.0 รับการเชื่อมต่อจากทุก Network Interface (เปิดให้ภายนอกเข้าถึงได้)', 'Localhost only vs All interfaces', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('network:04-tcp-ports-firewall:fc05', (SELECT id FROM topics WHERE slug = 'network'), (SELECT id FROM lessons WHERE slug = 'network-tcp-ports-firewall' AND topic_id = (SELECT id FROM topics WHERE slug = 'network')), 'ทำไม Firewall ปลายทางแบบ DROP จึงทำให้เกิดอาการ Connection Timed Out?', 'เพราะนโยบาย DROP จะทิ้งแพ็กเก็ต SYN เงียบๆ โดยไม่ส่งคำตอบใดๆ กลับมา ทำให้ Client ต้องรอจนกว่าจะหมดเวลา Timeout', 'DROP = Silent drop without reply', 5)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
--- --------------------------------------------------------------------
--- TOPIC: SQL & Database Essentials (sql)
--- --------------------------------------------------------------------
-INSERT INTO topics (slug, title, description, icon, color, display_order)
-VALUES ('sql', 'SQL & Database Essentials', 'PostgreSQL Query, JOIN, Aggregations, Index, Performance และการตรวจสอบปัญหา DB', 'Database', 'from-emerald-500 to-teal-600', 3)
-ON CONFLICT (slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  description = EXCLUDED.description,
-  icon = EXCLUDED.icon,
-  color = EXCLUDED.color,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'sql'), 'sql-queries-joins', 'Master รูปแบบ SQL JOIN และการประยุกต์ใช้งานจริงในงาน Support', 'เข้าใจ INNER JOIN, LEFT JOIN, FULL OUTER JOIN, เทคนิคค้นหาข้อมูลที่ไม่มีคู่ (Anti-join) และการรับมือกับค่า NULL อย่างปลอดภัย', '
+', 9, 'intermediate', 4, true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('5a3d9602-fb56-4f50-b4fa-c231d799a302', 3, 'sql-queries-joins', 'Master รูปแบบ SQL JOIN และการประยุกต์ใช้งานจริงในงาน Support', 'เข้าใจ INNER JOIN, LEFT JOIN, FULL OUTER JOIN, เทคนิคค้นหาข้อมูลที่ไม่มีคู่ (Anti-join) และการรับมือกับค่า NULL อย่างปลอดภัย', '
 # Master รูปแบบ SQL JOIN และการประยุกต์ใช้งานจริงในงาน Support
 
 ในฐานะ Application Support หน้าที่ประจำวันคือการเปิดฐานข้อมูลขึ้นมาสืบค้นว่า **"ทำไมออเดอร์ของลูกค้าหมายเลขนี้ไม่ตัดยอด"** หรือ **"ทำไมข้อมูลผู้ใช้แสดงไม่ครบ"** การดึงข้อมูลที่มีความเกี่ยวข้องกันข้ามตารางจำเป็นต้องใช้ **JOIN** อย่างชำนาญ
@@ -6569,18 +3158,8 @@ FROM customers;
 > 1. **ห้ามรัน `SELECT *` บนตารางที่มีข้อมูลหลายล้านแถวโดยไม่มี `LIMIT` เด็ดขาด** เพราะจะทำให้ Network I/O และ RAM ของ Database พุ่งสูงจนระบบค้าง
 > 2. **รันคำสั่งบน Read Replica เสมอ** หลีกเลี่ยงการยิงคำสั่งวิเคราะห์ข้อมูลหรือดึงรีพอร์ตบน Master Database เพื่อป้องกันไม่ให้ Transaction การเขียนของลูกค้าระบบหลักติด Lock
 > 3. **ระวังการ JOIN หลายตารางโดยไม่มี WHERE Condition** อาจเกิดผลคูณแบบ Cartesian Product (Cross Join) จน Database หน่วยความจำล้น
-', 8, 'beginner', 1)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'sql'), 'sql-aggregations-grouping', 'วิเคราะห์สถิติและเหตุการณ์ผิดปกติด้วย GROUP BY และ HAVING', 'เข้าใจฟังก์ชัน Aggregate, ความต่างระหว่าง WHERE vs HAVING, การจัดกลุ่มเวลาด้วย DATE_TRUNC และสูตร Query วิเคราะห์ Log', '
+', 8, 'beginner', 1, true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('10413c74-c724-4168-99e9-fc7c279fb980', 3, 'sql-aggregations-grouping', 'วิเคราะห์สถิติและเหตุการณ์ผิดปกติด้วย GROUP BY และ HAVING', 'เข้าใจฟังก์ชัน Aggregate, ความต่างระหว่าง WHERE vs HAVING, การจัดกลุ่มเวลาด้วย DATE_TRUNC และสูตร Query วิเคราะห์ Log', '
 # วิเคราะห์สถิติและเหตุการณ์ผิดปกติด้วย GROUP BY และ HAVING
 
 เมื่อเกิด Incident คำถามที่ผู้บริหารหรือทีมผู้พัฒนามักถามทีม Support คือ:
@@ -6670,18 +3249,8 @@ WHERE created_at >= NOW() - INTERVAL ''24 hours''
 GROUP BY DATE_TRUNC(''hour'', created_at)
 ORDER BY log_hour ASC;
 ```
-', 8, 'intermediate', 2)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'sql'), 'sql-indexes-performance', 'การจูน Index, อ่าน EXPLAIN ANALYZE และจัดการ Slow Query', 'ทำความเข้าใจ B-Tree Index, Sequential Scan vs Index Scan, ถอดรหัส EXPLAIN ANALYZE และคำสั่งปลดล็อกคิวรีที่ค้างด้วย pg_stat_activity', '
+', 8, 'intermediate', 2, true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('0ec2fdf6-2627-408b-9791-35963b5fe97e', 3, 'sql-indexes-performance', 'การจูน Index, อ่าน EXPLAIN ANALYZE และจัดการ Slow Query', 'ทำความเข้าใจ B-Tree Index, Sequential Scan vs Index Scan, ถอดรหัส EXPLAIN ANALYZE และคำสั่งปลดล็อกคิวรีที่ค้างด้วย pg_stat_activity', '
 # การจูน Index, อ่าน EXPLAIN ANALYZE และจัดการ Slow Query
 
 ปัญหาอันดับ 1 ของระบบฐานข้อมูลในระดับ Production ที่ทำให้เว็บค้างหรือ Database CPU พุ่ง 100% คือ **Slow Query** และ **Lock Contention** การเข้าใจว่า Query Engine ทำงานอย่างไร และรู้จักเครื่องมือตรวจสอบแบบ Real-time จะช่วยกู้วิกฤตระบบล่มได้อย่างรวดเร็ว
@@ -6761,343 +3330,8 @@ SELECT pg_terminate_backend(<pid>);
 หากผู้ใช้งานพบ Error: `FATAL: remaining connection slots are reserved for non-replication superuser connections`
 - สาเหตุ: แอปพลิเคชันเปิด Database Connection ทิ้งไว้โดยไม่ปิด (Connection Leak) หรือตั้งค่า Pool ใน Web Server สูงเกินกว่าที่ PostgreSQL รับไหว
 - แนวทางแก้ไขเบื้องต้น: ตรวจสอบ `SELECT count(*) FROM pg_stat_activity;` เทียบกับค่า `SHOW max_connections;` และพิจารณาใช้ Connection Pooler เช่น **PgBouncer**
-', 9, 'intermediate', 3)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('sql:01-queries-joins:q01', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-queries-joins' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'หากต้องการค้นหาข้อมูลลูกค้า (customers) ทั้งหมดที่ยังไม่เคยมีประวัติการสั่งซื้อสินค้า (orders) เลยแม้แต่ครั้งเดียว ควรเขียนคำสั่ง SQL อย่างไร?', 'ทีม Marketing ขอให้ Support ดึงรายชื่อลูกค้าที่สมัครสมาชิกแล้วแต่ยังไม่ได้สั่งซื้อ', 'medium', 'multiple_choice', 'การทำ Anti-Join ที่มีประสิทธิภาพสูงใน SQL คือการใช้ LEFT JOIN ตาราง orders ด้วย customer_id แล้วระบุเงื่อนไขใน WHERE clause ว่า WHERE orders.id IS NULL', ARRAY['sql', 'join', 'anti-join', 'null']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'sql:01-queries-joins:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:01-queries-joins:q01'), 'SELECT c.* FROM customers c LEFT JOIN orders o ON c.id = o.customer_id WHERE o.id IS NULL;', TRUE, 'ถูกต้อง นี่คือรูปแบบ Anti-Join มาตรฐานที่ค้นหาแถวที่ไม่พบคู่ตรงกันในตารางฝั่งขวา', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:01-queries-joins:q01'), 'SELECT c.* FROM customers c INNER JOIN orders o ON c.id = o.customer_id WHERE o.id IS NULL;', FALSE, 'INNER JOIN จะดึงเฉพาะรายการที่มีคู่ตรงกันทั้งสองฝั่ง ทำให้เงื่อนไข WHERE o.id IS NULL ไม่ได้ผลลัพธ์ใดๆ เลย', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:01-queries-joins:q01'), 'SELECT c.* FROM customers c WHERE c.id = (SELECT customer_id FROM orders);', FALSE, 'ไวยากรณ์นี้จะ Error หาก Subquery คืนค่ามากกว่า 1 แถว และเป็นเงื่อนไขที่ดึงเฉพาะคนที่มีออเดอร์', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:01-queries-joins:q01'), 'SELECT c.* FROM customers c RIGHT JOIN orders o ON c.id = o.customer_id;', FALSE, 'RIGHT JOIN จะเน้นตาราง orders เป็นหลัก ซึ่งไม่ได้รายการลูกค้าที่ไม่มีออเดอร์', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('sql:01-queries-joins:q02', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-queries-joins' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'ทำไมการเขียนเงื่อนไข ''WHERE email = NULL'' ใน SQL จึงไม่ได้ผลลัพธ์ข้อมูลใดๆ กลับมาเลย?', 'Support ต้องการหาผู้ใช้ที่ไม่มีอีเมลในระบบ แต่เมื่อรันคำสั่งกลับได้ 0 แถว ทั้งที่มีข้อมูลเว้นว่างอยู่', 'easy', 'multiple_choice', 'ในมาตรฐาน SQL ค่า NULL หมายถึง Unknown ไม่ใช่ค่าที่นำมาเปรียบเทียบด้วยเครื่องหมายเท่ากับ (=) ได้ ผลของการเปรียบเทียบกับ NULL จะได้ค่า UNKNOWN ซึ่งถือเป็น False ใน WHERE clause เสมอ ต้องใช้ ''IS NULL'' แทน', ARRAY['sql', 'null', 'syntax']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'sql:01-queries-joins:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:01-queries-joins:q02'), 'เพราะ NULL คือสภาวะไม่มีค่า (Unknown) ไม่สามารถเปรียบเทียบด้วยเครื่องหมาย = ได้ ต้องใช้ไวยากรณ์ IS NULL เท่านั้น', TRUE, 'ถูกต้อง NULL ต้องตรวจสอบด้วย IS NULL หรือ IS NOT NULL เสมอ', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:01-queries-joins:q02'), 'เพราะตารางบังคับให้คอลัมน์ email ต้องเป็น UNIQUE', FALSE, 'ข้อจำกัด UNIQUE ไม่ได้ห้ามการ Query', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:01-queries-joins:q02'), 'เพราะต้องเปลี่ยนคำว่า NULL เป็นสตริง ''NULL'' เสมอ', FALSE, '''NULL'' คือสตริงตัวอักษร ไม่ใช่ค่าว่าง NULL ในฐานข้อมูล', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:01-queries-joins:q02'), 'เพราะ PostgreSQL ไม่รองรับค่า NULL', FALSE, 'PostgreSQL รองรับค่า NULL ตามมาตรฐาน SQL สากล', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('sql:01-queries-joins:q03', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-queries-joins' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'ฟังก์ชัน COALESCE(phone, mobile, ''N/A'') จะให้ผลลัพธ์การทำงานอย่างไร?', 'คุณกำลังเขียน Query ดึงเบอร์ติดต่อเพื่อส่ง SMS แจ้งเตือนลูกค้า', 'easy', 'multiple_choice', 'COALESCE จะคืนค่าแรกจากซ้ายไปขวาที่ไม่เป็น NULL หากทั้ง phone และ mobile เป็น NULL ทั้งคู่ จะคืนค่าตัวสุดท้ายคือ ''N/A''', ARRAY['sql', 'coalesce', 'functions']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'sql:01-queries-joins:q03');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:01-queries-joins:q03'), 'คืนค่าตัวแรกที่ไม่เป็น NULL จากรายการที่ระบุ หากเป็น NULL ทั้งหมดจะคืนคำว่า ''N/A''', TRUE, 'ถูกต้อง นี่คือนิยามและการทำงานของฟังก์ชัน COALESCE', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:01-queries-joins:q03'), 'นำค่า phone, mobile และ ''N/A'' มาต่อกันเป็นข้อความเดียว', FALSE, 'การต่อสตริงใช้ฟังก์ชัน CONCAT หรือโอเปอเรเตอร์ ||', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:01-queries-joins:q03'), 'คืนค่าเฉพาะกรณีที่ phone และ mobile มีค่าตรงกันเท่านั้น', FALSE, 'ฟังก์ชันที่เช็คความเหมือนแล้วคืน NULL คือ NULLIF', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:01-queries-joins:q03'), 'บังคับแปลงเบอร์โทรศัพท์ให้เป็นรูปแบบสากล', FALSE, 'COALESCE ไม่ได้จัด Format ตัวเลข', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('sql:02-aggregations-grouping:q01', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-aggregations-grouping' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'หากต้องการค้นหา IP Address ที่ส่งคำขอ Login Failed มากกว่า 10 ครั้ง ควรเขียนเงื่อนไขกรองจำนวนครั้งที่จุดใด?', 'คุณกำลังตรวจสอบเหตุการณ์ Brute-force Attack ในฐานข้อมูลระบบยืนยันตัวตน', 'medium', 'multiple_choice', 'เงื่อนไขที่ตรวจสอบผลลัพธ์จากฟังก์ชันรวบรวมข้อมูล เช่น COUNT(*) > 10 จะต้องวางไว้ใน HAVING clause เท่านั้น ไม่สามารถวางใน WHERE clause ได้เพราะ WHERE ทำงานก่อนที่ข้อมูลจะถูกรวบกลุ่ม', ARRAY['sql', 'group-by', 'having', 'security']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'sql:02-aggregations-grouping:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:02-aggregations-grouping:q01'), 'ใช้ HAVING COUNT(*) > 10 หลังคำสั่ง GROUP BY ip_address', TRUE, 'ถูกต้อง HAVING ใช้กรองเงื่อนไขของค่า Aggregate หลังจากจัดกลุ่มแล้ว', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:02-aggregations-grouping:q01'), 'ใช้ WHERE COUNT(*) > 10 ก่อนคำสั่ง GROUP BY', FALSE, 'จะเกิด Syntax error: aggregate functions are not allowed in WHERE', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:02-aggregations-grouping:q01'), 'ใช้ ORDER BY COUNT(*) > 10', FALSE, 'ORDER BY ใช้จัดลำดับ ไม่ได้กรองตัดแถวที่ไม่ต้องการออก', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:02-aggregations-grouping:q01'), 'ใช้ LIMIT 10', FALSE, 'LIMIT 10 เพียงแค่ตัดผลลัพธ์มาแสดง 10 แถวแรก ไม่ได้กรองตามเงื่อนไขจำนวนครั้ง', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('sql:02-aggregations-grouping:q02', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-aggregations-grouping' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'ตาราง tickets มีทั้งหมด 100 แถว โดยมีคอลัมน์ resolved_by ที่มีค่าว่าง (NULL) อยู่ 20 แถว ผลลัพธ์ของ COUNT(*) และ COUNT(resolved_by) จะเป็นเท่าใดตามลำดับ?', 'หัวหน้างานสอบถามยอดสรุป Ticket ทั้งหมด และ Ticket ที่แก้เสร็จแล้ว', 'easy', 'multiple_choice', 'COUNT(*) นับแถวทั้งหมดไม่ว่าจะมีค่า NULL หรือไม่ จึงได้ 100 ส่วน COUNT(column_name) จะละเว้นแถวที่เป็น NULL จึงนับเฉพาะแถวที่มีค่า คือ 100 - 20 = 80', ARRAY['sql', 'count', 'null', 'aggregates']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'sql:02-aggregations-grouping:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:02-aggregations-grouping:q02'), '100 และ 80', TRUE, 'ถูกต้อง COUNT(*) ได้ 100 แถว และ COUNT(resolved_by) ละเว้น 20 แถวที่เป็น NULL จึงได้ 80', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:02-aggregations-grouping:q02'), '100 และ 100', FALSE, 'COUNT(column) จะไม่นับแถวที่เป็น NULL', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:02-aggregations-grouping:q02'), '80 และ 80', FALSE, 'COUNT(*) จะนับแถวทั้งหมดเสมอ', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:02-aggregations-grouping:q02'), '100 และ 20', FALSE, '20 คือจำนวนแถวที่เป็น NULL ไม่ใช่จำนวนแถวที่มีค่า', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('sql:03-indexes-performance:q01', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-indexes-performance' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'เมื่อสั่ง EXPLAIN ANALYZE บนตารางขนาด 5 ล้านแถว แล้วพบคำว่า ''Seq Scan on orders (cost=0.00..184500.00 rows=1 width=64) (actual time=0.021..1420.350 ms)'' ปัญหานี้ควรแก้ไขอย่างไร?', 'หน้าประวัติคำสั่งซื้อของลูกค้าโหลดช้าผิดปกติ ใช้เวลามากกว่า 1.5 วินาทีต่อครั้ง', 'medium', 'multiple_choice', 'Seq Scan บนตารางขนาดใหญ่บ่งชี้ว่า Database ต้องกวาดอ่านทุกบล็อกในดิสก์เพราะไม่มี Index ตรงกับเงื่อนไขใน WHERE clause การสร้าง B-Tree Index บนคอลัมน์ที่ถูกค้นหาจะเปลี่ยนเป็น Index Scan และลดเวลาเหลือต่ำกว่า 5ms', ARRAY['sql', 'performance', 'index', 'explain']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'sql:03-indexes-performance:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:03-indexes-performance:q01'), 'สร้าง Index บนคอลัมน์ที่อยู่ในเงื่อนไข WHERE ของคำสั่ง Query เพื่อเปลี่ยนเป็นการค้นหาแบบ Index Scan', TRUE, 'ถูกต้อง การสร้าง Index คือวิธีแก้ปัญหา Seq Scan บนตารางขนาดใหญ่โดยตรง', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:03-indexes-performance:q01'), 'เพิ่มขนาดของ CPU และ RAM ของ Database Server ให้สูงขึ้นทันที', FALSE, 'การขยายเครื่องไม่ใช่วิธีแก้ปัญหาที่ถูกต้องเมื่อขาด Index การ Scan 5 ล้านแถวยังคงช้าอยู่ดี', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:03-indexes-performance:q01'), 'เปลี่ยนประเภทคอลัมน์เป็น VARCHAR ทั้งหมด', FALSE, 'ไม่มีผลต่อการทำงานของ Index', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:03-indexes-performance:q01'), 'สั่ง VACUUM FULL เพื่อลบข้อมูลเก่า', FALSE, 'VACUUM เคลียร์ dead tuples แต่ไม่ได้สร้างดัชนีค้นหาใหม่', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('sql:03-indexes-performance:q02', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-indexes-performance' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'หากพบว่ามี Query ตัวหนึ่งทำงานค้างมานานกว่า 30 นาที และดึง CPU สูงจน Database ไม่ตอบสนอง คุณควรใช้คำสั่งใดใน PostgreSQL เพื่อตัดเซสชันและยกเลิกคำสั่งนั้นทันที?', 'เกิดเหตุการณ์ฉุกเฉินบนระบบ Production จำเป็นต้องหยุด Query อันตรายที่มี pid = 12450', 'medium', 'multiple_choice', 'SELECT pg_terminate_backend(pid) จะสั่งตัดการเชื่อมต่อ (terminate) ของเซสชันนั้นทันที ส่วน pg_cancel_backend จะพยายามส่งสัญญาณยกเลิกคำสั่งอย่างสุภาพแต่หาก Query ติด I/O หรือ Lock อาจไม่หยุด', ARRAY['sql', 'postgresql', 'kill-query', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'sql:03-indexes-performance:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:03-indexes-performance:q02'), 'SELECT pg_terminate_backend(12450);', TRUE, 'ถูกต้อง pg_terminate_backend บังคับตัดเซสชันของ pid นั้นทันทีอย่างแน่นอน', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:03-indexes-performance:q02'), 'KILL QUERY 12450;', FALSE, 'KILL QUERY เป็นไวยากรณ์ของ MySQL ไม่ใช่ PostgreSQL', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:03-indexes-performance:q02'), 'DROP PROCESS 12450;', FALSE, 'ไม่มีคำสั่งนี้ใน PostgreSQL', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'sql:03-indexes-performance:q02'), 'SYSTEMCTL STOP QUERY 12450;', FALSE, 'systemctl จัดการ Service ระดับ Linux OS ไม่สามารถตัด pid ใน database ได้', 4);
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('sql:01-queries-joins:fc01', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-queries-joins' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'INNER JOIN กับ LEFT JOIN ให้ผลลัพธ์ต่างกันอย่างไร?', 'INNER JOIN คืนเฉพาะแถวที่เงื่อนไขตรงกันทั้ง 2 ฝั่ง
-LEFT JOIN คืนแถวจากตารางฝั่งซ้ายทั้งหมด หากฝั่งขวาไม่มีคู่จะแสดงเป็น NULL', 'Intersection vs Left Table All', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('sql:01-queries-joins:fc02', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-queries-joins' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'เทคนิค Anti-Join ใช้สำหรับอะไรในงาน Support?', 'ใช้ค้นหาข้อมูลที่ไม่มีคู่หรือตกหล่น เช่น หาผู้ใช้ที่ไม่มีประวัติสั่งซื้อ ด้วยรูปแบบ: LEFT JOIN ... WHERE right_table.id IS NULL', 'LEFT JOIN + WHERE IS NULL', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('sql:01-queries-joins:fc03', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-queries-joins' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'ทำไมการเช็ค NULL ด้วย ''WHERE col = NULL'' จึงผิดเสมอ?', 'เพราะ NULL คือ Unknown ไม่สามารถเปรียบเทียบด้วยเครื่องหมาย = ได้ ต้องใช้ไวยากรณ์ ''IS NULL'' หรือ ''IS NOT NULL'' เท่านั้น', 'ต้องใช้ IS NULL', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('sql:01-queries-joins:fc04', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-queries-joins' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'ฟังก์ชัน COALESCE(val1, val2, ...) มีหน้าที่อะไร?', 'คืนค่าแรกในพารามิเตอร์ที่ไม่ใช่ค่า NULL (มักใช้กำหนดค่าเริ่มต้น หรือ Default fallback)', 'Return first non-null value', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('sql:01-queries-joins:fc05', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-queries-joins' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'ทำไมงาน Support จึงควร Query ข้อมูลบน Read Replica แทน Master Database?', 'เพื่อไม่ให้ Query ที่ซับซ้อนหรือดึงข้อมูลจำนวนมากไปรบกวนทรัพยากร CPU, RAM หรือทำให้เกิด Lock ขัดขวาง Transaction การเขียนของผู้ใช้งานในระบบจริง', 'ป้องกัน Database Lock และ CPU Overload บนระบบหลัก', 5)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('sql:02-aggregations-grouping:fc01', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-aggregations-grouping' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'COUNT(*) กับ COUNT(column_name) ต่างกันอย่างไร?', 'COUNT(*) นับจำนวนแถวทั้งหมด รวมทั้งแถวที่มีค่า NULL
-COUNT(column) นับเฉพาะแถวที่คอลัมน์นั้นมีค่า (ละเว้นแถวที่เป็น NULL)', 'นับทุกแถว vs นับเฉพาะไม่เป็น NULL', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('sql:02-aggregations-grouping:fc02', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-aggregations-grouping' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'WHERE กับ HAVING ต่างกันอย่างไรในคำสั่ง SQL?', 'WHERE กรองแถวก่อนนำไปจัดกลุ่ม (ห้ามใช้ฟังก์ชัน Aggregate)
-HAVING กรองผลลัพธ์หลังจากรวมกลุ่ม GROUP BY แล้ว (ใช้กับ Aggregate เช่น COUNT > 10 ได้)', 'ก่อนจัดกลุ่ม vs หลังจัดกลุ่ม', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('sql:02-aggregations-grouping:fc03', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-aggregations-grouping' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'คำสั่งใดใน PostgreSQL ใช้ปัดเศษ Timestamp ให้เป็นระดับชั่วโมงเพื่อนำมา GROUP BY?', 'DATE_TRUNC(''hour'', created_at)', 'DATE_TRUNC(''hour'', ...)', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('sql:02-aggregations-grouping:fc04', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-aggregations-grouping' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'ลำดับการประมวลผล (Execution Order) ของ WHERE, GROUP BY, HAVING คืออะไร?', '1. WHERE (กรองแถว)
-2. GROUP BY (รวมกลุ่ม)
-3. HAVING (กรองกลุ่ม)', 'WHERE -> GROUP BY -> HAVING', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('sql:03-indexes-performance:fc01', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-indexes-performance' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'Sequential Scan กับ Index Scan ต่างกันอย่างไร?', 'Sequential Scan: กวาดอ่านข้อมูลทุกแถวตั้งแต่ต้นจนจบตาราง (ช้ามากบนตารางใหญ่)
-Index Scan: ใช้ B-Tree ค้นหาตำแหน่งแถวที่ต้องการอย่างรวดเร็ว (ความเร็วระดับ O(log N))', 'Full table scan vs Binary search tree', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('sql:03-indexes-performance:fc02', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-indexes-performance' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'คำสั่ง EXPLAIN กับ EXPLAIN ANALYZE ต่างกันอย่างไร?', 'EXPLAIN แสดงเฉพาะแผนการทำงาน (Estimate cost/rows) โดยไม่ได้รันคำสั่งจริง
-EXPLAIN ANALYZE จะสั่งรันคำสั่งจริงและแสดงเวลาการทำงานจริง (Actual time) ของแต่ละขั้นตอน', 'Estimate plan vs Actually execute & measure time', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('sql:03-indexes-performance:fc03', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-indexes-performance' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'คำสั่งใดใน PostgreSQL ใช้ตรวจสอบ Query ที่กำลังรันอยู่แบบ Real-time?', 'SELECT * FROM pg_stat_activity WHERE state != ''idle'';', 'pg_stat_activity', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('sql:03-indexes-performance:fc04', (SELECT id FROM topics WHERE slug = 'sql'), (SELECT id FROM lessons WHERE slug = 'sql-indexes-performance' AND topic_id = (SELECT id FROM topics WHERE slug = 'sql')), 'ความแตกต่างระหว่าง pg_cancel_backend() กับ pg_terminate_backend() คืออะไร?', 'pg_cancel_backend(pid): พยายามยกเลิกเฉพาะ Query ที่กำลังรันอยู่ แต่ยังคง Session การเชื่อมต่อไว้
-pg_terminate_backend(pid): บังคับตัดการเชื่อมต่อของ Client ทิ้งทันที (Kill connection)', 'Cancel current query vs Terminate entire connection', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
--- --------------------------------------------------------------------
--- TOPIC: Incident & Troubleshooting (troubleshooting)
--- --------------------------------------------------------------------
-INSERT INTO topics (slug, title, description, icon, color, display_order)
-VALUES ('troubleshooting', 'Incident & Troubleshooting', 'ขั้นตอนวิเคราะห์ Root Cause, วิธีการไล่ปัญหาอย่างเป็นระบบ (Methodology) และ ITIL', 'Wrench', 'from-rose-500 to-pink-600', 6)
-ON CONFLICT (slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  description = EXCLUDED.description,
-  icon = EXCLUDED.icon,
-  color = EXCLUDED.color,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'troubleshooting'), 'troubleshooting-incident-triage-methodology', 'ลำดับการ Triage ปัญหาและระเบียบวิธีวิเคราะห์ Incident เชิงระบบ', 'ระดับความรุนแรง Sev 1 - Sev 4, คำถามทองคำ ''What Changed?'', แนวทางวิเคราะห์ Top-Down vs Bottom-Up และการกู้ระบบคืนก่อนหาสาเหตุ', '
+', 9, 'intermediate', 3, true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('11fc305a-c347-452a-8cbb-f81491cb8cae', 6, 'troubleshooting-incident-triage-methodology', 'ลำดับการ Triage ปัญหาและระเบียบวิธีวิเคราะห์ Incident เชิงระบบ', 'ระดับความรุนแรง Sev 1 - Sev 4, คำถามทองคำ ''What Changed?'', แนวทางวิเคราะห์ Top-Down vs Bottom-Up และการกู้ระบบคืนก่อนหาสาเหตุ', '
 # ลำดับการ Triage ปัญหาและระเบียบวิธีวิเคราะห์ Incident เชิงระบบ
 
 เมื่อเกิดเหตุการณ์ระบบขัดข้อง (Incident) ความตื่นตระหนกคือศัตรูอันดับหนึ่งของทีม Support สิ่งที่แบ่งแยกวิศวกรมืออาชีพออกจากมือใหม่คือ **"กระบวนการคิดและลำดับการ Triage ปัญหาอย่างเป็นระบบ (Systematic Troubleshooting)"**
@@ -7149,18 +3383,8 @@ VALUES ((SELECT id FROM topics WHERE slug = 'troubleshooting'), 'troubleshooting
 > เป้าหมายแรกสุดเมื่อเกิด Sev 1 คือ **"ทำให้ระบบกลับมาให้บริการได้เร็วที่สุด (MTTR - Mean Time to Recovery)"** เช่น การ Rollback เวอร์ชันก่อนหน้า, การ Restart เซอร์วิส, หรือเปิดใช้งานโหมด Failover ชั่วคราว
 > 
 > อย่าเพิ่งเสียเวลาดีบักหาบั๊กในโค้ดแบบละเอียดจนลืมเปิดระบบให้ลูกค้าใช้งาน! การหาสาเหตุที่แท้จริงแบบสมบูรณ์จะทำในขั้นตอน **Problem Management (Post-Incident Review / RCA)** หลังจากระบบกลับมาออนไลน์แล้วเสมอ
-', 8, 'beginner', 1)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'troubleshooting'), 'troubleshooting-root-cause-escalation', 'เทคนิค 5 Whys, การทำ RCA และการส่งต่อเคส (Escalation) อย่างมือโปร', 'เจาะลึกการวิเคราะห์รากเหง้าปัญหาด้วย 5 Whys, โครงสร้างการเขียนบันทึกส่งต่อเคสไปยัง Tier 2/DevOps และการทำ Blameless Post-Mortem', '
+', 8, 'beginner', 1, true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('782f94c6-acb3-408b-b091-a093bf7d0c40', 6, 'troubleshooting-root-cause-escalation', 'เทคนิค 5 Whys, การทำ RCA และการส่งต่อเคส (Escalation) อย่างมือโปร', 'เจาะลึกการวิเคราะห์รากเหง้าปัญหาด้วย 5 Whys, โครงสร้างการเขียนบันทึกส่งต่อเคสไปยัง Tier 2/DevOps และการทำ Blameless Post-Mortem', '
 # เทคนิค 5 Whys, การทำ RCA และการส่งต่อเคส (Escalation) อย่างมือโปร
 
 เมื่อกู้ระบบกลับมาให้บริการได้แล้ว งานของทีม Support ยังไม่จบ สิ่งสำคัญคือการค้นหาว่า **"อะไรคือต้นเหตุที่แท้จริง และเราจะป้องกันไม่ให้มันเกิดขึ้นซ้ำอีกได้อย่างไร?"** รวมถึงทักษะการส่งต่อเคส (Escalation) ที่มีคุณภาพไปยังทีมพัฒนา
@@ -7225,193 +3449,8 @@ VALUES ((SELECT id FROM topics WHERE slug = 'troubleshooting'), 'troubleshooting
 - ในองค์กรชั้นนำอย่าง Google, Netflix หรือ AWS เมื่อเกิดระบบล่ม จะไม่มีการหาตัวบุคคลมาลงโทษ
 - การชี้ความผิดไปที่บุคคลจะทำให้พนักงานปกปิดความผิดพลาด และกลัวการทดลองสิ่งใหม่
 - มุ่งเน้นการปรับปรุง **กระบวนการ (Process)**, **ระบบตรวจสอบ (Automated Testing)** และ **ระบบแจ้งเตือน (Observability)** เพื่อให้ระบบมีความทนทานต่อความผิดพลาดของมนุษย์
-', 8, 'intermediate', 2)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('troubleshooting:01-incident-triage-methodology:q01', (SELECT id FROM topics WHERE slug = 'troubleshooting'), (SELECT id FROM lessons WHERE slug = 'troubleshooting-incident-triage-methodology' AND topic_id = (SELECT id FROM topics WHERE slug = 'troubleshooting')), 'เมื่อเกิดเหตุการณ์ระบบชำระเงินล่มทั้งระบบ (Sev 1 Critical Incident) เป้าหมายสูงสุดข้อแรกของทีม Incident Management คืออะไร?', 'ระบบตัดบัตรเครดิตล่มในวันแคมเปญ 11.11 ทำให้ลูกค้าสั่งซื้อไม่ได้', 'easy', 'multiple_choice', 'ตามมาตรฐาน ITIL และ SRE เป้าหมายอันดับหนึ่งของ Incident Management คือการกู้คืนระบบให้กลับมาให้บริการได้เร็วที่สุด (Restore Service / ลด MTTR) เช่น การ Rollback หรือ Failover ส่วนการหาสาเหตุที่แท้จริงจะทำในกระบวนการ Problem Management หลังจากระบบออนไลน์แล้ว', ARRAY['troubleshooting', 'itil', 'incident-management', 'sev1']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'troubleshooting:01-incident-triage-methodology:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'troubleshooting:01-incident-triage-methodology:q01'), 'กู้คืนระบบให้กลับมาใช้งานได้โดยเร็วที่สุด (Restore Service / ลด MTTR) แม้จะต้องใช้ทางเลี่ยงชั่วคราวหรือสั่ง Rollback', TRUE, 'ถูกต้อง เป้าหมายคือหยุดความเสียหายต่อธุรกิจให้เร็วที่สุด', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'troubleshooting:01-incident-triage-methodology:q01'), 'นั่งไล่อ่านโค้ดทุกบรรทัดเพื่อหาบั๊กที่ทำให้เกิดปัญหาก่อนเปิดระบบ', FALSE, 'การมัวแต่อ่านโค้ดโดยไม่ Rollback จะทำให้ธุรกิจเสียหายอย่างหนัก', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'troubleshooting:01-incident-triage-methodology:q01'), 'ประชุมเพื่อหาตัวคนผิดที่รับผิดชอบการดีพลอย', FALSE, 'การกล่าวโทษ (Blame) ผิดหลักการ Blameless Post-Mortem', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'troubleshooting:01-incident-triage-methodology:q01'), 'ปิดระบบทั้งองค์กรเพื่อความปลอดภัย', FALSE, 'ไม่ใช่แนวทางที่ถูกต้องสำหรับ Incident Management', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('troubleshooting:01-incident-triage-methodology:q02', (SELECT id FROM topics WHERE slug = 'troubleshooting'), (SELECT id FROM lessons WHERE slug = 'troubleshooting-incident-triage-methodology' AND topic_id = (SELECT id FROM topics WHERE slug = 'troubleshooting')), 'ในการ Triage ปัญหาทางเทคนิค คำถามใดต่อไปนี้ถือเป็น ''คำถามทองคำ'' ที่มักนำไปสู่ต้นตอของปัญหาได้เร็วที่สุด?', 'ระบบที่เคยทำงานได้ตามปกติมาตลอด 6 เดือน จู่ๆ วันนี้เริ่มแสดงข้อผิดพลาด', 'easy', 'multiple_choice', 'ระบบคอมพิวเตอร์ที่เคยทำงานได้ปกติมักไม่พังขึ้นมาเองโดยไม่มีเหตุผล กว่า 80-90% ของ Incident เกิดจากการเปลี่ยนแปลง (Change) เช่น การดีพลอยโค้ดใหม่, แก้ไขคอนฟิก, เปลี่ยนใบรับรอง, หรืออัปเดตแพตช์ OS', ARRAY['troubleshooting', 'methodology', 'triage']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'troubleshooting:01-incident-triage-methodology:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'troubleshooting:01-incident-triage-methodology:q02'), 'มีอะไรเปลี่ยนแปลงไปในระบบก่อนหน้าที่ปัญหาจะเริ่มเกิดขึ้นหรือไม่? (What Changed?)', TRUE, 'ถูกต้อง การสืบค้น Change Logs มักไขข้อข้องใจได้ตรงจุดที่สุด', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'troubleshooting:01-incident-triage-methodology:q02'), 'เครื่องเซิร์ฟเวอร์ซื้อมาปีไหน?', FALSE, 'อายุเครื่องไม่ใช่คำถามแรกในการ Triage', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'troubleshooting:01-incident-triage-methodology:q02'), 'ใครเป็นคนเขียนโค้ดบรรทัดแรกของโปรเจกต์?', FALSE, 'ไม่เกี่ยวข้องกับการแก้ปัญหาเฉพาะหน้า', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'troubleshooting:01-incident-triage-methodology:q02'), 'ดาต้าเบสรองรับภาษาอะไรบ้าง?', FALSE, 'ไม่ใช่คำถามวิเคราะห์ต้นตอ', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('troubleshooting:02-root-cause-escalation:q01', (SELECT id FROM topics WHERE slug = 'troubleshooting'), (SELECT id FROM lessons WHERE slug = 'troubleshooting-root-cause-escalation' AND topic_id = (SELECT id FROM topics WHERE slug = 'troubleshooting')), 'ข้อมูลใดต่อไปนี้มีความจำเป็นและช่วยให้ทีมผู้พัฒนา (Developer) สามารถสืบสวนและแก้ไขปัญหาที่ส่งต่อมาได้อย่างรวดเร็วที่สุด?', 'ในฐานะ Tier 1 Support คุณกำลังเขียน Ticket ส่งต่อปัญหา (Escalation) ไปยังทีม Dev', 'easy', 'multiple_choice', 'Ticket ที่มีคุณภาพต้องระบุ Request/Response หรือ Error Log ที่ชัดเจน, Transaction/Order ID ที่เกิดปัญหา, เวลาที่เริ่มพบปัญหา และสิ่งที่ทีม Support ได้ทำการทดสอบคัดกรองไปแล้ว เพื่อที่ Dev จะได้ไม่ต้องเสียเวลาเริ่มต้นถามใหม่ตั้งแต่ศูนย์', ARRAY['troubleshooting', 'escalation', 'support-skills']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'troubleshooting:02-root-cause-escalation:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'troubleshooting:02-root-cause-escalation:q01'), 'Log ข้อความ Error พร้อม Transaction ID ที่เจาะจง, ช่วงเวลาที่เริ่มเป็น และสิ่งที่ Support ได้ทดสอบคัดกรองเบื้องต้นไปแล้ว', TRUE, 'ถูกต้อง นี่คือข้อมูลจำเป็นสำหรับการสืบสวนต่ออย่างมีประสิทธิภาพ', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'troubleshooting:02-root-cause-escalation:q01'), 'เขียนสั้นๆ เพียงว่า ''ระบบช้า รบกวนช่วยดูด่วน''', FALSE, 'ข้อมูลไม่เพียงพอ ทำให้ต้องเสียเวลาถามตอบไปมา', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'troubleshooting:02-root-cause-escalation:q01'), 'แนบเฉพาะสเปกฮาร์ดแวร์ของเครื่องคอมพิวเตอร์ลูกค้า', FALSE, 'สเปกเครื่องลูกข่ายไม่ช่วยบอกสาเหตุของปัญหาฝั่งแอปพลิเคชัน', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'troubleshooting:02-root-cause-escalation:q01'), 'ส่งภาพหน้าต่างสีฟ้าโดยไม่ระบุรายละเอียด', FALSE, 'ไม่ช่วยให้ผู้พัฒนาวิเคราะห์โค้ดได้', 4);
-
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('troubleshooting:02-root-cause-escalation:q02', (SELECT id FROM topics WHERE slug = 'troubleshooting'), (SELECT id FROM lessons WHERE slug = 'troubleshooting-root-cause-escalation' AND topic_id = (SELECT id FROM topics WHERE slug = 'troubleshooting')), 'หัวใจหลักของแนวคิด ''Blameless Post-Mortem'' ในกระบวนการ RCA หลังเกิดระบบล่มคืออะไร?', 'การประชุมสรุปบทเรียนหลังจากเหตุการณ์ระบบล่มครั้งใหญ่', 'easy', 'multiple_choice', 'Blameless Post-Mortem เชื่อว่ามนุษย์ทุกคนมีโอกาสผิดพลาดได้ หัวใจสำคัญไม่ใช่การหาตัวคนผิดมาลงโทษ แต่เป็นการปรับปรุงกระบวนการและสร้างระบบป้องกันที่ทำให้ความผิดพลาดของมนุษย์ไม่สามารถพังระบบได้', ARRAY['troubleshooting', 'rca', 'blameless', 'culture']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
-
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'troubleshooting:02-root-cause-escalation:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'troubleshooting:02-root-cause-escalation:q02'), 'มุ่งเน้นการปรับปรุงระบบและกระบวนการทำงานเพื่อป้องกันไม่ให้เกิดปัญหาซ้ำ โดยไม่กล่าวโทษหรือลงโทษตัวบุคคล', TRUE, 'ถูกต้อง มุ่งแก้ที่ระบบและกระบวนการ ไม่ใช่ลงโทษคน', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'troubleshooting:02-root-cause-escalation:q02'), 'การปกปิดความผิดพลาดไม่ให้ผู้บริหารรับรู้', FALSE, 'ผิดหลักความโปร่งใสและตรวจสอบได้', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'troubleshooting:02-root-cause-escalation:q02'), 'การตัดโบนัสพนักงานทุกคนที่อยู่ในกะที่ระบบล่ม', FALSE, 'ตรงข้ามกับแนวคิด Blameless โดยสิ้นเชิง', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'troubleshooting:02-root-cause-escalation:q02'), 'การโยนความผิดให้ผู้ให้บริการคลาวด์ภายนอกเสมอ', FALSE, 'ไม่ใช่แนวทางวิเคราะห์ที่สร้างสรรค์', 4);
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('troubleshooting:01-incident-triage-methodology:fc01', (SELECT id FROM topics WHERE slug = 'troubleshooting'), (SELECT id FROM lessons WHERE slug = 'troubleshooting-incident-triage-methodology' AND topic_id = (SELECT id FROM topics WHERE slug = 'troubleshooting')), 'ความแตกต่างระหว่าง Sev 1 กับ Sev 3 ตามมาตรฐาน ITIL คืออะไร?', 'Sev 1 (Critical): ระบบหลักล่มทั้งระบบ กระทบผู้ใช้ทุกคน ธุรกิจเสียหายรุนแรง
-Sev 3 (Medium): ฟังก์ชันย่อยมีปัญหา แต่ยังมีวิธีเลี่ยง (Workaround Available) ธุรกิจยังดำเนินการต่อได้', 'All down vs Minor feature with workaround', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('troubleshooting:01-incident-triage-methodology:fc02', (SELECT id FROM topics WHERE slug = 'troubleshooting'), (SELECT id FROM lessons WHERE slug = 'troubleshooting-incident-triage-methodology' AND topic_id = (SELECT id FROM topics WHERE slug = 'troubleshooting')), 'ทำไมคำถาม ''What Changed?'' จึงเป็นหัวใจสำคัญของการ Triage?', 'เพราะกว่า 80-90% ของ Incident เกิดจากการเปลี่ยนแปลง เช่น การดีพลอยเวอร์ชันใหม่, การเปลี่ยนคอนฟิก, หรือการแก้ไขระบบเครือข่าย', '80-90% of issues stem from recent changes', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('troubleshooting:01-incident-triage-methodology:fc03', (SELECT id FROM topics WHERE slug = 'troubleshooting'), (SELECT id FROM lessons WHERE slug = 'troubleshooting-incident-triage-methodology' AND topic_id = (SELECT id FROM topics WHERE slug = 'troubleshooting')), 'MTTR ย่อมาจากอะไรและมีความสำคัญอย่างไรใน Incident Management?', 'Mean Time to Recovery (หรือ Mean Time to Resolve) คือเวลาเฉลี่ยที่ใช้ในการกู้คืนระบบให้กลับมาใช้งานได้ ยิ่งค่านี้น้อย ยิ่งแสดงถึงประสิทธิภาพของทีม Support', 'Mean Time to Recovery', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('troubleshooting:02-root-cause-escalation:fc01', (SELECT id FROM topics WHERE slug = 'troubleshooting'), (SELECT id FROM lessons WHERE slug = 'troubleshooting-root-cause-escalation' AND topic_id = (SELECT id FROM topics WHERE slug = 'troubleshooting')), 'เทคนิค 5 Whys มีเป้าหมายเพื่ออะไรในการแก้ปัญหา?', 'การถามว่า ''ทำไม'' ซ้ำๆ เพื่อก้าวข้ามผ่านแค่อาการที่เห็นภายนอก (Symptom) ไปสู่ต้นตอที่แท้จริงของระบบหรือกระบวนการ (Root Cause)', 'Identify true underlying root cause', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('troubleshooting:02-root-cause-escalation:fc02', (SELECT id FROM topics WHERE slug = 'troubleshooting'), (SELECT id FROM lessons WHERE slug = 'troubleshooting-root-cause-escalation' AND topic_id = (SELECT id FROM topics WHERE slug = 'troubleshooting')), 'ข้อมูล 4 อย่างที่ควรมีเสมอใน Ticket ส่งต่อเคส (Escalation Handover) คืออะไร?', '1. ขอบเขตและผลกระทบ (Scope & Impact)
-2. เวลาที่เริ่มพบและสิ่งที่เปลี่ยนแปลงล่าสุด (When & What Changed)
-3. หลักฐานทางเทคนิค (Error Log, Request ID, Status Code)
-4. สิ่งที่ทีม Tier 1 ได้คัดกรองไปแล้ว (What''s already ruled out)', 'Scope, Timeline, Evidence, Ruled out', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('troubleshooting:02-root-cause-escalation:fc03', (SELECT id FROM topics WHERE slug = 'troubleshooting'), (SELECT id FROM lessons WHERE slug = 'troubleshooting-root-cause-escalation' AND topic_id = (SELECT id FROM topics WHERE slug = 'troubleshooting')), 'ทำไมองค์กรเทคโนโลยีชั้นนำจึงยึดถือหลักการ Blameless Post-Mortem?', 'เพราะการไม่กล่าวโทษบุคคลจะส่งเสริมความโปร่งใส ทำให้ทีมกล้าเปิดเผยปัญหาเพื่อนำไปสู่การปรับปรุงระบบและกระบวนการป้องกันอย่างยั่งยืน', 'Encourages transparency & system-level improvements', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
--- --------------------------------------------------------------------
--- TOPIC: Web & HTTP/API (web-api)
--- --------------------------------------------------------------------
-INSERT INTO topics (slug, title, description, icon, color, display_order)
-VALUES ('web-api', 'Web & HTTP/API', 'HTTP Status Codes, Headers, REST API, curl, SSL/TLS Handshake และ Web Server', 'Globe', 'from-purple-500 to-indigo-600', 4)
-ON CONFLICT (slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  description = EXCLUDED.description,
-  icon = EXCLUDED.icon,
-  color = EXCLUDED.color,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'web-api'), 'web-http-status-codes', 'ผ่าโครงสร้าง HTTP Status Codes สำหรับวิเคราะห์ปัญหา Web & API', 'สรุปรหัสสถานะ 2xx, 3xx, 4xx, 5xx และเจาะลึกความต่าง 502 Bad Gateway vs 504 Gateway Timeout พร้อมแผนผัง Reverse Proxy', '
+', 8, 'intermediate', 2, true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('8cd3f8e6-7571-47ca-bd5b-cd313f6179c6', 4, 'web-http-status-codes', 'ผ่าโครงสร้าง HTTP Status Codes สำหรับวิเคราะห์ปัญหา Web & API', 'สรุปรหัสสถานะ 2xx, 3xx, 4xx, 5xx และเจาะลึกความต่าง 502 Bad Gateway vs 504 Gateway Timeout พร้อมแผนผัง Reverse Proxy', '
 # ผ่าโครงสร้าง HTTP Status Codes สำหรับวิเคราะห์ปัญหา Web & API
 
 เมื่อผู้ใช้งานรายงานว่า **"เข้าเว็บไม่ได้ เกิด Error หน้าขาว"** สิ่งแรกที่ทีม Support ต้องถามหาคือ **HTTP Status Code** เพราะรหัสตัวเลข 3 หลักนี้บอกได้ทันทีว่าปัญหาเกิดที่ฝั่ง Client, Reverse Proxy หรือ Backend Service ภายใน
@@ -7478,18 +3517,8 @@ VALUES ((SELECT id FROM topics WHERE slug = 'web-api'), 'web-http-status-codes',
 | **TCP Layer** | Connection Refused / Invalid Response | Connection Established แต่ค้างรอ Response |
 | **สาเหตุหลัก** | Service แครช, Out of Memory, พอร์ตผิด | Slow Query, Database Lock, Deadlock, External API ช้า |
 | **จุดตรวจแรก** | `systemctl status <service>`, `docker logs` | ดู Query ค้างใน DB, ตรวจ CPU/RAM ของ Backend |
-', 8, 'beginner', 1)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'web-api'), 'web-curl-api-testing', 'การใช้คำสั่ง curl ทดสอบ REST API และวัด Response Time', 'คู่มือ curl ฉบับเจาะลึก flags สำคัญ (-i, -v, -H, -d, -k), การจำลอง Host Header และการจับเวลา Latency Breakdown ด้วย -w', '
+', 8, 'beginner', 1, true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('cfa14627-c168-4b14-9e7b-15eb4f7e1ead', 4, 'web-curl-api-testing', 'การใช้คำสั่ง curl ทดสอบ REST API และวัด Response Time', 'คู่มือ curl ฉบับเจาะลึก flags สำคัญ (-i, -v, -H, -d, -k), การจำลอง Host Header และการจับเวลา Latency Breakdown ด้วย -w', '
 # การใช้คำสั่ง curl ทดสอบ REST API และวัด Response Time
 
 บน Linux Production Server เราไม่มีโปรแกรมอย่าง Postman หรือเว็บเบราว์เซอร์ให้คลิก เครื่องมือหลักที่วิศวกร Support และ DevOps ทั่วโลกต้องใช้เพื่อตรวจสอบความพร้อมของ API คือ **`curl`**
@@ -7560,18 +3589,8 @@ HTTP Code:         %{http_code}\n" \
 
 > ⚠️ **คำเตือนความปลอดภัย (Warning)**:
 > หลีกเลี่ยงการใช้ `-k` (`--insecure`) ในสคริปต์อัตโนมัติบนระบบ Production เพราะเป็นการปิดการตรวจสอบ SSL/TLS ซึ่งเปิดช่องโหว่ต่อการถูกดักฟังข้อมูลแบบ Man-in-the-Middle (MitM)
-', 8, 'beginner', 2)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
-
-INSERT INTO lessons (topic_id, slug, title, summary, content_md, read_time_minutes, difficulty, display_order)
-VALUES ((SELECT id FROM topics WHERE slug = 'web-api'), 'web-ssl-tls-certificates', 'การตรวจสอบใบรับรอง SSL/TLS และการแก้ปัญหา Certificate หมดอายุ', 'เจาะลึก Chain of Trust, สาเหตุ Error ยอดนิยม (Expired, Self-signed, Domain Mismatch) และคำสั่ง openssl s_client ตรวจสอบใบรับรอง', '
+', 8, 'beginner', 2, true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('c1527b50-8bf1-4171-95ce-52bd25ee35f4', 4, 'web-ssl-tls-certificates', 'การตรวจสอบใบรับรอง SSL/TLS และการแก้ปัญหา Certificate หมดอายุ', 'เจาะลึก Chain of Trust, สาเหตุ Error ยอดนิยม (Expired, Self-signed, Domain Mismatch) และคำสั่ง openssl s_client ตรวจสอบใบรับรอง', '
 # การตรวจสอบใบรับรอง SSL/TLS และการแก้ปัญหา Certificate หมดอายุ
 
 หนึ่งในฝันร้ายของทีม Support คือตอนเช้าตื่นมาพบว่า **"ผู้ใช้งานทั้งประเทศเข้าเว็บไม่ได้ เบราว์เซอร์ขึ้นเตือน Your connection is not private (NET::ERR_CERT_DATE_INVALID)"** เพราะใบรับรอง SSL/TLS หมดอายุ การตรวจสอบวันหมดอายุและความสมบูรณ์ของใบรับรองจึงเป็นทักษะสำคัญ
@@ -7632,303 +3651,594 @@ openssl x509 -in /etc/ssl/certs/mycert.crt -noout -enddate
 
 > ⚠️ **ข้อควรระวัง (Warning)**:
 > เมื่อเปลี่ยนไฟล์ SSL Certificate บนเซิร์ฟเวอร์เสร็จแล้ว ต้องสั่ง **Reload Web Server เสมอ** (เช่น `sudo systemctl reload nginx`) มิฉะนั้น Nginx จะยังคงใช้ Certificate เก่าที่อยู่ในหน่วยความจำ
-', 8, 'intermediate', 3)
-ON CONFLICT (topic_id, slug) DO UPDATE SET
-  title = EXCLUDED.title,
-  summary = EXCLUDED.summary,
-  content_md = EXCLUDED.content_md,
-  read_time_minutes = EXCLUDED.read_time_minutes,
-  difficulty = EXCLUDED.difficulty,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
+', 8, 'intermediate', 3, true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('web-api:01-http-status-codes:q01', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-http-status-codes' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), 'ผู้ใช้งานเปิดหน้าเว็บแล้วพบข้อผิดพลาด ''502 Bad Gateway'' จาก Nginx ข้อใดคือสาเหตุที่เป็นไปได้มากที่สุด?', 'ระบบแจ้งเตือนว่าหน้าเว็บล่ม Nginx ส่ง 502 Bad Gateway กลับมายัง Client', 'medium', 'multiple_choice', '502 Bad Gateway เกิดจากตัว Reverse Proxy (Nginx) พยายามส่งต่อคำขอไปยัง Backend Upstream Service แต่ Backend ดับอยู่ ไม่ได้เปิดพอร์ต หรือแครช ทำให้เกิด Connection Refused', ARRAY['web', 'http', 'status-codes', '502', 'nginx']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
 
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'web-api:01-http-status-codes:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:01-http-status-codes:q01'), 'Backend Application Server ด้านหลังหยุดทำงาน แครชล่ม หรือไม่เปิดพอร์ตตามที่ Nginx คอนฟิกไว้', TRUE, 'ถูกต้อง Nginx ไม่สามารถเชื่อมต่อไปยัง Upstream ได้จึงส่ง 502 Bad Gateway', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:01-http-status-codes:q01'), 'Backend ประมวลผลช้าเกินกว่า 60 วินาที', FALSE, 'ประมวลผลนานเกิน Timeout จะได้รหัส 504 Gateway Timeout ไม่ใช่ 502', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:01-http-status-codes:q01'), 'Client ส่ง Header Authorization ที่มี Token หมดอายุมา', FALSE, 'Token หมดอายุจะได้รหัส 401 Unauthorized', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:01-http-status-codes:q01'), 'Client ส่ง URL ที่ไม่มีอยู่จริงบนเซิร์ฟเวอร์', FALSE, 'URL ไม่มีอยู่จริงจะได้รหัส 404 Not Found', 4);
+--
+-- Data for Name: questions; Type: TABLE DATA; Schema: public; Owner: -
+--
 
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('web-api:01-http-status-codes:q02', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-http-status-codes' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), 'ความแตกต่างระหว่างรหัส HTTP 401 Unauthorized และ 403 Forbidden คือข้อใด?', 'คำถามสัมภาษณ์งานตำแหน่ง Technical Support Engineer', 'easy', 'multiple_choice', '401 คือไม่พบข้อมูลยืนยันตัวตน (ยังไม่ได้ Login หรือ Token ผิด/หมดอายุ) ส่วน 403 คือระบบรู้จักตัวตนแล้วแต่ผู้ใช้นั้นไม่มีสิทธิ์ (No Permission) ในการเข้าถึงทรัพยากรนั้น', ARRAY['web', 'http', 'auth', 'interview']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
+INSERT INTO public.questions VALUES ('c1a10001-0000-0000-0000-000000000004', 'sql:joins:q01', 3, '5a3d9602-fb56-4f50-b4fa-c231d799a302', 'คำสั่ง SQL ใดใช้สำหรับค้นหาข้อมูลพนักงานทุกคน พร้อมชื่อแผนก โดยต้องการแสดงพนักงานแม้ว่าจะยังไม่ได้ถูกจัดให้อยู่แผนกใดก็ตาม (Department เป็น NULL)?', NULL, 'easy', 'multiple_choice', 'LEFT JOIN จะคงข้อมูลของตารางฝั่งซ้าย (employees) ไว้ทั้งหมด แม้จะไม่มีคู่ที่ตรงกันในตารางขวา (departments) ซึ่งคอลัมน์ของแผนกจะแสดงเป็นค่า NULL เหมาะสมกับโจทย์นี้', '{sql,join,database}', true, '2026-11-03 09:22:14.247234+00', '2026-11-03 09:22:14.247234+00');
+INSERT INTO public.questions VALUES ('c1a10001-0000-0000-0000-000000000002', 'linux:services:q02', 1, 'b1a10001-0000-0000-0000-000000000002', 'คุณได้รับแจ้งว่า Service เว็บ Nginx บน Production เกิด Crash สตาร์ทไม่ขึ้น และเมื่อรัน systemctl start nginx พบข้อความ "Job for nginx.service failed". ในฐานะ Support ขั้นตอนแรกที่ดีที่สุดในการตรวจสอบสาเหตุคืออะไร?', '# systemctl start nginx
+Job for nginx.service failed because the control process exited with error code.
+See "systemctl status nginx.service" and "journalctl -xeu nginx.service" for details.', 'medium', 'scenario', 'เมื่อ Nginx สตาร์ทไม่ติด สาเหตุอันดับ 1 มักเกิดจาก Syntax ผิดพลาดในไฟล์ nginx.conf หรือพอร์ต 80/443 ชนกับโปรเซสอื่น การรัน `nginx -t` จะตรวจสอบความถูกต้องของ Configuration ทันที หรือใช้ `journalctl -xeu nginx.service` เพื่อดู Error ล่าสุด', '{nginx,systemctl,journalctl,troubleshooting}', true, '2026-11-03 09:22:14.247234+00', '2026-11-03 09:22:14.247234+00');
+INSERT INTO public.questions VALUES ('c1a10001-0000-0000-0000-000000000006', 'linux:disk:q03', 1, 'b1a10001-0000-0000-0000-000000000005', 'เกิดปัญหา Disk /var เต็ม 100% คุณได้สั่งลบไฟล์ log ขนาด 50GB ด้วยคำสั่ง `rm /var/log/app.log` ไปแล้ว แต่เมื่อเช็คคำสั่ง `df -h` ปรากฏว่าพื้นที่ยังคงเต็ม 100% เหมือนเดิม สาเหตุเกิดจากอะไรและแก้ปัญหาอย่างไร?', '# df -h /var
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda3       100G  100G     0 100% /var', 'hard', 'scenario', 'เมื่อรัน `rm` บน Linux ตัว Pointer ใน Directory จะถูกลบออก แต่หากยังมี Process (เช่น Java/Node.js) เปิดเขียนไฟล์นั้นค้างอยู่ (File descriptor open) พื้นที่จริงใน Disk จะยังไม่ถูกคืน (Held open) วิธีตรวจสอบคือใช้ `lsof +L1` หรือ `lsof | grep deleted` และทำการ reload/restart process นั้น หรือแทนที่จะใช้ `rm` ให้ใช้คำสั่งเคลียร์เนื้อหาไฟล์แทน เช่น `> /var/log/app.log` (truncate)', '{linux,disk,lsof,storage}', true, '2026-11-03 09:22:14.247234+00', '2026-11-03 09:22:14.247234+00');
+INSERT INTO public.questions VALUES ('c1a10001-0000-0000-0000-000000000007', 'network:http:q02', 2, NULL, 'ผู้ใช้แจ้งว่าเข้าเว็บแล้วพบหน้าขาวพร้อมข้อความ "HTTP 504 Gateway Timeout" จากมุมมองของ Reverse Proxy (เช่น Nginx หรือ Cloudflare) ปัญหานี้เกิดขึ้นจากอะไร?', '# curl -I https://api.mycompany.com/checkout
+HTTP/1.1 504 Gateway Timeout
+Server: nginx/1.24.0', 'medium', 'multiple_choice', 'HTTP 504 Gateway Timeout หมายถึง ตัว Reverse Proxy สามารถเชื่อมต่อไปยัง Upstream / Backend Server ได้ แต่ Upstream ทำงานช้าเกินไปจนเกินเวลา timeout (เช่น `proxy_read_timeout`) ยังไม่ยอมส่ง Response กลับมา (ต่างจาก 502 Bad Gateway ที่ Upstream ตัดการเชื่อมต่อทันที หรือล่มไปแล้ว)', '{http,nginx,status-codes,proxy}', true, '2026-11-03 09:22:14.247234+00', '2026-11-03 09:22:14.247234+00');
+INSERT INTO public.questions VALUES ('c1a10001-0000-0000-0000-000000000003', 'network:tools:q01', 2, '3ff8610b-94c3-43a7-8e1f-436f27946647', 'เมื่อใช้คำสั่ง `curl -v http://192.168.1.50:8080` แล้วได้รับผลลัพธ์ว่า `curl: (7) Failed to connect to 192.168.1.50 port 8080: Connection refused` ข้อใดคือสาเหตุที่เป็นไปได้มากที่สุด?', NULL, 'medium', 'multiple_choice', 'Connection Refused หมายความว่า แพ็กเก็ต TCP SYN เดินทางไปถึงโฮสต์ปลายทางเรียบร้อยแล้ว แต่โฮสต์ปลายทางตอบกลับด้วย TCP RST (Reset) ซึ่งแปลว่า "ไม่มี Process/Application ใดเปิดฟัง (Listening) อยู่ที่พอร์ต 8080" หรือถูกปฏิเสธโดย Local Firewall แบบ reject (ต่างจาก Timeout ที่แพ็กเก็ตโดนดรอปเงียบๆ)', '{network,tcp,curl,ports}', true, '2026-11-03 09:22:14.247234+00', '2026-11-03 09:22:14.247234+00');
+INSERT INTO public.questions VALUES ('c1a10001-0000-0000-0000-000000000005', 'sql:explain:q02', 3, '0ec2fdf6-2627-408b-9791-35963b5fe97e', 'ใน PostgreSQL เมื่อพบว่า Query `SELECT * FROM orders WHERE customer_id = 45000 AND status = ''PENDING''` ทำงานช้ามากบนตารางที่มี 10,000,000 แถว คำสั่งใดที่ช่วยแสดง Execution Plan เพื่อดูว่า Query ใช้วิธี Sequential Scan หรือ Index Scan?', NULL, 'hard', 'multiple_choice', '`EXPLAIN ANALYZE` เป็นคำสั่งสำคัญของ PostgreSQL ที่จะรัน Query จริงและรายงาน Query Planner Plan พร้อมเวลาที่ใช้จริงในแต่ละ Node (Cost, Actual Time, Rows, Index Scan vs Seq Scan)', '{sql,postgresql,performance,explain}', true, '2026-11-03 09:22:14.247234+00', '2026-11-03 09:22:14.247234+00');
+INSERT INTO public.questions VALUES ('c1a10001-0000-0000-0000-000000000001', 'linux:permissions:q01', 1, 'b1a10001-0000-0000-0000-000000000001', 'หากต้องการกำหนดสิทธิ์ไฟล์ `deploy.sh` ให้ ''เจ้าของสามารถ อ่าน-เขียน-รันได้'' ส่วน ''กลุ่มและผู้อื่น อ่านและรันได้เท่านั้น'' ต้องใช้คำสั่ง chmod ตัวเลขใด?', NULL, 'easy', 'multiple_choice', 'คำนวณสิทธิ์ตามเลข Octal:
+- Owner (rwx) = 4 + 2 + 1 = 7
+- Group (r-x) = 4 + 0 + 1 = 5
+- Others (r-x) = 4 + 0 + 1 = 5
+ดังนั้นคำตอบคือ chmod 755 deploy.sh', '{chmod,linux,permissions}', true, '2026-11-03 09:22:14.247234+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('1b0c7347-ec8c-4c56-abd9-96fe64f7019e', 'web-api:01-http-status-codes:q03', 4, '8cd3f8e6-7571-47ca-bd5b-cd313f6179c6', 'ผู้ใช้งานกดปุ่ม Export Report ข้อมูลประจำปี แล้วหน้าเว็บหมุนค้างอยู่ 60 วินาที จากนั้นขึ้นข้อความ ''504 Gateway Timeout'' จุดแรกที่ทีม Support ควรเข้าไปตรวจสอบคืออะไร?', 'ลูกค้าแจ้งว่าฟังก์ชัน Export รายงานยอดขายขนาดใหญ่ใช้งานไม่ได้ ขึ้น 504 หลังจากรอนานประมาณ 1 นาที', 'medium', 'multiple_choice', '504 Gateway Timeout หมายถึง Reverse Proxy เชื่อมต่อ Backend ได้แต่ Backend ทำงานค้างจนเกิน proxy_read_timeout สาเหตุอันดับหนึ่งของการ Export ข้อมูลช้าคือ Slow Query หรือ Database Lock ในฐานข้อมูล', '{web,http,504,database,timeout}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('4fe283f1-19c2-4303-a2fa-0b62358c2440', 'web-api:02-curl-api-testing:q01', 4, 'cfa14627-c168-4b14-9e7b-15eb4f7e1ead', 'คำสั่ง curl ใดใช้สำหรับดูเฉพาะ HTTP Response Headers โดยไม่ต้องดาวน์โหลด Body?', 'คุณต้องการตรวจสอบค่า Cache-Control และ Server Header ของเว็บอย่างรวดเร็วผ่าน Terminal', 'easy', 'multiple_choice', 'แฟล็ก -I (ตัวไอใหญ่) จะส่งคำขอแบบ HEAD method ซึ่งเซิร์ฟเวอร์จะตอบกลับเฉพาะส่วน Headers โดยไม่มี Content Body', '{web,curl,http-headers}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('f92cd87a-0d5e-49eb-a61a-7764f41baf12', 'web-api:02-curl-api-testing:q02', 4, 'cfa14627-c168-4b14-9e7b-15eb4f7e1ead', 'หากต้องการทดสอบยิง Request ไปยัง IP ของเซิร์ฟเวอร์หลังบ้าน 10.0.1.25 โดยตรง แต่ยังต้องการให้ Web Server ทราบว่าเรียกโดเมน api.company.com ควรทำอย่างไร?', 'ระบบหน้าบ้านมี CDN/Cloudflare ขวางอยู่ และคุณต้องการบายพาสเพื่อทดสอบว่าปัญหาน้ำท่วมทราฟฟิกเกิดที่ CDN หรือเซิร์ฟเวอร์จริง', 'medium', 'multiple_choice', 'การระบุ Host Header ด้วย -H ''Host: api.company.com'' หรือใช้ตัวเลือก --resolve จะส่งคำขอตรงไปยัง IP ปลายทางโดยที่ Web Server (เช่น Nginx) สามารถเลือก Virtual Host ได้ถูกต้อง', '{web,curl,headers,virtualhost}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('35845f5e-4dcb-431d-8543-90b3ad2d0b52', 'web-api:03-ssl-tls-certificates:q01', 4, 'c1527b50-8bf1-4171-95ce-52bd25ee35f4', 'คำสั่ง openssl ใดต่อไปนี้ใช้สำหรับตรวจสอบวันหมดอายุของใบรับรอง SSL บนเซิร์ฟเวอร์ปลายทางผ่านพอร์ต 443 ได้อย่างแม่นยำ?', 'คุณได้รับแจ้งเตือนจากระบบ Monitoring ว่ามีแนวโน้มที่ใบรับรองของเว็บจะหมดอายุ และต้องการยืนยันวันหมดอายุจริง', 'medium', 'multiple_choice', 'openssl s_client -connect domain:443 ร่วมกับการไพพ์ไปยัง openssl x509 -noout -enddate เป็นวิธีมาตรฐานในการดึงวันหมดอายุโดยตรงจากพอร์ต HTTPS ของเซิร์ฟเวอร์', '{web,ssl,tls,openssl}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('fed5a2b0-f7b7-4585-869c-d21e36063fab', 'dc:fiber:q01', 10, 'd610df66-7525-44ca-9e83-02b4749afe01', 'สายไฟเบอร์ออปติกสีเหลือง (OS2) และสีฟ้าอมเขียว Aqua (OM3/OM4) แตกต่างกันอย่างไร และควรจับคู่กับหัว Transceiver รหัสใด?', NULL, 'easy', 'multiple_choice', 'สายสีเหลืองคือ Single-mode (OS2, แกน 9µm) สำหรับระยะไกล ใช้คู่กับหัวรหัส LR (1310nm) ส่วนสายสีฟ้า Aqua คือ Multi-mode (OM3/OM4, แกน 50µm) สำหรับระยะใกล้ในห้อง Data Hall ใช้คู่กับหัวรหัส SR (850nm)', '{fiber,smf,mmf,transceiver,datacenter}', true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('cf23fcf6-0d35-4d10-9843-e5cd963707d1', 'dc:fiber:q02', 10, 'd610df66-7525-44ca-9e83-02b4749afe01', 'เมื่อคุณเดินสายไฟเบอร์ Duplex LC เชื่อมต่อระหว่าง Switch A กับ Switch B ผ่าน Patch Panel เสร็จแล้ว พบว่าไฟสถานะพอร์ตไม่ติด (Link Down) ทั้งที่เช็กแล้วว่าหัว SFP+ ทั้งสองฝั่งปกติ สาเหตุที่พบบ่อยที่สุดและวิธีแก้ไขเบื้องต้นคืออะไร?', 'Switch-A (TenGigabitEthernet1/0/1) <---> Patch Panel <---> Switch-B (TenGigabitEthernet1/0/1)
+Status: notconnect (Link Down), Transceiver Tx Power: -2.1 dBm, Rx Power: -40.0 dBm (LOS)', 'medium', 'scenario', 'เมื่อค่า Tx Power ปกติแต่ Rx Power เป็น -40 dBm (Loss of Signal) หลังเดินสายผ่าน Patch Panel มักเกิดจากขั้วสายไฟเบอร์ไม่ได้ไขว้กัน (Tx วิ่งไปชน Tx และ Rx ชน Rx) วิธีแก้คือการทำ Rolling Fiber (สลับขั้วหัวสาย LC คู่ซ้าย-ขวาที่ปลายด้านใดด้านหนึ่ง) เพื่อให้ Tx ของฝั่งหนึ่งตรงกับ Rx ของอีกฝั่ง', '{fiber,rolling-fiber,tx-rx,troubleshooting}', true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('60d9f418-713b-4218-bba9-7763e3ec1077', 'dc:cabling:q03', 10, 'd610df66-7525-44ca-9e83-02b4749afe01', 'หัว Transceiver ชนิดใดที่รองรับความเร็ว 10 Gbps และชนิดใดรองรับ 100 Gbps ตามลำดับ?', NULL, 'easy', 'multiple_choice', 'SFP = 1G, SFP+ = 10G, SFP28 = 25G, QSFP+ = 40G และ QSFP28 = 100G (4 ช่องสัญญาณ x 25G)', '{sfp,qsfp,transceiver,datacenter}', true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('31507ab1-5704-4dca-adbb-845cb298008c', 'dc:cabling:q04', 10, 'd610df66-7525-44ca-9e83-02b4749afe01', 'ในการเข้าหัวสายแลนทองแดง RJ45 ตามมาตรฐาน T568B ลำดับสีสายตั้งแต่พิน 1 ถึงพิน 8 ข้อใดถูกต้อง?', NULL, 'medium', 'multiple_choice', 'มาตรฐาน T568B เรียงลำดับจากพิน 1 ถึง 8 คือ: (1) ขาวส้ม (2) ส้ม (3) ขาวเขียว (4) น้ำเงิน (5) ขาวน้ำเงิน (6) เขียว (7) ขาวน้ำตาล (8) น้ำตาล', '{t568b,rj45,cabling,utp}', true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('9d9f0119-30e0-4f74-a490-6f63150858f8', 'dc:hardware:q05', 10, 'a64393d6-d903-4f53-958f-99df97e3d586', 'อุปกรณ์ใดในเครื่อง Rack Server ขนาด 1U/2U ที่ทำหน้าที่แปลงสล็อต PCIe บนเมนบอร์ดให้สามารถเสียบการ์ด HBA หรือการ์ด NIC ในแนวนอนขนานกับตัวเครื่องได้?', NULL, 'easy', 'multiple_choice', 'Riser Card เป็นแผงวงจรรูปตัว L ที่เสียบลงบนเมนบอร์ดเพื่อหันสล็อต PCIe ให้อยู่ในแนวนอน ทำให้สามารถติดตั้งการ์ด PCIe ในตัวถังเซิร์ฟเวอร์ที่มีความสูงจำกัด (1U/2U) ได้', '{hardware,riser-card,pcie,server}', true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('9600ac8c-a971-4c6f-96be-42e68bba2936', 'dc:hardware:q06', 10, 'a64393d6-d903-4f53-958f-99df97e3d586', 'ในการนำอุปกรณ์เข้าติดตั้งในตู้แร็คขนาด 42U (Racking & Stacking) ข้อใดคือแนวปฏิบัติที่ถูกต้องที่สุดเพื่อความปลอดภัยและเสถียรภาพ?', NULL, 'easy', 'multiple_choice', 'การติดตั้งอุปกรณ์ที่มีน้ำหนักมากที่สุด (เช่น UPS หรือตู้ Storage Array) ไว้ที่ด้านล่างสุดของตู้แร็คจะช่วยรักษาจุดศูนย์ถ่วงให้อยู่ต่ำ ป้องกันไม่ให้ตู้แร็คกระดกหรือล้มคว่ำเมื่อดึงรางสไลด์เซิร์ฟเวอร์ออกมา', '{racking,rack-unit,safety,datacenter}', true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('8cca4bdc-4664-4c04-8b68-ba8cd1c3c87e', 'dc:oob:q07', 10, 'a64393d6-d903-4f53-958f-99df97e3d586', 'เซิร์ฟเวอร์ Dell PowerEdge เครื่องหนึ่งใน Data Center เกิดอาการค้างสนิทจน SSH เข้าไม่ได้ และมีไฟแจ้งเตือนสีส้มกระพริบหน้าเครื่อง วิศวกรควรใช้ระบบใดในการตรวจเช็ก System Event Log (SEL) และเปิดดูหน้าจอ Console จากระยะไกล?', NULL, 'easy', 'multiple_choice', 'สำหรับเซิร์ฟเวอร์ Dell ระบบ Out-of-Band Management ประจำเครื่องคือ iDRAC (ส่วน HPE คือ iLO) ซึ่งทำงานแยกอิสระจาก OS ช่วยให้อ่านฮาร์ดแวร์ Log (SEL), เปิดหน้าจอ Virtual KVM และสั่ง Power Cycle ได้แม้ OS จะค้างไปแล้ว', '{idrac,ilo,ipmi,oob}', true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('322d8847-058b-4e2b-aaf5-b73a6f99c8db', 'dc:pxe:q08', 10, 'a8d18af7-6692-4b1b-86b5-88a0d4fb8f9b', 'ในกระบวนการบูตเครื่องผ่านเครือข่าย (PXE Boot) เพื่อติดตั้งระบบปฏิบัติการอัตโนมัติ โปรโตคอลคู่ใดที่ทำงานร่วมกันเพื่อแจกเลข IP และส่งไฟล์บูตอิมเมจเริ่มต้นให้กับการ์ดแลนของเซิร์ฟเวอร์?', NULL, 'medium', 'multiple_choice', 'PXE Boot อาศัย DHCP (ในการแจก IP พร้อมระบุ Next-Server Option 66 และ Boot Filename Option 67) และ TFTP (UDP พอร์ต 69) ในการดาวน์โหลดไฟล์ Bootloader และ Kernel ลงมาบูตในหน่วยความจำ', '{pxe,dhcp,tftp,boot}', true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('7dc94aeb-fbb7-495c-b1a6-e0e7a616e571', 'dc:san:q09', 10, 'a8d18af7-6692-4b1b-86b5-88a0d4fb8f9b', 'ในระบบเครือข่ายพื้นที่จัดเก็บข้อมูล Fibre Channel SAN การทำ ''Zoning'' บน SAN Switch ใช้หมายเลขประจำพอร์ตชนิดใดในการกำหนดสิทธิ์ให้ HBA ของเซิร์ฟเวอร์มองเห็นพอร์ตของตู้ Storage?', NULL, 'medium', 'multiple_choice', 'ในโลกของ Fibre Channel SAN จะใช้หมายเลข WWPN (World Wide Port Name) ขนาด 64-bit ของการ์ด HBA (Initiator) และพอร์ต Storage (Target) ในการตั้งค่า सॉफ्टแวร์ Zoning บน SAN Switch', '{san,zoning,wwpn,hba,storage}', true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('a917b677-c0d8-4beb-9d74-003d1ecba5d7', 'dc:power:q10', 10, '92409c70-8fd7-4575-b8c5-22e661376a62', 'หน้าที่ของ UPS (Uninterruptible Power Supply) และ ATS (Automatic Transfer Switch) ในศูนย์ข้อมูล Data Center แตกต่างกันอย่างไร?', NULL, 'medium', 'multiple_choice', 'UPS ใช้แบตเตอรี่จ่ายไฟสำรองทันทีแบบไร้รอยต่อเมื่อไฟตก/ไฟดับและกรองไฟให้นิ่งในช่วงสั้นๆ (5-15 นาที) ส่วน ATS ทำหน้าที่เป็นสวิตช์สลับแหล่งจ่ายไฟอัตโนมัติจากไฟการไฟฟ้า (Utility Grid) ไปยังเครื่องปั่นไฟสำรอง (Generator) เมื่อเครื่องปั่นไฟสตาร์ทติดและกระแสไฟนิ่งแล้ว', '{ups,ats,power,generator,datacenter}', true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('7196c4c2-9d55-4195-b076-2fd1f73327e3', 'dc:power:q11', 10, '92409c70-8fd7-4575-b8c5-22e661376a62', 'หากต้องเปิดระบบทั้งหมดในตู้แร็คขึ้นมาใหม่หลังจากปิดบำรุงรักษาระบบไฟฟ้า (Rack Power-Up Sequence) ลำดับการเปิดอุปกรณ์ในข้อใดถูกต้องที่สุด?', NULL, 'medium', 'multiple_choice', 'เวลาเปิดระบบกลับขึ้นมา ต้องเปิด Network/SAN Switch ก่อน → ตามด้วยตู้ Storage (รอให้ดิสก์และ LUN พร้อมใช้งาน) → แล้วจึงทยอยเปิดเครื่อง Compute Server ทีละกลุ่ม เพื่อให้เซิร์ฟเวอร์บูตขึ้นมาเจอก้อน Storage และเครือข่ายได้ทันที และลดไฟกระชาก (Inrush current)', '{power-sequence,rack,storage,datacenter}', true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('933dfdc8-419d-4b12-9ccc-1a634e095c13', 'dc:cooling:q12', 10, '92409c70-8fd7-4575-b8c5-22e661376a62', 'การจัดเรียงตู้แร็คแบบ Hot Aisle / Cold Aisle ในห้อง Data Center มีหลักการอย่างไร และทำไมจึงต้องติดแผ่น Blanking Panel ในช่อง U ที่ว่าง?', NULL, 'easy', 'multiple_choice', 'การจัดแบบ Hot/Cold Aisle คือการหันด้านหน้าตู้แร็คเข้าหากันในช่องลมเย็น (Cold Aisle) เพื่อดูดแอร์เข้าหน้าเครื่อง และหันด้านหลังตู้ชนกันในช่องลมร้อน (Hot Aisle) ส่วนการติดแผ่น Blanking Panel ปิดช่อง U ที่ว่างช่วยป้องกันไม่ให้ลมร้อนจากหลังตู้ไหลวนย้อนกลับมาเข้าหน้าเครื่อง', '{cooling,hot-aisle,cold-aisle,blanking-panel}', true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('6f372fdb-946b-43aa-a8a4-868bc32651ea', 'dc:fire:q13', 10, '92409c70-8fd7-4575-b8c5-22e661376a62', 'ระบบดับเพลิงในห้องเซิร์ฟเวอร์ของ Data Center มาตรฐานนิยมใช้สารชนิดใดในการดับไฟเพื่อไม่ให้ทำลายแผงวงจรอิเล็กทรอนิกส์?', NULL, 'easy', 'multiple_choice', 'ห้อง Data Hall จะใช้สารสะอาดดับเพลิงชนิดแก๊ส (Clean Agent Fire Suppression) เช่น FM-200 (HFC-227ea), Novec 1230 หรือแก๊สเฉื่อย Inergen ซึ่งไม่นำไฟฟ้าและไม่ทิ้งคราบสกปรกไว้บนเซิร์ฟเวอร์', '{fire-suppression,fm200,novec1230,safety}', true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('583a1f9b-0196-4bd5-b6ca-18b2fd163774', 'dc:interview:q14', 10, 'e2bdf887-4d4b-4710-b6c1-8dd61f020fdc', '[คำถามสัมภาษณ์สถานการณ์จริง] หากคุณกำลังเดินตรวจในห้อง Data Hall แล้วเห็นประกายไฟช็อตสั้นๆ ที่ลูก Power Supply (PSU 1) ของเซิร์ฟเวอร์เครื่องหนึ่ง (ซึ่งมี Redundant PSU 2 ลูก) คุณควรตัดสินใจทำอย่างไร?', NULL, 'medium', 'scenario', 'ผู้จัดการกังวลเรื่องความตื่นตระหนกจนไปสับเบรกเกอร์หลักของทั้งตู้แร็ค (ซึ่งจะทำให้เซิร์ฟเวอร์อีก 30 เครื่องในตู้ดับทั้งหมด) วิธีที่ถูกต้องคือตั้งสติ ประเมินว่ามีไฟลุกไหม้หรือไม่ ตรวจสอบว่า PSU ลูกที่ 2 ยังจ่ายไฟเลี้ยงเครื่องอยู่ ถอดเฉพาะสายไฟเส้นที่เข้า PSU ลูกที่มีปัญหาออกอย่างปลอดภัย และรีบแจ้งหัวหน้าทีม/NOC เพื่อเปลี่ยนอะไหล่ตามขั้นตอน', '{interview,mindset,psu,safety,incident}', true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('30e66b8d-6030-4b13-8c81-97a7a8358886', 'dc:interview:q15', 10, 'e2bdf887-4d4b-4710-b6c1-8dd61f020fdc', '[คำถามสัมภาษณ์ทัศนคติ] หากผู้สัมภาษณ์ถามว่า ''คุณเชื่อมสายไฟเบอร์ด้วยเครื่อง Fusion Splicer เป็นหรือไม่?'' แต่คุณยังไม่เคยทำมาก่อน คำตอบใดเหมาะสมและสร้างความประทับใจมากที่สุด?', NULL, 'easy', 'multiple_choice', 'ความซื่อสัตย์ (Integrity) เป็นสิ่งสำคัญมากในการทำงาน Data Center หากทำไม่เป็นต้องตอบตามตรงว่ายังไม่เคยทำจริง แต่อธิบายความรู้พื้นฐานที่เกี่ยวข้อง (เช่น ชนิดสายไฟเบอร์ การทำความสะอาดหัวสาย) และแสดงความพร้อมที่จะเรียนรู้เพิ่มเติมอย่างรวดเร็ว', '{interview,honesty,mindset,fiber}', true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('5e788bf5-347f-4201-9344-7e3f4c9e180f', 'docker:02-troubleshooting-exit-codes:q01', 5, '13d2405e-0e29-4bf2-9f78-03f4f29d3aef', 'Container ตัวหนึ่งดับลงโดยแสดงสถานะ ''Exited (137)'' และเมื่อ inspect ดูพบว่า OOMKilled เป็น true ข้อใดคือสาเหตุที่แท้จริง?', 'บริการประมวลผลไฟล์ภาพขนาดใหญ่ดับลงกะทันหันในขณะที่มีผู้ใช้งานอัปโหลดไฟล์เข้ามาพร้อมกันเป็นจำนวนมาก', 'medium', 'multiple_choice', 'Exit Code 137 เท่ากับ 128 + 9 (SIGKILL) ซึ่งเกิดขึ้นเมื่อคอนเทนเนอร์ใช้งานหน่วยความจำ RAM เกินกว่าขีดจำกัด (Memory Limit) ที่กำหนดไว้ ทำให้ถูก Linux Kernel OOM (Out Of Memory) Killer ส่งสัญญาณสั่งฆ่าทันที', '{docker,exit-codes,oomkilled,memory}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('5d2f59f3-3800-4751-84af-43e8f7a2c8f4', 'docker:02-troubleshooting-exit-codes:q02', 5, '13d2405e-0e29-4bf2-9f78-03f4f29d3aef', 'Exit Code ใดใน Docker ที่บ่งบอกว่า Container ได้รับคำสั่งสั่งปิดการทำงานอย่างสุภาพ (Graceful Shutdown ด้วย SIGTERM)?', 'คำถามสัมภาษณ์งานตำแหน่ง DevOps / Support Engineer', 'easy', 'multiple_choice', 'Exit Code 143 คำนวณมาจาก 128 + 15 (SIGTERM) ซึ่งเป็นสัญญาณที่ส่งเมื่อมีการสั่ง docker stop หรือระบบ Orchestrator สั่งยุติเพื่อทำการ Deploy เวอร์ชันใหม่', '{docker,exit-codes,sigterm}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('424f36a8-1a09-4c7c-8511-fe7c60417e2e', 'linux:02-basics:q04', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'เมื่อต้องตรวจสอบไฟล์ `application.log` ที่มีขนาดใหญ่ถึง 2.5 GB บนเซิร์ฟเวอร์ Production เหตุใดจึงไม่ควรใช้คำสั่ง `cat application.log`?', NULL, 'medium', 'multiple_choice', '`cat` จะอ่านและพิมพ์เนื้อหาทั้งไฟล์ออกทางหน้าจอรวดเดียว สำหรับไฟล์ขนาดหลาย GB จะทำให้หน้าจอค้าง สิ้นเปลือง I/O และแบนด์วิดท์ของเซสชัน SSH ควรใช้ `less` (อ่านทีละหน้า) หรือ `tail` (ดูเฉพาะท้ายไฟล์) แทน', '{cat,less,tail,logs}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('ff930bba-7a53-42c5-acae-936a295c3727', 'linux:02-basics:q05', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'จากเหตุการณ์ในหน้าจอ Terminal ด้านล่าง หากผู้ใช้งานกด Enter เพื่อรันคำสั่งดังกล่าว จะเกิดผลกระทบอย่างไร?', 'root@app-prod-01:/var/www/html# pwd
+/var/www/html
+root@app-prod-01:/var/www/html# rm -rf / tmp/cache/*', 'hard', 'scenario', 'สังเกตช่องว่างระหว่าง `/` กับ `tmp/cache/*` คำสั่ง `rm -rf / tmp/cache/*` จะถูก Shell ตีความว่าให้ลบ 2 เป้าหมาย คือ `/` (รากของระบบทั้งหมด) และ `tmp/cache/*` ซึ่งอันตรายร้ายแรงมากในสิทธิ์ root (แม้ว่าระบบสมัยใหม่จะมี `--preserve-root` ป้องกันระดับหนึ่ง แต่หากเผลอพิมพ์เว้นวรรคผิดกับพาธสำคัญอื่น เช่น `/var/www/ html` ก็จะลบทั้ง `/var/www/` ทันที)', '{rm,wildcard,safety,troubleshooting}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('a41d9eb7-8d8e-4280-992f-cc029c329c9a', 'linux:02-basics:q06', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'ขณะยืนอยู่ที่โฟลเดอร์ `/var/log/nginx` หากต้องการเปลี่ยนโฟลเดอร์ไปยัง `/var/log` โดยใช้เส้นทางแบบ Relative Path ควรพิมพ์คำสั่งใด?', NULL, 'easy', 'multiple_choice', 'สัญลักษณ์ `..` หมายถึงโฟลเดอร์แม่ (Parent Directory) ที่อยู่สูงขึ้นไป 1 ระดับ ดังนั้นเมื่อยืนอยู่ที่ `/var/log/nginx` การรัน `cd ..` จะพาไปยัง `/var/log`', '{cd,path,navigation}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('d7c21650-b866-4270-89b0-b1694c2881dd', 'linux:02-basics:q07', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'หากต้องการสำรองไฟล์คอนฟิก `app.conf` เป็น `app.conf.bak` โดยยังคงรักษาค่าเวลาแก้ไขเดิม (Timestamp) และสิทธิ์เจ้าของไฟล์เดิมไว้ทั้งหมด เพื่อใช้เปรียบเทียบภายหลัง ควรใช้คำสั่งใด?', NULL, 'medium', 'multiple_choice', 'คำสั่ง `cp -p` (`--preserve=mode,ownership,timestamps`) จะคัดลอกไฟล์พร้อมเก็บรักษาสิทธิ์ เจ้าของ และเวลาแก้ไขเดิมของไฟล์ต้นฉบับไว้ ซึ่งมีประโยชน์มากในงาน Support เมื่อต้องเก็บหลักฐานเวลาแก้ไขไฟล์', '{cp,backup,basics}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('c76d1ecb-de00-4fe1-b3cd-fb37fb4de9f3', 'linux:03-file-system:q01', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'ตามมาตรฐานโครงสร้างไดเรกทอรีของ Linux (FHS) ไฟล์ตั้งค่าระบบ (System Configuration) และไฟล์บันทึกเหตุการณ์ (System Logs) จะถูกจัดเก็บไว้ที่ไดเรกทอรีใดตามลำดับ?', NULL, 'easy', 'multiple_choice', 'ตามมาตรฐาน FHS ไดเรกทอรี `/etc` ใช้เก็บไฟล์ตั้งค่าระบบและบริการต่างๆ ส่วน `/var/log` ใช้เก็บไฟล์บันทึกเหตุการณ์ (Logs) ที่มีขนาดเปลี่ยนแปลงตลอดเวลา', '{filesystem,fhs,directories}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('31f353c9-c627-49e9-a19b-a79eb9cfc624', 'linux:03-file-system:q02', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'เมื่อได้รับแจ้งเตือนว่าพาร์ทิชัน `/var` กำลังจะเต็ม หากต้องการค้นหาเฉพาะไฟล์ธรรมดา (`-type f`) ใน `/var` ที่มีขนาดใหญ่กว่า 200 MB ต้องใช้คำสั่งใด?', NULL, 'easy', 'multiple_choice', 'คำสั่ง `find /var -type f -size +200M` ใช้ค้นหาเฉพาะไฟล์ปกติ (`-type f`) ภายใน `/var` ที่มีขนาดมากกว่า (`+`) 200 เมกะไบต์ (`M`)', '{find,disk,filesystem}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('1ac01c44-5005-4ecb-88fc-c771eb4dae59', 'linux:03-file-system:q03', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'จากผลลัพธ์การตรวจสอบด้านล่าง สาเหตุที่แอปพลิเคชันไม่สามารถอ่านไฟล์คอนฟิกผ่าน `/opt/payment/current/config.yml` ได้คืออะไร?', '$ ls -l /opt/payment/current
+lrwxrwxrwx 1 deploy deploy 31 Nov  2 22:00 /opt/payment/current -> /opt/payment/releases/20261015
 
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'web-api:01-http-status-codes:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:01-http-status-codes:q02'), '401 คือยังไม่ผ่านการยืนยันตัวตน (Authentication Failed/No Token), ส่วน 403 คือยืนยันตัวตนแล้วแต่ไม่มีสิทธิ์เข้าถึง (Authorization Failed/Forbidden)', TRUE, 'ถูกต้อง 401 = Who are you? / 403 = I know who you are, but you cannot enter.', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:01-http-status-codes:q02'), '401 ใช้กับหน้าเว็บ ส่วน 403 ใช้กับ REST API เท่านั้น', FALSE, 'ทั้งสองรหัสเป็นมาตรฐาน HTTP ใช้ได้ทั้ง Web และ API', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:01-http-status-codes:q02'), '401 เป็นข้อผิดพลาดฝั่ง Server ส่วน 403 เป็นฝั่ง Client', FALSE, 'ทั้งรหัสขึ้นต้นด้วย 4xx จัดเป็น Client Error ทั้งคู่', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:01-http-status-codes:q02'), '401 คือเซิร์ฟเวอร์หาไฟล์ไม่พบ ส่วน 403 คือไฟล์ถูกลบไปแล้ว', FALSE, 'ไฟล์หาไม่พบคือ 404 Not Found หรือ 410 Gone', 4);
+$ file /opt/payment/current
+/opt/payment/current: broken symbolic link to /opt/payment/releases/20261015
 
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('web-api:01-http-status-codes:q03', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-http-status-codes' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), 'ผู้ใช้งานกดปุ่ม Export Report ข้อมูลประจำปี แล้วหน้าเว็บหมุนค้างอยู่ 60 วินาที จากนั้นขึ้นข้อความ ''504 Gateway Timeout'' จุดแรกที่ทีม Support ควรเข้าไปตรวจสอบคืออะไร?', 'ลูกค้าแจ้งว่าฟังก์ชัน Export รายงานยอดขายขนาดใหญ่ใช้งานไม่ได้ ขึ้น 504 หลังจากรอนานประมาณ 1 นาที', 'medium', 'multiple_choice', '504 Gateway Timeout หมายถึง Reverse Proxy เชื่อมต่อ Backend ได้แต่ Backend ทำงานค้างจนเกิน proxy_read_timeout สาเหตุอันดับหนึ่งของการ Export ข้อมูลช้าคือ Slow Query หรือ Database Lock ในฐานข้อมูล', ARRAY['web', 'http', '504', 'database', 'timeout']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
+$ ls -l /opt/payment/releases/
+total 8
+drwxr-xr-x 4 deploy deploy 4096 Nov  1 09:00 20261101
+drwxr-xr-x 4 deploy deploy 4096 Nov  3 08:30 20261103', 'medium', 'scenario', 'จากผลของ `file /opt/payment/current` แจ้งชัดเจนว่าเป็น `broken symbolic link` เพราะชี้ไปยังโฟลเดอร์ `/opt/payment/releases/20261015` ซึ่งถูกลบออกไปแล้ว (ใน `releases/` เหลือเพียง `20261101` และ `20261103`) ต้องแจ้งทีมที่ดูแลทำการอัปเดต Symlink ให้ชี้ไปยัง Release ที่ถูกต้อง', '{symlink,file,troubleshooting}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('e19ee335-78a0-4eac-b7a7-95af8779fa8f', 'linux:03-file-system:q04', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'แอปพลิเคชันบนเครื่อง `app-01` พยายามเชื่อมต่อฐานข้อมูลด้วยชื่อ `db-internal.corp` แต่กลับวิ่งไปยัง IP เก่า (`10.10.1.50`) ทั้งที่ทีม Network ยืนยันว่าอัปเดต DNS Server กลางเป็น IP ใหม่ (`10.10.2.99`) เรียบร้อยแล้ว ควรตรวจสอบไฟล์ใดบนเครื่อง `app-01` เป็นอันดับแรก?', '$ ping -c 1 db-internal.corp
+PING db-internal.corp (10.10.1.50) 56(84) bytes of data.', 'medium', 'scenario', 'โดยค่าเริ่มต้น Linux จะตรวจสอบการจับคู่ชื่อโฮสต์ในไฟล์ `/etc/hosts` ของเครื่องก่อนส่งคำถามไปที่ DNS Server ที่ระบุใน `/etc/resolv.conf` หากมีการผูก IP เก่าค้างไว้ใน `/etc/hosts` เครื่องจะใช้ IP นั้นทันที', '{hosts,dns,etc,troubleshooting}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('23509a71-f1f8-45bf-96da-6d3a6a9c3f91', 'linux:03-file-system:q05', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'ระบบเกิดความผิดปกติเมื่อ 25 นาทีที่แล้ว หัวหน้าทีมต้องการทราบว่ามีไฟล์ใดใน `/etc/nginx` ถูกแก้ไขเนื้อหาในช่วง 30 นาทีที่ผ่านมาหรือไม่ ควรใช้คำสั่งใดตรวจสอบ?', NULL, 'medium', 'multiple_choice', 'ในคำสั่ง `find` ตัวเลือก `-mmin -30` หมายถึงค้นหาไฟล์ที่มีการแก้ไขเนื้อหา (Modification time in minutes) น้อยกว่า 30 นาทีที่ผ่านมา (ส่วน `-mtime` จะนับเป็นหน่วยวัน/24 ชั่วโมง)', '{find,stat,timestamp}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('27c7d63d-8846-4721-927d-742b789c9ef0', 'linux:03-file-system:q06', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'เมื่อใช้คำสั่ง `stat config.yml` จะเห็นเวลา 3 ค่า ได้แก่ Access, Modify และ Change ค่า `Modify` กับ `Change` ต่างกันอย่างไร?', NULL, 'hard', 'multiple_choice', 'ในระบบไฟล์ Linux: `Modify` (mtime) คือเวลาที่เนื้อหาภายในไฟล์ถูกแก้ไขครั้งล่าสุด ส่วน `Change` (ctime) คือเวลาที่ข้อมูลกำกับไฟล์ (Metadata เช่น สิทธิ์ `chmod`, เจ้าของ `chown`, หรือจำนวนลิงก์) ถูกเปลี่ยนแปลง', '{stat,inode,filesystem}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('1ec400d8-3617-45ec-8fb7-3dbea642ec4b', 'linux:03-file-system:q07', 1, 'adeaa019-95a7-4877-8d5a-94c875441152', 'คำสั่ง `file report_2026.gz` มีประโยชน์อย่างไรในการตรวจสอบปัญหาหน้างาน?', NULL, 'easy', 'multiple_choice', 'คำสั่ง `file` จะอ่านข้อมูลส่วนหัว (Magic bytes) ของไฟล์เพื่อบอกชนิดที่แท้จริงของไฟล์โดยไม่เชื่อแค่ชื่อนามสกุล ช่วยให้รู้ว่าไฟล์ `.gz` ที่แตกไม่ได้ แท้จริงแล้วเป็นไฟล์ข้อความธรรมดาหรือไฟล์ว่างหรือไม่', '{file,troubleshooting,filesystem}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('f3e4853e-922b-4d4a-b10f-7d2bd40d88f1', 'linux:04-process-service:q01', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'คำสั่ง `kill 14520` กับคำสั่ง `kill -9 14520` มีความแตกต่างกันอย่างไรในแง่ของการจัดการโปรเซส?', NULL, 'easy', 'multiple_choice', '`kill <PID>` โดยไม่ระบุตัวเลขสัญญาณ จะส่งสัญญาณเริ่มต้นคือ `SIGTERM` (15) เพื่อขอให้โปรเซสปิดตัวเองอย่างสุภาพและบันทึกข้อมูลที่ค้างให้เรียบร้อย ส่วน `kill -9 <PID>` ส่งสัญญาณ `SIGKILL` (9) ซึ่งสั่งให้ Kernel ตัดการทำงานของโปรเซสทันทีโดยไม่ให้โอกาสเคลียร์งาน', '{kill,signals,process}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('f8280394-341a-4956-bc80-97c392a1c7be', 'linux:04-process-service:q02', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'จากผลลัพธ์ของคำสั่ง `systemctl status payment-worker.service` ด้านล่าง สาเหตุที่ทำให้บริการหยุดทำงานคืออะไร?', '× payment-worker.service - Payment Queue Worker
+     Loaded: loaded (/etc/systemd/system/payment-worker.service; enabled)
+     Active: failed (Result: oom-kill) since Tue 2026-11-03 13:45:02 +07; 3min ago
+    Process: 9412 ExecStart=/usr/bin/python3 /opt/payment/worker.py (code=killed, signal=KILL)
+   Main PID: 9412 (code=killed, signal=KILL)
 
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'web-api:01-http-status-codes:q03');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:01-http-status-codes:q03'), 'ตรวจสอบ Slow Query หรือคำสั่งที่ค้างอยู่ใน Database และดูภาระ CPU/Memory ของ Backend Service', TRUE, 'ถูกต้อง Backend ยังไม่ตายแต่ประมวลผลนานเกินกำหนด มักเกิดจากฐานข้อมูลช้า', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:01-http-status-codes:q03'), 'สั่งรีสตาร์ท Router ของผู้ใช้งานทันที', FALSE, '504 เกิดขึ้นที่ฝั่งเซิร์ฟเวอร์ (Proxy กับ Upstream) ไม่เกี่ยวกับเน็ตบ้านผู้ใช้', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:01-http-status-codes:q03'), 'ตรวจสอบว่าผู้ใช้จำรหัสผ่านถูกหรือไม่', FALSE, 'รหัสผ่านผิดจะไม่ทำให้เกิด 504 Timeout', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:01-http-status-codes:q03'), 'เปลี่ยนโดเมนเนมของเว็บไซต์ใหม่', FALSE, 'ไม่เกี่ยวกับการทำงานของ Gateway Timeout', 4);
+Nov 03 13:45:02 app-02 systemd[1]: payment-worker.service: A process of this unit has been killed by the OOM killer.
+Nov 03 13:45:02 app-02 systemd[1]: payment-worker.service: Failed with result ''oom-kill''.', 'medium', 'scenario', 'บรรทัด `Active: failed (Result: oom-kill)` และข้อความ `killed by the OOM killer` ระบุชัดเจนว่าเครื่องมีหน่วยความจำ (RAM) ไม่เพียงพอ จนระบบ Out-Of-Memory (OOM) Killer ของ Linux Kernel ต้องส่งสัญญาณ `SIGKILL` มาบังคับปิดโปรเซสนี้', '{systemctl,oom-kill,troubleshooting}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('90c789a2-b6f3-4c51-9a7a-df5d3e8f28e2', 'linux:04-process-service:q03', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'หากต้องการตรวจสอบรายชื่อบริการ (systemd units) ทั้งหมดบนเครื่องที่อยู่ในสถานะ `failed` ในคำสั่งเดียว ควรใช้คำสั่งใด?', NULL, 'easy', 'multiple_choice', 'คำสั่ง `systemctl list-units --failed` (หรือ `systemctl --failed`) จะกรองและแสดงเฉพาะยูนิตบริการที่มีปัญหาอยู่ในสถานะ `failed` ทั้งหมด ช่วยให้ NOC Tier 1 ตรวจภาพรวมของเครื่องได้รวดเร็ว', '{systemctl,systemd,service}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('38b2cbc9-0ffb-4c2f-9042-fcd9bf03fa06', 'linux:04-process-service:q04', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'จากผลลัพธ์ของคำสั่ง `ps aux` ด้านล่าง โปรเซส PID `24109` ที่มีสถานะ `Z` และมีคำว่า `<defunct>` ต่อท้ายคืออะไร และเหตุใดการใช้ `kill -9 24109` จึงไม่ทำให้รายการนี้หายไป?', '$ ps aux | grep report
+appuser   24100  0.2  1.5 412800 31200 ?  Sl   09:00   0:14 /usr/bin/python3 /opt/app/scheduler.py
+appuser   24109  0.0  0.0      0     0 ?  Z    10:15   0:00 [report_gen.sh] <defunct>', 'hard', 'scenario', 'สถานะ `Z` (`<defunct>`) คือ **Zombie Process** ซึ่งเป็นโปรเซสที่ทำงานจบและคืนหน่วยความจำไปแล้ว แต่โปรเซสแม่ (PPID) ยังไม่ได้เรียก `wait()` เพื่ออ่านค่าสถานะจบงาน เนื่องจากมันจบการทำงานไปแล้ว จึงไม่สามารถฆ่าซ้ำด้วย `kill -9 24109` ได้ การเคลียร์ต้องให้โปรเซสแม่อ่านสถานะ หรือรีสตาร์ทโปรเซสแม่ตาม Runbook', '{ps,zombie,process,troubleshooting}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('d7eedd6d-d129-48c5-a471-bde470b716ee', 'linux:04-process-service:q05', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'หากต้องการดู Log ของบริการ `nginx` ย้อนหลัง 100 บรรทัดล่าสุด และเปิดติดตามบรรทัดใหม่ที่เข้ามาแบบเรียลไทม์ (Real-time follow) ต้องใช้คำสั่งใด?', NULL, 'easy', 'multiple_choice', '`journalctl -u nginx` ระบุชื่อยูนิตบริการ, `-n 100` แสดงย้อนหลัง 100 บรรทัด, และ `-f` (follow) ติดตามข้อความใหม่แบบสด', '{journalctl,logs,systemd}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('9d6fdd1a-c91e-4801-b419-5b7464be34e6', 'linux:04-process-service:q06', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'คำสั่ง `systemctl enable nginx` ทำหน้าที่อะไร?', NULL, 'medium', 'multiple_choice', '`systemctl enable <service>` เป็นการสร้าง Symbolic link เพื่อให้บริการนั้นเริ่มทำงานอัตโนมัติเมื่อเปิดเครื่อง (Boot) แต่ไม่ได้สั่งสตาร์ทบริการในทันที (หากต้องการสตาร์ททันทีด้วยต้องใช้ `systemctl start` หรือ `systemctl enable --now`)', '{systemctl,systemd,boot}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('1585e544-0263-4635-83aa-d715e87cb38e', 'linux:04-process-service:q07', 1, 'f18ea418-7710-44cb-b1b9-4a5724a2a92b', 'เมื่อเปิดโปรแกรม `top` เพื่อดูโปรเซสที่กำลังทำงานอยู่ หากต้องการเรียงลำดับโปรเซสตามปริมาณการใช้หน่วยความจำ (`%MEM`) จากมากไปน้อย ต้องกดปุ่มใดบนคีย์บอร์ด?', NULL, 'medium', 'multiple_choice', 'ในหน้าจอโปรแกรม `top` การกดปุ่ม `M` (ตัวพิมพ์ใหญ่) จะเรียงลำดับตาม `%MEM` จากมากไปน้อย ส่วนการกดปุ่ม `P` (ตัวพิมพ์ใหญ่) จะเรียงตาม `%CPU` และการกด `q` คือออกจากโปรแกรม', '{top,memory,process}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('063ee6ab-3870-4443-a4c7-f47dd6b52be3', 'linux:05-text-tools:q01', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'หากต้องการค้นหาคำว่า `timeout` ในไฟล์ `app.log` โดยไม่สนใจว่าเป็นตัวพิมพ์เล็กหรือพิมพ์ใหญ่ (`Timeout`, `TIMEOUT`, `timeout`) พร้อมแสดงหมายเลขบรรทัดกำกับ ต้องใช้คำสั่งใด?', NULL, 'easy', 'multiple_choice', 'ในคำสั่ง `grep` ตัวเลือก `-i` หมายถึงไม่สนใจตัวพิมพ์เล็ก-ใหญ่ (ignore case) และ `-n` หมายถึงแสดงหมายเลขบรรทัด (line number) เมื่อรวมกันคือ `grep -in "timeout" app.log`', '{grep,logs,text-tools}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('c848a792-a49c-488d-ba20-3fbea6501ed6', 'linux:05-text-tools:q02', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'ความแตกต่างที่สำคัญระหว่างการรัน `grep "ERROR" app.log > summary.txt` กับ `grep "ERROR" app.log >> summary.txt` คืออะไร?', NULL, 'easy', 'multiple_choice', 'เครื่องหมาย `>` (Single redirect) จะล้างข้อมูลเดิมในไฟล์ `summary.txt` ทิ้งทั้งหมดแล้วเขียนทับใหม่ ส่วน `>>` (Append redirect) จะนำผลลัพธ์ใหม่ไปเขียนต่อท้ายไฟล์เดิมโดยไม่ลบข้อมูลเก่า', '{redirect,bash,text-tools}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('a2fad7a4-377c-4205-a3dd-ba2639d4f345', 'linux:05-text-tools:q03', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'จากตัวอย่างบรรทัดในไฟล์ `access.log` ด้านล่าง หากต้องการหา 5 อันดับ IP Address ที่ส่ง Request เข้ามามากที่สุด พร้อมจำนวนครั้ง เรียงจากมากไปน้อย ควรใช้ชุดคำสั่งใด?', '$ head -n 3 /var/log/nginx/access.log
+203.0.113.50 - - [03/Nov/2026:14:00:01 +0700] "GET /api/v1/items HTTP/1.1" 200 1420
+198.51.100.12 - - [03/Nov/2026:14:00:02 +0700] "POST /api/v1/login HTTP/1.1" 401 85
+203.0.113.50 - - [03/Nov/2026:14:00:02 +0700] "GET /api/v1/items HTTP/1.1" 200 1420', 'medium', 'scenario', 'IP Address อยู่ในคอลัมน์ที่ 1 จึงใช้ `awk ''{print $1}''` ดึงออกมา จากนั้นต้องใช้ `sort` เพื่อให้ IP เดียวกันมาเรียงติดกันก่อนส่งให้ `uniq -c` นับจำนวน แล้วจึงใช้ `sort -nr` เรียงตามตัวเลขจากมากไปน้อย ปิดท้ายด้วย `head -n 5`', '{awk,sort,uniq,logs}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('ebbab95e-1663-4e95-9c8e-47efd927b2b5', 'linux:05-text-tools:q04', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'ในการตรวจสอบไฟล์ `access.log` พบว่ามีบรรทัดของระบบตรวจสอบสุขภาพ `/healthcheck` ปะปนอยู่จำนวนมาก หากต้องการกรองเอาเฉพาะบรรทัดที่ **ไม่มี** คำว่า `healthcheck` ออกมาดู 20 บรรทัดสุดท้าย ควรใช้คำสั่งใด?', NULL, 'medium', 'multiple_choice', 'ตัวเลือก `-v` (invert match) ของ `grep` จะคัดกรองเอาเฉพาะบรรทัดที่ไม่มีคำค้นหานั้น เมื่อส่งผ่าน Pipe ไปยัง `tail -n 20` จะได้ 20 บรรทัดล่าสุดที่ไม่ใช่ healthcheck', '{grep,tail,pipe}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('beef98a0-5be8-485d-84d7-dc1947afead4', 'linux:05-text-tools:q05', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'จากคำสั่งและผลลัพธ์ด้านล่าง เหตุใดผลลัพธ์ของคำสั่ง `uniq -c` จึงยังมีชื่อสถานะ `ERROR` แยกกันอยู่ 2 บรรทัดแทนที่จะรวมกันเป็น 3 ครั้ง?', '$ cat status.txt
+ERROR
+INFO
+ERROR
+ERROR
 
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('web-api:02-curl-api-testing:q01', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-curl-api-testing' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), 'คำสั่ง curl ใดใช้สำหรับดูเฉพาะ HTTP Response Headers โดยไม่ต้องดาวน์โหลด Body?', 'คุณต้องการตรวจสอบค่า Cache-Control และ Server Header ของเว็บอย่างรวดเร็วผ่าน Terminal', 'easy', 'multiple_choice', 'แฟล็ก -I (ตัวไอใหญ่) จะส่งคำขอแบบ HEAD method ซึ่งเซิร์ฟเวอร์จะตอบกลับเฉพาะส่วน Headers โดยไม่มี Content Body', ARRAY['web', 'curl', 'http-headers']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
+$ cat status.txt | uniq -c
+      1 ERROR
+      1 INFO
+      2 ERROR', 'medium', 'scenario', 'คำสั่ง `uniq` จะเปรียบเทียบและยุบรวมเฉพาะบรรทัดที่ซ้ำกันซึ่ง **อยู่ติดกันเท่านั้น** เนื่องจากมีบรรทัด `INFO` คั่นกลางระหว่าง `ERROR` ตัวแรกกับสองตัวหลัง จึงต้องรัน `sort` ก่อนส่งเข้า `uniq -c` (`sort status.txt | uniq -c`)', '{uniq,sort,troubleshooting}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('94e77eb0-8531-4d36-b351-a394e5a164e3', 'linux:05-text-tools:q06', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'หากต้องการค้นหาบรรทัดที่มีคำว่า `ERROR` หรือ `FATAL` หรือ `CRITICAL` ในไฟล์ `server.log` พร้อมแสดงบรรทัดก่อนหน้าและหลังจุดที่พบอย่างละ 3 บรรทัดเพื่อดูบริบท ต้องใช้คำสั่งใด?', NULL, 'hard', 'multiple_choice', 'ตัวเลือก `-E` เปิดใช้งาน Extended Regular Expressions ทำให้ใช้ `|` แทนคำว่า ''หรือ'' ได้ และตัวเลือก `-C 3` (Context) จะแสดงบรรทัดก่อนหน้า 3 บรรทัด และบรรทัดถัดไป 3 บรรทัดรอบจุดที่พบ', '{grep,regex,logs}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('ffc2a0cd-6e46-43a2-90b3-9302014d2039', 'linux:05-text-tools:q07', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'ในคำสั่ง `./check_health.sh > /tmp/check.log 2>&1` ส่วนของ `2>&1` มีความหมายว่าอย่างไร?', NULL, 'hard', 'multiple_choice', 'ใน Linux File Descriptor `1` คือ Standard Output (`stdout`) และ `2` คือ Standard Error (`stderr`) การเขียน `2>&1` จึงหมายถึงการส่งข้อความ Error (`2`) ไปรวมที่ช่องทางเดียวกับผลลัพธ์ปกติ (`1`) เพื่อให้ทั้งผลลัพธ์ปกติและข้อความ Error ถูกบันทึกลงในไฟล์ `/tmp/check.log` ครบถ้วน', '{redirect,stderr,stdout,bash}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('1ca32e9b-b597-44d2-8add-2849374abcb5', 'linux:06-log-reading:q01', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'หากต้องการตรวจสอบประวัติการล็อกอิน SSH และการใช้คำสั่ง `sudo` บนเซิร์ฟเวอร์ตระกูล Ubuntu/Debian เทียบกับตระกูล RHEL/Rocky Linux ต้องเปิดดูที่ไฟล์ใดตามลำดับ?', NULL, 'easy', 'multiple_choice', 'บนระบบ Ubuntu/Debian บันทึกเกี่ยวกับการพิสูจน์ตัวตน (Authentication, SSH, sudo) จะอยู่ที่ `/var/log/auth.log` ส่วนบนระบบ RHEL/Rocky/AlmaLinux จะเก็บไว้ที่ `/var/log/secure`', '{logs,auth,ubuntu,rhel}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('892ec4d9-193b-40fa-a7c6-71c4e3031c2d', 'linux:02-basics:q01', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'เจ้าหน้าที่ Support รีโมตเข้าเครื่องเซิร์ฟเวอร์แล้วต้องการตรวจสอบว่าขณะนี้ตนเองกำลังยืนอยู่ที่โฟลเดอร์ใดแบบเส้นทางเต็ม (Absolute Path) ควรใช้คำสั่งใด?', NULL, 'easy', 'multiple_choice', 'คำสั่ง `pwd` (Print Working Directory) ใช้แสดงเส้นทางเต็มของโฟลเดอร์ปัจจุบันตั้งแต่ราก (`/`) ช่วยป้องกันความผิดพลาดก่อนรันคำสั่งจัดการไฟล์', '{pwd,basics,navigation}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('1e16fb7f-d0aa-4285-b8d2-3faa3bccb016', 'linux:02-basics:q02', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'หากต้องการดูรายการไฟล์ทั้งหมดในโฟลเดอร์ รวมถึงไฟล์ซ่อนที่ขึ้นต้นด้วยจุด (`.`) พร้อมแสดงสิทธิ์และขนาดไฟล์ในหน่วยที่อ่านง่าย (KB, MB, GB) ควรใช้คำสั่งใด?', NULL, 'easy', 'multiple_choice', 'ตัวเลือก `-l` แสดงรายละเอียดแบบยาว, `-a` แสดงไฟล์ทั้งหมดรวมไฟล์ซ่อน (dotfiles), และ `-h` แปลงหน่วยขนาดไฟล์ให้อ่านง่าย (human-readable) เมื่อรวมกันคือ `ls -lah`', '{ls,basics,files}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('35d32f57-908c-4509-84c0-94b315f2bd35', 'linux:02-basics:q03', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'จากผลลัพธ์บนหน้าจอ Terminal ด้านล่าง ทำไมคำสั่ง `tail -n 20 error.log` จึงแจ้งว่า `No such file or directory` และควรแก้ไขอย่างไร?', 'support@web-01:/var/log/nginx$ ls -l
+total 48
+-rw-r----- 1 www-data adm 38420 Nov  3 11:00 access.log
+-rw-r----- 1 www-data adm  8192 Nov  3 10:55 Error.log
+support@web-01:/var/log/nginx$ tail -n 20 error.log
+tail: cannot open ''error.log'' for reading: No such file or directory', 'easy', 'scenario', 'ระบบไฟล์บน Linux แยกแยะตัวพิมพ์เล็กและตัวพิมพ์ใหญ่ (Case-sensitive) จากผลของ `ls -l` ชื่อไฟล์จริงคือ `Error.log` (ตัว E พิมพ์ใหญ่) ดังนั้นการพิมพ์ `error.log` จึงถือเป็นคนละไฟล์ วิธีป้องกันคือใช้ปุ่ม Tab ช่วยเติมชื่อไฟล์', '{case-sensitive,tail,troubleshooting}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('1fabb88c-d4d0-4b99-b096-f544592a7eae', 'linux:06-log-reading:q02', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'เมื่อต้องการค้นหาคำว่า `ORA-12170` ในไฟล์ Log ของเมื่อวานซึ่งถูก `logrotate` บีบอัดเป็นไฟล์ `/var/log/app/worker.log.1.gz` ไปแล้ว วิธีใดเหมาะสมและปลอดภัยที่สุดบนเครื่อง Production?', NULL, 'easy', 'multiple_choice', 'คำสั่ง `zgrep` สามารถค้นหาข้อความภายในไฟล์ที่ถูกบีบอัดด้วย gzip (`.gz`) ได้โดยตรงในหน่วยความจำ โดยไม่ต้องแตกไฟล์ออกมาเขียนลงดิสก์ จึงไม่เสี่ยงทำให้พาร์ทิชัน `/var/log` เต็ม', '{zgrep,logrotate,logs}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('aaa1442e-1b0e-4ba3-9c3b-d709f527716c', 'linux:06-log-reading:q03', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'ลูกค้าแจ้งว่าทำรายการโอนเงินไม่สำเร็จเมื่อเวลา **15:20 น. (ตามเวลาประเทศไทย)** เมื่อคุณรีโมตเข้าเซิร์ฟเวอร์และรันคำสั่งด้านล่าง คุณควรระบุช่วงเวลาค้นหาใน `journalctl` อย่างไรจึงจะตรงกับเหตุการณ์ที่ลูกค้าแจ้ง?', '$ timedatectl
+               Local time: Tue 2026-11-03 08:45:10 UTC
+           Universal time: Tue 2026-11-03 08:45:10 UTC
+                Time zone: Etc/UTC (UTC, +0000)', 'medium', 'scenario', 'จากผลลัพธ์ของ `timedatectl` เครื่องเซิร์ฟเวอร์ตั้งค่า Timezone เป็น **UTC (+0000)** ซึ่งช้ากว่าเวลาประเทศไทย (GMT+7) อยู่ 7 ชั่วโมง ดังนั้นเวลา 15:20 น. ของไทย จึงตรงกับเวลา **08:20 UTC** บนเครื่องเซิร์ฟเวอร์', '{timezone,journalctl,timedatectl,troubleshooting}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('2000d365-d8a9-4337-acea-cf9b3795d920', 'linux:06-log-reading:q04', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'จากผลลัพธ์ของคำสั่ง `dmesg -T` ด้านล่าง เกิดอะไรขึ้นกับโปรเซส `java` (PID 11204) และควรดำเนินการอย่างไร?', '$ dmesg -T | tail -n 3
+[Tue Nov  3 11:02:14 2026] Out of memory: Killed process 11204 (java) total-vm:8421040kB, anon-rss:3812400kB, file-rss:0kB
+[Tue Nov  3 11:02:14 2026] oom_reaper: reaped process 11204 (java), now anon-rss:0kB, file-rss:0kB', 'medium', 'scenario', 'ข้อความจาก Kernel Ring Buffer (`dmesg -T`) ระบุว่าเกิดภาวะหน่วยความจำของระบบหมด (`Out of memory`) ทำให้ Kernel สั่งฆ่าโปรเซส `java` (PID 11204) ที่ใช้หน่วยความจำจริง (`anon-rss`) ไปราว 3.8 GB ในฐานะ Tier 1 ต้องเก็บบรรทัด Log นี้พร้อมผล `free -h` และสถานะบริการเพื่อส่งต่อ (Escalate) ให้ทีมตรวจสอบปัญหา Memory leak หรือการตั้งค่า JVM Heap', '{dmesg,oom,kernel,logs}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('ec034ac3-b426-4d0c-b5d3-44e557e114b3', 'linux:06-log-reading:q05', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'คำสั่ง `journalctl -u api-gateway --since "2026-11-03 09:00:00" --until "2026-11-03 09:30:00" -p err` จะแสดงผลลัพธ์อย่างไร?', NULL, 'medium', 'multiple_choice', 'ตัวเลือก `-u api-gateway` กรองเฉพาะบริการนั้น, `--since` และ `--until` กำหนดกรอบเวลา 09:00 ถึง 09:30 และ `-p err` กรองเฉพาะข้อความที่มีระดับความรุนแรงตั้งแต่ Error ขึ้นไป (`err`, `crit`, `alert`, `emerg`)', '{journalctl,systemd,logs}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('72dae6ef-9cc7-4886-a78e-b03dcf03b3f0', 'linux:06-log-reading:q06', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'ตัวเลือก `-T` ในคำสั่ง `dmesg -T` ช่วยให้การอ่าน Log ของเจ้าหน้าที่ Support ง่ายขึ้นอย่างไร?', NULL, 'easy', 'multiple_choice', 'โดยค่าเริ่มต้น `dmesg` จะแสดงเวลาเป็นตัวเลขวินาทีนับจากตอนเปิดเครื่อง (เช่น `[14250.120411]`) ซึ่งเทียบกับเวลาที่เกิดเหตุจริงได้ยาก การใส่ `-T` (`--ctime`) จะแปลงเป็นวันที่และเวลาที่มนุษย์อ่านเข้าใจได้ง่าย (เช่น `[Tue Nov 3 11:02:14 2026]`)', '{dmesg,timestamp,logs}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('727c6eae-6010-4167-8926-e7b834cdb6c4', 'linux:06-log-reading:q07', 1, 'b5b35ad3-068d-4e04-b07b-670f9697aea3', 'เมื่อต้องรวบรวมข้อมูล Log ส่งต่อ (Escalate) ให้ทีม Tier 2 หรือทีมนักพัฒนา ข้อมูลชุดใดครบถ้วนและมีประโยชน์มากที่สุด?', NULL, 'easy', 'multiple_choice', 'การส่งต่อ Ticket ที่มีคุณภาพควรระบุชื่อเครื่อง (Hostname), พาธของไฟล์ Log, ช่วงเวลาที่เกิดเหตุพร้อมระบุ Timezone ของเครื่อง (เช่น UTC หรือ +07), ข้อความ Error พร้อมบรรทัดบริบทรอบข้าง (`grep -C`) และรหัสรายการ (Transaction/Request ID) หากมี', '{escalate,troubleshooting,logs}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('4405d551-253e-42a6-8516-84a2da370226', 'linux:07-disk-memory-cpu:q01', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'จากผลลัพธ์ของคำสั่ง `free -h` ด้านล่าง ข้อใดอธิบายสถานะหน่วยความจำของเซิร์ฟเวอร์เครื่องนี้ได้ถูกต้องที่สุด?', '$ free -h
+               total        used        free      shared  buff/cache   available
+Mem:            15Gi       3.1Gi       380Mi        95Mi        12Gi        11Gi
+Swap:          4.0Gi          0B       4.0Gi', 'easy', 'scenario', 'แม้คอลัมน์ `free` จะแสดงเพียง `380Mi` แต่ Linux นำหน่วยความจำที่ว่างไปพักแคชไฟล์ใน `buff/cache` ถึง `12Gi` ซึ่งพร้อมคืนให้แอปพลิเคชันใช้งานทันที โดยดูได้จากคอลัมน์ `available` ที่มีอยู่ถึง `11Gi` (จาก `15Gi`) และ `Swap` ยังเป็น `0B` ดังนั้นหน่วยความจำของเครื่องนี้ยังเหลือใช้งานได้อย่างสบาย', '{free,memory,ram}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('ff00fcfc-cc97-4ef4-a859-b9e111a5857a', 'linux:07-disk-memory-cpu:q02', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'แอปพลิเคชันไม่สามารถสร้างไฟล์ใหม่ในพาร์ทิชัน `/var` ได้และฟ้อง `No space left on device` แต่เมื่อรัน `df -h` พบว่าพื้นที่ดิสก์ยังว่างอีก 40 GB เมื่อตรวจสอบต่อด้วย `df -i` ได้ผลดังด้านล่าง สาเหตุเกิดจากอะไร?', '$ df -h /var
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sdb1        80G   40G   40G  50% /var
 
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'web-api:02-curl-api-testing:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:02-curl-api-testing:q01'), 'curl -I https://api.example.com', TRUE, 'ถูกต้อง -I ส่ง HEAD request เพื่อดึงเฉพาะ Header', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:02-curl-api-testing:q01'), 'curl -h https://api.example.com', FALSE, '-h คือการเปิดหน้า Help ของคำสั่ง curl', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:02-curl-api-testing:q01'), 'curl --body-none https://api.example.com', FALSE, 'ไม่มี option --body-none ใน curl', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:02-curl-api-testing:q01'), 'curl -s https://api.example.com', FALSE, '-s คือ silent mode เพื่อปิด progress bar', 4);
+$ df -i /var
+Filesystem      Inodes   IUsed   IFree IUse% Mounted on
+/dev/sdb1      5242880 5242880       0  100% /var', 'medium', 'scenario', 'จากผลของ `df -i /var` พบว่า `IFree` เป็น `0` และ `IUse%` เป็น `100%` แสดงว่าหมายเลข **Inode เต็ม** (มักเกิดจากการมีไฟล์ขนาดเล็กจำนวนหลายล้านไฟล์ เช่น ไฟล์ Session หรือไฟล์ชั่วคราวที่ไม่ถูกลบ) ทำให้ระบบไฟล์ไม่สามารถสร้างไฟล์ใหม่เพิ่มได้แม้พื้นที่ความจุ (GB) จะยังว่างอยู่', '{df,inode,disk,troubleshooting}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('70a6fe79-8783-47a0-9025-d0f2dfc849f9', 'linux:07-disk-memory-cpu:q03', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'หลังจากมีการลบไฟล์ Log ขนาด 30 GB ด้วยคำสั่ง `rm` ไปแล้ว แต่เมื่อตรวจด้วย `df -h` พื้นที่ดิสก์ยังไม่ลดลง คำสั่งใดใช้ตรวจสอบว่ามีโปรเซสใดยังคงเปิดถือไฟล์ที่ถูกลบไปแล้วค้างอยู่?', NULL, 'medium', 'multiple_choice', 'คำสั่ง `lsof +L1` ใช้แสดงรายการไฟล์ที่ถูกเปิดอยู่ซึ่งมีจำนวนลิงก์ (Link count) น้อยกว่า 1 (กล่าวคือชื่อไฟล์ถูกลบออกจากไดเรกทอรีไปแล้ว แต่โปรเซสยังเปิด File descriptor ค้างอยู่ ทำให้พื้นที่ดิสก์ยังไม่ถูกคืน)', '{lsof,disk,troubleshooting}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('b1082aee-a82d-4fac-8295-780e7b4bc4c0', 'linux:07-disk-memory-cpu:q04', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'เมื่อรันคำสั่ง `uptime` ได้ผลว่า `load average: 0.80, 1.10, 1.25` ตัวเลขทั้ง 3 ค่านี้แทนช่วงเวลาใดตามลำดับ?', NULL, 'easy', 'multiple_choice', 'ค่า Load Average ทั้ง 3 ตัวเลขในคำสั่ง `uptime` และ `top` แทนค่าเฉลี่ยของโหลดงานในระบบย้อนหลัง **1 นาที, 5 นาที และ 15 นาที** ตามลำดับ', '{uptime,load-average,cpu}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('34c5edbf-6823-4260-850d-6273902007aa', 'linux:07-disk-memory-cpu:q05', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'ในการประเมินว่าค่า `load average: 6.50` สูงเกินกำลังของเครื่องหรือไม่ ต้องใช้คำสั่งใดเพื่อดูจำนวน CPU Core ของเครื่องมาเปรียบเทียบ?', NULL, 'easy', 'multiple_choice', 'คำสั่ง `nproc` จะแสดงจำนวนหน่วยประมวลผล (CPU Cores/Threads) ที่มีให้ใช้งาน เช่น หาก `nproc` ได้ `2` ค่าโหลด `6.50` ถือว่าสูงเกินจำนวน Core มาก แต่หาก `nproc` ได้ `16` ค่าโหลด `6.50` ถือว่ายังมีกำลังเหลือ', '{nproc,cpu,load-average}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('7bb99738-0e7d-4e64-af8c-c6c23eb55759', 'linux:07-disk-memory-cpu:q06', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'หากพบว่าเซิร์ฟเวอร์มีค่า Load Average สูงมาก แต่เมื่อตรวจสอบด้วย `vmstat 1 5` หรือ `top` กลับพบว่าค่าการใช้ CPU ของโปรแกรม (`us`) ต่ำมาก แต่ค่า `wa` สูงถึง 75% พร้อมมีโปรเซสติดสถานะ `D` จำนวนมาก บ่งชี้ถึงปัญหาใด?', NULL, 'hard', 'multiple_choice', 'คอลัมน์ `wa` คือ **I/O Wait** (เวลาที่ CPU ต้องรอการอ่าน/เขียนดิสก์หรือเครือข่ายสตอเรจ) และสถานะโปรเซส `D` คือ Uninterruptible sleep ที่รอ I/O บน Linux โปรเซสในสถานะ `D` จะถูกนับรวมใน Load Average ด้วย จึงทำให้ Load สูงทั้งที่ CPU ไม่ได้คำนวณหนัก', '{vmstat,iowait,load-average,troubleshooting}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('26fe4415-b506-49a7-90b7-1aff3eeabb25', 'linux:07-disk-memory-cpu:q07', 1, '5f86a586-91de-4a51-b749-fcf6d837849f', 'หากต้องการตรวจสอบขนาดของทุกโฟลเดอร์ย่อยในตำแหน่งปัจจุบันและเรียงลำดับตามขนาดจากน้อยไปมาก (โดยเข้าใจหน่วย K, M, G อย่างถูกต้อง) ควรใช้คำสั่งใด?', NULL, 'medium', 'multiple_choice', '`du -sh *` จะสรุปขนาดของแต่ละรายการในหน่วย Human-readable (K, M, G) และเมื่อส่งผ่าน Pipe ไปยัง `sort -h` (`--human-numeric-sort`) จะสามารถเรียงลำดับโดยเข้าใจว่า `2G` ใหญ่กว่า `500M` ได้อย่างถูกต้อง', '{du,sort,disk}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('a2110b46-0e41-4ae6-898e-582052248f0b', 'linux:08-remote-access:q01', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'เพื่อให้การล็อกอินแบบ SSH Key-based ทำงานได้โดยไม่ถูก `sshd` ปฏิเสธ สิทธิ์ (Octal Permission) ที่ถูกต้องของโฟลเดอร์ `~/.ssh` และไฟล์ `~/.ssh/authorized_keys` คือข้อใดตามลำดับ?', NULL, 'easy', 'multiple_choice', 'บริการ `sshd` มีโหมด `StrictModes` ซึ่งกำหนดให้โฟลเดอร์ `~/.ssh` ต้องมีสิทธิ์ `700` (`drwx------` เจ้าของเข้าได้คนเดียว) และไฟล์ `~/.ssh/authorized_keys` ต้องมีสิทธิ์ `600` (`-rw-------` เจ้าของอ่าน/เขียนได้คนเดียว) หากเปิดสิทธิ์ให้กลุ่มหรือผู้อื่นแก้ไขได้ `sshd` จะปฏิเสธการใช้ Key ทันที', '{ssh,permissions,security}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('c50abf18-1605-4875-adee-013bf4c85344', 'linux:08-remote-access:q02', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'เมื่อพยายามเชื่อมต่อ SSH ด้วยคำสั่งด้านล่างแล้วได้รับข้อความแจ้งเตือนดังภาพ สาเหตุเกิดจากอะไรและควรแก้ไขอย่างไร?', '$ ssh -i ~/.ssh/id_ed25519 support@10.20.1.50
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+Permissions 0644 for ''/home/user/.ssh/id_ed25519'' are too open.
+It is required that your private key files are NOT accessible by others.
+This private key will be ignored.', 'easy', 'scenario', 'ข้อความ `Permissions 0644 for ''/home/user/.ssh/id_ed25519'' are too open` ระบุว่าไฟล์ Private Key บนเครื่องต้นทางมีสิทธิ์เปิดกว้างเกินไป (`644` ทำให้คนอื่นในเครื่องอ่านไฟล์กุญแจส่วนตัวได้) โปรแกรม `ssh` จึงเพิกเฉยไม่ยอมใช้กุญแจนี้ วิธีแก้คือรัน `chmod 600 ~/.ssh/id_ed25519`', '{ssh,permissions,troubleshooting}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('4ea1f21a-007e-415a-91bd-4faa49b43e2f', 'linux:08-remote-access:q03', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'ข้อผิดพลาด `Connection refused` กับ `Connection timed out` ขณะรันคำสั่ง `ssh user@10.20.1.50` บ่งชี้สาเหตุต่างกันอย่างไร?', NULL, 'medium', 'multiple_choice', '`Connection refused` แปลว่าแพ็กเก็ตเดินทางไปถึงเครื่อง `10.20.1.50` แล้ว แต่ปลายทางตอบปฏิเสธกลับมาทันทีเพราะพอร์ต 22 ไม่มีบริการ `sshd` เปิดฟังอยู่ (เช่น `sshd` หยุดทำงาน หรือเปลี่ยนไปฟังพอร์ตอื่น) ส่วน `Connection timed out` แปลว่าส่งแพ็กเก็ตไปแล้วไม่ได้รับการตอบกลับเลย มักเกิดจากติด Firewall, Security Group, Routing หรือยังไม่ได้ต่อ VPN', '{ssh,network,troubleshooting}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('05515d73-1a5e-475d-b40b-94ce12001fab', 'linux:08-remote-access:q04', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'ทีม Infrastructure แจ้งว่าเพิ่งติดตั้ง OS ใหม่ให้กับเซิร์ฟเวอร์ `10.20.1.88` เสร็จเรียบร้อย เมื่อคุณสั่ง `ssh support@10.20.1.88` จึงพบข้อความเตือนด้านล่าง หลังจากยืนยันกับทีม Infra แล้วว่าเป็นการลงเครื่องใหม่จริง คุณควรรันคำสั่งใดเพื่อล้างค่า Host key เก่าของ IP นี้ออกจากไฟล์ `known_hosts`?', '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Host key for 10.20.1.88 has changed and you have requested strict checking.
+Host key verification failed.', 'medium', 'scenario', 'เมื่อเซิร์ฟเวอร์ถูกติดตั้ง OS ใหม่ที่ IP เดิม ลายนิ้วมือของเครื่อง (Host key) จะเปลี่ยนไป ทำให้ไม่ตรงกับค่าเก่าที่บันทึกไว้ใน `~/.ssh/known_hosts` คำสั่งที่ปลอดภัยและตรงจุดที่สุดในการลบเฉพาะบรรทัดของโฮสต์นั้นคือ `ssh-keygen -R 10.20.1.88`', '{ssh,known_hosts,ssh-keygen,troubleshooting}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('61f3e206-c48a-46a6-bfd0-f3c8b21d81ad', 'linux:08-remote-access:q05', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'หากเซิร์ฟเวอร์ปลายทางเปิดรับ SSH ที่พอร์ต `2222` และคุณต้องการคัดลอกไฟล์ `/tmp/report.txt` จากเซิร์ฟเวอร์มาไว้ที่โฟลเดอร์ปัจจุบันด้วยคำสั่ง `scp` ต้องระบุตัวเลือกพอร์ตอย่างไร?', NULL, 'medium', 'multiple_choice', 'ข้อควรระวังยอดฮิต: คำสั่ง `ssh` ใช้ `-p` (ตัวพิมพ์เล็ก) สำหรับระบุพอร์ต แต่คำสั่ง `scp` ใช้ **`-P` (ตัวพิมพ์ใหญ่)** สำหรับระบุพอร์ต (เนื่องจาก `-p` พิมพ์เล็กใน `scp` ถูกใช้สำหรับ preserve timestamps/modes เหมือนใน `cp -p`)', '{scp,ssh,ports}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('cae06534-8367-4658-867b-09de72d34502', 'linux:08-remote-access:q06', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'เหตุใดการใช้โปรแกรม `tmux` บนเซิร์ฟเวอร์จึงมีประโยชน์อย่างมากสำหรับเจ้าหน้าที่ Support เวลาต้องติดตาม Log หรือรันสคริปต์ตรวจสอบที่ใช้เวลานาน?', NULL, 'easy', 'multiple_choice', '`tmux` สร้างเซสชันเทอร์มินัลที่รันอยู่บนฝั่งเซิร์ฟเวอร์ หากสัญญาณอินเทอร์เน็ตของเจ้าหน้าที่หลุดหรือหน้าต่าง SSH ปิดลง งานที่รันอยู่ใน `tmux` จะไม่ถูกตัดจบ และสามารถใช้คำสั่ง `tmux attach` กลับเข้ามาดูหน้าจอเดิมต่อได้ทันที', '{tmux,ssh,remote-access}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('22fcc240-b574-4819-8d9b-af1205ffe0df', 'web-api:03-ssl-tls-certificates:q02', 4, 'c1527b50-8bf1-4171-95ce-52bd25ee35f4', 'หลังจากที่ทีมงานอัปเดตไฟล์ใบรับรอง SSL ใหม่ลงในไดเรกทอรี /etc/ssl/certs/ บน Linux Server เรียบร้อยแล้ว ทำไมเมื่อทดสอบเข้าเว็บยังคงแจ้งเตือนว่าใบรับรองเดิมหมดอายุอยู่?', 'ทีมงานเพิ่งต่ออายุใบรับรองเสร็จ แต่ผู้ใช้งานยังเข้าเว็บไม่ได้และได้ Error เก่า', 'easy', 'multiple_choice', 'Web Server (เช่น Nginx หรือ Apache) จะโหลด Certificate เก็บไว้ในหน่วยความจำ RAM ตั้งแต่ตอนบูตเซอร์วิส หากไม่สั่ง Reload หรือ Restart เว็บเซิร์ฟเวอร์จะไม่ดึงไฟล์ใบรับรองใหม่มาใช้งาน', '{web,ssl,nginx,troubleshooting}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('df8cecab-518d-43d8-926c-ffcd0f2e042e', 'linux:08-remote-access:q07', 1, '75b271d2-e3ff-464b-be92-18b9ea5a0d05', 'เมื่อต้องการซิงก์โฟลเดอร์ไฟล์ Log ขนาดใหญ่จากเซิร์ฟเวอร์ปลายทางมาที่เครื่องโลคอล โดยต้องการให้ส่งเฉพาะส่วนที่เปลี่ยนแปลง คงค่าสิทธิ์/เวลาเดิม และบีบอัดข้อมูลระหว่างส่งผ่านเครือข่าย ควรใช้คำสั่งใด?', NULL, 'medium', 'multiple_choice', 'คำสั่ง `rsync -avz` เหมาะสมที่สุด โดย `-a` (archive) คัดลอกทั้งโฟลเดอร์พร้อมคงสิทธิ์และเวลาเดิม, `-v` (verbose) แสดงรายการไฟล์ที่ส่ง, และ `-z` (compress) บีบอัดข้อมูลขณะส่งผ่านเครือข่าย และหากหลุดกลางคันสามารถรันซ้ำเพื่อส่งต่อเฉพาะส่วนที่ยังขาดได้', '{rsync,scp,remote-access}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('bb4bdd67-7b76-4f2a-bf49-f0e2b0c9c1f8', 'linux:09-cron-schedule:q01', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'ในตาราง Crontab บรรทัดตั้งเวลา `30 3 * * 1-5 /opt/app/backup.sh` หมายถึงการสั่งรันสคริปต์ในเวลาใด?', NULL, 'easy', 'multiple_choice', 'ฟิลด์ที่ 1 คือนาที (`30`), ฟิลด์ที่ 2 คือชั่วโมง (`3` = 03:30 น.), ฟิลด์ที่ 3 คือวันที่ (`*` = ทุกวันที่), ฟิลด์ที่ 4 คือเดือน (`*` = ทุกเดือน), และฟิลด์ที่ 5 คือวันในสัปดาห์ (`1-5` = วันจันทร์ถึงวันศุกร์) ดังนั้นหมายถึงรันเวลา 03:30 น. ของทุกวันจันทร์ถึงศุกร์', '{cron,crontab,schedule}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('d18c78fa-edc9-4d07-bcee-55e19d3afd37', 'linux:09-cron-schedule:q02', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'หากต้องการตรวจสอบรายการงานตั้งเวลา (Crontab) ของผู้ใช้ปัจจุบันโดยไม่เสี่ยงเผลอแก้ไขหรือลบข้อมูล ต้องใช้คำสั่งใด และควรระวังห้ามพิมพ์สลับกับคำสั่งใดมากที่สุด?', NULL, 'easy', 'multiple_choice', '`crontab -l` (list) ใช้แสดงรายการ Crontab ออกทางหน้าจออย่างปลอดภัย และต้องระวังห้ามพิมพ์ `crontab -r` (remove) เพราะจะลบตาราง Crontab ทั้งหมดทิ้งทันทีโดยไม่ถามยืนยัน', '{crontab,safety,cron}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('cbd582ae-b4a6-412f-852d-649e880f77b2', 'linux:09-cron-schedule:q03', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'นักพัฒนาแจ้งว่าเมื่อล็อกอินเข้าเครื่องแล้วรัน `/opt/report/gen.sh` ด้วยตนเอง สคริปต์ทำงานสำเร็จปกติ แต่เมื่อตั้งเวลาใน Crontab ให้รันตอนเที่ยงคืนกลับล้มเหลวและพบข้อความในไฟล์ Log ดังด้านล่าง สาเหตุเกิดจากอะไร?', '$ sudo crontab -u appuser -l
+0 0 * * * /opt/report/gen.sh >> /var/log/report.log 2>&1
 
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('web-api:02-curl-api-testing:q02', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-curl-api-testing' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), 'หากต้องการทดสอบยิง Request ไปยัง IP ของเซิร์ฟเวอร์หลังบ้าน 10.0.1.25 โดยตรง แต่ยังต้องการให้ Web Server ทราบว่าเรียกโดเมน api.company.com ควรทำอย่างไร?', 'ระบบหน้าบ้านมี CDN/Cloudflare ขวางอยู่ และคุณต้องการบายพาสเพื่อทดสอบว่าปัญหาน้ำท่วมทราฟฟิกเกิดที่ CDN หรือเซิร์ฟเวอร์จริง', 'medium', 'multiple_choice', 'การระบุ Host Header ด้วย -H ''Host: api.company.com'' หรือใช้ตัวเลือก --resolve จะส่งคำขอตรงไปยัง IP ปลายทางโดยที่ Web Server (เช่น Nginx) สามารถเลือก Virtual Host ได้ถูกต้อง', ARRAY['web', 'curl', 'headers', 'virtualhost']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
+$ tail -n 3 /var/log/report.log
+Starting daily report generation...
+/opt/report/gen.sh: line 14: node: command not found
+Report generation failed with exit code 127.', 'medium', 'scenario', 'เมื่อ Cron สั่งรันงาน จะใช้สภาพแวดล้อม (Environment) พื้นฐานที่มีค่าตัวแปร `PATH` สั้นมาก (เช่น `/usr/bin:/bin`) ต่างจากตอนล็อกอินผ่าน Shell ปกติ หากโปรแกรม `node` ติดตั้งอยู่ที่ `/usr/local/bin/node` หรือในโฟลเดอร์ของ `nvm` ตัวสคริปต์ที่เรียกแค่ `node` เฉยๆ จึงหาคำสั่งไม่เจอ (`command not found`, exit code 127) ต้องแก้ไขโดยระบุ Absolute Path เต็มของคำสั่งหรือกำหนด `PATH` ในสคริปต์', '{cron,path,troubleshooting}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('aea9e7b1-71c1-4b19-9424-3f9410a25f28', 'linux:09-cron-schedule:q04', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'จากบรรทัด Crontab และบันทึกใน `/var/log/syslog` ด้านล่าง เหตุใดคำสั่งสำรองไฟล์จึงล้มเหลวและเห็นคำสั่งถูกตัดจบแค่คำว่า `backup_`?', '$ crontab -l
+0 1 * * * cp /opt/app/config.yml /opt/backup/config_$(date +%Y%m%d).yml
 
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'web-api:02-curl-api-testing:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:02-curl-api-testing:q02'), 'curl -H "Host: api.company.com" http://10.0.1.25/health', TRUE, 'ถูกต้อง การใส่ Host Header ช่วยทดสอบเจาะจง IP ได้โดยตรง', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:02-curl-api-testing:q02'), 'curl http://10.0.1.25:api.company.com', FALSE, 'ไวยากรณ์นี้ไม่ถูกต้อง หลังโคลอนต้องเป็นพอร์ตตัวเลข', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:02-curl-api-testing:q02'), 'curl -X DOMAIN http://10.0.1.25', FALSE, '-X กำหนด HTTP Method ไม่ใช่โดเมน', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:02-curl-api-testing:q02'), 'curl --dns-bypass http://10.0.1.25', FALSE, 'ไม่มีแฟล็ก --dns-bypass ใน curl', 4);
+$ grep CRON /var/log/syslog | tail -n 1
+Nov  3 01:00:01 app-01 CRON[19022]: (support) CMD (cp /opt/app/config.yml /opt/backup/config_$(date +)', 'hard', 'scenario', 'ในไฟล์ Crontab เครื่องหมายเปอร์เซ็นต์ (`%`) มีความหมายพิเศษคือถูกแปลงเป็น **การขึ้นบรรทัดใหม่ (Newline)** และข้อความหลัง `%` ตัวแรกจะถูกส่งเป็น Standard Input แทนที่จะเป็นส่วนหนึ่งของคำสั่ง ดังนั้นหากต้องใช้ `%` ในบรรทัด Crontab (เช่นใน `date +\%Y\%m\%d`) ต้องใส่เครื่องหมาย Backslash (`\`) นำหน้า `%` ทุกตัว หรือย้ายคำสั่งไปไว้ในไฟล์สคริปต์ `.sh`', '{crontab,percent,troubleshooting}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('8c5078fb-64e4-4e84-bbbb-ac15123d866d', 'linux:09-cron-schedule:q05', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'หากต้องการตรวจสอบว่าบริการ Cron ได้สั่งปลุกงานตามเวลาที่ตั้งไว้จริงหรือไม่ บนเซิร์ฟเวอร์ **Ubuntu/Debian** เทียบกับ **RHEL/Rocky Linux** ต้องตรวจสอบที่ไฟล์ Log ใดตามลำดับ?', NULL, 'medium', 'multiple_choice', 'บน Ubuntu/Debian บันทึกการทำงานของบริการ `cron` จะถูกรวมอยู่ใน `/var/log/syslog` (ใช้ `grep CRON /var/log/syslog`) ส่วนบน RHEL/Rocky Linux บริการ `crond` จะแยกไฟล์ Log เฉพาะไว้ที่ `/var/log/cron`', '{cron,logs,ubuntu,rhel}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('8e9483d6-ae5f-40c0-b138-8ed3177059f1', 'linux:09-cron-schedule:q06', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'ความแตกต่างทางโครงสร้างบรรทัดระหว่างการตั้งเวลาใน User Crontab (`crontab -e`) กับการตั้งเวลาในไฟล์ภายใต้ `/etc/cron.d/` คืออะไร?', NULL, 'medium', 'multiple_choice', 'ไฟล์ตารางงานระดับระบบใน `/etc/crontab` และ `/etc/cron.d/` จะต้องระบุ **ชื่อบัญชีผู้ใช้ (username)** แทรกเป็นฟิลด์ที่ 6 (หลังฟิลด์เวลา 5 ตัว และก่อนตัวคำสั่ง) เพื่อบอกว่าจะให้รันคำสั่งนั้นภายใต้สิทธิ์ของใคร ส่วนใน `crontab -e` เป็นของใครของมันอยู่แล้วจึงไม่มีฟิลด์ชื่อผู้ใช้', '{crontab,cron.d,system}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('2a3504c4-29e5-46af-b2fb-9ebf81c95947', 'linux:09-cron-schedule:q07', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'บนเซิร์ฟเวอร์ Linux สมัยใหม่ หากตรวจสอบทั้ง `crontab -l` และ `/etc/cron*` แล้วไม่พบงานตั้งเวลาที่ตามหา แต่ยังมีงานรันอัตโนมัติตามรอบเวลาอยู่ ควรใช้คำสั่งใดเพื่อตรวจสอบกลไกตั้งเวลาของ `systemd`?', NULL, 'easy', 'multiple_choice', 'นอกเหนือจาก Cron แล้ว ระบบที่ใช้ `systemd` สามารถตั้งเวลางานด้วย **systemd timer** ได้ โดยตรวจสอบรายการทั้งหมดพร้อมเวลาที่จะรันรอบถัดไปและรอบล่าสุดได้ด้วยคำสั่ง `systemctl list-timers` (หรือ `systemctl list-timers --all`)', '{systemd,timers,cron}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('4e95dfd0-892c-4c0c-b51f-9f1b56c0ad9f', 'linux:10-health-check:q01', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'เมื่อมีคนแจ้งว่าเว็บเข้าไม่ได้ ลำดับการตรวจแบบล่างขึ้นบนที่เหมาะสมที่สุดคือข้อใด?', NULL, 'easy', 'multiple_choice', 'ตรวจจากชั้นล่างขึ้นบนเพื่อหาชั้นแรกที่ผิดปกติ: Service รันอยู่ไหม (systemctl) → Process ฟัง Port ถูกต้องไหม (ss) → ต่อ Port จากภายนอกได้ไหม (nc) → Endpoint ตอบ HTTP ปกติไหม (curl)', '{troubleshooting,systemctl,ss,curl}', true, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('a5cff860-3040-413a-b67a-63944822a4ad', 'linux:10-health-check:q03', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'จากผลลัพธ์ด้านล่าง ทำไมเครื่อง app-02 จึงต่อ Port 8080 ของเครื่องนี้ไม่ได้ ทั้งที่ Service รันปกติ?', '$ systemctl is-active order-api
+active
 
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('web-api:03-ssl-tls-certificates:q01', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-ssl-tls-certificates' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), 'คำสั่ง openssl ใดต่อไปนี้ใช้สำหรับตรวจสอบวันหมดอายุของใบรับรอง SSL บนเซิร์ฟเวอร์ปลายทางผ่านพอร์ต 443 ได้อย่างแม่นยำ?', 'คุณได้รับแจ้งเตือนจากระบบ Monitoring ว่ามีแนวโน้มที่ใบรับรองของเว็บจะหมดอายุ และต้องการยืนยันวันหมดอายุจริง', 'medium', 'multiple_choice', 'openssl s_client -connect domain:443 ร่วมกับการไพพ์ไปยัง openssl x509 -noout -enddate เป็นวิธีมาตรฐานในการดึงวันหมดอายุโดยตรงจากพอร์ต HTTPS ของเซิร์ฟเวอร์', ARRAY['web', 'ssl', 'tls', 'openssl']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
+$ sudo ss -ltnp ''sport = :8080''
+State   Recv-Q  Send-Q  Local Address:Port  Peer Address:Port  Process
+LISTEN  0       511         127.0.0.1:8080       0.0.0.0:*      users:(("node",pid=18420,fd=19))
 
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'web-api:03-ssl-tls-certificates:q01');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:03-ssl-tls-certificates:q01'), 'openssl s_client -connect domain.com:443 -servername domain.com < /dev/null | openssl x509 -noout -enddate', TRUE, 'ถูกต้อง นี่คือคำสั่งที่ถูกต้องพร้อมระบุ SNI (-servername) และแสดงบรรทัด notAfter', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:03-ssl-tls-certificates:q01'), 'openssl check-cert domain.com:443', FALSE, 'ไม่มีคำสั่งย่อย check-cert ใน openssl', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:03-ssl-tls-certificates:q01'), 'curl --check-ssl-expiry domain.com', FALSE, 'curl ไม่มีแฟล็ก --check-ssl-expiry', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:03-ssl-tls-certificates:q01'), 'ping -ssl domain.com', FALSE, 'ping ทำงานบนระดับ ICMP Layer 3 ไม่รู้จัก SSL/TLS', 4);
+# จาก app-02
+$ nc -zv 10.20.1.50 8080
+nc: connect to 10.20.1.50 port 8080 (tcp) failed: Connection refused', 'medium', 'scenario', 'Local Address เป็น 127.0.0.1:8080 แปลว่าแอปฟังเฉพาะภายในเครื่อง เครื่องอื่นจึงได้ Connection refused ต้องแจ้งทีมที่ดูแลแอปให้ตรวจ Config ว่ากำหนดให้ฟังที่ 0.0.0.0 หรือ IP ของเครื่อง ไม่ใช่ปัญหา Firewall หรือ Network', '{ss,bind-address,troubleshooting}', true, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('af321481-4010-42cc-a917-de4dc61cda20', 'linux:10-health-check:q04', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'ความหมายของ Connection refused กับ Connection timed out ต่างกันอย่างไร?', NULL, 'easy', 'multiple_choice', 'refused: แพ็กเก็ตถึงเครื่องปลายทางแล้ว แต่ไม่มีโปรแกรมฟัง Port นั้น (หรือถูก reject) ส่วน timed out: ไม่มีคำตอบกลับมา มักเกิดจาก Firewall/Security Group ดรอปเงียบๆ หรือไม่มีเส้นทาง', '{tcp,curl,nc}', true, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('f986cb3a-3b71-4610-889e-2cc401e88854', 'linux:10-health-check:q05', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'ต้องการดูเฉพาะ HTTP Status Code และเวลาที่ใช้ของ https://api.example.com/health โดยไม่แสดง Body และไม่ให้ค้างเกิน 10 วินาที ควรใช้คำสั่งใด?', NULL, 'medium', 'multiple_choice', '-sS ปิด Progress แต่ยังแสดง Error, -o /dev/null ทิ้ง Body, -w กำหนดรูปแบบผลลัพธ์ และ --max-time จำกัดเวลารวม', '{curl,health-check}', true, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('7973243b-4e81-479c-9ae6-9ec56f46a8b5', 'linux:10-health-check:q06', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'จากผลลัพธ์ด้านล่าง การสตาร์ท Service ไม่สำเร็จเพราะอะไร และควรทำอะไรต่อ?', '$ sudo systemctl start report-api
+Job for report-api.service failed.
 
-INSERT INTO questions (seed_key, topic_id, lesson_id, question_text, scenario_text, difficulty, question_type, explanation, tags)
-VALUES ('web-api:03-ssl-tls-certificates:q02', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-ssl-tls-certificates' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), 'หลังจากที่ทีมงานอัปเดตไฟล์ใบรับรอง SSL ใหม่ลงในไดเรกทอรี /etc/ssl/certs/ บน Linux Server เรียบร้อยแล้ว ทำไมเมื่อทดสอบเข้าเว็บยังคงแจ้งเตือนว่าใบรับรองเดิมหมดอายุอยู่?', 'ทีมงานเพิ่งต่ออายุใบรับรองเสร็จ แต่ผู้ใช้งานยังเข้าเว็บไม่ได้และได้ Error เก่า', 'easy', 'multiple_choice', 'Web Server (เช่น Nginx หรือ Apache) จะโหลด Certificate เก็บไว้ในหน่วยความจำ RAM ตั้งแต่ตอนบูตเซอร์วิส หากไม่สั่ง Reload หรือ Restart เว็บเซิร์ฟเวอร์จะไม่ดึงไฟล์ใบรับรองใหม่มาใช้งาน', ARRAY['web', 'ssl', 'nginx', 'troubleshooting']::text[])
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  question_text = EXCLUDED.question_text,
-  scenario_text = EXCLUDED.scenario_text,
-  difficulty = EXCLUDED.difficulty,
-  question_type = EXCLUDED.question_type,
-  explanation = EXCLUDED.explanation,
-  tags = EXCLUDED.tags,
-  updated_at = CURRENT_TIMESTAMP;
+$ journalctl -u report-api -n 3 --no-pager
+Nov 03 14:20:11 app-prod-01 node[22011]: Error: listen EADDRINUSE: address already in use :::9000
+Nov 03 14:20:11 app-prod-01 systemd[1]: report-api.service: Main process exited, code=exited, status=1/FAILURE
 
-DELETE FROM choices WHERE question_id = (SELECT id FROM questions WHERE seed_key = 'web-api:03-ssl-tls-certificates:q02');
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:03-ssl-tls-certificates:q02'), 'ยังไม่ได้สั่ง Reload หรือ Restart โปรเซสของ Web Server (เช่น sudo systemctl reload nginx) ทำให้ระบบยังคงใช้ใบรับรองเดิมที่อยู่ใน RAM', TRUE, 'ถูกต้อง ต้อง reload service เสมอหลังจากอัปเดตไฟล์ certificate', 1);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:03-ssl-tls-certificates:q02'), 'ระบบต้องรอเวลาอย่างน้อย 24 ชั่วโมงเพื่อให้ DNS อัปเดต', FALSE, 'SSL Certificate อยู่บน Web Server ไม่เกี่ยวกับ DNS Propagation', 2);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:03-ssl-tls-certificates:q02'), 'เพราะไม่ได้ทำการ Format ดิสก์ใหม่', FALSE, 'การเปลี่ยน Certificate ไม่เกี่ยวกับการ Format ดิสก์', 3);
-INSERT INTO choices (question_id, choice_text, is_correct, explanation, display_order)
-VALUES ((SELECT id FROM questions WHERE seed_key = 'web-api:03-ssl-tls-certificates:q02'), 'เพราะพอร์ต 443 ถูกจำกัดให้ใช้ Certificate ใบเดิมตลอดไป', FALSE, 'พอร์ตเครือข่ายสามารถเปลี่ยน Certificate ได้ตลอดเวลา', 4);
+$ sudo ss -ltnp ''sport = :9000''
+LISTEN 0 511 *:9000 *:* users:(("java",pid=1544,fd=77))', 'medium', 'scenario', 'EADDRINUSE แปลว่า Port 9000 ถูกใช้อยู่แล้ว จาก ss พบว่า Process java PID 1544 ถือ Port นี้ Tier 1 ควรเก็บชื่อและ PID ของ Process และ Log แล้วส่งต่อตาม Runbook ไม่ kill Process ที่ไม่รู้ที่มา', '{EADDRINUSE,ss,lsof,troubleshooting}', true, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('d63a08cb-8a15-4783-8eba-9dec781d11b9', 'linux:10-health-check:q07', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'คำสั่ง curl ได้ผลลัพธ์ HTTP 502 Bad Gateway จาก Nginx ควรตรวจอะไรเป็นอันดับแรก?', '$ curl -I https://shop.example.com
+HTTP/2 502
+server: nginx/1.24.0', 'hard', 'scenario', '502 หมายถึง Nginx ทำงานอยู่แต่ได้คำตอบที่ใช้ไม่ได้หรือต่อ Upstream ไม่ได้ จึงควรตรวจ Service และ Port ของ Backend และอ่าน error.log ของ Nginx เพื่อดูข้อความ upstream', '{nginx,502,curl,upstream}', true, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('6164b7cc-ad3b-4035-8811-281134f2b57d', 'network:01-ip-subnetting:q01', 2, 'd8929572-6865-40b4-bf65-a32bfcdb15a5', 'Subnet ขนาด /28 มีจำนวน IP Address ที่สามารถนำไปกำหนดให้กับ Host ใช้งานได้จริงกี่ IP?', 'ทีม Network แจ้งว่าได้จัดสรรวง Subnet 192.168.10.64/28 ให้กับเซิร์ฟเวอร์ชุดใหม่ใน DMZ', 'medium', 'multiple_choice', '/28 มีบิตเหลือสำหรับ Host คือ 32 - 28 = 4 บิต จำนวน IP ทั้งหมดคือ 2^4 = 16 IP แต่ต้องหัก Network ID (ตัวแรก) และ Broadcast ID (ตัวสุดท้าย) ออก 2 ค่าเสมอ จึงเหลือ Host ใช้งานได้จริง 14 IP', '{network,subnetting,cidr}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('98df92a1-ad7f-46d6-9529-d780a7dad658', 'network:01-ip-subnetting:q02', 2, 'd8929572-6865-40b4-bf65-a32bfcdb15a5', 'หากเครื่องเซิร์ฟเวอร์เปิดขึ้นมาแล้วรัน ip addr พบว่าได้รับ IP เป็น 169.254.12.34 ปัญหาน่าจะเกิดจากอะไร?', 'ได้รับแจ้งจากลูกค้าว่าตู้ Kiosk ไม่สามารถเชื่อมต่อกับ Backend API ได้ ตรวจสอบพบ IP 169.254.x.x', 'easy', 'multiple_choice', 'IP ในช่วง 169.254.0.0/16 คือ APIPA (Automatic Private IP Addressing) ซึ่งระบบปฏิบัติการจะกำหนดขึ้นเองเมื่อไม่สามารถขอ IP จาก DHCP Server ได้ หรือสาย LAN หลุด/ไม่เชื่อมต่อ', '{network,ip,dhcp,troubleshooting}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('b4c8e401-d6ff-494a-84f3-715e4b84eaba', 'network:01-ip-subnetting:q03', 2, 'd8929572-6865-40b4-bf65-a32bfcdb15a5', 'IP Address ใดต่อไปนี้จัดเป็น Public IP ที่สามารถวิ่งบน Public Internet ได้จริง?', 'คุณต้องตรวจสอบ Whitelist ใน Firewall ของลูกค้าว่าไอพีที่เข้ามาเป็น Private IP หรือ Public IP', 'easy', 'multiple_choice', 'Private IP ตาม RFC 1918 คือ 10.0.0.0/8, 172.16.0.0/12 (172.16-172.31), 192.168.0.0/16 ดังนั้น 172.32.1.1 จึงอยู่นอกช่วง Private และเป็น Public IP', '{network,ip,rfc1918}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('a6917e20-839e-4d3c-821d-4541711f8053', 'network:01-ip-subnetting:q04', 2, 'd8929572-6865-40b4-bf65-a32bfcdb15a5', 'เมื่อสั่ง ip route show แล้วไม่พบข้อความ ''default via ...'' ผลกระทบที่จะเกิดขึ้นกับเซิร์ฟเวอร์คือข้อใด?', 'เครื่องเซิร์ฟเวอร์เพิ่งถูกแก้ไขคอนฟิกเน็ตเวิร์ก หลังจากรีสตาร์ทสามารถ ping เครื่องข้างเคียงในวงเดียวกันเจอ แต่ออกเน็ตไม่ได้', 'medium', 'multiple_choice', 'default via ระบุ Default Gateway หากไม่มี จะทำให้เซิร์ฟเวอร์คุยได้เฉพาะเครื่องใน Local Subnet เดียวกันเท่านั้น แต่ไม่สามารถส่ง Packet ข้ามวงหรือออกอินเทอร์เน็ตได้', '{network,routing,gateway}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('9b606785-3b1d-4039-8aef-d077d30d52dc', 'network:02-dns-resolution:q01', 2, '04cb05e0-09ef-4ee4-8cf5-1ed7d502bbfe', 'คำสั่ง dig ใดต่อไปนี้ใช้สำหรับสอบถาม A Record ไปยัง Google DNS (8.8.8.8) โดยตรงและให้แสดงผลลัพธ์เฉพาะ IP แบบย่อ?', 'คุณต้องการทดสอบว่าปัญหาโดเมน resolve ไม่ได้เกิดจาก DNS Server ในองค์กรหรือเกิดจาก Cloudflare กันแน่', 'medium', 'multiple_choice', 'ไวยากรณ์ของ dig ในการระบุ DNS Server ปลายทางจะใช้เครื่องหมาย @ นำหน้า (@8.8.8.8) และการแสดงเฉพาะคำตอบสั้นๆ จะใช้ flag +short', '{network,dns,dig}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('f3360feb-004a-49b9-9366-b7b9899c587f', 'network:02-dns-resolution:q02', 2, '04cb05e0-09ef-4ee4-8cf5-1ed7d502bbfe', 'หากเครื่องเซิร์ฟเวอร์ resolve ชื่อโดเมนได้เป็น IP เดิมที่เลิกใช้ไปแล้ว ทั้งๆ ที่ผู้ให้บริการ DNS ยืนยันว่าเปลี่ยน IP แล้ว สาเหตุที่น่าจะเป็นไปได้มากที่สุดคืออะไร?', 'ระบบเพิ่ง Migrate เซิร์ฟเวอร์และเปลี่ยน IP ใน Cloudflare เมื่อ 10 นาทีที่แล้ว แต่ Web Server เครื่องหนึ่งยังยิงไป IP เก่า', 'easy', 'multiple_choice', 'DNS Resolver ฝั่ง Local หรือ ISP จะแคชค่าไว้จนกว่าค่า TTL (Time-To-Live) ของ Record นั้นจะหมดอายุลง เรียกว่าระยะ DNS Propagation', '{network,dns,ttl,caching}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('611c9533-5018-4260-93b1-75368ecf0e4b', 'network:02-dns-resolution:q03', 2, '04cb05e0-09ef-4ee4-8cf5-1ed7d502bbfe', 'หากต้องการตรวจสอบว่า IP 203.0.113.50 ผูกกับชื่อโฮสต์ใด (Reverse DNS Lookup) ควรใช้คำสั่งใด?', 'คุณได้รับ Alert จาก Firewall แจ้ง IP ต้องสงสัยเข้ามาและต้องการตรวจสอบย้อนกลับว่าเป็นชื่อโดเมนอะไร', 'medium', 'multiple_choice', 'การทำ Reverse DNS (PTR Record) ด้วย dig จะใช้แฟล็ก -x ตามด้วย IP เช่น dig -x 203.0.113.50', '{network,dns,ptr,reverse-dns}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('b8d26fbb-9136-4651-a96a-004a0568191c', 'network:03-routing-latency:q01', 2, '240e3caf-58b9-4b37-9d41-8d7a2830fe79', 'หากรัน mtr แล้วพบว่า Hop ที่ 4 มี Loss 40% แต่ Hop ที่ 5, 6 และปลายทางมี Loss 0% และ Latency ปกติ ข้อใดคือการวิเคราะห์ที่ถูกต้องที่สุด?', 'ผู้ใช้งานแจ้งว่าระบบช้า คุณทดสอบ mtr เพื่อนำข้อมูลไปแจ้งผู้ให้บริการ ISP', 'hard', 'multiple_choice', 'เราเตอร์กลางทาง (Hop 4) มักจะตั้งค่า ICMP Rate-limiting เพื่อป้องกัน CPU Overload ซึ่งจะดรอปเฉพาะ ICMP ที่วิ่งมาหาตัวมันเอง แต่ยัง Forward ทราฟฟิกจริงไปยัง Hop ถัดไปได้อย่างสมบูรณ์ จึงไม่ถือว่าเครือข่ายมีปัญหา', '{network,mtr,icmp,troubleshooting}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('15081888-fb1c-4b94-9d2a-5bab1372ddd3', 'network:03-routing-latency:q02', 2, '240e3caf-58b9-4b37-9d41-8d7a2830fe79', 'ทำไมการทดสอบ ping ไปยังเซิร์ฟเวอร์ปลายทางแล้วได้ Request Timed Out จึงไม่สามารถฟันธงได้ว่าเซิร์ฟเวอร์ล่ม?', 'ลูกค้าแจ้งว่าเซิร์ฟเวอร์เว็บล่มเพราะลอง ping แล้วไม่ตอบกลับ', 'easy', 'multiple_choice', 'ping ใช้โปรโตคอล ICMP ซึ่งเซิร์ฟเวอร์และ Firewall ส่วนใหญ่ปิดการตอบรับ ICMP เพื่อป้องกันการสแกนและการโจมตี แต่เว็บเซิร์ฟเวอร์ที่เปิด Port 80/443 (TCP) อาจยังทำงานได้ตามปกติ', '{network,ping,icmp,firewall}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('809eec81-5754-4afb-8940-ff635ec0484c', 'network:04-tcp-ports-firewall:q01', 2, '3ff8610b-94c3-43a7-8e1f-436f27946647', 'เมื่อสั่ง nc -zv db-server 5432 แล้วได้รับผลลัพธ์ว่า ''Connection refused'' สาเหตุที่เป็นไปได้มากที่สุดคือข้อใด?', 'แอปพลิเคชันขึ้น Error ไม่สามารถเชื่อมต่อกับฐานข้อมูล PostgreSQL บนเครื่อง db-server ได้', 'medium', 'multiple_choice', 'Connection refused หมายถึงแพ็กเก็ตวิ่งไปถึงเครื่องปลายทางแล้ว แต่ OS ฝั่งปลายทางส่ง TCP RST กลับมาเพราะไม่มี Service ใดเปิด LISTEN อยู่ที่พอร์ต 5432 หรือ Service ดับอยู่', '{network,tcp,ports,connection-refused}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('9305fed3-82a6-4ca9-a25b-a0ae68b2049d', 'network:04-tcp-ports-firewall:q02', 2, '3ff8610b-94c3-43a7-8e1f-436f27946647', 'หากรันคำสั่ง ss -tulpn บนเซิร์ฟเวอร์ฐานข้อมูลแล้วพบว่า Local Address คือ ''127.0.0.1:5432'' จะส่งผลอย่างไรต่อการเชื่อมต่อ?', 'เครื่อง Backend Server ที่อยู่คนละเครื่องพยายามต่อ Database เครื่องนี้แต่ล้มเหลว', 'medium', 'multiple_choice', '127.0.0.1 คือ Loopback Interface การ Bind ที่ IP นี้จะทำให้รับการเชื่อมต่อได้เฉพาะจากภายในเครื่องตัวเองเท่านั้น หากต้องการให้เครื่องภายนอกเชื่อมต่อได้ ต้องตั้งค่าใน postgresql.conf ให้ listen_addresses = ''*'' หรือ bind ที่ 0.0.0.0', '{network,tcp,bind,postgresql}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('5f978533-62ea-48fe-9698-8ee8b1b27294', 'network:04-tcp-ports-firewall:q03', 2, '3ff8610b-94c3-43a7-8e1f-436f27946647', 'ความแตกต่างหลักระหว่างข้อผิดพลาด ''Connection Refused'' และ ''Connection Timed Out'' คืออะไร?', 'คำถามสัมภาษณ์งานตำแหน่ง Junior Application Support', 'easy', 'multiple_choice', 'Connection Refused ได้รับคำตอบปฏิเสธ (TCP RST) จากเครื่องปลายทาง แสดงว่าเครื่องปลายทางยังเปิดอยู่แต่ไม่มี Service รอรับ ส่วน Timed Out ไม่มีสัญญาณตอบกลับใดๆ เลยจนหมดเวลา มักเกิดจาก Firewall บล็อกทิ้ง (DROP) หรือเครื่องปลายทางดับ', '{network,tcp,interview,troubleshooting}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('8e98bdbc-25ff-4734-ab03-4f4cc8d75ec6', 'sql:01-queries-joins:q01', 3, '5a3d9602-fb56-4f50-b4fa-c231d799a302', 'หากต้องการค้นหาข้อมูลลูกค้า (customers) ทั้งหมดที่ยังไม่เคยมีประวัติการสั่งซื้อสินค้า (orders) เลยแม้แต่ครั้งเดียว ควรเขียนคำสั่ง SQL อย่างไร?', 'ทีม Marketing ขอให้ Support ดึงรายชื่อลูกค้าที่สมัครสมาชิกแล้วแต่ยังไม่ได้สั่งซื้อ', 'medium', 'multiple_choice', 'การทำ Anti-Join ที่มีประสิทธิภาพสูงใน SQL คือการใช้ LEFT JOIN ตาราง orders ด้วย customer_id แล้วระบุเงื่อนไขใน WHERE clause ว่า WHERE orders.id IS NULL', '{sql,join,anti-join,"null"}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('1965fab0-45b2-4e02-adc4-72650a0c04f0', 'sql:01-queries-joins:q02', 3, '5a3d9602-fb56-4f50-b4fa-c231d799a302', 'ทำไมการเขียนเงื่อนไข ''WHERE email = NULL'' ใน SQL จึงไม่ได้ผลลัพธ์ข้อมูลใดๆ กลับมาเลย?', 'Support ต้องการหาผู้ใช้ที่ไม่มีอีเมลในระบบ แต่เมื่อรันคำสั่งกลับได้ 0 แถว ทั้งที่มีข้อมูลเว้นว่างอยู่', 'easy', 'multiple_choice', 'ในมาตรฐาน SQL ค่า NULL หมายถึง Unknown ไม่ใช่ค่าที่นำมาเปรียบเทียบด้วยเครื่องหมายเท่ากับ (=) ได้ ผลของการเปรียบเทียบกับ NULL จะได้ค่า UNKNOWN ซึ่งถือเป็น False ใน WHERE clause เสมอ ต้องใช้ ''IS NULL'' แทน', '{sql,"null",syntax}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('31c1b64e-e85e-4f8c-9eca-381f6805148b', 'sql:01-queries-joins:q03', 3, '5a3d9602-fb56-4f50-b4fa-c231d799a302', 'ฟังก์ชัน COALESCE(phone, mobile, ''N/A'') จะให้ผลลัพธ์การทำงานอย่างไร?', 'คุณกำลังเขียน Query ดึงเบอร์ติดต่อเพื่อส่ง SMS แจ้งเตือนลูกค้า', 'easy', 'multiple_choice', 'COALESCE จะคืนค่าแรกจากซ้ายไปขวาที่ไม่เป็น NULL หากทั้ง phone และ mobile เป็น NULL ทั้งคู่ จะคืนค่าตัวสุดท้ายคือ ''N/A''', '{sql,coalesce,functions}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('c75407f1-a3a5-4a5b-981b-b9e31701154f', 'linux:10-health-check:q02', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'คำสั่งใดแสดงทุก Port ที่ฟังอยู่ (TCP และ UDP) พร้อมชื่อ Process และแสดงเป็นตัวเลข?', NULL, 'easy', 'multiple_choice', 'ss -tulpn: t = TCP, u = UDP, l = Listening, p = แสดง Process, n = ตัวเลข ไม่แปลงเป็นชื่อ ควรใช้ sudo เพื่อเห็น Process ของผู้ใช้อื่น', '{ss,port}', true, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('5718c858-1020-4652-9789-1d2f2f1629ae', 'sql:02-aggregations-grouping:q01', 3, '10413c74-c724-4168-99e9-fc7c279fb980', 'หากต้องการค้นหา IP Address ที่ส่งคำขอ Login Failed มากกว่า 10 ครั้ง ควรเขียนเงื่อนไขกรองจำนวนครั้งที่จุดใด?', 'คุณกำลังตรวจสอบเหตุการณ์ Brute-force Attack ในฐานข้อมูลระบบยืนยันตัวตน', 'medium', 'multiple_choice', 'เงื่อนไขที่ตรวจสอบผลลัพธ์จากฟังก์ชันรวบรวมข้อมูล เช่น COUNT(*) > 10 จะต้องวางไว้ใน HAVING clause เท่านั้น ไม่สามารถวางใน WHERE clause ได้เพราะ WHERE ทำงานก่อนที่ข้อมูลจะถูกรวบกลุ่ม', '{sql,group-by,having,security}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('48ef625d-f83d-4e25-9661-d28975cfb48c', 'sql:02-aggregations-grouping:q02', 3, '10413c74-c724-4168-99e9-fc7c279fb980', 'ตาราง tickets มีทั้งหมด 100 แถว โดยมีคอลัมน์ resolved_by ที่มีค่าว่าง (NULL) อยู่ 20 แถว ผลลัพธ์ของ COUNT(*) และ COUNT(resolved_by) จะเป็นเท่าใดตามลำดับ?', 'หัวหน้างานสอบถามยอดสรุป Ticket ทั้งหมด และ Ticket ที่แก้เสร็จแล้ว', 'easy', 'multiple_choice', 'COUNT(*) นับแถวทั้งหมดไม่ว่าจะมีค่า NULL หรือไม่ จึงได้ 100 ส่วน COUNT(column_name) จะละเว้นแถวที่เป็น NULL จึงนับเฉพาะแถวที่มีค่า คือ 100 - 20 = 80', '{sql,count,"null",aggregates}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('e39e6e87-df02-4e08-a4a3-ddfce1e64731', 'sql:03-indexes-performance:q01', 3, '0ec2fdf6-2627-408b-9791-35963b5fe97e', 'เมื่อสั่ง EXPLAIN ANALYZE บนตารางขนาด 5 ล้านแถว แล้วพบคำว่า ''Seq Scan on orders (cost=0.00..184500.00 rows=1 width=64) (actual time=0.021..1420.350 ms)'' ปัญหานี้ควรแก้ไขอย่างไร?', 'หน้าประวัติคำสั่งซื้อของลูกค้าโหลดช้าผิดปกติ ใช้เวลามากกว่า 1.5 วินาทีต่อครั้ง', 'medium', 'multiple_choice', 'Seq Scan บนตารางขนาดใหญ่บ่งชี้ว่า Database ต้องกวาดอ่านทุกบล็อกในดิสก์เพราะไม่มี Index ตรงกับเงื่อนไขใน WHERE clause การสร้าง B-Tree Index บนคอลัมน์ที่ถูกค้นหาจะเปลี่ยนเป็น Index Scan และลดเวลาเหลือต่ำกว่า 5ms', '{sql,performance,index,explain}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('442a963b-7185-4a91-9925-5d292b0ec6cd', 'sql:03-indexes-performance:q02', 3, '0ec2fdf6-2627-408b-9791-35963b5fe97e', 'หากพบว่ามี Query ตัวหนึ่งทำงานค้างมานานกว่า 30 นาที และดึง CPU สูงจน Database ไม่ตอบสนอง คุณควรใช้คำสั่งใดใน PostgreSQL เพื่อตัดเซสชันและยกเลิกคำสั่งนั้นทันที?', 'เกิดเหตุการณ์ฉุกเฉินบนระบบ Production จำเป็นต้องหยุด Query อันตรายที่มี pid = 12450', 'medium', 'multiple_choice', 'SELECT pg_terminate_backend(pid) จะสั่งตัดการเชื่อมต่อ (terminate) ของเซสชันนั้นทันที ส่วน pg_cancel_backend จะพยายามส่งสัญญาณยกเลิกคำสั่งอย่างสุภาพแต่หาก Query ติด I/O หรือ Lock อาจไม่หยุด', '{sql,postgresql,kill-query,troubleshooting}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('264fa5d3-53b8-42c9-9879-5fe87517011a', 'troubleshooting:01-incident-triage-methodology:q01', 6, '11fc305a-c347-452a-8cbb-f81491cb8cae', 'เมื่อเกิดเหตุการณ์ระบบชำระเงินล่มทั้งระบบ (Sev 1 Critical Incident) เป้าหมายสูงสุดข้อแรกของทีม Incident Management คืออะไร?', 'ระบบตัดบัตรเครดิตล่มในวันแคมเปญ 11.11 ทำให้ลูกค้าสั่งซื้อไม่ได้', 'easy', 'multiple_choice', 'ตามมาตรฐาน ITIL และ SRE เป้าหมายอันดับหนึ่งของ Incident Management คือการกู้คืนระบบให้กลับมาให้บริการได้เร็วที่สุด (Restore Service / ลด MTTR) เช่น การ Rollback หรือ Failover ส่วนการหาสาเหตุที่แท้จริงจะทำในกระบวนการ Problem Management หลังจากระบบออนไลน์แล้ว', '{troubleshooting,itil,incident-management,sev1}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('d2bfba71-09f3-46d0-aacd-24c38ff4e835', 'docker:01-container-basics:q01', 5, 'cf0d4598-1c64-4a7f-b8c9-d6a18307a0f9', 'หากรันคำสั่ง docker ps แล้วไม่พบ Container ของฐานข้อมูล แต่เมื่อรัน docker ps -a กลับพบว่าสถานะคือ ''Exited (1) 2 minutes ago'' คุณควรทำขั้นตอนใดต่อไปเป็นอันดับแรก?', 'ระบบแจ้งเตือนว่าฐานข้อมูลดับลงและไม่สามารถเข้าใช้งานได้', 'easy', 'multiple_choice', 'เมื่อ Container อยู่ในสถานะ Exited บ่งบอกว่า Container ดับลง ขั้นตอนแรกที่ถูกต้องคือการดู Log ด้วย docker logs <container_name> เพื่อหาสาเหตุของ Error หรือ Panic ที่ทำให้โปรเซสดับ', '{docker,logs,troubleshooting}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('0fc16af1-29b0-41f4-af69-ba9e1cd8aa60', 'docker:01-container-basics:q02', 5, 'cf0d4598-1c64-4a7f-b8c9-d6a18307a0f9', 'คำสั่งใดใช้เปิด Interactive Shell เพื่อเข้าไปตรวจสอบไฟล์คอนฟิกและสภาพแวดล้อมภายใน Container ชื่อ api_gateway ที่กำลังรันอยู่?', 'คุณต้องการเข้าไปทดสอบรันคำสั่ง curl ภายใน Container ไปยัง Backend', 'easy', 'multiple_choice', 'docker exec -it <container_name> <command> โดย -i (interactive) และ -t (allocate pseudo-TTY) ร่วมกับคำสั่ง shell เช่น sh หรือ bash คือวิธีมาตรฐานในการเข้าไปใน Container', '{docker,exec,cli}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('32ec1200-c002-4d27-b0d8-89f96f2d05d5', 'troubleshooting:01-incident-triage-methodology:q02', 6, '11fc305a-c347-452a-8cbb-f81491cb8cae', 'ในการ Triage ปัญหาทางเทคนิค คำถามใดต่อไปนี้ถือเป็น ''คำถามทองคำ'' ที่มักนำไปสู่ต้นตอของปัญหาได้เร็วที่สุด?', 'ระบบที่เคยทำงานได้ตามปกติมาตลอด 6 เดือน จู่ๆ วันนี้เริ่มแสดงข้อผิดพลาด', 'easy', 'multiple_choice', 'ระบบคอมพิวเตอร์ที่เคยทำงานได้ปกติมักไม่พังขึ้นมาเองโดยไม่มีเหตุผล กว่า 80-90% ของ Incident เกิดจากการเปลี่ยนแปลง (Change) เช่น การดีพลอยโค้ดใหม่, แก้ไขคอนฟิก, เปลี่ยนใบรับรอง, หรืออัปเดตแพตช์ OS', '{troubleshooting,methodology,triage}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('9a165cbe-1a6d-41a7-994d-d7f2c50274c7', 'troubleshooting:02-root-cause-escalation:q01', 6, '782f94c6-acb3-408b-b091-a093bf7d0c40', 'ข้อมูลใดต่อไปนี้มีความจำเป็นและช่วยให้ทีมผู้พัฒนา (Developer) สามารถสืบสวนและแก้ไขปัญหาที่ส่งต่อมาได้อย่างรวดเร็วที่สุด?', 'ในฐานะ Tier 1 Support คุณกำลังเขียน Ticket ส่งต่อปัญหา (Escalation) ไปยังทีม Dev', 'easy', 'multiple_choice', 'Ticket ที่มีคุณภาพต้องระบุ Request/Response หรือ Error Log ที่ชัดเจน, Transaction/Order ID ที่เกิดปัญหา, เวลาที่เริ่มพบปัญหา และสิ่งที่ทีม Support ได้ทำการทดสอบคัดกรองไปแล้ว เพื่อที่ Dev จะได้ไม่ต้องเสียเวลาเริ่มต้นถามใหม่ตั้งแต่ศูนย์', '{troubleshooting,escalation,support-skills}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('cad3c17c-591e-452d-bc6f-28238eee28f1', 'troubleshooting:02-root-cause-escalation:q02', 6, '782f94c6-acb3-408b-b091-a093bf7d0c40', 'หัวใจหลักของแนวคิด ''Blameless Post-Mortem'' ในกระบวนการ RCA หลังเกิดระบบล่มคืออะไร?', 'การประชุมสรุปบทเรียนหลังจากเหตุการณ์ระบบล่มครั้งใหญ่', 'easy', 'multiple_choice', 'Blameless Post-Mortem เชื่อว่ามนุษย์ทุกคนมีโอกาสผิดพลาดได้ หัวใจสำคัญไม่ใช่การหาตัวคนผิดมาลงโทษ แต่เป็นการปรับปรุงกระบวนการและสร้างระบบป้องกันที่ทำให้ความผิดพลาดของมนุษย์ไม่สามารถพังระบบได้', '{troubleshooting,rca,blameless,culture}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('e6ac9105-39ae-46e1-85cb-1df0720cf127', 'web-api:01-http-status-codes:q01', 4, '8cd3f8e6-7571-47ca-bd5b-cd313f6179c6', 'ผู้ใช้งานเปิดหน้าเว็บแล้วพบข้อผิดพลาด ''502 Bad Gateway'' จาก Nginx ข้อใดคือสาเหตุที่เป็นไปได้มากที่สุด?', 'ระบบแจ้งเตือนว่าหน้าเว็บล่ม Nginx ส่ง 502 Bad Gateway กลับมายัง Client', 'medium', 'multiple_choice', '502 Bad Gateway เกิดจากตัว Reverse Proxy (Nginx) พยายามส่งต่อคำขอไปยัง Backend Upstream Service แต่ Backend ดับอยู่ ไม่ได้เปิดพอร์ต หรือแครช ทำให้เกิด Connection Refused', '{web,http,status-codes,502,nginx}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('5b92c358-a418-4117-a664-1c45579f5e01', 'web-api:01-http-status-codes:q02', 4, '8cd3f8e6-7571-47ca-bd5b-cd313f6179c6', 'ความแตกต่างระหว่างรหัส HTTP 401 Unauthorized และ 403 Forbidden คือข้อใด?', 'คำถามสัมภาษณ์งานตำแหน่ง Technical Support Engineer', 'easy', 'multiple_choice', '401 คือไม่พบข้อมูลยืนยันตัวตน (ยังไม่ได้ Login หรือ Token ผิด/หมดอายุ) ส่วน 403 คือระบบรู้จักตัวตนแล้วแต่ผู้ใช้นั้นไม่มีสิทธิ์ (No Permission) ในการเข้าถึงทรัพยากรนั้น', '{web,http,auth,interview}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('web-api:01-http-status-codes:fc01', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-http-status-codes' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), 'ความแตกต่างระหว่าง HTTP Status Code หมวด 4xx และ 5xx คืออะไร?', '4xx: Client Error (ความผิดพลาดจากฝั่งผู้เรียก เช่น ส่งข้อมูลผิด, ไม่ได้ล็อกอิน)
-5xx: Server Error (ความผิดพลาดจากฝั่งระบบ/เซิร์ฟเวอร์ เช่น แอปแครช, DB ล่ม, Proxy Timeout)', 'Client Error vs Server Error', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
 
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('web-api:01-http-status-codes:fc02', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-http-status-codes' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), '502 Bad Gateway เกิดขึ้นจากสาเหตุใดในระบบที่มี Reverse Proxy?', 'Reverse Proxy (เช่น Nginx) ไม่สามารถเชื่อมต่อกับ Upstream Backend ได้ เนื่องจาก Backend แครชล่ม, ดับอยู่ หรือพอร์ตไม่ตรง (Connection Refused)', 'Upstream Backend ตายหรือไม่เปิดพอร์ต', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
+--
+-- Data for Name: quiz_session_answers; Type: TABLE DATA; Schema: public; Owner: -
+--
 
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('web-api:01-http-status-codes:fc03', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-http-status-codes' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), '504 Gateway Timeout ต่างจาก 502 Bad Gateway อย่างไร?', '502: Backend ดับ/ตายสนิทเชื่อมต่อไม่ติดทันที
-504: Backend ยังรันอยู่ แต่ประมวลผลนานเกินกำหนด (มักติด Slow Query ใน Database) จน Proxy ตัดการเชื่อมต่อไปก่อน', 'ตายสนิท vs ตอบกลับช้าจนเกินเวลา', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
+INSERT INTO public.quiz_session_answers VALUES ('a3e368c3-e706-4a41-b116-5441f455c133', '7571bf0c-0ae7-4810-9108-51213de7c566', '1ac01c44-5005-4ecb-88fc-c771eb4dae59', NULL, true, '2026-11-04 07:20:41.409499+00');
+INSERT INTO public.quiz_session_answers VALUES ('ac35cba6-ce27-4c0e-94b2-9116f40d3ede', '7571bf0c-0ae7-4810-9108-51213de7c566', '1fabb88c-d4d0-4b99-b096-f544592a7eae', NULL, true, '2026-11-04 07:20:41.409499+00');
+INSERT INTO public.quiz_session_answers VALUES ('3420d263-0ff4-46a7-be38-760c234ac7de', '7571bf0c-0ae7-4810-9108-51213de7c566', '26fe4415-b506-49a7-90b7-1aff3eeabb25', NULL, false, '2026-11-04 07:20:41.409499+00');
+INSERT INTO public.quiz_session_answers VALUES ('30ee2422-531f-42cd-9ff1-346dca871020', '7571bf0c-0ae7-4810-9108-51213de7c566', 'a2110b46-0e41-4ae6-898e-582052248f0b', NULL, true, '2026-11-04 07:20:41.409499+00');
+INSERT INTO public.quiz_session_answers VALUES ('6f77e269-652a-4250-8ebd-eaddca549553', '7571bf0c-0ae7-4810-9108-51213de7c566', 'd18c78fa-edc9-4d07-bcee-55e19d3afd37', NULL, false, '2026-11-04 07:20:41.409499+00');
 
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('web-api:01-http-status-codes:fc04', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-http-status-codes' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), '401 Unauthorized กับ 403 Forbidden ต่างกันอย่างไร?', '401: ไม่พบข้อมูลยืนยันตัวตน (ยังไม่ได้ Login หรือ Token ผิด/หมดอายุ)
-403: ยืนยันตัวตนแล้วแต่ไม่มีสิทธิ์เข้าถึงทรัพยากรนั้น (Permission Denied)', 'Authentication vs Authorization', 4)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
 
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('web-api:01-http-status-codes:fc05', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-http-status-codes' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), 'HTTP Status Code 429 มีความหมายว่าอย่างไร?', 'Too Many Requests (ผู้ใช้ส่ง Request ถี่เกินโควตาที่กำหนดและโดน Rate Limiter บล็อกไว้)', 'Rate limit exceeded', 5)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
+--
+-- Data for Name: quiz_sessions; Type: TABLE DATA; Schema: public; Owner: -
+--
 
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('web-api:02-curl-api-testing:fc01', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-curl-api-testing' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), 'แฟล็ก -i กับ -I ใน curl ต่างกันอย่างไร?', '-I (ตัวใหญ่): ส่ง HEAD request เพื่อแสดงเฉพาะ HTTP Response Header เท่านั้น
--i (ตัวเล็ก): ส่ง request ปกติแต่ให้แสดงผลลัพธ์ทั้ง Headers และ Body', 'HEAD only vs Headers + Body', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
+INSERT INTO public.quiz_sessions VALUES ('7571bf0c-0ae7-4810-9108-51213de7c566', 1, 'all', 5, 3, 60.00, 178, true, '2026-11-04 07:17:42.645449+00', '2026-11-04 07:20:41.409499+00');
+INSERT INTO public.quiz_sessions VALUES ('6674bd76-8b42-4af3-89c8-fbf7936ab56f', NULL, 'all', 5, 0, 0.00, 0, false, '2026-11-04 10:43:30.412302+00', NULL);
+INSERT INTO public.quiz_sessions VALUES ('f5c75795-3eb2-4381-ad9f-55282b74d00d', NULL, 'all', 5, 0, 0.00, 0, false, '2026-11-04 10:43:39.672117+00', NULL);
 
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('web-api:02-curl-api-testing:fc02', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-curl-api-testing' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), 'แฟล็ก -k หรือ --insecure ใน curl มีประโยชน์อะไรและมีความเสี่ยงอย่างไร?', 'ประโยชน์: สั่งให้ข้ามการตรวจสอบใบรับรอง SSL/TLS (ใช้ทดสอบ Self-signed cert ภายใน)
-ความเสี่ยง: เสี่ยงต่อการถูกดักข้อมูลแบบ Man-in-the-Middle ห้ามใช้บน Production สคริปต์', 'Bypass SSL certificate check', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
 
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('web-api:02-curl-api-testing:fc03', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-curl-api-testing' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), 'แฟล็ก -w ใน curl ใช้สำหรับทำอะไรในงาน Support?', 'ใช้จัดรูปแบบแสดงค่า Latency Breakdown (เวลา Resolve DNS, เวลา TCP Handshake, เวลาต่อ SSL, และ Time to First Byte)', 'Latency & timing breakdown metrics', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
+--
+-- Data for Name: study_activity; Type: TABLE DATA; Schema: public; Owner: -
+--
 
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('web-api:03-ssl-tls-certificates:fc01', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-ssl-tls-certificates' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), 'ห่วงโซ่ความเชื่อถือ (Chain of Trust) ของ SSL/TLS ประกอบด้วยอะไรบ้าง?', '1. Root CA (ฝังอยู่ใน OS/เบราว์เซอร์)
-2. Intermediate CA (ผู้ออกใบรับรองระดับกลาง)
-3. Server / Leaf Certificate (ใบรับรองของเว็บไซต์เรา)', 'Root -> Intermediate -> Leaf', 1)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
+INSERT INTO public.study_activity VALUES ('361ec8ba-a717-4315-afb0-f8573722b1ac', 'lesson', 'b1a10001-0000-0000-0000-000000000001', '2026-11-04', '2026-11-04 10:41:53.044441+00');
+INSERT INTO public.study_activity VALUES ('bc655e2d-7f4c-44cb-bf8e-b3e2a9157363', 'flashcard', 'd1a10001-0000-0000-0000-000000000001', '2026-11-04', '2026-11-04 13:06:34.69043+00');
+INSERT INTO public.study_activity VALUES ('d6027f00-54d5-464d-ba47-572878ad091e', 'lesson', 'd610df66-7525-44ca-9e83-02b4749afe01', '2026-11-05', '2026-11-05 03:49:48.222839+00');
 
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('web-api:03-ssl-tls-certificates:fc02', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-ssl-tls-certificates' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), 'ทำไมเบราว์เซอร์จึงขึ้นเตือน ''unable to get local issuer certificate''?', 'เกิดจากเว็บเซิร์ฟเวอร์ส่งเฉพาะ Leaf Cert แต่ไม่ได้ใส่ไฟล์ Intermediate CA Bundle ลงไปด้วย ทำให้เบราว์เซอร์ต่อสายโซ่กลับไปยัง Root CA ไม่ได้', 'Missing intermediate CA bundle (Fullchain)', 2)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
 
-INSERT INTO flashcards (seed_key, topic_id, lesson_id, front_text, back_text, hint, display_order)
-VALUES ('web-api:03-ssl-tls-certificates:fc03', (SELECT id FROM topics WHERE slug = 'web-api'), (SELECT id FROM lessons WHERE slug = 'web-ssl-tls-certificates' AND topic_id = (SELECT id FROM topics WHERE slug = 'web-api')), 'หลังเปลี่ยนไฟล์ SSL Certificate บน Nginx หรือ Apache ต้องทำสิ่งใดเป็นขั้นตอนสุดท้ายเสมอ?', 'สั่ง Reload หรือ Restart เว็บเซิร์ฟเวอร์ (เช่น sudo systemctl reload nginx) เพื่อให้อ่านไฟล์ใบรับรองใหม่เข้า RAM', 'systemctl reload nginx', 3)
-ON CONFLICT (seed_key) DO UPDATE SET
-  topic_id = EXCLUDED.topic_id,
-  lesson_id = EXCLUDED.lesson_id,
-  front_text = EXCLUDED.front_text,
-  back_text = EXCLUDED.back_text,
-  hint = EXCLUDED.hint,
-  display_order = EXCLUDED.display_order,
-  updated_at = CURRENT_TIMESTAMP;
+--
+-- Data for Name: topics; Type: TABLE DATA; Schema: public; Owner: -
+--
 
-COMMIT;
+INSERT INTO public.topics VALUES (10, 'datacenter', 'Data Center & Hardware Ops', 'สายสัญญาณ Fiber/Copper, ฮาร์ดแวร์เซิร์ฟเวอร์, iDRAC/iLO, SAN Zoning, ระบบไฟ UPS/ATS, Hot/Cold Aisle และเทคนิคสัมภาษณ์ DC', 'Server', 'from-orange-500 to-amber-600', 7, true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.topics VALUES (5, 'docker', 'Docker & Containers', 'Docker Command, Container Lifecycle, Log, Networking และการแก้ปัญหา Container ล่ม', 'Container', 'from-sky-500 to-blue-600', 5, true, '2026-11-03 09:22:14.247234+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.topics VALUES (1, 'linux', 'Linux Administration', 'คำสั่งพื้นฐาน, การจัดการสิทธิ์ไฟล์, Process, Service systemctl และการวิเคราะห์ Log', 'Terminal', 'from-amber-500 to-orange-600', 1, true, '2026-11-03 09:22:14.247234+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.topics VALUES (2, 'network', 'Network Troubleshooting', 'TCP/IP, IP/Subnet, DNS, Routing, Port, Firewall และเครื่องมือวิเคราะห์เครือข่าย', 'Network', 'from-blue-500 to-cyan-600', 2, true, '2026-11-03 09:22:14.247234+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.topics VALUES (3, 'sql', 'SQL & Database Essentials', 'PostgreSQL Query, JOIN, Aggregations, Index, Performance และการตรวจสอบปัญหา DB', 'Database', 'from-emerald-500 to-teal-600', 3, true, '2026-11-03 09:22:14.247234+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.topics VALUES (6, 'troubleshooting', 'Incident & Troubleshooting', 'ขั้นตอนวิเคราะห์ Root Cause, วิธีการไล่ปัญหาอย่างเป็นระบบ (Methodology) และ ITIL', 'Wrench', 'from-rose-500 to-pink-600', 6, true, '2026-11-03 09:22:14.247234+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.topics VALUES (4, 'web-api', 'Web & HTTP/API', 'HTTP Status Codes, Headers, REST API, curl, SSL/TLS Handshake และ Web Server', 'Globe', 'from-purple-500 to-indigo-600', 4, true, '2026-11-03 09:22:14.247234+00', '2026-11-04 15:19:45.48554+00');
+
+
+--
+-- Name: topics_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.topics_id_seq', 16, true);
+
+
+--
+-- Name: bookmarks bookmarks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bookmarks
+    ADD CONSTRAINT bookmarks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: choices choices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.choices
+    ADD CONSTRAINT choices_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: flashcards flashcards_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.flashcards
+    ADD CONSTRAINT flashcards_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: flashcards flashcards_seed_key_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.flashcards
+    ADD CONSTRAINT flashcards_seed_key_key UNIQUE (seed_key);
+
+
+--
+-- Name: lesson_progress lesson_progress_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lesson_progress
+    ADD CONSTRAINT lesson_progress_pkey PRIMARY KEY (lesson_id);
+
+
+--
+-- Name: lessons lessons_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lessons
+    ADD CONSTRAINT lessons_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: questions questions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.questions
+    ADD CONSTRAINT questions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: questions questions_seed_key_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.questions
+    ADD CONSTRAINT questions_seed_key_key UNIQUE (seed_key);
+
+
+--
+-- Name: quiz_session_answers quiz_session_answers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.quiz_session_answers
+    ADD CONSTRAINT quiz_session_answers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: quiz_sessions quiz_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.quiz_sessions
+    ADD CONSTRAINT quiz_sessions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: study_activity study_activity_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.study_activity
+    ADD CONSTRAINT study_activity_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: topics topics_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.topics
+    ADD CONSTRAINT topics_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: topics topics_slug_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.topics
+    ADD CONSTRAINT topics_slug_key UNIQUE (slug);
+
+
+--
+-- Name: bookmarks uq_bookmarks_item; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bookmarks
+    ADD CONSTRAINT uq_bookmarks_item UNIQUE (item_type, item_id);
+
+
+--
+-- Name: lessons uq_topic_lesson_slug; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lessons
+    ADD CONSTRAINT uq_topic_lesson_slug UNIQUE (topic_id, slug);
+
+
+--
+-- Name: idx_choices_question; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_choices_question ON public.choices USING btree (question_id);
+
+
+--
+-- Name: idx_flashcards_lesson; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_flashcards_lesson ON public.flashcards USING btree (lesson_id);
+
+
+--
+-- Name: idx_flashcards_topic; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_flashcards_topic ON public.flashcards USING btree (topic_id);
+
+
+--
+-- Name: idx_lesson_progress_completed; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_lesson_progress_completed ON public.lesson_progress USING btree (completed_at);
+
+
+--
+-- Name: idx_lessons_topic_order; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_lessons_topic_order ON public.lessons USING btree (topic_id, display_order);
+
+
+--
+-- Name: idx_questions_lesson; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_questions_lesson ON public.questions USING btree (lesson_id);
+
+
+--
+-- Name: idx_questions_tags; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_questions_tags ON public.questions USING gin (tags);
+
+
+--
+-- Name: idx_questions_topic_diff; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_questions_topic_diff ON public.questions USING btree (topic_id, difficulty);
+
+
+--
+-- Name: idx_quiz_answers_question; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_quiz_answers_question ON public.quiz_session_answers USING btree (question_id);
+
+
+--
+-- Name: idx_quiz_answers_session; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_quiz_answers_session ON public.quiz_session_answers USING btree (session_id);
+
+
+--
+-- Name: idx_quiz_sessions_topic; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_quiz_sessions_topic ON public.quiz_sessions USING btree (topic_id);
+
+
+--
+-- Name: idx_study_activity_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_study_activity_date ON public.study_activity USING btree (activity_date);
+
+
+--
+-- Name: idx_topics_slug; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_topics_slug ON public.topics USING btree (slug);
+
+
+--
+-- Name: uq_choices_one_correct; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_choices_one_correct ON public.choices USING btree (question_id) WHERE is_correct;
+
+
+--
+-- Name: choices choices_question_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.choices
+    ADD CONSTRAINT choices_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.questions(id) ON DELETE CASCADE;
+
+
+--
+-- Name: flashcards flashcards_lesson_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.flashcards
+    ADD CONSTRAINT flashcards_lesson_id_fkey FOREIGN KEY (lesson_id) REFERENCES public.lessons(id) ON DELETE SET NULL;
+
+
+--
+-- Name: flashcards flashcards_topic_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.flashcards
+    ADD CONSTRAINT flashcards_topic_id_fkey FOREIGN KEY (topic_id) REFERENCES public.topics(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lesson_progress lesson_progress_lesson_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lesson_progress
+    ADD CONSTRAINT lesson_progress_lesson_id_fkey FOREIGN KEY (lesson_id) REFERENCES public.lessons(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lessons lessons_topic_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lessons
+    ADD CONSTRAINT lessons_topic_id_fkey FOREIGN KEY (topic_id) REFERENCES public.topics(id) ON DELETE CASCADE;
+
+
+--
+-- Name: questions questions_lesson_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.questions
+    ADD CONSTRAINT questions_lesson_id_fkey FOREIGN KEY (lesson_id) REFERENCES public.lessons(id) ON DELETE SET NULL;
+
+
+--
+-- Name: questions questions_topic_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.questions
+    ADD CONSTRAINT questions_topic_id_fkey FOREIGN KEY (topic_id) REFERENCES public.topics(id) ON DELETE CASCADE;
+
+
+--
+-- Name: quiz_session_answers quiz_session_answers_question_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.quiz_session_answers
+    ADD CONSTRAINT quiz_session_answers_question_id_fkey FOREIGN KEY (question_id) REFERENCES public.questions(id) ON DELETE CASCADE;
+
+
+--
+-- Name: quiz_session_answers quiz_session_answers_selected_choice_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.quiz_session_answers
+    ADD CONSTRAINT quiz_session_answers_selected_choice_id_fkey FOREIGN KEY (selected_choice_id) REFERENCES public.choices(id) ON DELETE SET NULL;
+
+
+--
+-- Name: quiz_session_answers quiz_session_answers_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.quiz_session_answers
+    ADD CONSTRAINT quiz_session_answers_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.quiz_sessions(id) ON DELETE CASCADE;
+
+
+--
+-- Name: quiz_sessions quiz_sessions_topic_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.quiz_sessions
+    ADD CONSTRAINT quiz_sessions_topic_id_fkey FOREIGN KEY (topic_id) REFERENCES public.topics(id) ON DELETE SET NULL;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+
