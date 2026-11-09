@@ -69,7 +69,16 @@ async function run() {
     await client.query(schemaSql);
     console.log(`Schema created successfully.`);
 
-    // 2. Run Seed (02-seed.sql)
+    // 2. Run Migration (03-progress-streak.sql)
+    const migrationFile = path.join(rootDir, 'db/init/03-progress-streak.sql');
+    if (fs.existsSync(migrationFile)) {
+      console.log(`Executing migration: ${migrationFile}...`);
+      const migrationSql = fs.readFileSync(migrationFile, 'utf8');
+      await client.query(migrationSql);
+      console.log(`Migration loaded successfully.`);
+    }
+
+    // 3. Run Seed (02-seed.sql)
     const seedFile = path.join(rootDir, 'db/init/02-seed.sql');
     if (fs.existsSync(seedFile)) {
       console.log(`Executing seed data: ${seedFile}...`);
