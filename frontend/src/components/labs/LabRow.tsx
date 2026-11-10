@@ -17,6 +17,7 @@ const TOPIC_LABELS: Record<Lab['topic'], string> = {
   'web-api': 'Web & API',
   docker: 'Docker',
   troubleshooting: 'Troubleshooting',
+  datacenter: 'Data Center',
 };
 
 const DIFFICULTY_LABELS: Record<Lab['difficulty'], string> = {

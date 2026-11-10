@@ -91,6 +91,11 @@ export function formatSidebarTitle(title: string): string {
     // Incident & Troubleshooting
     'ลำดับการ Triage ปัญหาและระเบียบวิธีวิเคราะห์ Incident เชิงระบบ': 'ลำดับ Triage & Sev Matrix',
     'เทคนิค 5 Whys, การทำ RCA และการส่งต่อเคส (Escalation) อย่างมือโปร': 'เทคนิค 5 Whys & RCA',
+    'กระบวนการทำงาน IT Support มืออาชีพ: ITIL, SLA, การเขียน Ticket และ Escalation (ITIL & SLA Operations)': 'ITIL, SLA & การเขียน Ticket',
+    'การจัดการ Windows Domain เบื้องต้น: Active Directory, GPO และแก้ปัญหา Login ในองค์กร (Active Directory & GPO)': 'Windows AD, GPO & Domain',
+    'การดูแลระบบอีเมลองค์กร Microsoft 365 และตรวจสอบ SPF, DKIM, DMARC (M365 & Email Authentication)': 'M365 & อีเมล SPF/DKIM/DMARC',
+    'การแก้ปัญหา Network Printer, Print Spooler, SMB Share และ VPN ในสำนักงาน (Office IT & Endpoint Troubleshooting)': 'แก้ปัญหา Printer, SMB & VPN',
+    'กลยุทธ์การสำรองข้อมูล (3-2-1 Backup Rule), RTO vs RPO และการรับมือเหตุการณ์ Ransomware (Backup, DR & Incident Response)': 'กฎ 3-2-1 Backup, RTO/RPO & DR',
 
     // Data Center & Hardware Ops
     'ระบบสายสัญญาณ ไฟเบอร์ออปติก และ Transceiver (Cabling, Fiber & Optics)': 'สายสัญญาณ & Fiber Optics',

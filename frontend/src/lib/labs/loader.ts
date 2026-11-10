@@ -4,6 +4,8 @@ import servicePortConflictRaw from '@/content/labs/service-port-conflict.json';
 import permissionDeniedRaw from '@/content/labs/permission-denied.json';
 import dnsFailureRaw from '@/content/labs/dns-failure.json';
 import logHuntRaw from '@/content/labs/log-hunt.json';
+import vlanGatewayMismatchRaw from '@/content/labs/vlan-gateway-mismatch.json';
+import raidDegradedSmartRaw from '@/content/labs/raid-degraded-smart.json';
 
 const VALID_TOPICS = new Set([
   'linux',
@@ -12,6 +14,7 @@ const VALID_TOPICS = new Set([
   'web-api',
   'docker',
   'troubleshooting',
+  'datacenter',
 ]);
 
 const VALID_DIFFICULTIES = new Set(['beginner', 'intermediate', 'advanced']);
@@ -145,6 +148,8 @@ const ALL_LABS: Lab[] = [
   validateLab(permissionDeniedRaw, 'permission-denied.json'),
   validateLab(dnsFailureRaw, 'dns-failure.json'),
   validateLab(logHuntRaw, 'log-hunt.json'),
+  validateLab(vlanGatewayMismatchRaw, 'vlan-gateway-mismatch.json'),
+  validateLab(raidDegradedSmartRaw, 'raid-degraded-smart.json'),
 ];
 
 export function getAllLabs(): Lab[] {

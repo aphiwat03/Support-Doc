@@ -4,7 +4,8 @@ export type LabTopic =
   | 'sql'
   | 'web-api'
   | 'docker'
-  | 'troubleshooting';
+  | 'troubleshooting'
+  | 'datacenter';
 
 export type LabDifficulty = 'beginner' | 'intermediate' | 'advanced';
 

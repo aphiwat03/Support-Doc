@@ -1,0 +1,162 @@
+{
+  "slug": "vlan-gateway-mismatch",
+  "title": "เซิร์ฟเวอร์ย้ายตู้แร็คแล้วออกเครือข่ายไม่ได้ (VLAN & Default Gateway ผิด)",
+  "topic": "network",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 10,
+  "relatedLessons": [
+    "network-switching-vlan-trunk",
+    "network-ip-subnetting",
+    "network-osi-layered-troubleshooting"
+  ],
+  "ticket": {
+    "id": "INC-1204",
+    "severity": "P2",
+    "reporter": "ทีม Data Center Operations",
+    "summary": "ย้ายเครื่อง app-node-04 ไปยังพอร์ต VLAN 20 (10.20.20.0/24) แล้วเชื่อมต่อฐานข้อมูล 10.10.50.10 ไม่ได้",
+    "detail": "ทีมหน้างานเปลี่ยน IP ของ eth0 เป็น 10.20.20.45/24 แล้ว แต่ยัง ping ข้ามวงไปยัง 10.10.50.10 ไม่ผ่าน (Network is unreachable / 100% packet loss)"
+  },
+  "runbook": [
+    "ตรวจสอบ IP Address และ Subnet ของอินเทอร์เฟซด้วยคำสั่ง ip addr หรือ ip -br addr",
+    "ตรวจสอบตารางเส้นทางด้วยคำสั่ง ip route และเปิดอ่านไฟล์ตั้งค่าเครือข่าย /etc/netplan/01-netcfg.yaml",
+    "ทดสอบ ping ไปยัง Default Gateway ที่ถูกต้องของ VLAN 20 ด้วยคำสั่ง ping -c 2 10.20.20.1 เพื่อพิสูจน์ว่าสวิตช์พอร์ตทำงานปกติ",
+    "ส่งรายงานต่อให้ทีม Infra/SysAdmin ด้วยคำสั่ง escalate \"<ระบุสาเหตุ gateway ผิดเป็น 10.20.10.1 ใน /etc/netplan/01-netcfg.yaml>\""
+  ],
+  "host": {
+    "hostname": "app-node-04",
+    "user": "support",
+    "cwd": "/home/support"
+  },
+  "world": {
+    "fs": [
+      {
+        "path": "/etc/netplan",
+        "type": "dir",
+        "mode": "0755",
+        "owner": "root",
+        "group": "root",
+        "mtime": "2026-11-10T08:00:00Z"
+      },
+      {
+        "path": "/etc/netplan/01-netcfg.yaml",
+        "type": "file",
+        "content": "network:\n  version: 2\n  renderer: networkd\n  ethernets:\n    eth0:\n      addresses:\n        - 10.20.20.45/24\n      routes:\n        - to: default\n          via: 10.20.10.1\n      nameservers:\n        addresses: [10.10.1.53]\n",
+        "mode": "0644",
+        "owner": "root",
+        "group": "root",
+        "mtime": "2026-11-10T08:15:00Z"
+      },
+      {
+        "path": "/etc/hosts",
+        "type": "file",
+        "content": "127.0.0.1 localhost\n10.20.20.45 app-node-04\n",
+        "mode": "0644",
+        "owner": "root",
+        "group": "root",
+        "mtime": "2026-11-01T00:00:00Z"
+      }
+    ],
+    "disks": [
+      {
+        "device": "/dev/sda1",
+        "mount": "/",
+        "sizeBytes": 32212254720,
+        "otherUsedBytes": 8589934592
+      }
+    ],
+    "memory": {
+      "totalMB": 7980,
+      "usedMB": 1420,
+      "freeMB": 5200,
+      "buffCacheMB": 1360
+    },
+    "processes": [
+      {
+        "pid": 1,
+        "user": "root",
+        "cpu": 0.0,
+        "mem": 0.2,
+        "command": "/sbin/init"
+      }
+    ],
+    "services": [],
+    "network": {
+      "interfaces": [
+        {
+          "name": "lo",
+          "state": "UNKNOWN",
+          "addr": "127.0.0.1/8"
+        },
+        {
+          "name": "eth0",
+          "state": "UP",
+          "addr": "10.20.20.45/24"
+        }
+      ],
+      "routes": [
+        "default via 10.20.10.1 dev eth0 proto static onlink",
+        "10.20.20.0/24 dev eth0 proto kernel scope link src 10.20.20.45"
+      ]
+    }
+  },
+  "scripted": [
+    {
+      "match": "^ping\\s+(-c\\s+\\d+\\s+)?10\\.20\\.20\\.1$",
+      "stdout": "PING 10.20.20.1 (10.20.20.1) 56(84) bytes of data.\n64 bytes from 10.20.20.1: icmp_seq=1 ttl=64 time=0.65 ms\n64 bytes from 10.20.20.1: icmp_seq=2 ttl=64 time=0.58 ms\n\n--- 10.20.20.1 ping statistics ---\n2 packets transmitted, 2 received, 0% packet loss, time 1001ms\nrtt min/avg/max/mdev = 0.580/0.615/0.650/0.035 ms",
+      "exitCode": 0
+    },
+    {
+      "match": "^ping\\s+(-c\\s+\\d+\\s+)?10\\.20\\.10\\.1$",
+      "stdout": "PING 10.20.10.1 (10.20.10.1) 56(84) bytes of data.\nFrom 10.20.20.45 icmp_seq=1 Destination Host Unreachable\nFrom 10.20.20.45 icmp_seq=2 Destination Host Unreachable\n\n--- 10.20.10.1 ping statistics ---\n2 packets transmitted, 0 received, +2 errors, 100% packet loss, time 1014ms",
+      "exitCode": 1
+    },
+    {
+      "match": "^ping\\s+(-c\\s+\\d+\\s+)?10\\.10\\.50\\.10$",
+      "stdout": "PING 10.10.50.10 (10.10.50.10) 56(84) bytes of data.\nFrom 10.20.20.45 icmp_seq=1 Destination Host Unreachable\n\n--- 10.10.50.10 ping statistics ---\n1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms",
+      "exitCode": 1
+    }
+  ],
+  "goals": [
+    {
+      "id": "g1",
+      "text": "ตรวจสอบ IP Address และตารางเส้นทางด้วย ip addr และ ip route",
+      "check": {
+        "type": "commandMatched",
+        "pattern": "^ip\\s+(route|r)\\b"
+      }
+    },
+    {
+      "id": "g2",
+      "text": "เปิดอ่านไฟล์ /etc/netplan/01-netcfg.yaml จนพบค่า Default Gateway ที่ตั้งไว้ผิด (10.20.10.1)",
+      "check": {
+        "type": "outputContains",
+        "substring": "via: 10.20.10.1"
+      }
+    },
+    {
+      "id": "g3",
+      "text": "ทดสอบ ping ไปยัง Gateway ที่ถูกต้องของ VLAN 20 (10.20.20.1)",
+      "check": {
+        "type": "commandMatched",
+        "pattern": "^ping\\s+.*10\\.20\\.20\\.1"
+      }
+    },
+    {
+      "id": "g4",
+      "text": "ส่งโน้ต escalate ระบุว่าเป็นปัญหา Default Gateway/netplan และแจ้ง IP 10.20.10.1",
+      "check": {
+        "type": "escalationValid",
+        "mustMention": [
+          ["gateway", "route", "netplan", "vlan"],
+          ["10.20.10.1", "10.20.20.1"]
+        ]
+      }
+    }
+  ],
+  "hints": [
+    "ลองรัน ip -br addr และ ip route เพื่อดูว่า Default Gateway ชี้ไปที่วงเดียวกันกับ IP ของเครื่องหรือไม่",
+    "เปิดดูไฟล์ตั้งค่าด้วย cat /etc/netplan/01-netcfg.yaml แล้วทดสอบ ping -c 2 10.20.20.1",
+    "ส่งต่อข้อมูลด้วยคำสั่ง escalate \"Default gateway in /etc/netplan/01-netcfg.yaml is still set to old VLAN 10 gateway 10.20.10.1 instead of 10.20.20.1\""
+  ],
+  "debrief": "สรุปบทเรียน: เมื่อย้ายเซิร์ฟเวอร์ข้าม VLAN การเปลี่ยนเฉพาะ IP Address โดยลืมอัปเดต Default Gateway ให้ตรงกับ Subnet ใหม่จะทำให้เครื่องติดต่อได้เฉพาะในวงเดียวกันแต่ข้ามวงไม่ได้ การตรวจด้วย ip addr คู่กับ ip route และทดสอบ ping Gateway (10.20.20.1) ช่วยแยกแยะได้ทันทีว่าพอร์ตสวิตช์ VLAN 20 ปกติแต่ติดที่ค่า Gateway ในไฟล์ Netplan"
+}

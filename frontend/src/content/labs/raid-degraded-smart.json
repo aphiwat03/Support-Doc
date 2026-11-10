@@ -1,0 +1,169 @@
+{
+  "slug": "raid-degraded-smart",
+  "title": "ดิสก์เซิร์ฟเวอร์แจ้งเตือนไฟสีส้มและ RAID ตกสถานะ Degraded",
+  "topic": "datacenter",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 10,
+  "relatedLessons": [
+    "dc-storage-raid-smart",
+    "dc-hardware-troubleshooting-sel"
+  ],
+  "ticket": {
+    "id": "INC-1290",
+    "severity": "P2",
+    "reporter": "NOC Monitoring Alert",
+    "summary": "เซิร์ฟเวอร์ db-store-02 แจ้งเตือน RAID Array /dev/md0 Degraded และไฟหน้า Drive Bay กะพริบสีส้ม",
+    "detail": "ต้องการให้ทีมระบุชื่อดิสก์ที่เสีย (เช่น /dev/sda หรือ /dev/sdb), ดึงหมายเลข Serial Number จาก SMART และตรวจสอบบันทึก SEL ก่อนส่งต่อให้ช่างหน้างานทำ Hot-Swap"
+  },
+  "runbook": [
+    "ตรวจสอบสถานะ Software RAID ด้วยคำสั่ง cat /proc/mdstat หรือ mdadm --detail /dev/md0 เพื่อดูว่าดิสก์ลูกใดขึ้นสถานะ Faulty (F)",
+    "ดึงข้อมูลสุขภาพ SMART และหมายเลข Serial Number ของดิสก์ลูกที่เสียด้วยคำสั่ง smartctl -a /dev/sdb",
+    "ตรวจสอบบันทึกเหตุการณ์ฮาร์ดแวร์ของ BMC ด้วยคำสั่ง ipmitool sel elist เพื่อยืนยันช่องเสียบดิสก์ (Drive Bay)",
+    "ส่งรายงานเปิดเคสเคลมดิสก์ด้วยคำสั่ง escalate \"<ระบุชื่อดิสก์ที่เสียและหมายเลข Serial Number WD-WCC4N7K9921X>\""
+  ],
+  "host": {
+    "hostname": "db-store-02",
+    "user": "support",
+    "cwd": "/home/support"
+  },
+  "world": {
+    "fs": [
+      {
+        "path": "/proc",
+        "type": "dir",
+        "mode": "0555",
+        "owner": "root",
+        "group": "root",
+        "mtime": "2026-11-10T00:00:00Z"
+      },
+      {
+        "path": "/proc/mdstat",
+        "type": "file",
+        "content": "Personalities : [raid1] [raid10]\nmd0 : active raid1 sdb1[1](F) sda1[0]\n      937697280 blocks super 1.2 [2/1] [U_]\n      bitmap: 4/7 pages [16KB], 65536KB chunk\n\nunused devices: <none>\n",
+        "mode": "0444",
+        "owner": "root",
+        "group": "root",
+        "mtime": "2026-11-10T09:10:00Z"
+      }
+    ],
+    "disks": [
+      {
+        "device": "/dev/md0",
+        "mount": "/",
+        "sizeBytes": 960199999488,
+        "otherUsedBytes": 412316860416
+      }
+    ],
+    "memory": {
+      "totalMB": 32768,
+      "usedMB": 12400,
+      "freeMB": 8368,
+      "buffCacheMB": 12000
+    },
+    "processes": [
+      {
+        "pid": 1,
+        "user": "root",
+        "cpu": 0.1,
+        "mem": 0.1,
+        "command": "/sbin/init"
+      },
+      {
+        "pid": 842,
+        "user": "postgres",
+        "cpu": 4.2,
+        "mem": 18.5,
+        "command": "/usr/lib/postgresql/16/bin/postgres"
+      }
+    ],
+    "services": [],
+    "network": {
+      "interfaces": [
+        {
+          "name": "lo",
+          "state": "UNKNOWN",
+          "addr": "127.0.0.1/8"
+        },
+        {
+          "name": "eth0",
+          "state": "UP",
+          "addr": "10.30.10.22/24"
+        }
+      ],
+      "routes": [
+        "default via 10.30.10.1 dev eth0 proto static"
+      ],
+      "dmesg": [
+        "[14201.112] ata2.00: exception Emask 0x0 SAct 0x0 SErr 0x0 action 0x0",
+        "[14201.114] blk_update_request: I/O error, dev sdb, sector 48192008",
+        "[14201.118] md/raid1:md0: Disk failure on sdb1, disabling device.",
+        "[14201.119] md/raid1:md0: Operation continuing on 1 devices."
+      ]
+    }
+  },
+  "scripted": [
+    {
+      "match": "^mdadm\\s+--detail\\s+/dev/md0$",
+      "stdout": "/dev/md0:\n           Version : 1.2\n        Raid Level : raid1\n     Raid Devices : 2\n             State : clean, degraded\n    Active Devices : 1\n   Working Devices : 1\n    Failed Devices : 1\n\n    Number   Major   Minor   RaidDevice State\n       0       8        1        0      active sync   /dev/sda1\n       1       8       17        -      faulty        /dev/sdb1",
+      "exitCode": 0
+    },
+    {
+      "match": "^smartctl\\s+(-[aHi]+\\s+)+/dev/sdb$",
+      "stdout": "=== START OF INFORMATION SECTION ===\nDevice Model:     WDC WD1003FBYZ-010FB0\nSerial Number:    WD-WCC4N7K9921X\nUser Capacity:    1,000,204,886,016 bytes [1.00 TB]\n\n=== START OF READ SMART DATA SECTION ===\nSMART overall-health self-assessment test result: FAILED!\nDrive failure expected in less than 24 hours. SAVE ALL DATA.\n\nID# ATTRIBUTE_NAME          FLAG     VALUE WORST THRESH TYPE      UPDATED  WHEN_FAILED RAW_VALUE\n  5 Reallocated_Sector_Ct   0x0033   012   012   140    Pre-fail  Always   FAILING_NOW 1842\n197 Current_Pending_Sector  0x0032   198   198   000    Old_age   Always       -       64\n198 Offline_Uncorrectable   0x0030   198   198   000    Offline   Offline      -       64",
+      "exitCode": 0
+    },
+    {
+      "match": "^smartctl\\s+(-[aHi]+\\s+)+/dev/sda$",
+      "stdout": "=== START OF INFORMATION SECTION ===\nDevice Model:     WDC WD1003FBYZ-010FB0\nSerial Number:    WD-WCC4N7K8810A\nUser Capacity:    1,000,204,886,016 bytes [1.00 TB]\n\n=== START OF READ SMART DATA SECTION ===\nSMART overall-health self-assessment test result: PASSED\n  5 Reallocated_Sector_Ct   0x0033   200   200   140    Pre-fail  Always       -       0",
+      "exitCode": 0
+    },
+    {
+      "match": "^ipmitool\\s+sel\\s+(elist|list)$",
+      "stdout": "   1 | 11/10/2026 | 09:09:58 | Drive Slot / Bay #0x02 | Drive Fault | Asserted\n   2 | 11/10/2026 | 09:10:01 | Storage / RAID #0x45 | Redundancy Degraded | Asserted",
+      "exitCode": 0
+    }
+  ],
+  "goals": [
+    {
+      "id": "g1",
+      "text": "ตรวจสถานะ RAID Array ด้วย cat /proc/mdstat หรือ mdadm --detail /dev/md0",
+      "check": {
+        "type": "outputContains",
+        "substring": "sdb1"
+      }
+    },
+    {
+      "id": "g2",
+      "text": "ดึงค่า SMART และ Serial Number ของดิสก์ที่เสียด้วย smartctl -a /dev/sdb",
+      "check": {
+        "type": "outputContains",
+        "substring": "WD-WCC4N7K9921X"
+      }
+    },
+    {
+      "id": "g3",
+      "text": "ตรวจสอบบันทึกเหตุการณ์ฮาร์ดแวร์ด้วยคำสั่ง ipmitool sel elist",
+      "check": {
+        "type": "commandMatched",
+        "pattern": "^ipmitool\\s+sel\\s+(elist|list)"
+      }
+    },
+    {
+      "id": "g4",
+      "text": "ส่งโน้ต escalate ระบุชื่อดิสก์ที่เสีย (sdb) และหมายเลข Serial Number (WD-WCC4N7K9921X)",
+      "check": {
+        "type": "escalationValid",
+        "mustMention": [
+          ["sdb", "bay", "raid"],
+          ["wd-wcc4n7k9921x"]
+        ]
+      }
+    }
+  ],
+  "hints": [
+    "ลองรัน cat /proc/mdstat หรือ mdadm --detail /dev/md0 เพื่อดูว่าดิสก์ลูกใดขึ้นสถานะ (F) Faulty",
+    "รัน smartctl -a /dev/sdb เพื่ออ่านค่า Serial Number และรัน ipmitool sel elist เพื่อดูหมายเลข Drive Bay",
+    "ส่งต่อให้ทีมหน้างานด้วยคำสั่ง escalate \"RAID1 /dev/md0 degraded due to faulty disk /dev/sdb (Bay 2, Serial: WD-WCC4N7K9921X) with 1842 Reallocated Sectors\""
+  ],
+  "debrief": "สรุปบทเรียน: เมื่อเกิดไฟสีส้มกะพริบที่ช่องดิสก์และ RAID ตกสถานะ Degraded ช่างเทคนิคต้องตรวจสอบจาก /proc/mdstat หรือ mdadm ก่อนว่าดิสก์ก้อนใดเสีย (/dev/sdb) จากนั้นใช้ smartctl -a ดึงค่า Serial Number และใช้ ipmitool sel elist ยืนยันช่องเสียบ (Bay 2) เพื่อป้องกันการดึงดิสก์ผิดลูกขณะทำ Hot-Swap"
+}

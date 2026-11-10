@@ -10,6 +10,7 @@ const FILTER_TABS: Array<{ id: 'all' | LabTopic; label: string }> = [
   { id: 'all', label: 'ทั้งหมด' },
   { id: 'linux', label: 'Linux' },
   { id: 'network', label: 'Network' },
+  { id: 'datacenter', label: 'Data Center' },
 ];
 
 export default function LabsListPage() {

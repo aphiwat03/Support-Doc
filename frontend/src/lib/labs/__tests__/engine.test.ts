@@ -156,9 +156,9 @@ describe('Phase 10 — Interactive Terminal Sandbox Engine', () => {
   });
 
   describe('4. Lab Schema Validation & Goal Evaluators', () => {
-    it('loads all 5 labs with valid schema', () => {
+    it('loads all 7 labs with valid schema', () => {
       const labs = getAllLabs();
-      expect(labs.length).toBe(5);
+      expect(labs.length).toBe(7);
       for (const lab of labs) {
         expect(() => validateLab(lab, lab.slug)).not.toThrow();
       }
@@ -197,7 +197,7 @@ describe('Phase 10 — Interactive Terminal Sandbox Engine', () => {
     });
   });
 
-  describe('6. End-to-End Solution Walkthrough for All 5 Labs', () => {
+  describe('6. End-to-End Solution Walkthrough for All 7 Labs', () => {
     it('Lab 1: disk-full completes 100% of goals along solution path', () => {
       const lab = getLabBySlug('disk-full')!;
       let world = createInitialWorld(lab);
@@ -276,6 +276,46 @@ describe('Phase 10 — Interactive Terminal Sandbox Engine', () => {
 
       const evalResult = evaluateLabGoals(world, lab);
       expect(evalResult.statuses.map((s) => s.completed)).toEqual([true, true, true]);
+      expect(evalResult.allCompleted).toBe(true);
+    });
+
+    it('Lab 6: vlan-gateway-mismatch completes 100% of goals along solution path', () => {
+      const lab = getLabBySlug('vlan-gateway-mismatch')!;
+      let world = createInitialWorld(lab);
+
+      world = execLine(world, 'ip route', { lab }).world;
+      world = execLine(world, 'cat /etc/netplan/01-netcfg.yaml', { lab }).world;
+      world = execLine(world, 'ping -c 2 10.20.20.1', { lab }).world;
+      const escRes = execLine(
+        world,
+        'escalate "Default gateway in /etc/netplan/01-netcfg.yaml is set to old VLAN 10 gateway 10.20.10.1"',
+        { lab }
+      );
+      world = escRes.world;
+      expect(escRes.exitCode).toBe(0);
+
+      const evalResult = evaluateLabGoals(world, lab);
+      expect(evalResult.statuses.map((s) => s.completed)).toEqual([true, true, true, true]);
+      expect(evalResult.allCompleted).toBe(true);
+    });
+
+    it('Lab 7: raid-degraded-smart completes 100% of goals along solution path', () => {
+      const lab = getLabBySlug('raid-degraded-smart')!;
+      let world = createInitialWorld(lab);
+
+      world = execLine(world, 'cat /proc/mdstat', { lab }).world;
+      world = execLine(world, 'smartctl -a /dev/sdb', { lab }).world;
+      world = execLine(world, 'ipmitool sel elist', { lab }).world;
+      const escRes = execLine(
+        world,
+        'escalate "RAID1 degraded on /dev/sdb (Bay 2, Serial WD-WCC4N7K9921X)"',
+        { lab }
+      );
+      world = escRes.world;
+      expect(escRes.exitCode).toBe(0);
+
+      const evalResult = evaluateLabGoals(world, lab);
+      expect(evalResult.statuses.map((s) => s.completed)).toEqual([true, true, true, true]);
       expect(evalResult.allCompleted).toBe(true);
     });
   });
