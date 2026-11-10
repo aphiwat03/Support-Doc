@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { execFileSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -11,6 +12,23 @@ const dumpsDir = path.join(dbDir, 'dumps');
 if (!fs.existsSync(dumpsDir)) {
   fs.mkdirSync(dumpsDir, { recursive: true });
 }
+
+// Simple .env parser
+const env = {};
+const envPath = path.join(rootDir, '.env');
+if (fs.existsSync(envPath)) {
+  fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      const [key, ...values] = trimmed.split('=');
+      env[key.trim()] = values.join('=').trim();
+    }
+  });
+}
+
+const dbUser = process.env.DB_USER || env.DB_USER || 'postgres';
+const dbName = process.env.DB_NAME || env.DB_NAME || 'support_knowledge_db';
+const containerName = process.env.DB_CONTAINER || 'support_postgres';
 
 function cleanPgDump(sql, isDataOnly = false) {
   let cleaned = sql
@@ -24,7 +42,7 @@ function cleanPgDump(sql, isDataOnly = false) {
 
   if (isDataOnly && !cleaned.includes('TRUNCATE TABLE')) {
     const truncateStmt = `
--- Clean existing rows before inserting full dump seed
+-- Clean existing rows before inserting full dump data
 TRUNCATE TABLE
   public.study_activity,
   public.lesson_progress,
@@ -49,18 +67,48 @@ RESTART IDENTITY CASCADE;
 
 const fullDumpPath = path.join(dumpsDir, 'support_knowledge_db_full.sql');
 const dataOnlyPath = path.join(dumpsDir, 'support_knowledge_db_data.sql');
-const initSeedPath = path.join(dbDir, 'init', '02-seed.sql');
 
-if (fs.existsSync(fullDumpPath)) {
-  const rawDump = fs.readFileSync(fullDumpPath, 'utf8');
-  fs.writeFileSync(fullDumpPath, cleanPgDump(rawDump, false), 'utf8');
-  console.log('Verified db/dumps/support_knowledge_db_full.sql');
-}
+console.log(`Exporting live PostgreSQL database "${dbName}" from container "${containerName}"...`);
 
-if (fs.existsSync(dataOnlyPath)) {
-  const rawSeed = fs.readFileSync(dataOnlyPath, 'utf8');
-  const cleanedSeed = cleanPgDump(rawSeed, true);
-  fs.writeFileSync(dataOnlyPath, cleanedSeed, 'utf8');
-  fs.writeFileSync(initSeedPath, cleanedSeed, 'utf8');
-  console.log('Verified db/dumps/support_knowledge_db_data.sql and db/init/02-seed.sql');
-}
+const rawFull = execFileSync(
+  'docker',
+  [
+    'exec',
+    containerName,
+    'pg_dump',
+    '-U',
+    dbUser,
+    '-d',
+    dbName,
+    '--clean',
+    '--if-exists',
+    '--no-owner',
+    '--no-privileges',
+    '--inserts',
+  ],
+  { encoding: 'utf8', maxBuffer: 50 * 1024 * 1024 }
+);
+
+const rawData = execFileSync(
+  'docker',
+  [
+    'exec',
+    containerName,
+    'pg_dump',
+    '-U',
+    dbUser,
+    '-d',
+    dbName,
+    '--data-only',
+    '--no-owner',
+    '--no-privileges',
+    '--inserts',
+  ],
+  { encoding: 'utf8', maxBuffer: 50 * 1024 * 1024 }
+);
+
+fs.writeFileSync(fullDumpPath, cleanPgDump(rawFull, false), 'utf8');
+console.log(`✅ Dumped full schema + data -> db/dumps/support_knowledge_db_full.sql`);
+
+fs.writeFileSync(dataOnlyPath, cleanPgDump(rawData, true), 'utf8');
+console.log(`✅ Dumped data-only -> db/dumps/support_knowledge_db_data.sql`);

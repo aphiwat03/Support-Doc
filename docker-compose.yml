@@ -12,7 +12,9 @@ services:
       - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./db/init:/docker-entrypoint-initdb.d:ro
+      - ./db/init/01-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./db/dumps/support_knowledge_db_data.sql:/docker-entrypoint-initdb.d/02-data.sql:ro
+      - ./db/init/03-progress-streak.sql:/docker-entrypoint-initdb.d/03-progress-streak.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-support_knowledge_db}"]
       interval: 10s

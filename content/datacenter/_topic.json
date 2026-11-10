@@ -1,8 +1,0 @@
-{
-  "slug": "datacenter",
-  "title": "Data Center & Hardware Ops",
-  "description": "สายสัญญาณ Fiber/Copper, ฮาร์ดแวร์เซิร์ฟเวอร์, iDRAC/iLO, SAN Zoning, ระบบไฟ UPS/ATS, Hot/Cold Aisle และเทคนิคสัมภาษณ์ DC",
-  "icon": "Server",
-  "color": "from-orange-500 to-amber-600",
-  "display_order": 7
-}

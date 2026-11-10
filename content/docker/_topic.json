@@ -1,8 +1,0 @@
-{
-  "slug": "docker",
-  "title": "Docker & Containers",
-  "description": "Docker Command, Container Lifecycle, Log, Networking และการแก้ปัญหา Container ล่ม",
-  "icon": "Container",
-  "color": "from-sky-500 to-blue-600",
-  "display_order": 5
-}

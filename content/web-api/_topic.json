@@ -1,8 +1,0 @@
-{
-  "slug": "web-api",
-  "title": "Web & HTTP/API",
-  "description": "HTTP Status Codes, Headers, REST API, curl, SSL/TLS Handshake และ Web Server",
-  "icon": "Globe",
-  "color": "from-purple-500 to-indigo-600",
-  "display_order": 4
-}

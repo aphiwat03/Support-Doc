@@ -1,8 +1,0 @@
-{
-  "slug": "sql",
-  "title": "SQL & Database Essentials",
-  "description": "PostgreSQL Query, JOIN, Aggregations, Index, Performance และการตรวจสอบปัญหา DB",
-  "icon": "Database",
-  "color": "from-emerald-500 to-teal-600",
-  "display_order": 3
-}

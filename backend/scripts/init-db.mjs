@@ -78,13 +78,13 @@ async function run() {
       console.log(`Migration loaded successfully.`);
     }
 
-    // 3. Run Seed (02-seed.sql)
-    const seedFile = path.join(rootDir, 'db/init/02-seed.sql');
-    if (fs.existsSync(seedFile)) {
-      console.log(`Executing seed data: ${seedFile}...`);
-      const seedSql = fs.readFileSync(seedFile, 'utf8');
-      await client.query(seedSql);
-      console.log(`Seed data loaded successfully.`);
+    // 3. Restore Data Dump (db/dumps/support_knowledge_db_data.sql)
+    const dataDumpFile = path.join(rootDir, 'db/dumps/support_knowledge_db_data.sql');
+    if (fs.existsSync(dataDumpFile)) {
+      console.log(`Restoring database dump: ${dataDumpFile}...`);
+      const dumpSql = fs.readFileSync(dataDumpFile, 'utf8');
+      await client.query(dumpSql);
+      console.log(`Database dump restored successfully.`);
     }
 
     // Verify record counts

@@ -65,6 +65,12 @@ export function formatSidebarTitle(title: string): string {
     'การทำงานของระบบ DNS และเทคนิคการสืบค้น (dig, nslookup)': 'ระบบ DNS & dig',
     'วิเคราะห์เส้นทางและ Latency ด้วย ping, traceroute และ mtr': 'เส้นทาง & Latency (mtr)',
     'TCP Handshake, สถานะพอร์ต และความต่าง Connection Refused vs Timed Out': 'TCP Handshake & Port',
+    'โมเดล OSI/TCP-IP และการวิเคราะห์ปัญหาเครือข่ายทีละชั้น (OSI & Layered Troubleshooting)': 'OSI 7 Layers & วิเคราะห์ทีละชั้น',
+    'การทำงานของ Switch, ARP, VLAN และ Trunk 802.1Q (Switching & VLANs)': 'Switch, ARP, VLAN & Trunk',
+    'ระบบแจกไอพี DHCP และการแปลงแอดเดรส NAT/PAT (DHCP & Network Address Translation)': 'ระบบ DHCP & NAT/PAT',
+    'คำสั่งสำรวจและตรวจสอบเครือข่าย Cisco/Network CLI (Show Commands & Diagnostics)': 'คำสั่ง Cisco CLI & Show',
+    'ถอดรหัสปัญหา Layer 1 และ Layer 2 หน้างาน (L1/L2 Troubleshooting & Storms)': 'ปัญหา L1/L2, STP & LACP',
+    'การดักจับและวิเคราะห์แพ็กเก็ตด้วย tcpdump และ Wireshark (Packet Capture & Analysis)': 'Packet Capture (tcpdump)',
 
     // SQL
     'Master รูปแบบ SQL JOIN และการประยุกต์ใช้งานจริง': 'รูปแบบ SQL JOIN',

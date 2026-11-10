@@ -352,6 +352,7 @@ INSERT INTO public.choices VALUES ('66b8d85e-4c32-4a54-8ede-59cadd26bb73', '7dc9
 INSERT INTO public.choices VALUES ('73b75a06-c32b-4b43-8d34-e79a7f9eb9ae', '7dc94aeb-fbb7-495c-b1a6-e0e7a616e571', 'หมายเลขพอร์ต TCP 80 และ 443', false, 'TCP 80/443 เป็นพอร์ตของ HTTP/HTTPS', 2);
 INSERT INTO public.choices VALUES ('f194ccdb-2eff-4ceb-beff-e2fed80b67b1', '7dc94aeb-fbb7-495c-b1a6-e0e7a616e571', 'ชื่อโดเมนเว็บไซต์ในไฟล์ /etc/resolv.conf', false, 'ไม่เกี่ยวข้องกับ Fibre Channel Zoning', 3);
 INSERT INTO public.choices VALUES ('5a10fcc5-5c39-4dd7-beca-8274b30c5e4f', '7dc94aeb-fbb7-495c-b1a6-e0e7a616e571', 'หมายเลข Serial Number ของพัดลมระบายความร้อน', false, 'ไม่เกี่ยวข้องกับระบบ SAN', 4);
+INSERT INTO public.choices VALUES ('6182029a-f11d-4ee7-8b72-df54fe8efbbc', '6e981c68-db2f-4533-9f5d-8a923e156a67', 'Frame และ Packet', true, 'ถูกต้อง Layer 2 = Frame, Layer 3 = Packet', 1);
 INSERT INTO public.choices VALUES ('0c34e859-6396-4277-bdc5-2988451fbd01', 'a917b677-c0d8-4beb-9d74-003d1ecba5d7', 'UPS จ่ายไฟจากแบตเตอรี่ทันทีเพื่อประคองระบบช่วงสั้นๆ ส่วน ATS ทำหน้าที่สลับแหล่งจ่ายไฟระหว่างไฟการไฟฟ้ากับเครื่องปั่นไฟ (Generator) อัตโนมัติ', true, 'ถูกต้อง', 1);
 INSERT INTO public.choices VALUES ('9e56322a-c562-46fe-b850-b75a845c0082', 'a917b677-c0d8-4beb-9d74-003d1ecba5d7', 'UPS ใช้ดับเพลิงเมื่อเกิดไฟไหม้ ส่วน ATS ใช้ทำความเย็นให้ตู้แร็ค', false, 'ทั้งคู่เป็นอุปกรณ์ในระบบไฟฟ้ากำลัง', 2);
 INSERT INTO public.choices VALUES ('20b50d60-e7f2-4c85-ba14-ff1fa4c68ba4', 'a917b677-c0d8-4beb-9d74-003d1ecba5d7', 'ATS คือแบตเตอรี่สำรองไฟ ส่วน UPS คือเครื่องปั่นไฟดีเซล', false, 'สลับความหมายและหน้าที่กัน', 3);
@@ -371,6 +372,7 @@ INSERT INTO public.choices VALUES ('080d7a79-ce4a-4b73-aef9-7bc6afa0823f', '6f37
 INSERT INTO public.choices VALUES ('5ba1e7ab-e087-482c-90d6-ddbda7ef0325', '6f372fdb-946b-43aa-a8a4-868bc32651ea', 'ถังดับเพลิงชนิดผงเคมีแห้งสีแดงฉีดพ่นเข้าไปในพัดลมเซิร์ฟเวอร์', false, 'ผงเคมีแห้งมีความเป็นกรดและกัดกร่อนแผงวงจรเมนบอร์ดทุกเครื่องในห้องจนพัง', 3);
 INSERT INTO public.choices VALUES ('71ca36fa-4985-436c-96d7-577dd67ba353', '6f372fdb-946b-43aa-a8a4-868bc32651ea', 'โฟมเคมีผสมน้ำเกลือ', false, 'นำไฟฟ้าอย่างรุนแรง ห้ามใช้กับอุปกรณ์ไฟฟ้า', 4);
 INSERT INTO public.choices VALUES ('ccaa39fd-3003-488c-bfae-ac99ae8a0758', '583a1f9b-0196-4bd5-b6ca-18b2fd163774', 'ตั้งสติ ไม่สับเบรกเกอร์หลักของทั้งตู้แร็ค ประเมินความปลอดภัย ตรวจสอบสถานะ Redundant PSU ถอดเฉพาะสายไฟของลูก PSU ที่มีปัญหา และแจ้งหัวหน้าทีม/NOC ทันที', true, 'ถูกต้อง แสดงถึงความรอบคอบ มีสติ และเข้าใจผลกระทบต่อระบบส่วนรวม (Blast radius)', 1);
+INSERT INTO public.choices VALUES ('cc8e11ac-e1e9-4b29-a332-e8637c4c478a', '892ec4d9-193b-40fa-a7c6-71c4e3031c2d', 'pwd', true, 'ถูกต้อง — แสดงเส้นทางเต็มของโฟลเดอร์ที่กำลังทำงานอยู่ปัจจุบัน', 1);
 INSERT INTO public.choices VALUES ('5f13781e-84fe-458f-8a78-65d0b019463d', '583a1f9b-0196-4bd5-b6ca-18b2fd163774', 'รีบวิ่งไปสับเบรกเกอร์ไฟหลักของทั้งตู้แร็คลงทันทีโดยไม่ต้องแจ้งใคร', false, 'จะทำให้เซิร์ฟเวอร์เครื่องอื่นทั้งตู้แร็คดับทั้งหมดโดยไม่จำเป็น', 2);
 INSERT INTO public.choices VALUES ('5c3adc1f-9305-4f90-a15e-69cf86bea955', '583a1f9b-0196-4bd5-b6ca-18b2fd163774', 'ทุบกระจกกดปุ่ม EPO (Emergency Power Off) เพื่อตัดไฟทั้งอาคาร Data Center ทันที', false, 'ปุ่ม EPO ใช้เฉพาะกรณีเกิดภัยพิบัติร้ายแรงถึงชีวิตเท่านั้น การกดโดยไม่จำเป็นจะทำให้ทั้งศูนย์ข้อมูลล่ม', 3);
 INSERT INTO public.choices VALUES ('340bc71b-0648-4774-a937-787628ab7aca', '583a1f9b-0196-4bd5-b6ca-18b2fd163774', 'เพิกเฉยและเดินผ่านไปเหมือนไม่มีอะไรเกิดขึ้นเพราะเห็นว่าเซิร์ฟเวอร์ยังไม่ดับ', false, 'ขาดความรับผิดชอบ ต้องตรวจสอบและรายงานเพื่อเปลี่ยน PSU ลูกที่เสีย', 4);
@@ -398,7 +400,7 @@ INSERT INTO public.choices VALUES ('91f3cdee-bc8a-4132-ae39-6c9bed01f524', 'c1a1
 INSERT INTO public.choices VALUES ('1066ba17-9cef-419c-a742-9e64633b8826', 'c1a10001-0000-0000-0000-000000000001', 'chmod 644 deploy.sh', false, NULL, 2);
 INSERT INTO public.choices VALUES ('c141e7aa-24cf-423a-b0ce-10590e64688d', 'c1a10001-0000-0000-0000-000000000001', 'chmod 777 deploy.sh', false, NULL, 3);
 INSERT INTO public.choices VALUES ('146f1f0d-cfd8-4da0-80f2-706d203401f6', 'c1a10001-0000-0000-0000-000000000001', 'chmod 764 deploy.sh', false, NULL, 4);
-INSERT INTO public.choices VALUES ('cc8e11ac-e1e9-4b29-a332-e8637c4c478a', '892ec4d9-193b-40fa-a7c6-71c4e3031c2d', 'pwd', true, 'ถูกต้อง — แสดงเส้นทางเต็มของโฟลเดอร์ที่กำลังทำงานอยู่ปัจจุบัน', 1);
+INSERT INTO public.choices VALUES ('9ce6749e-c03b-47f9-99bd-f8c178194f2b', 'a41d9eb7-8d8e-4280-992f-cc029c329c9a', 'cd /', false, '`cd /` คือการย้ายไปยังรากสุดของระบบ (Root directory) และเป็น Absolute Path', 4);
 INSERT INTO public.choices VALUES ('613c7a6c-8806-4ce6-85c4-1080007ed23c', '892ec4d9-193b-40fa-a7c6-71c4e3031c2d', 'cd', false, 'cd ใช้สำหรับเปลี่ยนโฟลเดอร์ หากพิมพ์ cd เปล่าๆ จะพากลับไปยัง Home directory', 2);
 INSERT INTO public.choices VALUES ('79179020-9ec7-4fb9-8d38-a50615902723', '892ec4d9-193b-40fa-a7c6-71c4e3031c2d', 'whoami', false, 'whoami ใช้แสดงชื่อบัญชีผู้ใช้ปัจจุบัน ไม่ใช่ตำแหน่งโฟลเดอร์', 3);
 INSERT INTO public.choices VALUES ('1c54fbf8-ff71-4978-94ea-2434ce613243', '892ec4d9-193b-40fa-a7c6-71c4e3031c2d', 'ls -a', false, 'ls -a ใช้แสดงรายชื่อไฟล์ในโฟลเดอร์ปัจจุบัน ไม่ได้แสดงเส้นทางเต็ม', 4);
@@ -421,7 +423,7 @@ INSERT INTO public.choices VALUES ('bc146859-c6f6-42bc-b9ea-8eabcac651ba', 'ff93
 INSERT INTO public.choices VALUES ('b8b8c054-abb5-456d-9634-d164a6182a92', 'a41d9eb7-8d8e-4280-992f-cc029c329c9a', 'cd ..', true, 'ถูกต้อง — `..` แทนโฟลเดอร์แม่ 1 ชั้น', 1);
 INSERT INTO public.choices VALUES ('46e5bc6f-7be5-4c58-ae59-0454030653eb', 'a41d9eb7-8d8e-4280-992f-cc029c329c9a', 'cd .', false, '`.` หมายถึงโฟลเดอร์ปัจจุบัน การรัน `cd .` จึงยังคงอยู่ที่เดิม', 2);
 INSERT INTO public.choices VALUES ('a44e253a-3598-4168-8be1-4a6bf8f995ce', 'a41d9eb7-8d8e-4280-992f-cc029c329c9a', 'cd ~', false, '`~` หมายถึง Home directory ของผู้ใช้ เช่น `/home/support`', 3);
-INSERT INTO public.choices VALUES ('9ce6749e-c03b-47f9-99bd-f8c178194f2b', 'a41d9eb7-8d8e-4280-992f-cc029c329c9a', 'cd /', false, '`cd /` คือการย้ายไปยังรากสุดของระบบ (Root directory) และเป็น Absolute Path', 4);
+INSERT INTO public.choices VALUES ('dbf0ead7-22bc-47e1-b1e9-339ec4742237', '6e981c68-db2f-4533-9f5d-8a923e156a67', 'Packet และ Segment', false, 'ผิด Packet คือ Layer 3 ส่วน Segment คือ Layer 4', 2);
 INSERT INTO public.choices VALUES ('991f7d6a-07ef-4a68-83a2-5bd90682ed53', 'd7c21650-b866-4270-89b0-b1694c2881dd', 'cp -p app.conf app.conf.bak', true, 'ถูกต้อง — `-p` ช่วยคงค่า mode, ownership และ timestamps เดิมไว้', 1);
 INSERT INTO public.choices VALUES ('4845569d-8da0-40d2-82eb-c81941e03ee2', 'd7c21650-b866-4270-89b0-b1694c2881dd', 'mv app.conf app.conf.bak', false, 'mv เป็นการย้ายหรือเปลี่ยนชื่อไฟล์ จะทำให้ไฟล์ต้นฉบับ `app.conf` หายไปและกระทบแอปพลิเคชัน', 2);
 INSERT INTO public.choices VALUES ('75ff46bb-5d8b-41db-bdb9-9680a9031ade', 'd7c21650-b866-4270-89b0-b1694c2881dd', 'touch app.conf.bak', false, 'touch จะสร้างเพียงไฟล์เปล่าที่ไม่มีเนื้อหาข้างใน', 3);
@@ -469,6 +471,7 @@ INSERT INTO public.choices VALUES ('1017258d-1850-4249-a883-b4c1148b9b19', '90c7
 INSERT INTO public.choices VALUES ('1086a172-09b8-4a29-ba11-fb460337afcd', '90c789a2-b6f3-4c51-9a7a-df5d3e8f28e2', 'journalctl --list-failed', false, 'journalctl ใช้เปิดอ่าน Log ไม่มีตัวเลือก --list-failed', 4);
 INSERT INTO public.choices VALUES ('94f18c3e-d233-42c0-8f0f-01ca5c8211dd', '38b2cbc9-0ffb-4c2f-9042-fcd9bf03fa06', 'คือ Zombie Process ที่ทำงานจบไปแล้วแต่โปรเซสแม่ยังไม่อ่านสถานะจบงาน จึงไม่สามารถใช้ kill -9 สั่งฆ่าตัวมันซ้ำได้', true, 'ถูกต้อง — Zombie ไม่มีโค้ดรันอยู่แล้ว เหลือเพียงรายการในตารางโปรเซสที่รอโปรเซสแม่มาเก็บกวาด', 1);
 INSERT INTO public.choices VALUES ('d2c85bfa-1519-4662-ba60-2fb398ca77bd', '38b2cbc9-0ffb-4c2f-9042-fcd9bf03fa06', 'คือโปรเซสที่ถูกเข้ารหัสด้วยไวรัส ต้องใช้สิทธิ์ root รัน `pkill -f defunct` เท่านั้น', false, 'Zombie process เป็นกลไกปกติของตารางโปรเซสบน Linux ไม่ใช่ไวรัส', 2);
+INSERT INTO public.choices VALUES ('cf9a551f-dbd7-4e59-99c9-e5ae31b6f70f', 'ebbab95e-1663-4e95-9c8e-47efd927b2b5', 'grep -r "healthcheck" access.log | tail -n 20', false, 'จะแสดงเฉพาะบรรทัดที่มีคำว่า healthcheck เท่านั้น (ตรงข้ามกับที่ต้องการ)', 2);
 INSERT INTO public.choices VALUES ('f78ff077-1b24-4b38-b68b-73bdc35aa8c0', '38b2cbc9-0ffb-4c2f-9042-fcd9bf03fa06', 'คือโปรเซสที่กำลังบีบอัดไฟล์แบบ Zip (Z) และห้ามขัดจังหวะจนกว่าจะบีบอัดเสร็จ', false, 'ตัวอักษร Z ในคอลัมน์ STAT หมายถึง Zombie ไม่ใช่การบีบอัดไฟล์', 3);
 INSERT INTO public.choices VALUES ('4d805f1b-7f72-4b60-a62c-d3bdab45636a', '38b2cbc9-0ffb-4c2f-9042-fcd9bf03fa06', 'คือโปรเซสของ Kernel ที่ถูกล็อกด้วยฮาร์ดแวร์ ต้องถอดสายแลนออกก่อนจึงจะ kill ได้', false, 'ไม่เกี่ยวข้องกับสายแลนหรือการล็อกฮาร์ดแวร์', 4);
 INSERT INTO public.choices VALUES ('59c7390a-2dcf-4f2f-bf27-ac548e511f6b', 'd7eedd6d-d129-48c5-a471-bde470b716ee', 'journalctl -u nginx -n 100 -f', true, 'ถูกต้อง — ระบุยูนิต (-u), จำนวนบรรทัด (-n 100) และติดตามสด (-f)', 1);
@@ -496,7 +499,6 @@ INSERT INTO public.choices VALUES ('10219b8b-bcc1-40b3-8b34-e69da78dba35', 'a2fa
 INSERT INTO public.choices VALUES ('6403c9f9-7b35-43b0-902e-d1958aa38638', 'a2fad7a4-377c-4205-a3dd-ba2639d4f345', 'grep -c "IP" /var/log/nginx/access.log | sort -r | tail -n 5', false, 'ในไฟล์ log ไม่มีคำว่า "IP" ตรงๆ และ grep -c คืนค่าเป็นตัวเลขรวมบรรทัดเดียว', 3);
 INSERT INTO public.choices VALUES ('cd8b3c44-1327-4165-9204-df22c531c50c', 'a2fad7a4-377c-4205-a3dd-ba2639d4f345', 'cut -d'':'' -f1 /var/log/nginx/access.log | wc -l', false, 'คอลัมน์คั่นด้วยช่องว่างไม่ใช่โคลอน และ wc -l นับเพียงจำนวนบรรทัดทั้งหมด', 4);
 INSERT INTO public.choices VALUES ('945bc5fa-bd7a-42f9-88f2-6ae1aaecb705', 'ebbab95e-1663-4e95-9c8e-47efd927b2b5', 'grep -v "healthcheck" access.log | tail -n 20', true, 'ถูกต้อง — grep -v ใช้ตัดบรรทัดที่มีคำว่า healthcheck ออก', 1);
-INSERT INTO public.choices VALUES ('cf9a551f-dbd7-4e59-99c9-e5ae31b6f70f', 'ebbab95e-1663-4e95-9c8e-47efd927b2b5', 'grep -r "healthcheck" access.log | tail -n 20', false, 'จะแสดงเฉพาะบรรทัดที่มีคำว่า healthcheck เท่านั้น (ตรงข้ามกับที่ต้องการ)', 2);
 INSERT INTO public.choices VALUES ('793754a2-95fe-4d93-90d7-575688b9b05d', 'ebbab95e-1663-4e95-9c8e-47efd927b2b5', 'grep -E "healthcheck" access.log | head -n 20', false, 'แสดงเฉพาะบรรทัดที่มีคำว่า healthcheck 20 บรรทัดแรก', 3);
 INSERT INTO public.choices VALUES ('68ea6579-5e74-4692-b4db-a97cece643cc', 'ebbab95e-1663-4e95-9c8e-47efd927b2b5', 'uniq -v "healthcheck" access.log', false, 'คำสั่ง uniq ไม่มีตัวเลือก -v สำหรับกรองข้อความ', 4);
 INSERT INTO public.choices VALUES ('70146e4a-d7ac-4817-8cc3-55b90c445cf9', 'beef98a0-5be8-485d-84d7-dc1947afead4', 'เพราะคำสั่ง uniq จะรวมเฉพาะบรรทัดซ้ำที่อยู่ติดกันเท่านั้น ต้องใส่ `sort` คั่นก่อน `uniq -c` เสมอ', true, 'ถูกต้อง — การใช้ sort status.txt | uniq -c จะจัดกลุ่มให้คำเดียวกันอยู่ติดกันก่อนนับ', 1);
@@ -566,6 +568,7 @@ INSERT INTO public.choices VALUES ('996eb1c6-fb1b-4196-a818-7c8f60041747', '7bb9
 INSERT INTO public.choices VALUES ('a7651a9e-66dc-42e4-ba6b-66a6191e46a0', '26fe4415-b506-49a7-90b7-1aff3eeabb25', 'du -sh * | sort -h', true, 'ถูกต้อง — sort -h สามารถเปรียบเทียบหน่วย K, M, G จากผลลัพธ์ของ du -sh ได้อย่างแม่นยำ', 1);
 INSERT INTO public.choices VALUES ('874ef423-648c-4bcf-80fa-cc429f006360', '26fe4415-b506-49a7-90b7-1aff3eeabb25', 'df -h * | uniq -c', false, 'df ใช้ดูระดับพาร์ทิชัน และ uniq -c ไม่ใช่การเรียงขนาด', 2);
 INSERT INTO public.choices VALUES ('d801c315-a7a4-4721-b386-0fa7feece909', '26fe4415-b506-49a7-90b7-1aff3eeabb25', 'free -h | sort -n', false, 'free -h ใช้ดูหน่วยความจำ RAM ไม่ใช่ขนาดโฟลเดอร์บนดิสก์', 3);
+INSERT INTO public.choices VALUES ('3a48a0fa-cc51-43f7-a333-27f2dbabd29d', 'f986cb3a-3b71-4610-889e-2cc401e88854', 'curl -v https://api.example.com/health > /dev/null', false, 'ไม่ได้จำกัดเวลาและพิมพ์ข้อความ Verbose จำนวนมาก', 2);
 INSERT INTO public.choices VALUES ('a65d6e6c-4ba8-40b9-857a-0f8a8b79ade4', '26fe4415-b506-49a7-90b7-1aff3eeabb25', 'lsof +L1 | wc -l', false, 'lsof +L1 ใช้ดูไฟล์ที่ถูกลบแต่ยังเปิดค้าง ไม่ใช่การเรียงขนาดโฟลเดอร์', 4);
 INSERT INTO public.choices VALUES ('d9906b17-02e4-4de1-a244-4949764981aa', 'a2110b46-0e41-4ae6-898e-582052248f0b', '`~/.ssh` เป็น 700 และ `~/.ssh/authorized_keys` เป็น 600', true, 'ถูกต้อง — เป็นสิทธิ์มาตรฐานที่ปลอดภัยและผ่านการตรวจสอบของ sshd', 1);
 INSERT INTO public.choices VALUES ('38fa1195-3413-4139-97e6-75b79e186003', 'a2110b46-0e41-4ae6-898e-582052248f0b', '`~/.ssh` เป็น 777 และ `~/.ssh/authorized_keys` เป็น 666', false, 'สิทธิ์ 777 และ 666 เปิดให้ผู้อื่นเขียนทับกุญแจได้ จึงถูก sshd บล็อกการล็อกอินทันที', 2);
@@ -587,6 +590,7 @@ INSERT INTO public.choices VALUES ('df6ad7e5-e35d-4870-af94-21807bddf9be', '61f3
 INSERT INTO public.choices VALUES ('9af2c325-14e9-4887-a8ed-bf7320b941ec', '61f3e206-c48a-46a6-bfd0-f3c8b21d81ad', 'scp -i 2222 support@10.20.1.50:/tmp/report.txt ./', false, '-i ใช้สำหรับระบุไฟล์ Private Key (identity file) ไม่ใช่หมายเลขพอร์ต', 4);
 INSERT INTO public.choices VALUES ('1055ca3d-b3b5-4d9d-9d85-54b04fbe41f1', 'cae06534-8367-4658-867b-09de72d34502', 'ช่วยให้โปรเซสและหน้าจอทำงานต่อไปบนเซิร์ฟเวอร์แม้การเชื่อมต่อ SSH จะหลุด และสามารถกลับเข้าเซสชันเดิมได้ด้วย `tmux attach`', true, 'ถูกต้อง — ป้องกันงานค้างหรือตัดจบกลางคันเมื่อเน็ตหลุด', 1);
 INSERT INTO public.choices VALUES ('5edeb6b8-d801-4b20-b764-09d9923c6eb8', 'cae06534-8367-4658-867b-09de72d34502', 'ช่วยเร่งความเร็วของ CPU บนเซิร์ฟเวอร์ให้ทำงานเร็วขึ้น 2 เท่า', false, 'tmux เป็น Terminal Multiplexer ไม่ได้เร่งความเร็วฮาร์ดแวร์ CPU', 2);
+INSERT INTO public.choices VALUES ('9b58c411-6ccd-4c28-b185-7320372dea9d', 'f986cb3a-3b71-4610-889e-2cc401e88854', 'curl -k https://api.example.com/health', false, '-k ข้ามการตรวจใบรับรอง ไม่ได้ช่วยให้ได้ Status Code ตามต้องการ', 3);
 INSERT INTO public.choices VALUES ('8077d8db-574d-4521-b9f2-15202a77c1e4', 'cae06534-8367-4658-867b-09de72d34502', 'ช่วยข้ามการตรวจสอบรหัสผ่านและ SSH Key ทั้งหมด', false, 'ต้องล็อกอินผ่าน SSH ตามปกติก่อนจึงจะรัน tmux บนเซิร์ฟเวอร์ได้', 3);
 INSERT INTO public.choices VALUES ('5e68c66d-bd74-4762-9216-e71906bbee3a', 'cae06534-8367-4658-867b-09de72d34502', 'ช่วยบีบอัดไฟล์ Log ทั้งหมดใน `/var/log` เป็น `.gz` อัตโนมัติ', false, 'หน้าที่บีบอัดไฟล์ Log ตามรอบคือ logrotate ไม่ใช่ tmux', 4);
 INSERT INTO public.choices VALUES ('4740ad45-7db3-435b-97d2-4ed8dfd2a419', 'df8cecab-518d-43d8-926c-ffcd0f2e042e', 'rsync -avz support@10.20.1.50:/var/log/app/ ./app-logs/', true, 'ถูกต้อง — ประหยัดแบนด์วิดท์ด้วย -z และส่งเฉพาะส่วนที่ต่างกัน', 1);
@@ -609,6 +613,7 @@ INSERT INTO public.choices VALUES ('bf1e2873-a1a1-4c6b-8d06-dc93d1d9b0d9', 'aea9
 INSERT INTO public.choices VALUES ('1c275aec-1214-44a9-b31a-02c5167098ea', 'aea9e7b1-71c1-4b19-9424-3f9410a25f28', 'คำสั่ง `cp` ไม่สามารถทำงานร่วมกับคำสั่ง `date` บน Linux ได้', false, 'บน Shell ปกติรันได้ แต่ในไฟล์ Crontab ติดกฎพิเศษของเครื่องหมาย %', 2);
 INSERT INTO public.choices VALUES ('39869c70-2919-4a83-9315-9d3aa7779fca', 'aea9e7b1-71c1-4b19-9424-3f9410a25f28', 'บริการ Cron ห้ามตั้งเวลาทำงานตอนตี 1 (01:00 น.)', false, 'Cron สั่งรันงานตอน 01:00:01 แล้วตามที่ปรากฏใน syslog', 3);
 INSERT INTO public.choices VALUES ('abb4bddd-88b3-4f41-a8a4-fc9a72a5023d', 'aea9e7b1-71c1-4b19-9424-3f9410a25f28', 'ชื่อไฟล์ใน Linux ห้ามมีตัวเลขปี ค.ศ. อยู่ในชื่อไฟล์', false, 'ชื่อไฟล์ใส่ตัวเลขวันที่ได้ตามปกติ', 4);
+INSERT INTO public.choices VALUES ('40b04dc3-3660-4494-b659-b7e5db18be56', 'f986cb3a-3b71-4610-889e-2cc401e88854', 'ping https://api.example.com/health', false, 'ping ใช้ไม่ได้กับ URL และไม่ตรวจ HTTP', 4);
 INSERT INTO public.choices VALUES ('f40e4cb6-c263-4b8b-af4c-380e54f58a25', '8c5078fb-64e4-4e84-bbbb-ac15123d866d', '`/var/log/syslog` (Ubuntu/Debian) และ `/var/log/cron` (RHEL/Rocky)', true, 'ถูกต้อง — เป็นตำแหน่งมาตรฐานของบันทึกการทำงาน Cron ในแต่ละค่าย', 1);
 INSERT INTO public.choices VALUES ('588afe6e-5694-442f-9e89-b48d51585c18', '8c5078fb-64e4-4e84-bbbb-ac15123d866d', '`/var/log/auth.log` (Ubuntu/Debian) และ `/var/log/secure` (RHEL/Rocky)', false, 'auth.log และ secure เก็บเรื่องการล็อกอินและสิทธิ์เป็นหลัก (แม้จะมี session ของ pam_unix บ้าง แต่รายการคำสั่ง CMD ของ RHEL อยู่ที่ /var/log/cron)', 2);
 INSERT INTO public.choices VALUES ('5bd57a73-8240-481d-a554-b9fa5d70f74e', '8c5078fb-64e4-4e84-bbbb-ac15123d866d', '`/etc/crontab` ทั้งสองตระกูล', false, '/etc/crontab คือไฟล์ตั้งค่าตารางงาน ไม่ใช่ไฟล์บันทึกผลการทำงาน (Log)', 3);
@@ -638,9 +643,6 @@ INSERT INTO public.choices VALUES ('68f591bf-8296-44e4-82c0-d761d7b20c5f', 'af32
 INSERT INTO public.choices VALUES ('96119a99-cc11-4554-bdab-42505f1798db', 'af321481-4010-42cc-a917-de4dc61cda20', 'ทั้งสองคำเหมือนกัน', false, 'บ่งชี้ปัญหาคนละชั้น', 3);
 INSERT INTO public.choices VALUES ('f6400730-c830-4ab4-8446-5bf7e5b96c31', 'af321481-4010-42cc-a917-de4dc61cda20', 'refused = ดิสก์เต็ม, timed out = RAM เต็ม', false, 'ไม่เกี่ยวกับทรัพยากรเครื่อง', 4);
 INSERT INTO public.choices VALUES ('ee5f1037-6e5b-4fbd-9d60-debbfc548c1c', 'f986cb3a-3b71-4610-889e-2cc401e88854', 'curl -sS -o /dev/null -w "%{http_code} %{time_total}s\n" --max-time 10 https://api.example.com/health', true, 'ถูกต้อง', 1);
-INSERT INTO public.choices VALUES ('3a48a0fa-cc51-43f7-a333-27f2dbabd29d', 'f986cb3a-3b71-4610-889e-2cc401e88854', 'curl -v https://api.example.com/health > /dev/null', false, 'ไม่ได้จำกัดเวลาและพิมพ์ข้อความ Verbose จำนวนมาก', 2);
-INSERT INTO public.choices VALUES ('9b58c411-6ccd-4c28-b185-7320372dea9d', 'f986cb3a-3b71-4610-889e-2cc401e88854', 'curl -k https://api.example.com/health', false, '-k ข้ามการตรวจใบรับรอง ไม่ได้ช่วยให้ได้ Status Code ตามต้องการ', 3);
-INSERT INTO public.choices VALUES ('40b04dc3-3660-4494-b659-b7e5db18be56', 'f986cb3a-3b71-4610-889e-2cc401e88854', 'ping https://api.example.com/health', false, 'ping ใช้ไม่ได้กับ URL และไม่ตรวจ HTTP', 4);
 INSERT INTO public.choices VALUES ('5f18e908-56c5-4dda-b954-f2e8e05f0fcb', '7973243b-4e81-479c-9ae6-9ec56f46a8b5', 'Port 9000 ถูก Process java (PID 1544) ใช้อยู่ ให้เก็บข้อมูลแล้วส่งต่อตาม Runbook ก่อนตัดสินใจจัดการ', true, 'ถูกต้อง — รู้ตัวผู้ถือ Port แล้ว แต่ต้องยืนยันก่อนว่าเป็น Process ที่ควรอยู่หรือไม่', 1);
 INSERT INTO public.choices VALUES ('f1146496-dd38-4736-bb9b-9fd06733c5a6', '7973243b-4e81-479c-9ae6-9ec56f46a8b5', 'ไฟล์ Config สะกดผิด ให้แก้ไฟล์ทันที', false, 'Log ชี้ที่ Port ถูกใช้ ไม่ใช่ Config ผิดรูปแบบ', 2);
 INSERT INTO public.choices VALUES ('273f3782-2135-4f94-8bf1-cb764213bd97', '7973243b-4e81-479c-9ae6-9ec56f46a8b5', 'ดิสก์เต็ม ให้ลบ Log', false, 'ไม่มีหลักฐานเรื่องดิสก์ใน Log', 3);
@@ -672,6 +674,7 @@ INSERT INTO public.choices VALUES ('672a229a-84d4-4514-a43e-f999488ec45c', '9b60
 INSERT INTO public.choices VALUES ('e3d62eb7-75b8-49ee-9613-fd6213cd5ed3', '9b606785-3b1d-4039-8aef-d077d30d52dc', 'dig -ip 8.8.8.8 api.example.com', false, 'dig ไม่ใช้ flag -ip ในการระบุ DNS server', 4);
 INSERT INTO public.choices VALUES ('bffdbf77-176c-48cf-84ef-5403369a92de', 'f3360feb-004a-49b9-9366-b7b9899c587f', 'DNS Resolver ยังคงติดแคชตามระยะเวลา TTL ของ Record เดิม', true, 'ถูกต้อง Resolver จะไม่ร้องขอ IP ใหม่จนกว่า TTL เดิมจะนับถอยหลังหมด', 1);
 INSERT INTO public.choices VALUES ('be593a36-19af-489f-99cb-e8d726f42a15', 'f3360feb-004a-49b9-9366-b7b9899c587f', 'พอร์ต 53 บนเซิร์ฟเวอร์ถูกบล็อก', false, 'ถ้าพอร์ต 53 ถูกบล็อก จะเกิด Timeout ไม่ใช่ได้ IP เก่ากลับมา', 2);
+INSERT INTO public.choices VALUES ('b6fb6403-793c-4f49-a645-55648df8da62', '6e981c68-db2f-4533-9f5d-8a923e156a67', 'Bits และ Frame', false, 'ผิด Bits คือ Layer 1', 3);
 INSERT INTO public.choices VALUES ('594fbb8c-2e6c-442e-8184-929006f26817', 'f3360feb-004a-49b9-9366-b7b9899c587f', 'Default Gateway ของเครื่องล่ม', false, 'ถ้า Gateway ล่มจะไม่สามารถออกเน็ตหรือคุยข้ามวงได้', 3);
 INSERT INTO public.choices VALUES ('01a03022-ec33-497f-9787-14307d202c5b', 'f3360feb-004a-49b9-9366-b7b9899c587f', 'A Record ไม่รองรับ IPv4', false, 'A Record คือมาตรฐานสำหรับ IPv4 โดยเฉพาะ', 4);
 INSERT INTO public.choices VALUES ('0c454b0b-2edc-4b94-bc2d-ade3454a338f', '611c9533-5018-4260-93b1-75368ecf0e4b', 'dig -x 203.0.113.50', true, 'ถูกต้อง flag -x ย่อมาจาก reverse query (PTR record lookup)', 1);
@@ -722,6 +725,7 @@ INSERT INTO public.choices VALUES ('73957f91-3da9-4a1d-b93d-011c39adf891', '442a
 INSERT INTO public.choices VALUES ('4cddbec9-16db-4ac1-9c6e-76f5d5c73706', '442a963b-7185-4a91-9925-5d292b0ec6cd', 'DROP PROCESS 12450;', false, 'ไม่มีคำสั่งนี้ใน PostgreSQL', 3);
 INSERT INTO public.choices VALUES ('08eb5281-0e05-4408-b41d-1717d1241ed5', '442a963b-7185-4a91-9925-5d292b0ec6cd', 'SYSTEMCTL STOP QUERY 12450;', false, 'systemctl จัดการ Service ระดับ Linux OS ไม่สามารถตัด pid ใน database ได้', 4);
 INSERT INTO public.choices VALUES ('e2b178c2-3443-425e-a168-e82e236b999d', '264fa5d3-53b8-42c9-9879-5fe87517011a', 'กู้คืนระบบให้กลับมาใช้งานได้โดยเร็วที่สุด (Restore Service / ลด MTTR) แม้จะต้องใช้ทางเลี่ยงชั่วคราวหรือสั่ง Rollback', true, 'ถูกต้อง เป้าหมายคือหยุดความเสียหายต่อธุรกิจให้เร็วที่สุด', 1);
+INSERT INTO public.choices VALUES ('1956ac60-5b00-411a-9967-b44d3441da2b', '6e981c68-db2f-4533-9f5d-8a923e156a67', 'Segment และ Datagram', false, 'ผิด Segment/Datagram คือ PDU ใน Layer 4', 4);
 INSERT INTO public.choices VALUES ('d299f7fa-c629-4808-b5b0-87414824eac3', '264fa5d3-53b8-42c9-9879-5fe87517011a', 'นั่งไล่อ่านโค้ดทุกบรรทัดเพื่อหาบั๊กที่ทำให้เกิดปัญหาก่อนเปิดระบบ', false, 'การมัวแต่อ่านโค้ดโดยไม่ Rollback จะทำให้ธุรกิจเสียหายอย่างหนัก', 2);
 INSERT INTO public.choices VALUES ('f22c4857-c359-4123-8668-0abb3784af02', '264fa5d3-53b8-42c9-9879-5fe87517011a', 'ประชุมเพื่อหาตัวคนผิดที่รับผิดชอบการดีพลอย', false, 'การกล่าวโทษ (Blame) ผิดหลักการ Blameless Post-Mortem', 3);
 INSERT INTO public.choices VALUES ('7bd83241-d9ea-4d30-adf0-5562c866e25f', '264fa5d3-53b8-42c9-9879-5fe87517011a', 'ปิดระบบทั้งองค์กรเพื่อความปลอดภัย', false, 'ไม่ใช่แนวทางที่ถูกต้องสำหรับ Incident Management', 4);
@@ -745,6 +749,7 @@ INSERT INTO public.choices VALUES ('c0cc2028-8a14-4220-81a0-9458b12fed83', '5b92
 INSERT INTO public.choices VALUES ('37e50f17-c1b4-4aff-8b8d-51bd4c2504b0', '5b92c358-a418-4117-a664-1c45579f5e01', '401 ใช้กับหน้าเว็บ ส่วน 403 ใช้กับ REST API เท่านั้น', false, 'ทั้งสองรหัสเป็นมาตรฐาน HTTP ใช้ได้ทั้ง Web และ API', 2);
 INSERT INTO public.choices VALUES ('d736d075-509b-490f-bb00-e7549afc8e15', '5b92c358-a418-4117-a664-1c45579f5e01', '401 เป็นข้อผิดพลาดฝั่ง Server ส่วน 403 เป็นฝั่ง Client', false, 'ทั้งรหัสขึ้นต้นด้วย 4xx จัดเป็น Client Error ทั้งคู่', 3);
 INSERT INTO public.choices VALUES ('846318c3-ed31-4b30-a6d8-e4d6f513a2ae', '5b92c358-a418-4117-a664-1c45579f5e01', '401 คือเซิร์ฟเวอร์หาไฟล์ไม่พบ ส่วน 403 คือไฟล์ถูกลบไปแล้ว', false, 'ไฟล์หาไม่พบคือ 404 Not Found หรือ 410 Gone', 4);
+INSERT INTO public.choices VALUES ('c9ad8e26-8ff6-4edc-9fb2-bedf66911668', 'd1fd2b23-0add-4fd1-95ea-8e56dc91c7cb', 'Layer 4 (Transport Layer) หรือการกรองพอร์ตของ Firewall', true, 'ถูกต้อง Connection Timed out มักเกิดจาก Firewall ทิ้งแพ็กเก็ต (DROP) ในชั้น Transport', 1);
 INSERT INTO public.choices VALUES ('e5c71722-b6ca-45df-964c-58b94f68f032', '1b0c7347-ec8c-4c56-abd9-96fe64f7019e', 'ตรวจสอบ Slow Query หรือคำสั่งที่ค้างอยู่ใน Database และดูภาระ CPU/Memory ของ Backend Service', true, 'ถูกต้อง Backend ยังไม่ตายแต่ประมวลผลนานเกินกำหนด มักเกิดจากฐานข้อมูลช้า', 1);
 INSERT INTO public.choices VALUES ('7bd3691a-6967-433a-9e5b-2bbe15667f31', '1b0c7347-ec8c-4c56-abd9-96fe64f7019e', 'สั่งรีสตาร์ท Router ของผู้ใช้งานทันที', false, '504 เกิดขึ้นที่ฝั่งเซิร์ฟเวอร์ (Proxy กับ Upstream) ไม่เกี่ยวกับเน็ตบ้านผู้ใช้', 2);
 INSERT INTO public.choices VALUES ('1ef59d8f-8ec3-44a8-b746-11b49630231f', '1b0c7347-ec8c-4c56-abd9-96fe64f7019e', 'ตรวจสอบว่าผู้ใช้จำรหัสผ่านถูกหรือไม่', false, 'รหัสผ่านผิดจะไม่ทำให้เกิด 504 Timeout', 3);
@@ -765,6 +770,129 @@ INSERT INTO public.choices VALUES ('e01f4209-60ae-4bd7-9477-6715b8565d70', '22fc
 INSERT INTO public.choices VALUES ('25b7fd17-a598-41c9-87f9-49a7103040e0', '22fcc240-b574-4819-8d9b-af1205ffe0df', 'ระบบต้องรอเวลาอย่างน้อย 24 ชั่วโมงเพื่อให้ DNS อัปเดต', false, 'SSL Certificate อยู่บน Web Server ไม่เกี่ยวกับ DNS Propagation', 2);
 INSERT INTO public.choices VALUES ('570e7fbb-ea61-47de-9a38-2db194827023', '22fcc240-b574-4819-8d9b-af1205ffe0df', 'เพราะไม่ได้ทำการ Format ดิสก์ใหม่', false, 'การเปลี่ยน Certificate ไม่เกี่ยวกับการ Format ดิสก์', 3);
 INSERT INTO public.choices VALUES ('27a3bf9f-dc6a-48b8-9e8a-fa9cc7972fe9', '22fcc240-b574-4819-8d9b-af1205ffe0df', 'เพราะพอร์ต 443 ถูกจำกัดให้ใช้ Certificate ใบเดิมตลอดไป', false, 'พอร์ตเครือข่ายสามารถเปลี่ยน Certificate ได้ตลอดเวลา', 4);
+INSERT INTO public.choices VALUES ('8b8118c7-4581-4858-ad3d-51f26817064a', '327a3f1f-ee09-4088-b3ec-5b8dc48e5c8c', 'Network ID: 192.168.1.128, Broadcast IP: 192.168.1.191', true, 'ถูกต้อง /26 มี Block Size ละ 64 ไอพี .130 อยู่ในช่วง .128 ถึง .191', 1);
+INSERT INTO public.choices VALUES ('ecb4abcd-77fc-4013-95bf-a1dccdc14076', '327a3f1f-ee09-4088-b3ec-5b8dc48e5c8c', 'Network ID: 192.168.1.0, Broadcast IP: 192.168.1.255', false, 'ผิด นั่นคือช่วงของ /24', 2);
+INSERT INTO public.choices VALUES ('0774bd4a-973c-437c-a926-0f9b4e431a02', '327a3f1f-ee09-4088-b3ec-5b8dc48e5c8c', 'Network ID: 192.168.1.64, Broadcast IP: 192.168.1.127', false, 'ผิด ช่วง .64-.127 ยังไม่ถึง .130', 3);
+INSERT INTO public.choices VALUES ('cfba3133-c342-4a5e-94c3-83c60e851538', '327a3f1f-ee09-4088-b3ec-5b8dc48e5c8c', 'Network ID: 192.168.1.128, Broadcast IP: 192.168.1.255', false, 'ผิด Broadcast ของ /26 ต้องเป็น .191 ไม่ใช่ .255', 4);
+INSERT INTO public.choices VALUES ('dca64936-acc4-477c-aaae-83bc501205e9', '38803ea5-5df5-408e-b93f-89f392bbb11f', '/27 (255.255.255.224 รองรับได้ 30 เครื่อง)', true, 'ถูกต้อง /27 ให้ 30 Usable Hosts เพียงพอสำหรับ 28 เครื่องและประหยัดที่สุด', 1);
+INSERT INTO public.choices VALUES ('bb4be496-9073-4473-850f-b8d5e703e2ca', '38803ea5-5df5-408e-b93f-89f392bbb11f', '/28 (255.255.255.240 รองรับได้ 14 เครื่อง)', false, 'ผิด /28 ได้แค่ 14 เครื่อง ไม่พอสำหรับ 28 เครื่อง', 2);
+INSERT INTO public.choices VALUES ('9d022c22-e001-4264-8f84-d38a3a7e7539', '38803ea5-5df5-408e-b93f-89f392bbb11f', '/26 (255.255.255.192 รองรับได้ 62 เครื่อง)', false, 'แม้จะพอแต่เปลือง IP เกินความจำเป็น ไม่ใช่ตัวเลือกที่ประหยัดที่สุด', 3);
+INSERT INTO public.choices VALUES ('9c7a2f11-b3d7-4cfb-82f7-8aad9f37740f', '38803ea5-5df5-408e-b93f-89f392bbb11f', '/29 (255.255.255.248 รองรับได้ 6 เครื่อง)', false, 'ผิด /29 ได้แค่ 6 เครื่อง', 4);
+INSERT INTO public.choices VALUES ('02d5d967-f3e3-4354-af0f-107435bea543', 'e75e4f1e-eac7-4c46-bc80-4535f39071c8', 'Layer 7 (Application Layer) เนื่องจากระบบ DNS มีปัญหา', true, 'ถูกต้อง เพราะ DNS เป็น Application Protocol ที่รับผิดชอบการแปลงชื่อ Hostname เป็น IP', 1);
+INSERT INTO public.choices VALUES ('2e31f303-2334-43ae-9508-a9331e09e623', 'e75e4f1e-eac7-4c46-bc80-4535f39071c8', 'Layer 3 (Network Layer) เนื่องจาก Routing เสียหาย', false, 'ผิด เพราะ ping 8.8.8.8 และ Gateway ติด แสดงว่า Routing ปกติ', 2);
+INSERT INTO public.choices VALUES ('071f4a6c-2b11-4109-b25a-b02a29ca6ff2', 'e75e4f1e-eac7-4c46-bc80-4535f39071c8', 'Layer 1 (Physical Layer) สายสัญญาณหลวม', false, 'ผิด หากสายหลวมจะ ping อะไรไม่ติดเลย', 3);
+INSERT INTO public.choices VALUES ('defd7e8c-5371-4772-8210-91edd3d76007', 'e75e4f1e-eac7-4c46-bc80-4535f39071c8', 'Layer 2 (Data Link Layer) มีปัญหา VLAN', false, 'ผิด หาก VLAN ผิด จะ ping Gateway ในวงไม่ติด', 4);
+INSERT INTO public.choices VALUES ('89253fee-f8ba-45d3-b70e-338d648e859f', 'd1fd2b23-0add-4fd1-95ea-8e56dc91c7cb', 'Layer 2 (Data Link Layer) สวิตช์ไม่ส่งข้อมูล', false, 'ผิด เพราะ ping ที่อยู่ Layer 3 สามารถวิ่งผ่านสวิตช์ไป-กลับได้ปกติ', 2);
+INSERT INTO public.choices VALUES ('43ecd49d-66c5-4d3c-ad21-90567d31eb9a', 'd1fd2b23-0add-4fd1-95ea-8e56dc91c7cb', 'Layer 1 (Physical Layer) พอร์ตแลนชำรุด', false, 'ผิด หาก Physical เสีย จะไม่สามารถ ping ได้', 3);
+INSERT INTO public.choices VALUES ('44edae78-a98c-4ca1-8826-9d19b2fb362d', 'd1fd2b23-0add-4fd1-95ea-8e56dc91c7cb', 'Layer 6 (Presentation Layer) ถอดรหัส SSL ไม่ได้', false, 'ผิด การเชื่อมต่อ TCP Handshake ยังไม่สำเร็จด้วยซ้ำ จึงยังไม่ถึงขั้น SSL', 4);
+INSERT INTO public.choices VALUES ('ce49ea0d-6edf-40d2-8049-e2b205cf7750', 'ce1f94cc-3909-4aa0-baf9-6db3001a8836', 'Layer 2 (Data Link) และ Layer 3 (Network)', true, 'ถูกต้อง Switch = Layer 2, Router = Layer 3', 1);
+INSERT INTO public.choices VALUES ('11c982de-b988-4e0c-8157-f202d8ea307c', 'ce1f94cc-3909-4aa0-baf9-6db3001a8836', 'Layer 1 (Physical) และ Layer 2 (Data Link)', false, 'ผิด Hub ทำงานที่ Layer 1, Switch อยู่ที่ Layer 2', 2);
+INSERT INTO public.choices VALUES ('e72a13c8-824e-48d7-accb-9fef34c9662d', 'ce1f94cc-3909-4aa0-baf9-6db3001a8836', 'Layer 3 (Network) และ Layer 4 (Transport)', false, 'ผิด Router ทำงานที่ Layer 3 ไม่ใช่ Layer 4', 3);
+INSERT INTO public.choices VALUES ('989150d2-59ae-4046-8337-e9e768b0d607', 'ce1f94cc-3909-4aa0-baf9-6db3001a8836', 'Layer 2 (Data Link) ทั้งคู่', false, 'ผิด Router ทำงานที่ Layer 3', 4);
+INSERT INTO public.choices VALUES ('5f472038-1075-4d85-b4cc-e91a7564c43f', '811e4d06-268a-48ee-8694-c9d2e24494bf', 'เมื่อมีการติดตั้งเครื่องเซิร์ฟเวอร์ใหม่ หรือเพิ่งเดินสายสัญญาณและเชื่อมต่ออุปกรณ์เข้าตู้แร็ค', true, 'ถูกต้อง เพราะต้องตรวจว่าไฟพอร์ตติดและสายดีตั้งแต่ Layer 1 ก่อนคอนฟิกส่วนอื่น', 1);
+INSERT INTO public.choices VALUES ('37ba0258-2941-4ac7-aa86-973b958c60f9', '811e4d06-268a-48ee-8694-c9d2e24494bf', 'เมื่อผู้ใช้แจ้งว่าเว็บมีปุ่มสีเพี้ยนในเบราว์เซอร์ Safari', false, 'ผิด กรณีนี้เป็นปัญหาหน้าบ้าน (Frontend UI) ไม่เกี่ยวกับสายแลน', 2);
+INSERT INTO public.choices VALUES ('0afdb093-0621-4d62-8a1c-8a7d7b0fe046', '811e4d06-268a-48ee-8694-c9d2e24494bf', 'เมื่อระบบแจ้งเตือนว่า Memory ใช้งานเต็ม 99%', false, 'ผิด ปัญหาทรัพยากรเครื่องไม่จำเป็นต้องตรวจสายแลนหรือสวิตช์', 3);
+INSERT INTO public.choices VALUES ('90d53382-1de6-4d9e-91a7-36f1b0f95775', '811e4d06-268a-48ee-8694-c9d2e24494bf', 'เมื่อต้องการตรวจสอบว่าทำไม Nginx ตอบกลับ HTTP 500', false, 'ผิด กรณีนี้เหมาะกับ Top-Down เพราะเครือข่ายต่อได้แล้วแต่ระบบแอปมีปัญหา', 4);
+INSERT INTO public.choices VALUES ('27f764c7-a119-4e4b-b9f2-1f0342c3c22c', 'd5a6607b-d2ab-4160-b0f5-bf5a8e021c1d', 'เพราะอยู่คนละ VLAN ซึ่งตัดขาดการสื่อสารที่ Layer 2 ต้องอาศัย Router หรือ L3 Switch ในการส่งต่อ (Inter-VLAN Routing)', true, 'ถูกต้อง VLAN ทำหน้าที่แยกบรอดคาสต์โดเมน หากไม่มีอุปกรณ์ Layer 3 จะไม่สามารถคุยข้ามกันได้', 1);
+INSERT INTO public.choices VALUES ('91882b9f-438e-4f5e-9126-adb689aa302a', 'd5a6607b-d2ab-4160-b0f5-bf5a8e021c1d', 'เพราะสายสัญญาณของ Server B ขาดใน', false, 'ผิด ไม่ใช่สาเหตุหลัก เพราะทั้งสองตั้งใจอยู่คนละ VLAN', 2);
+INSERT INTO public.choices VALUES ('596ac809-c439-41a7-af61-4bf5c7df7f1d', 'd5a6607b-d2ab-4160-b0f5-bf5a8e021c1d', 'เพราะพอร์ตสวิตช์ต้องปรับเป็นโหมด Trunk ทั้งคู่', false, 'ผิด เซิร์ฟเวอร์ทั่วไปเชื่อมต่อด้วยพอร์ต Access ไม่ใช่ Trunk', 3);
+INSERT INTO public.choices VALUES ('11cb292a-90e2-443a-a8a9-923d2004e52a', 'd5a6607b-d2ab-4160-b0f5-bf5a8e021c1d', 'เพราะสวิตช์ตัวเดียวกันไม่สามารถสร้างมากกว่า 1 VLAN ได้', false, 'ผิด สวิตช์สามารถสร้างได้หลาย VLAN (ปกติได้สูงสุด 4094 VLANs)', 4);
+INSERT INTO public.choices VALUES ('7fcb6b08-b450-484e-839c-54a09c465582', '7c3302c8-0a22-43e9-ab9a-6f3e9cb1b549', 'IEEE 802.1Q (Dot1q)', true, 'ถูกต้อง 802.1Q คือมาตรฐานอุตสาหกรรมสำหรับการแท็ก VLAN', 1);
+INSERT INTO public.choices VALUES ('9d423734-478d-4f63-a535-266c291399b2', '7c3302c8-0a22-43e9-ab9a-6f3e9cb1b549', 'IEEE 802.3ad', false, 'ผิด 802.3ad คือมาตรฐาน LACP (Link Aggregation)', 2);
+INSERT INTO public.choices VALUES ('1bfc202c-bd7a-4cd0-a27c-eda605757db5', '7c3302c8-0a22-43e9-ab9a-6f3e9cb1b549', 'IEEE 802.11ax', false, 'ผิด 802.11ax คือ Wi-Fi 6', 3);
+INSERT INTO public.choices VALUES ('bcf6707f-9576-4e26-904e-be7366081b3f', '7c3302c8-0a22-43e9-ab9a-6f3e9cb1b549', 'IEEE 802.1D', false, 'ผิด 802.1D คือ Spanning Tree Protocol (STP)', 4);
+INSERT INTO public.choices VALUES ('95b2670a-ef4a-4a59-9ba0-e5c703e5207f', '7d3ba65b-d6e0-4272-be9d-2132dc332262', 'ส่งต่อเฟรมนั้นเข้าสู่ ''Native VLAN'' ที่กำหนดไว้ของพอร์ตนั้น', true, 'ถูกต้อง เฟรม Untagged จะถูกส่งเข้า Native VLAN อัตโนมัติ', 1);
+INSERT INTO public.choices VALUES ('c9f03a0c-b35a-4e31-8b8e-03146117103c', '7d3ba65b-d6e0-4272-be9d-2132dc332262', 'สวิตช์จะทิ้ง (Drop) เฟรมนั้นทันทีเพราะพอร์ต Trunk รับเฉพาะ Tagged Frame', false, 'ผิด พอร์ต Trunk ยอมรับ Untagged Frame ได้ 1 วง นั่นคือ Native VLAN', 2);
+INSERT INTO public.choices VALUES ('eaa810a9-885d-4ab6-86e1-9fd177c045f9', '7d3ba65b-d6e0-4272-be9d-2132dc332262', 'ส่งกระจายออกไปยังทุก VLAN ที่มีในสวิตช์', false, 'ผิด การส่งข้าม VLAN เป็นเรื่องต้องห้ามที่ Layer 2', 3);
+INSERT INTO public.choices VALUES ('764fdbce-abf5-4d1a-ace6-19b00dae275e', '7d3ba65b-d6e0-4272-be9d-2132dc332262', 'สวิตช์จะแปลงเฟรมนั้นเป็นแพ็กเก็ต Layer 3 ทันที', false, 'ผิด สวิตช์ Layer 2 ไม่แปลงเฟรมเป็นแพ็กเก็ต', 4);
+INSERT INTO public.choices VALUES ('ed07c900-4e52-4b89-9e5b-261b594d1845', '62acd40b-f56e-4c54-ab90-2fa76164588b', 'Flooding: ส่งเฟรมนั้นออกไปทุกพอร์ตใน VLAN เดียวกัน ยกเว้นพอร์ตที่รับเฟรมเข้ามา', true, 'ถูกต้อง นี่คือกลไกพื้นฐานเพื่อให้ปลายทางได้รับข้อมูลและตอบกลับ สวิตช์จะได้เรียนรู้ MAC นั้น', 1);
+INSERT INTO public.choices VALUES ('d377404b-97ea-48dd-aa0f-c4ffcf51b755', '62acd40b-f56e-4c54-ab90-2fa76164588b', 'Drop: ทิ้งเฟรมนั้นทันทีเพื่อความปลอดภัยของเครือข่าย', false, 'ผิด สวิตช์จะไม่ทิ้ง แต่จะส่งกระจาย (Flooding)', 2);
+INSERT INTO public.choices VALUES ('945ec7d9-9530-40ac-bc14-4abd6d5173cd', '62acd40b-f56e-4c54-ab90-2fa76164588b', 'ส่งเฟรมนั้นไปยัง Default Gateway เสมอ', false, 'ผิด สวิตช์ Layer 2 ส่งเฟรมด้วย MAC ไม่ส่งไปที่ Gateway เอง เว้นแต่เครื่องต้นทางจะระบุ MAC ของ Gateway มา', 3);
+INSERT INTO public.choices VALUES ('d095dfbd-af9d-4f6b-8191-af49baf7c8c2', '62acd40b-f56e-4c54-ab90-2fa76164588b', 'สวิตช์จะทำการยิงคำสั่ง Ping ไปตรวจสอบเครื่องปลายทาง', false, 'ผิด สวิตช์ไม่มีกลไกส่ง Ping อัตโนมัติเมื่อไม่พบ MAC', 4);
+INSERT INTO public.choices VALUES ('a029f140-17a4-4b4b-9e92-621dec337096', '6beac71f-ab96-429b-ba53-7d8e90efdf67', 'ip neigh show (หรือ arp -an)', true, 'ถูกต้อง ip neigh แสดงตาราง Neighbor/ARP บน Linux', 1);
+INSERT INTO public.choices VALUES ('704f32ab-7dc6-4ae0-b517-11b8da455597', '6beac71f-ab96-429b-ba53-7d8e90efdf67', 'ip route show', false, 'ผิด ip route ใช้ดูตาราง Routing ไม่ใช่ ARP', 2);
+INSERT INTO public.choices VALUES ('57bedc06-6c34-4622-aa15-b53d7602e915', '6beac71f-ab96-429b-ba53-7d8e90efdf67', 'ss -tulpn', false, 'ผิด ss ใช้ดูสถานะ Port และ Socket ไม่ใช่ ARP', 3);
+INSERT INTO public.choices VALUES ('611636a2-d4fb-4781-b67d-7edc7e76e0e1', '6beac71f-ab96-429b-ba53-7d8e90efdf67', 'ethtool eth0', false, 'ผิด ethtool ใช้ดูความเร็วและฮาร์ดแวร์ของการ์ดแลน', 4);
+INSERT INTO public.choices VALUES ('7d0dff00-b066-477f-92cd-56daf3d9c41b', 'a3d59ff8-03bc-4ee8-a561-93a6feb5cf8e', 'Discover -> Offer -> Request -> Acknowledge', true, 'ถูกต้อง นี่คือลำดับ DORA Process', 1);
+INSERT INTO public.choices VALUES ('5e12c7c2-6b87-47b0-b2f3-a1442e9fab1d', 'a3d59ff8-03bc-4ee8-a561-93a6feb5cf8e', 'Discover -> Request -> Offer -> Acknowledge', false, 'ผิด Server ต้อง Offer ไอพีก่อนที่ Client จะ Request', 2);
+INSERT INTO public.choices VALUES ('fc68c091-da7f-4235-8623-90ced419ac54', 'a3d59ff8-03bc-4ee8-a561-93a6feb5cf8e', 'Request -> Offer -> Discover -> Acknowledge', false, 'ผิด ขั้นแรกต้องเป็น Discover', 3);
+INSERT INTO public.choices VALUES ('252a238d-4024-4247-a15e-164c3ee45434', 'a3d59ff8-03bc-4ee8-a561-93a6feb5cf8e', 'Demand -> Obtain -> Release -> Accept', false, 'ผิด ไม่ใช่ชื่อขั้นตอนของ DHCP', 4);
+INSERT INTO public.choices VALUES ('e76e33f6-3cfa-4a6a-bb47-7a5fd68b8a5f', 'a4d3b42b-b063-43a3-b338-578b87fae333', 'เครื่องไม่สามารถติดต่อหรือรับไอพีจาก DHCP Server ได้ (APIPA)', true, 'ถูกต้อง 169.254.x.x เป็นสัญลักษณ์ของ APIPA เมื่อ DHCP ล้มเหลว', 1);
+INSERT INTO public.choices VALUES ('17b67d8f-0113-41e2-9552-748fb9033b2d', 'a4d3b42b-b063-43a3-b338-578b87fae333', 'เครื่องได้รับ Public IP จริงจากผู้ให้บริการอินเทอร์เน็ตแล้ว', false, 'ผิด 169.254.x.x เป็น Link-Local Address ไม่ใช่ Public IP ที่ออกเน็ตได้', 2);
+INSERT INTO public.choices VALUES ('ecae113d-9be2-43b7-b3fc-5261f78656b1', 'a4d3b42b-b063-43a3-b338-578b87fae333', 'ระบบกำลังเชื่อมต่อผ่าน VPN สำเร็จเรียบร้อย', false, 'ผิด ไม่เกี่ยวกับ VPN', 3);
+INSERT INTO public.choices VALUES ('e9e9454d-1ae3-462c-9f21-cd881d24459f', 'a4d3b42b-b063-43a3-b338-578b87fae333', 'ระบบตรวจพบว่าการ์ดแลนถูกไวรัสโจมตีจนพังถาวร', false, 'ผิด การ์ดแลนยังทำงานได้ปกติ แต่ไม่ได้รับไอพีจากเน็ตเวิร์ก', 4);
+INSERT INTO public.choices VALUES ('a86f2911-37f5-4abd-8541-94c6e18b295b', '79645a39-48ce-4bfd-b6f6-b8809dfba87c', 'DHCP Relay Agent (คำสั่ง ip helper-address)', true, 'ถูกต้อง DHCP Relay ทำหน้าที่ส่งต่อคำขอข้าม Subnet ไปยัง DHCP Server', 1);
+INSERT INTO public.choices VALUES ('97d1a882-1f3d-41cd-a61b-a75956aa3531', '79645a39-48ce-4bfd-b6f6-b8809dfba87c', 'NAT Overload', false, 'ผิด NAT ใช้แปลงแอดเดรส ไม่ใช่ส่งต่อการขอไอพี', 2);
+INSERT INTO public.choices VALUES ('7451d475-51aa-4437-a457-593aa3c42cfd', '79645a39-48ce-4bfd-b6f6-b8809dfba87c', 'Spanning Tree Protocol (STP)', false, 'ผิด STP ใช้ป้องกัน Loop ใน Layer 2', 3);
+INSERT INTO public.choices VALUES ('931db5ef-171e-4d65-89ee-6ee70fd42032', '79645a39-48ce-4bfd-b6f6-b8809dfba87c', 'Dynamic ARP Inspection', false, 'ผิด DAI เป็นฟีเจอร์ความปลอดภัย ป้องกัน ARP Spoofing', 4);
+INSERT INTO public.choices VALUES ('27f4ac42-cecf-4256-925b-775b92f44888', 'c81e6aa9-e017-4ee8-bd8a-f170ba5d2e30', 'PAT (Port Address Translation หรือ NAT Overload)', true, 'ถูกต้อง PAT ใช้ Port Number แยกเซสชันของอุปกรณ์นับร้อยเครื่องผ่าน Public IP เบอร์เดียว', 1);
+INSERT INTO public.choices VALUES ('3c58da65-5ea1-4521-ac6c-18a79ed86a2f', 'c81e6aa9-e017-4ee8-bd8a-f170ba5d2e30', 'Static NAT (1-to-1)', false, 'ผิด Static NAT ใช้ Public IP 1 เบอร์ต่อเครื่องลูกข่าย 1 เครื่องเท่านั้น', 2);
+INSERT INTO public.choices VALUES ('368d9ee5-a7f3-44f3-8cc1-7503841a5bed', 'c81e6aa9-e017-4ee8-bd8a-f170ba5d2e30', 'Dynamic Routing', false, 'ผิด การทำ Routing เป็นการหาเส้นทาง ไม่ใช่การแปลงแอดเดรส', 3);
+INSERT INTO public.choices VALUES ('d9a4a5dc-4898-4849-8e77-dc71e1e4f9be', 'c81e6aa9-e017-4ee8-bd8a-f170ba5d2e30', 'Proxy ARP', false, 'ผิด Proxy ARP เป็นการตอบ ARP แทนเครื่องอื่น ไม่ใช่การแชร์ Public IP', 4);
+INSERT INTO public.choices VALUES ('0b486f1c-5e20-480c-ac31-d076fe9f58dc', '49da2415-c6d1-440c-b962-0d129a95f694', 'Static NAT (1-to-1) หรือ Destination NAT / Port Forwarding', true, 'ถูกต้อง การชี้จากภายนอกเข้าหาเซิร์ฟเวอร์ภายในต้องทำ Port Forwarding หรือ Static NAT', 1);
+INSERT INTO public.choices VALUES ('1f16b074-8b25-4eb4-a2e2-5a9b06165d8e', '49da2415-c6d1-440c-b962-0d129a95f694', 'DHCP Snooping', false, 'ผิด DHCP Snooping เป็นเรื่องป้องกัน DHCP เถื่อนในสวิตช์', 2);
+INSERT INTO public.choices VALUES ('4628f386-d5e4-4637-9fd8-f697c80d7477', '49da2415-c6d1-440c-b962-0d129a95f694', 'Dynamic NAT แบบไม่มี Overload', false, 'ผิด Dynamic NAT สุ่มไอพีขาออก ไม่สามารถรับการเชื่อมต่อขาเข้าที่แน่นอนได้', 3);
+INSERT INTO public.choices VALUES ('d4fca0e3-95f5-4b16-837f-bbf838e5f878', '49da2415-c6d1-440c-b962-0d129a95f694', 'APIPA', false, 'ผิด APIPA ไม่สามารถใช้งานบนอินเทอร์เน็ตได้', 4);
+INSERT INTO public.choices VALUES ('bfd33699-99dc-4ef3-94ed-32267fe595d3', '078a7bed-80ff-486c-8dee-ef31175e5ef5', 'พอร์ตถูกสั่งปิดใช้งานด้วยคำสั่ง ''shutdown'' โดยผู้ดูแลระบบ', true, 'ถูกต้อง administratively down คือพอร์ตถูกปิดด้วยคำสั่ง shutdown', 1);
+INSERT INTO public.choices VALUES ('a8fa2077-aceb-4232-b3d3-5d5095673267', '078a7bed-80ff-486c-8dee-ef31175e5ef5', 'สายสัญญาณแลนขาดใน หรือปลายทางไม่ได้เปิดเครื่อง', false, 'ผิด หากสายหลุดหรือปลายทางปิดเครื่อง สถานะจะเป็น ''down / down'' ไม่ใช่ administratively down', 2);
+INSERT INTO public.choices VALUES ('6745b563-b283-4301-846a-24a24953944a', '078a7bed-80ff-486c-8dee-ef31175e5ef5', 'พอร์ตกำลังได้รับ Broadcast Storm โจมตี', false, 'ผิด หากโดน Storm พอร์ตอาจขึ้นสถานะ err-disabled', 3);
+INSERT INTO public.choices VALUES ('ed4b1d15-98f0-40e3-9718-1098e82ce697', '078a7bed-80ff-486c-8dee-ef31175e5ef5', 'พอร์ตกำลังส่งข้อมูลด้วยความเร็วสูงสุด', false, 'ผิด สถานะนี้คือพอร์ตถูกปิดใช้งาน', 4);
+INSERT INTO public.choices VALUES ('c3bdbb2e-cbbd-4bbc-8c01-319275303d1f', '52df195e-483c-4a2b-a982-463827ca7fbd', 'สายสัญญาณชำรุด มีสัญญาณรบกวน (Noise) หรือหัวต่อสายหลวม/สกปรก', true, 'ถูกต้อง CRC error บ่งบอกถึงปัญหาทางกายภาพและสัญญาณรบกวนใน Layer 1 ชัดเจนที่สุด', 1);
+INSERT INTO public.choices VALUES ('85d188c7-ffc2-425e-865d-ea45104afee5', '52df195e-483c-4a2b-a982-463827ca7fbd', 'พอร์ตสวิตช์ถูกตั้งค่าผิด VLAN', false, 'ผิด การตั้ง VLAN ผิดจะไม่ทำให้เกิด CRC error แต่จะทำให้คุยกันไม่รู้เรื่อง', 2);
+INSERT INTO public.choices VALUES ('96368ecf-9374-46d6-a335-f3d4d24249bc', '52df195e-483c-4a2b-a982-463827ca7fbd', 'เราเตอร์ไม่มี Default Gateway', false, 'ผิด Routing ไม่ทำให้เกิด CRC error บนพอร์ต Layer 2', 3);
+INSERT INTO public.choices VALUES ('0e8fea03-697c-4629-a9ed-2c0a3d37f8ad', '52df195e-483c-4a2b-a982-463827ca7fbd', 'เซิร์ฟเวอร์ปลายทางใช้ Memory เต็ม 100%', false, 'ผิด Memory เซิร์ฟเวอร์ไม่ส่งผลให้เฟรมของสวิตช์เกิด CRC error', 4);
+INSERT INTO public.choices VALUES ('9789bda0-2389-4cce-be5d-3e7c8d999f38', '69303d68-e689-49b4-9c70-5faa75c07553', 'show vlan brief', true, 'ถูกต้อง show vlan brief ใช้ดูรายการ VLAN และพอร์ตที่สังกัด', 1);
+INSERT INTO public.choices VALUES ('e046bdc5-fd40-4bbc-9037-d7730faab787', '69303d68-e689-49b4-9c70-5faa75c07553', 'show ip route', false, 'ผิด show ip route ใช้ดูตาราง Routing ของ Layer 3', 2);
+INSERT INTO public.choices VALUES ('49a63a34-cbec-40d7-b947-b94d9f7e0d30', '69303d68-e689-49b4-9c70-5faa75c07553', 'show mac address-table', false, 'ผิด show mac address-table ใช้ดูตาราง MAC Address ที่เรียนรู้มา', 3);
+INSERT INTO public.choices VALUES ('5bb930cf-4d52-40d7-b26d-12993dd8e691', '69303d68-e689-49b4-9c70-5faa75c07553', 'show running-config interface', false, 'ผิด เป็นคำสั่งดูคอนฟิกดิบ ไม่ได้สรุปภาพรวมในรูปแบบตาราง', 4);
+INSERT INTO public.choices VALUES ('bb8406aa-9839-4e0c-9e06-cf937ce52f8a', '8d7e57ad-f961-4347-ad2d-199066471909', '9600', true, 'ถูกต้อง 9600 คือ Baud rate มาตรฐานของ Console port', 1);
+INSERT INTO public.choices VALUES ('991f051a-9472-4be7-a757-9d7939075e63', '8d7e57ad-f961-4347-ad2d-199066471909', '115200', false, 'ผิด 115200 นิยมใช้ในอุปกรณ์บอร์ดบางประเภท แต่ Cisco ดั้งเดิมคือ 9600', 2);
+INSERT INTO public.choices VALUES ('0d2cb680-8702-4b1a-a7f7-966234eb3dcf', '8d7e57ad-f961-4347-ad2d-199066471909', '1000', false, 'ผิด ไม่ใช่ค่ามาตรฐาน Serial', 3);
+INSERT INTO public.choices VALUES ('dff18879-6302-4152-92e5-526c7c411f3f', '8d7e57ad-f961-4347-ad2d-199066471909', '4800', false, 'ผิด ช้าเกินไปไม่ใช่มาตรฐานของ Cisco', 4);
+INSERT INTO public.choices VALUES ('47239a32-9270-457f-b6eb-121ed30b13a7', '0248a868-1d00-463b-8b08-6f3f8cf82efb', 'C = Directly Connected (ต่อตรง) และ S* = Static Default Route (เส้นทางหลักออกข้างนอก)', true, 'ถูกต้อง C คือ Connected และ S* คือ Default Static Route 0.0.0.0/0', 1);
+INSERT INTO public.choices VALUES ('178637ce-0145-4519-89bd-c776ffd4e231', '0248a868-1d00-463b-8b08-6f3f8cf82efb', 'C = Cisco Proprietary และ S* = Standard Route', false, 'ผิด ไม่ใช่ความหมายของสัญลักษณ์ C และ S', 2);
+INSERT INTO public.choices VALUES ('bbe8aa57-96e2-4422-813e-6b311c51b7ef', '0248a868-1d00-463b-8b08-6f3f8cf82efb', 'C = Core Network และ S* = Subnet Mask', false, 'ผิด ไม่ถูกต้อง', 3);
+INSERT INTO public.choices VALUES ('7c128821-b1cd-4fd6-b718-5ec6da1c2fc9', '0248a868-1d00-463b-8b08-6f3f8cf82efb', 'C = Collision Detected และ S* = Spanning-tree Route', false, 'ผิด C ใน Routing table หมายถึง Connected', 4);
+INSERT INTO public.choices VALUES ('96da29e7-5e61-4109-8765-d4dd331b3b3a', '29a4fa57-6dd7-4b04-9a94-3f64ef1ea7ab', 'เกิด Late Collisions จำนวนมาก และมี Packet Loss สูงมากเมื่อมีการรับส่งข้อมูลปริมาณมาก', true, 'ถูกต้อง นี่คืออาการจำเพาะของ Duplex Mismatch', 1);
+INSERT INTO public.choices VALUES ('7cd4a43c-99b2-4bd2-bf3f-c2fd5541f748', '29a4fa57-6dd7-4b04-9a94-3f64ef1ea7ab', 'พอร์ตจะดับ (down/down) สนิททันทีตั้งแต่เริ่มเสียบสาย', false, 'ผิด พอร์ตจะยังขึ้น up/up และใช้งานได้ช้าๆ', 2);
+INSERT INTO public.choices VALUES ('f6ffaee9-cc15-4508-a10e-81b38edec4fb', '29a4fa57-6dd7-4b04-9a94-3f64ef1ea7ab', 'เครื่องลูกข่ายจะได้รับไอพีเป็น 169.254.x.x เสมอ', false, 'ผิด ไม่เกี่ยวกับ APIPA', 3);
+INSERT INTO public.choices VALUES ('d7d6402a-6044-480d-a2be-26fd3444ce14', '29a4fa57-6dd7-4b04-9a94-3f64ef1ea7ab', 'สวิตช์จะปิดระบบดับเพลิงในห้องเซิร์ฟเวอร์', false, 'ผิด ไม่เกี่ยวข้องกัน', 4);
+INSERT INTO public.choices VALUES ('2203d007-a3c5-484a-b485-96a139031876', '48a688b6-b7e4-4d4f-8164-32df8b03b281', 'เกิด Loop ทางกายภาพใน Switch และ Ethernet Frame ไม่มีฟิลด์ TTL จึงวนเวียนไม่สิ้นสุด', true, 'ถูกต้อง เพราะ Layer 2 ไม่มี TTL มาคอยตัดรอบเหมือน Layer 3 IP Packet', 1);
+INSERT INTO public.choices VALUES ('121c217a-812d-4818-9ef5-50ee40d2d045', '48a688b6-b7e4-4d4f-8164-32df8b03b281', 'เกิดจากมีคนตั้งค่า Default Gateway ซ้ำกันเกิน 2 เครื่อง', false, 'ผิด Gateway ชนกันไม่ทำให้เกิด Broadcast Storm ระดับสวิตช์ล่ม', 2);
+INSERT INTO public.choices VALUES ('d5572638-00f3-448c-b7dc-2a8683eda87a', '48a688b6-b7e4-4d4f-8164-32df8b03b281', 'เกิดจากสายไฟเบอร์ถูกดัดงอเกินรัศมี Bend Radius', false, 'ผิด สัญญาณแสงดรอปไม่ทำให้เกิด Storm', 3);
+INSERT INTO public.choices VALUES ('370eff7f-7bec-4a60-9069-c183bba7382c', '48a688b6-b7e4-4d4f-8164-32df8b03b281', 'เกิดจากระบบ DNS มีการตั้งค่า TTL เป็น 0', false, 'ผิด DNS TTL คือการแคชชื่อโดเมน ไม่เกี่ยวกับ Ethernet Frame loop', 4);
+INSERT INTO public.choices VALUES ('1f1d4edf-b148-4234-bcfa-59e77cb6914d', '6742174c-264e-4fba-a6da-56b09a01ac39', 'STP (Spanning Tree Protocol)', true, 'ถูกต้อง STP คือโปรโตคอลหลักในการป้องกัน Switching Loop', 1);
+INSERT INTO public.choices VALUES ('bc889589-68be-494f-a431-fe78f6bccaaf', '6742174c-264e-4fba-a6da-56b09a01ac39', 'BGP (Border Gateway Protocol)', false, 'ผิด BGP คือโปรโตคอล Routing บนอินเทอร์เน็ต', 2);
+INSERT INTO public.choices VALUES ('74389850-88ce-480b-8660-01c0ca776824', '6742174c-264e-4fba-a6da-56b09a01ac39', 'SNMP (Simple Network Management Protocol)', false, 'ผิด SNMP ใช้สำหรับ Monitoring ตรวจสอบอุปกรณ์', 3);
+INSERT INTO public.choices VALUES ('c1b825af-5a9d-44c8-94fe-ef1880247b35', '6742174c-264e-4fba-a6da-56b09a01ac39', 'OSPF (Open Shortest Path First)', false, 'ผิด OSPF คือโปรโตคอล Dynamic Routing ใน Layer 3', 4);
+INSERT INTO public.choices VALUES ('a655a0e2-023b-4b46-b934-09ade4a49f97', '1e185f85-4700-463f-a971-4c02526fc962', 'หากมีเฟรม BPDU ส่งเข้ามาที่พอร์ตนั้น สวิตช์จะสั่งปิดพอร์ตทันที (err-disabled) เพื่อป้องกันการต่อสวิตช์เถื่อนมาทำ Loop', true, 'ถูกต้อง BPDU Guard ปกป้องพอร์ต edge ไม่ให้มีอุปกรณ์สวิตช์อื่นมาเชื่อมต่อ', 1);
+INSERT INTO public.choices VALUES ('0657cd6c-cadb-4724-a2ce-227bea911c10', '1e185f85-4700-463f-a971-4c02526fc962', 'ช่วยเพิ่มความเร็วในการดาวน์โหลดไฟล์ของพอร์ตนั้นเป็น 2 เท่า', false, 'ผิด ไม่ได้เพิ่มความเร็ว', 2);
+INSERT INTO public.choices VALUES ('fff58c29-6597-4f0f-9684-6a9607eb911d', '1e185f85-4700-463f-a971-4c02526fc962', 'ทำการสำรองข้อมูลการคอนฟิกเก็บไว้ใน Flash memory อัตโนมัติ', false, 'ผิด ไม่เกี่ยวกับแบ็กอัปคอนฟิก', 3);
+INSERT INTO public.choices VALUES ('2a8328bd-316a-486a-8148-247d8e691a84', '1e185f85-4700-463f-a971-4c02526fc962', 'อนุญาตให้พอร์ตนั้นรองรับเฉพาะการต่อสายไฟเบอร์ออปติกเท่านั้น', false, 'ผิด ใช้ได้ทั้งสายทองแดงและสายไฟเบอร์', 4);
+INSERT INTO public.choices VALUES ('fbdbe20c-b181-4877-9492-4e8476207fc6', '34d76a3b-7fb2-4a41-b949-84b1bbd4537d', 'LACP (Link Aggregation Control Protocol - IEEE 802.3ad)', true, 'ถูกต้อง LACP คือมาตรฐานเปิดที่รองรับการรวมสายข้ามยี่ห้อ', 1);
+INSERT INTO public.choices VALUES ('1df75c95-04b7-4649-9ed2-f3b704ff5d19', '34d76a3b-7fb2-4a41-b949-84b1bbd4537d', 'VTP (VLAN Trunking Protocol)', false, 'ผิด VTP ใช้ซิงค์ฐานข้อมูล VLAN', 2);
+INSERT INTO public.choices VALUES ('ef1c8425-0043-4e97-b579-15ca7dfcb855', '34d76a3b-7fb2-4a41-b949-84b1bbd4537d', 'CDP (Cisco Discovery Protocol)', false, 'ผิด CDP ใช้ค้นหาอุปกรณ์ข้างเคียง', 3);
+INSERT INTO public.choices VALUES ('b472d490-70fe-42f3-81d8-eb6f13e1504b', '34d76a3b-7fb2-4a41-b949-84b1bbd4537d', 'HSRP (Hot Standby Router Protocol)', false, 'ผิด HSRP คือการสำรอง Default Gateway ของ Router', 4);
+INSERT INTO public.choices VALUES ('f8e44536-99c9-49c5-b7d5-599c6a756ad2', 'eed83e79-382d-4cd4-b70c-a794fdc8d5be', 'เพื่อป้องกันไม่ให้ tcpdump พยายามแปลง IP เป็น Hostname และแปลง Port เป็นชื่อบริการ ซึ่งทำให้ผลลัพธ์แสดงได้รวดเร็วและไม่รบกวน DNS', true, 'ถูกต้อง -n ปิดการ Resolve IP, -nn ปิดการ Resolve ทั้ง IP และ Port', 1);
+INSERT INTO public.choices VALUES ('46ca8078-e17e-41ed-8467-125b3ca38c70', 'eed83e79-382d-4cd4-b70c-a794fdc8d5be', 'เพื่อเปิดการเข้ารหัสข้อมูลที่ดักจับได้ด้วยมาตรฐาน AES-256', false, 'ผิด tcpdump ไม่ได้เข้ารหัสไฟล์ด้วยแฟล็กนี้', 2);
+INSERT INTO public.choices VALUES ('4ab9e12e-661e-495a-9309-f65a44ba340c', 'eed83e79-382d-4cd4-b70c-a794fdc8d5be', 'เพื่อจำกัดให้ดักจับเฉพาะแพ็กเก็ตที่เป็นไวรัสเท่านั้น', false, 'ผิด tcpdump ดักจับแพ็กเก็ตตามฟิลเตอร์ ไม่ใช่โปรแกรมแอนตี้ไวรัส', 3);
+INSERT INTO public.choices VALUES ('404d01ae-8888-43cb-ae56-0739e5743f74', 'eed83e79-382d-4cd4-b70c-a794fdc8d5be', 'เพื่อสั่งให้ระบบจำลองการส่งข้อมูลเสมือนโดยไม่ต้องแตะการ์ดแลนจริง', false, 'ผิด tcpdump ดักฟังจากการ์ดแลนจริง', 4);
+INSERT INTO public.choices VALUES ('2e88d2f8-044d-4dfb-ad21-58f3d50d6a9d', '4179d86f-e2c7-4331-a1f3-c90aae750b83', 'แพ็กเก็ตถูกบล็อกหรือถูกทิ้ง (DROP) โดย Firewall หรือเครื่องปลายทางปิดเครื่องอยู่', true, 'ถูกต้อง หากโดน DROP จะไม่มีการตอบกลับใดๆ ทำให้เครื่องต้นทางส่ง SYN ซ้ำจนกระทั่ง Connection timed out', 1);
+INSERT INTO public.choices VALUES ('15b7a30d-ee15-4fcd-9216-f6ca33504913', '4179d86f-e2c7-4331-a1f3-c90aae750b83', 'การเชื่อมต่อสำเร็จสมบูรณ์และกำลังดาวน์โหลดไฟล์', false, 'ผิด ถ้าสำเร็จต้องมี [S.] และ [.] ตอบกลับมา', 2);
+INSERT INTO public.choices VALUES ('53a8333c-2d66-4e45-9ec3-e6348e443ce9', '4179d86f-e2c7-4331-a1f3-c90aae750b83', 'เครื่องปลายทางตอบปฏิเสธการเชื่อมต่อด้วย Connection Refused', false, 'ผิด หากปฏิเสธ ปลายทางจะส่ง Flags [R] (RST) สวนกลับมา ไม่ใช่เงียบหาย', 3);
+INSERT INTO public.choices VALUES ('889db75d-61e2-4f24-a824-27bf29416d22', '4179d86f-e2c7-4331-a1f3-c90aae750b83', 'สายแลนของเครื่องต้นทางหลุดออกจากเครื่องตนเอง', false, 'ผิด หากสายหลุดตั้งแต่เครื่องตัวเอง tcpdump จะไม่เห็นแพ็กเก็ตส่งออกไปได้', 4);
+INSERT INTO public.choices VALUES ('05928e3a-a3ba-4cad-965a-b1831d7638e4', 'd3078369-34bc-435c-a843-0aa4c32c9797', 'เครือข่ายส่งข้อมูลถึงปลายทางได้ปกติ แต่ไม่มี Service หรือ Application เปิดรันรองรับอยู่ที่พอร์ตนั้น (Connection Refused)', true, 'ถูกต้อง RST เป็นสัญญาณว่าเครื่องปลายทางยังมีชีวิตอยู่แต่ไม่มีโปรแกรมเปิดฟังพอร์ตนั้น', 1);
+INSERT INTO public.choices VALUES ('cb745f59-65c4-4230-8aa9-ae841948e8af', 'd3078369-34bc-435c-a843-0aa4c32c9797', 'สายแลนระหว่างทางขาดใน', false, 'ผิด หากสายขาดจะไม่มีแพ็กเก็ต RST ส่งสวนกลับมาหาเราได้', 2);
+INSERT INTO public.choices VALUES ('3c4a814c-3e43-4bfe-bfe1-2224f381a064', 'd3078369-34bc-435c-a843-0aa4c32c9797', 'Firewall กำลังทำการทิ้งข้อมูลทั้งหมด', false, 'ผิด Firewall drop มักทำให้แพ็กเก็ตเงียบหายไป (Timed out)', 3);
+INSERT INTO public.choices VALUES ('f4340d1a-9bef-44dc-a6d5-2feb30c5d3ad', 'd3078369-34bc-435c-a843-0aa4c32c9797', 'ฮาร์ดดิสก์ของเครื่องต้นทางเสีย', false, 'ผิด ไม่เกี่ยวกับฮาร์ดดิสก์', 4);
+INSERT INTO public.choices VALUES ('f1c3b99f-6d83-4859-8c4f-a3b258658b37', 'caf4b43f-815a-4731-afe7-e459846dc1fe', 'sudo tcpdump -nn -i eth0 port 443 -c 50 -w /tmp/ssl_test.pcap', true, 'ถูกต้อง มีครบทั้ง -nn, -i eth0, port 443, -c 50 และ -w ชี้ชื่อไฟล์', 1);
+INSERT INTO public.choices VALUES ('169ec223-96e3-40d0-a6d9-e046a10dce9e', 'caf4b43f-815a-4731-afe7-e459846dc1fe', 'sudo tcpdump -i eth0 --save /tmp/ssl_test.pcap 443', false, 'ผิด tcpdump ไม่มีแฟล็ก --save (ต้องใช้ -w)', 2);
+INSERT INTO public.choices VALUES ('bd5d98ee-0dbb-40d1-a423-fbe29df1e6fa', 'caf4b43f-815a-4731-afe7-e459846dc1fe', 'sudo tcpdump --port=443 --count=50 > /tmp/ssl_test.pcap', false, 'ผิด ไวยากรณ์ไม่ถูกต้องและใช้ redirection ธรรมดาจะทำให้ไฟล์ pcap เสียหาย', 3);
+INSERT INTO public.choices VALUES ('dc62c9d8-c2bc-4233-85cb-3df7fda27f9c', 'caf4b43f-815a-4731-afe7-e459846dc1fe', 'sudo tcpdump -r /tmp/ssl_test.pcap port 443', false, 'ผิด แฟล็ก -r ใช้สำหรับอ่านไฟล์ย้อนหลัง ไม่ใช่บันทึกไฟล์ใหม่', 4);
+INSERT INTO public.choices VALUES ('0d70c6da-293e-4b09-be5d-166fb3bf814a', '70b5a05d-a58c-4b52-8750-07b0d905cae1', 'คลิกขวาที่แพ็กเก็ตแล้วเลือก Follow -> TCP Stream', true, 'ถูกต้อง Follow TCP Stream ใช้ประกอบข้อมูลทั้งเซสชันออกมาเป็นข้อความอ่านต่อเนื่อง', 1);
+INSERT INTO public.choices VALUES ('29de3bdf-3bc9-490c-9b48-1be6d23cdb7b', '70b5a05d-a58c-4b52-8750-07b0d905cae1', 'เลือกเมนู File -> Export Objects -> JSON', false, 'ผิด ไม่ใช่การอ่านสตรีมข้อมูล TCP', 2);
+INSERT INTO public.choices VALUES ('dd599aa7-a6cb-435e-8ec1-3ab05728710d', '70b5a05d-a58c-4b52-8750-07b0d905cae1', 'คลิกเลือก Apply as Filter -> Selected MAC', false, 'ผิด เป็นเพียงการกรอง MAC Address', 3);
+INSERT INTO public.choices VALUES ('60eeab6e-dd15-47c9-b732-e48f38df3ba5', '70b5a05d-a58c-4b52-8750-07b0d905cae1', 'กดปุ่ม Restart Capture ทันที', false, 'ผิด จะเป็นการเริ่มดักจับใหม่และล้างข้อมูลเก่า', 4);
 
 
 --
@@ -834,6 +962,9 @@ INSERT INTO public.flashcards VALUES ('149b4883-feaa-470c-b259-5b53df77508c', 'd
 8. น้ำตาล', 'ขึ้นต้นด้วยคู่ส้ม แล้วขาวเขียวคร่อมคู่น้ำเงิน', 5, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.flashcards VALUES ('ba6305d9-fa64-4573-bf8a-804eaadd08c3', 'dc:fc:riser-hba', 10, 'a64393d6-d903-4f53-958f-99df97e3d586', 'หน้าที่ของ Riser Card และ HBA Card ในเครื่องเซิร์ฟเวอร์', '• Riser Card: แผงแปลงสล็อต PCIe จากแนวตั้งเป็นแนวนอน เพื่อให้ใส่การ์ดในเครื่อง 1U/2U เตี้ยๆ ได้
 • HBA (Host Bus Adapter): การ์ดเชื่อมต่อเซิร์ฟเวอร์เข้ากับระบบจัดเก็บข้อมูลภายนอก เช่น Fibre Channel SAN หรือ SAS Storage', 'Riser = ยกตะแคงแนวนอน, HBA = การ์ดต่อ Storage', 6, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('8f54e66a-facb-4671-9672-2ea9f6003bc9', 'linux:02-basics:fc04', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'สัญลักษณ์ . , .. และ ~ ในเส้นทาง Linux หมายถึงอะไร?', '• . = โฟลเดอร์ปัจจุบัน
+• .. = โฟลเดอร์แม่ (ถอยขึ้น 1 ชั้น)
+• ~ = โฟลเดอร์ Home ของผู้ใช้ปัจจุบัน', 'จุดเดียว สองจุด และตัวหนอน', 4, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.flashcards VALUES ('9d1351c4-681b-4384-8b0e-f3ebc14dcd43', 'dc:fc:ecc-dimm-rules', 10, 'a64393d6-d903-4f53-958f-99df97e3d586', 'ECC RAM คืออะไร และทำไมการใส่ RAM เซิร์ฟเวอร์ต้องเรียงตาม DIMM Population Rules?', '• ECC (Error-Correcting Code): แรมที่ตรวจจับและซ่อมบิตข้อมูลที่เพี้ยนเองได้ ป้องกันเครื่องแฮงค์
 • DIMM Population Rules: ลำดับช่องเสียบแรมที่ระบุบนฝาเครื่อง (เช่น A1, B1, A2...) เพื่อให้ Memory Controller ทุก Channel ทำงานสมดุลกันและบูตผ่าน', 'ดูผังลำดับช่องเสียบใต้ฝาเครื่องเสมอ', 7, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.flashcards VALUES ('3e9f9cc8-8f5c-459c-984c-a39dc1c77578', 'dc:fc:rack-unit-1u', 10, 'a64393d6-d903-4f53-958f-99df97e3d586', 'ขนาดความสูง 1U (Rack Unit) เท่ากับกี่นิ้ว และหลักการวางน้ำหนักในตู้แร็ค 42U คืออะไร?', '• 1U = 1.75 นิ้ว (4.445 ซม.)
@@ -889,9 +1020,6 @@ INSERT INTO public.flashcards VALUES ('840b7116-6411-4d82-80a4-cf6a141a1089', 'l
 (Print Working Directory)', 'ตัวย่อ 3 ตัวอักษร', 1, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.flashcards VALUES ('39deab3c-366f-4706-b945-93aafd794048', 'linux:02-basics:fc03', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'ความแตกต่างระหว่าง Absolute Path กับ Relative Path', '• Absolute Path: ขึ้นต้นด้วย / เสมอ (อ้างอิงจากรากสุดของระบบ เช่น /var/log/syslog)
 • Relative Path: ไม่ขึ้นต้นด้วย / (อ้างอิงจากตำแหน่งปัจจุบัน เช่น ./app.log หรือ ../config)', 'ดูที่ตัวอักษรแรกของเส้นทาง', 3, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
-INSERT INTO public.flashcards VALUES ('8f54e66a-facb-4671-9672-2ea9f6003bc9', 'linux:02-basics:fc04', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'สัญลักษณ์ . , .. และ ~ ในเส้นทาง Linux หมายถึงอะไร?', '• . = โฟลเดอร์ปัจจุบัน
-• .. = โฟลเดอร์แม่ (ถอยขึ้น 1 ชั้น)
-• ~ = โฟลเดอร์ Home ของผู้ใช้ปัจจุบัน', 'จุดเดียว สองจุด และตัวหนอน', 4, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.flashcards VALUES ('3d65c2dd-2d36-4346-ba8b-3d6679a9f45c', 'linux:02-basics:fc05', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'คำสั่งสลับกลับไปยังโฟลเดอร์ก่อนหน้าที่เพิ่งจากมา', 'cd -', 'ใช้เครื่องหมายขีดกลาง', 5, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.flashcards VALUES ('7ad0de06-e939-484c-8b72-312ee902b4a0', 'linux:02-basics:fc06', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'ทำไมไม่ควรใช้ cat เปิดอ่านไฟล์ Log ขนาดใหญ่ และควรใช้คำสั่งใดแทน?', 'เพราะ cat จะแสดงเนื้อหาทั้งไฟล์รวดเดียวทำให้หน้าจอค้างและเปลือง I/O
 ควรใช้:
@@ -1050,6 +1178,10 @@ INSERT INTO public.flashcards VALUES ('8dd4b8d8-4072-40e0-9442-397afb9f0a34', 'l
 INSERT INTO public.flashcards VALUES ('c3b5afcf-5f60-4207-aef3-ca1dd84296eb', 'linux:09-cron-schedule:fc04', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'คำสั่งดูรายการ Crontab ของตัวเอง และคำสั่งดูของ user อื่น (เช่น appuser)', '• ของตัวเอง: crontab -l
 • ของผู้ใช้คนอื่น: sudo crontab -u appuser -l', '-l = list, -u = user', 4, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.flashcards VALUES ('da0f36ae-5349-4e00-9c62-219a069a1983', 'linux:09-cron-schedule:fc05', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'ทำไมห้ามเผลอพิมพ์คำสั่ง crontab -r เด็ดขาด?', 'เพราะ -r (remove) จะลบตาราง Crontab ทั้งหมดของผู้ใช้นั้นทิ้งทันทีโดยไม่ถามยืนยัน (ให้ใช้เฉพาะ crontab -l ในการตรวจสอบ)', 'ปุ่ม r อยู่ติดกับปุ่ม e บนคีย์บอร์ด', 5, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('175022d6-d009-4c14-b8ca-0380f124eaa4', 'linux:10-health-check:fc10', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'curl exit code 6, 7, 28 และ 60 หมายถึงอะไร', '• 6: Resolve host ไม่ได้ (DNS)
+• 7: Connect ไม่ได้ (refused)
+• 28: Timeout
+• 60: ปัญหาใบรับรอง SSL', 'DNS, Connect, Timeout, Cert', 10, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.flashcards VALUES ('3ba2ea29-42d9-4b7d-9915-be7d6c9341aa', 'linux:09-cron-schedule:fc06', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'ความต่างระหว่างบรรทัดใน User Crontab (crontab -e) กับไฟล์ใน /etc/cron.d/', '• User Crontab: มี 5 ฟิลด์เวลา ตามด้วยคำสั่งทันที
 • /etc/cron.d/ และ /etc/crontab: ต้องระบุชื่อผู้ใช้ (username) แทรกเป็นคอลัมน์ที่ 6 ก่อนคำสั่งเสมอ', 'ระดับระบบต้องระบุว่ารันในสิทธิ์ของ user ใด', 6, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.flashcards VALUES ('6c116e09-ffcb-4488-9149-3d65500f6c71', 'linux:09-cron-schedule:fc07', 1, '5a93786b-3b53-4b51-8232-c77e8324453b', 'ชื่อบริการและตำแหน่งไฟล์ Log ของ Cron บน Ubuntu เทียบกับ RHEL', '• Ubuntu / Debian:
@@ -1086,10 +1218,6 @@ INSERT INTO public.flashcards VALUES ('44006424-587f-4f05-ac5c-8cd9c38c8560', 'l
 z = สแกนเฉยๆ, v = แสดงผล', 'netcat', 7, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.flashcards VALUES ('3b3477ab-2f44-4fad-8b51-b5dccc6d89c0', 'linux:10-health-check:fc08', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'ถ้าไม่มี nc จะทดสอบต่อ Port ได้อย่างไร', 'timeout 3 bash -c ''</dev/tcp/<host>/<port>'' && echo open', 'ใช้ bash ต่อ TCP เอง', 8, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.flashcards VALUES ('3f6ab51f-3ba8-49e3-a7bc-b8e82126ed74', 'linux:10-health-check:fc09', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'curl พิมพ์เฉพาะ Status Code กับเวลาที่ใช้', 'curl -sS -o /dev/null -w "%{http_code} %{time_total}s\n" --max-time 10 <URL>', '-w กำหนดรูปแบบผลลัพธ์', 9, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
-INSERT INTO public.flashcards VALUES ('175022d6-d009-4c14-b8ca-0380f124eaa4', 'linux:10-health-check:fc10', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'curl exit code 6, 7, 28 และ 60 หมายถึงอะไร', '• 6: Resolve host ไม่ได้ (DNS)
-• 7: Connect ไม่ได้ (refused)
-• 28: Timeout
-• 60: ปัญหาใบรับรอง SSL', 'DNS, Connect, Timeout, Cert', 10, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.flashcards VALUES ('c8ed3813-155e-4a0a-951d-9ce8a41ed015', 'linux:10-health-check:fc11', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'HTTP 502, 503 และ 504 ต่างกันอย่างไร', '• 502: Backend ตอบไม่ถูกต้องหรือต่อไม่ได้
 • 503: Service ไม่พร้อม (ล้น/ปิดปรับปรุง)
 • 504: Backend ตอบช้าจนเกิน Timeout', 'Bad Gateway, Unavailable, Gateway Timeout', 11, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
@@ -1140,6 +1268,12 @@ EXPLAIN ANALYZE จะสั่งรันคำสั่งจริงแล�
 INSERT INTO public.flashcards VALUES ('bb12cd67-1c94-4d46-ad1b-49df8a84efc8', 'sql:03-indexes-performance:fc03', 3, '0ec2fdf6-2627-408b-9791-35963b5fe97e', 'คำสั่งใดใน PostgreSQL ใช้ตรวจสอบ Query ที่กำลังรันอยู่แบบ Real-time?', 'SELECT * FROM pg_stat_activity WHERE state != ''idle'';', 'pg_stat_activity', 3, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.flashcards VALUES ('63ed67c7-7cc9-4a11-aa03-d4ba35a7f26d', 'sql:03-indexes-performance:fc04', 3, '0ec2fdf6-2627-408b-9791-35963b5fe97e', 'ความแตกต่างระหว่าง pg_cancel_backend() กับ pg_terminate_backend() คืออะไร?', 'pg_cancel_backend(pid): พยายามยกเลิกเฉพาะ Query ที่กำลังรันอยู่ แต่ยังคง Session การเชื่อมต่อไว้
 pg_terminate_backend(pid): บังคับตัดการเชื่อมต่อของ Client ทิ้งทันที (Kill connection)', 'Cancel current query vs Terminate entire connection', 4, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('8bef37d2-7e3e-449e-bd5e-e673965f6da4', 'network:08-cli:fc05', 2, 'c349c769-a0a4-4287-a5dd-73daeaa0f3a8', 'การตั้งค่า Serial Connection พอร์ต Console ของอุปกรณ์เครือข่ายมีค่ามาตรฐานสากลอย่างไร?', 'Baud Rate: 9600
+Data Bits: 8
+Parity: None
+Stop Bits: 1
+Flow Control: None
+(เรียกย่อว่า 9600 8-N-1)', '9600 8-N-1', 5, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
 INSERT INTO public.flashcards VALUES ('c62cc901-2845-4c71-ab69-f3c13a116552', 'troubleshooting:01-incident-triage-methodology:fc01', 6, '11fc305a-c347-452a-8cbb-f81491cb8cae', 'ความแตกต่างระหว่าง Sev 1 กับ Sev 3 ตามมาตรฐาน ITIL คืออะไร?', 'Sev 1 (Critical): ระบบหลักล่มทั้งระบบ กระทบผู้ใช้ทุกคน ธุรกิจเสียหายรุนแรง
 Sev 3 (Medium): ฟังก์ชันย่อยมีปัญหา แต่ยังมีวิธีเลี่ยง (Workaround Available) ธุรกิจยังดำเนินการต่อได้', 'All down vs Minor feature with workaround', 1, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.flashcards VALUES ('3399914c-18d5-4b99-a434-d2a1eb0b126c', 'troubleshooting:01-incident-triage-methodology:fc02', 6, '11fc305a-c347-452a-8cbb-f81491cb8cae', 'ทำไมคำถาม ''What Changed?'' จึงเป็นหัวใจสำคัญของการ Triage?', 'เพราะกว่า 80-90% ของ Incident เกิดจากการเปลี่ยนแปลง เช่น การดีพลอยเวอร์ชันใหม่, การเปลี่ยนคอนฟิก, หรือการแก้ไขระบบเครือข่าย', '80-90% of issues stem from recent changes', 2, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
@@ -1168,6 +1302,59 @@ INSERT INTO public.flashcards VALUES ('f57ad89b-f81c-4eb9-86b1-3a15aa6ce90b', 'w
 3. Server / Leaf Certificate (ใบรับรองของเว็บไซต์เรา)', 'Root -> Intermediate -> Leaf', 1, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.flashcards VALUES ('02445f8e-4ff1-4848-8c83-104f852d6c50', 'web-api:03-ssl-tls-certificates:fc02', 4, 'c1527b50-8bf1-4171-95ce-52bd25ee35f4', 'ทำไมเบราว์เซอร์จึงขึ้นเตือน ''unable to get local issuer certificate''?', 'เกิดจากเว็บเซิร์ฟเวอร์ส่งเฉพาะ Leaf Cert แต่ไม่ได้ใส่ไฟล์ Intermediate CA Bundle ลงไปด้วย ทำให้เบราว์เซอร์ต่อสายโซ่กลับไปยัง Root CA ไม่ได้', 'Missing intermediate CA bundle (Fullchain)', 2, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.flashcards VALUES ('8842cda8-8a11-464f-b14f-84888daecf11', 'web-api:03-ssl-tls-certificates:fc03', 4, 'c1527b50-8bf1-4171-95ce-52bd25ee35f4', 'หลังเปลี่ยนไฟล์ SSL Certificate บน Nginx หรือ Apache ต้องทำสิ่งใดเป็นขั้นตอนสุดท้ายเสมอ?', 'สั่ง Reload หรือ Restart เว็บเซิร์ฟเวอร์ (เช่น sudo systemctl reload nginx) เพื่อให้อ่านไฟล์ใบรับรองใหม่เข้า RAM', 'systemctl reload nginx', 3, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.flashcards VALUES ('2c040024-c24c-437f-918b-26fc9f1ccf78', 'network:05-osi:fc01', 2, '6b461aa2-fd34-427d-8b52-fe4455276c56', 'เรียงลำดับชื่อชั้นของโมเดล OSI ทั้ง 7 ชั้น จากล่างสุด (Layer 1) ไปบนสุด (Layer 7)', '1. Physical
+2. Data Link
+3. Network
+4. Transport
+5. Session
+6. Presentation
+7. Application
+(จำ: Please Do Not Throw Sausage Pizza Away)', 'เริ่มต้นจาก Physical สิ้นสุดที่ Application', 1, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('ae981477-a6aa-473a-88f5-064aca9f66c0', 'network:05-osi:fc02', 2, '6b461aa2-fd34-427d-8b52-fe4455276c56', 'หน่วยข้อมูล (PDU) ในแต่ละชั้นของโมเดล OSI มีชื่อเรียกอย่างไรบ้าง (Layer 1 ถึง 4)?', 'Layer 1 = Bits
+Layer 2 = Frame
+Layer 3 = Packet
+Layer 4 = Segment (TCP) หรือ Datagram (UDP)', 'Bits, Frame, Packet, Segment', 2, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('efe69abe-d128-49e3-959c-7a7357045439', 'network:05-osi:fc03', 2, '6b461aa2-fd34-427d-8b52-fe4455276c56', 'การวิเคราะห์ปัญหาแบบ ''Divide-and-Conquer'' ในเครือข่ายมักเริ่มต้นทดสอบที่ชั้นใด และใช้คำสั่งอะไร?', 'เริ่มต้นที่ Layer 3 ด้วยคำสั่ง ping (เพื่อดูว่า IP และเส้นทางสื่อสารได้ไหม) หากปิงติดจะตัดปัญหา Layer 1-3 ทิ้งได้ทันที แล้วไปโฟกัสที่ Port/Firewall (Layer 4) หรือ Service (Layer 7)', 'Layer 3 (คำสั่ง ping)', 3, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('ecb09fe6-2a8a-4e70-bf16-7b963276f6fc', 'network:05-osi:fc04', 2, '6b461aa2-fd34-427d-8b52-fe4455276c56', 'Switch Layer 2 และ Router แตกต่างกันอย่างไรในแง่ของชั้น OSI และการส่งต่อข้อมูล?', 'Switch L2 ทำงานที่ Layer 2 (Data Link) ส่งต่อข้อมูลโดยอ่าน MAC Address
+Router ทำงานที่ Layer 3 (Network) ส่งต่อข้อมูลโดยอ่าน IP Address และค้นหาเส้นทางข้ามเครือข่าย', 'Layer 2 (MAC) vs Layer 3 (IP)', 4, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('816e5137-d9a0-4bf5-8142-eae8f3100ead', 'network:05-osi:fc05', 2, '6b461aa2-fd34-427d-8b52-fe4455276c56', 'หาก ping 8.8.8.8 ติด แต่ ping google.com ไม่ได้ แสดงว่าเกิดปัญหาที่ชั้นใดในโมเดล OSI?', 'Layer 7 (Application Layer) เนื่องจากเกิดจากโปรโตคอล DNS ไม่สามารถแปลงชื่อ Hostname เป็น IP Address ได้ ทั้งที่เครือข่ายเชื่อมต่อออกสู่อินเทอร์เน็ตได้ปกติ', 'DNS อยู่ใน Layer 7', 5, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('0839b777-bee3-437f-ab1a-bd257a31577e', 'network:06-vlan:fc01', 2, 'd297f4f2-4aec-41db-b324-a8e4ae10ea05', 'อธิบายความแตกต่างระหว่าง Access Port และ Trunk Port บน Switch', 'Access Port: เชื่อมต่อเครื่องลูกข่าย/เซิร์ฟเวอร์ รองรับเพียง 1 VLAN และส่งเฟรมแบบไม่มี Tag (Untagged)
+Trunk Port: เชื่อมต่อระหว่าง Switch-to-Switch หรือ Switch-to-Router รองรับหลาย VLAN พร้อมกัน และแปะ Tag ตามมาตรฐาน 802.1Q', 'Untagged 1 VLAN vs Tagged หลาย VLAN', 1, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('35f3115b-6786-4a63-ba2e-410c6c5c668f', 'network:06-vlan:fc02', 2, 'd297f4f2-4aec-41db-b324-a8e4ae10ea05', 'โปรโตคอล ARP (Address Resolution Protocol) ทำหน้าที่อะไรในระบบเครือข่าย?', 'ทำหน้าที่แปลงจาก IP Address (Layer 3) เป็น MAC Address (Layer 2) เพื่อให้การ์ดแลนสามารถสร้าง Ethernet Frame ส่งไปยังเครื่องเป้าหมายในวง LAN ได้ถูกต้อง', 'แปลง IP เป็น MAC', 2, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('9f7691b8-11e7-428f-bd29-40f544a48b70', 'network:06-vlan:fc03', 2, 'd297f4f2-4aec-41db-b324-a8e4ae10ea05', 'สวิตช์ Layer 2 มีขั้นตอนการสร้างและอัปเดต MAC Address Table อย่างไร?', 'สวิตช์จะตรวจสอบ ''Source MAC Address'' ของทุก Frame ที่วิ่งเข้ามาที่พอร์ต แล้วจดบันทึกลงในตารางคู่กับหมายเลขพอร์ตและ VLAN นั้นๆ (Learning phase)', 'ดู Source MAC ของเฟรมขาเข้า', 3, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('a9e481c3-6d72-435e-8f95-80a1f63df8a4', 'network:06-vlan:fc04', 2, 'd297f4f2-4aec-41db-b324-a8e4ae10ea05', 'Native VLAN บนพอร์ต Trunk คืออะไร และมีความพิเศษอย่างไร?', 'คือ VLAN พิเศษประจำพอร์ต Trunk ที่รองรับเฟรมแบบ ''ไม่มี Tag'' (Untagged Frame) หากมีเฟรมธรรมดาวิ่งเข้ามาที่พอร์ต Trunk สวิตช์จะส่งเข้า Native VLAN อัตโนมัติ (ค่าเริ่มต้นมักเป็น VLAN 1)', 'VLAN สำหรับ Untagged Frame บน Trunk', 4, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('5005b6d2-7152-4300-8cd4-e901da1a0fdb', 'network:06-vlan:fc05', 2, 'd297f4f2-4aec-41db-b324-a8e4ae10ea05', 'หากต้องการให้เครื่องที่อยู่ต่าง VLAN กันสามารถสื่อสารกันได้ ต้องใช้อุปกรณ์ใด และเรียกกระบวนการนี้ว่าอะไร?', 'ต้องใช้อุปกรณ์ Layer 3 เช่น Router หรือ Layer 3 Switch โดยเรียกกระบวนการส่งต่อข้อมูลข้ามวงนี้ว่า ''Inter-VLAN Routing'' (เช่น วิธี Router-on-a-Stick หรือใช้ SVI บน L3 Switch)', 'Router / L3 Switch (Inter-VLAN Routing)', 5, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('5dc6d13d-6fc8-48f1-8a2a-9c29e0f1e3f7', 'network:07-dhcp:fc01', 2, '11100691-a71e-441a-abe3-ba9a1d4ba021', 'ขั้นตอน DORA ของโปรโตคอล DHCP ย่อมาจากอะไร และทำงานอย่างไร?', 'D = Discover (เครื่องลูกข่ายส่ง Broadcast ถามหา DHCP)
+O = Offer (DHCP Server เสนอหมายเลข IP ให้)
+R = Request (เครื่องลูกข่ายตอบรับเพื่อขอยืนยันใช้ IP นั้น)
+A = Acknowledge (DHCP Server ส่งการยืนยันสัญญา Lease Time กลับมา)', 'Discover -> Offer -> Request -> Acknowledge', 1, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('8abbe3e2-3331-4f98-b663-e4ee7dddf871', 'network:07-dhcp:fc02', 2, '11100691-a71e-441a-abe3-ba9a1d4ba021', 'เมื่อเครื่องคอมพิวเตอร์ได้รับไอพีในกลุ่ม 169.254.x.x (APIPA) มีความหมายว่าอย่างไรในเชิงเทคนิค?', 'หมายความว่าเครื่องไม่สามารถติดต่อขอ IP จาก DHCP Server ได้สำเร็จ (เช่น สายแลนหลุด, พอร์ตสวิตช์ผิด VLAN, DHCP Server ดับ หรือ Pool ไอพีเต็ม) ระบบปฏิบัติการจึงสุ่มไอพี Link-Local มาให้ชั่วคราว', 'ขอ DHCP ไม่ผ่าน (APIPA)', 2, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('fb67ab4c-a060-47b6-bfc3-f4974ab8a11a', 'network:07-dhcp:fc03', 2, '11100691-a71e-441a-abe3-ba9a1d4ba021', 'DHCP Relay Agent (ip helper-address) มีบทบาทสำคัญอย่างไรในระบบเครือข่ายที่มีหลาย VLAN?', 'เนื่องจากแพ็กเก็ต DHCP Discover ส่งแบบ Broadcast ซึ่งไม่สามารถวิ่งข้าม Router ได้ ฟังก์ชัน DHCP Relay จะช่วยดักจับ Broadcast ใน Subnet นั้น แล้วแปลงเป็น Unicast ส่งตรงไปยัง DHCP Server ที่อยู่ต่างวง Subnet ให้', 'ส่งต่อ Broadcast ข้าม Router ไปยัง DHCP Server', 3, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('a491a290-c10e-49d0-b077-f05e58a8cdfc', 'network:07-dhcp:fc04', 2, '11100691-a71e-441a-abe3-ba9a1d4ba021', 'PAT (Port Address Translation) หรือ NAT Overload แตกต่างจาก Static NAT อย่างไร?', 'Static NAT: แปลง 1 Private IP คู่กับ 1 Public IP แบบ 1-to-1 ถาวร (เหมาะกับ Web/Mail Server)
+PAT (NAT Overload): อนุญาตให้อุปกรณ์จำนวนมากใช้ Public IP เดียวกันพร้อมกันได้ โดยใช้ Port Number ในการแยกเซสชันของแต่ละเครื่อง', '1-to-1 vs Many-to-1 โดยใช้ Port', 4, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('d79e76fe-cd60-4b57-be86-655fa5e5c599', 'network:07-dhcp:fc05', 2, '11100691-a71e-441a-abe3-ba9a1d4ba021', 'โปรโตคอล DHCP ทำงานบน Transport Layer ด้วย Protocol และ Port ใด?', 'ทำงานบน UDP (User Datagram Protocol):
+- พอร์ต 67 สำหรับ DHCP Server
+- พอร์ต 68 สำหรับ DHCP Client', 'UDP พอร์ต 67 และ 68', 5, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('ed34b488-64b2-4209-b2dc-fef1025d0399', 'network:08-cli:fc01', 2, 'c349c769-a0a4-4287-a5dd-73daeaa0f3a8', 'คำสั่ง ''show ip interface brief'' บน Cisco Switch มีประโยชน์หลักในการตรวจสอบอะไร?', 'ใช้สรุปรายการ Interface ทั้งหมดของอุปกรณ์ในตารางเดียว เพื่อดูว่าพอร์ตใดมี IP Address, พอร์ตใดมีไฟ Link ติดทางกายภาพ (Status: up) และพอร์ตใดพร้อมส่งข้อมูลที่ระดับ Layer 2 (Protocol: up)', 'สรุปสถานะพอร์ตและไอพีในหน้าเดียว', 1, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('0a0e4704-2d23-4eb4-88d4-ef9b831e1f2e', 'network:08-cli:fc02', 2, 'c349c769-a0a4-4287-a5dd-73daeaa0f3a8', 'สถานะ ''up / down'' ในคำสั่ง show ip interface brief บอกอะไรเกี่ยวกับชั้นของโมเดล OSI?', 'Status: up ➔ Layer 1 (Physical) ทำงานปกติ มีสัญญาณไฟฟ้าหรือแสงเข้ามา
+Protocol: down ➔ Layer 2 (Data Link) มีปัญหา เช่น ไม่ได้รับ Keepalive, Duplex Mismatch หรือตั้งค่า Encapsulation ผิด', 'L1 (Status) ผ่าน แต่ L2 (Protocol) มีปัญหา', 2, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('af4f0dea-e97c-4f6e-b48c-625fa22c2132', 'network:08-cli:fc03', 2, 'c349c769-a0a4-4287-a5dd-73daeaa0f3a8', 'หากพบค่า ''CRC errors'' เพิ่มขึ้นเรื่อยๆ ในคำสั่ง show interfaces <port> ควรตรวจสอบจุดใดเป็นอันดับแรก?', 'ตรวจสอบ Layer 1 ทางกายภาพทันที: สายสัญญาณแลน/ไฟเบอร์ชำรุด, หัวต่อเข้าหัวไม่แน่นหรือมีฝุ่นสกปรก, สายพาดผ่านแหล่งกำเนิดสัญญาณรบกวนแม่เหล็กไฟฟ้า (EMI/Noise) หรือระยะสายเกิน 100 เมตร', 'สายสัญญาณ ฮาร์ดแวร์ และสัญญาณรบกวน (Layer 1)', 3, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('e4525244-4b77-4ccc-b413-79650bc93a51', 'network:08-cli:fc04', 2, 'c349c769-a0a4-4287-a5dd-73daeaa0f3a8', 'คำสั่งใดใช้ตรวจสอบสถานะการทำงานของพอร์ต Trunk บน Cisco Switch?', '''show interfaces trunk'' เพื่อดูว่าพอร์ตใดกำลังทำหน้าที่เป็น Trunk, ค่า Native VLAN คืออะไร และมี VLAN ใดบ้างที่ได้รับอนุญาตให้ส่งผ่านสายเส้นนี้ (Allowed VLANs)', 'show interfaces trunk', 4, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('dbddf3f2-9219-4d00-bfa2-87543cf486c5', 'network:09-l1l2:fc01', 2, 'ff620473-be72-44d1-bbee-3112ba85188d', 'Duplex Mismatch (ข้างหนึ่ง Full อีกข้างเป็น Half) แสดงอาการผิดปกติอย่างไรในระบบเครือข่าย?', 'การเชื่อมต่อจะขึ้น UP และปิงขนาดเล็กผ่านได้ปกติ แต่เมื่อมี Traffic ปริมาณมาก (โหลด/อัปโหลดไฟล์) ความเร็วจะตกต่ำมากและเกิด Late Collisions กับ Packet Loss สูงจนระบบใช้งานแทบไม่ได้', 'ปิงผ่านแต่โหลดไฟล์ช้ามาก + Late Collisions', 1, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('ccf62ab7-550d-4826-b55a-cd87af418c27', 'network:09-l1l2:fc02', 2, 'ff620473-be72-44d1-bbee-3112ba85188d', 'ทำไม Switching Loop ถึงทำให้ระบบเครือข่ายล่มได้อย่างรวดเร็วในระดับ Broadcast Storm?', 'เพราะ Ethernet Frame ใน Layer 2 ไม่มีฟิลด์ TTL (Time-to-Live) เมื่อเฟรมบรอดคาสต์วิ่งวนเป็นลูป สวิตช์จะส่งกระจายทวีคูณวนไปมาไม่สิ้นสุดจนกระทั่งกินแบนด์วิดท์และ CPU เต็ม 100%', 'Layer 2 ไม่มีฟิลด์ TTL', 2, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('58e8ad49-75fe-4cd1-af0c-6996ae4937fc', 'network:09-l1l2:fc03', 2, 'ff620473-be72-44d1-bbee-3112ba85188d', 'อาการ Port Flapping คืออะไร และมีสาเหตุทั่วไปมาจากอะไร?', 'คืออาการที่พอร์ตสลับสถานะ UP และ DOWN วนลูปต่อเนื่องหลายครั้งต่อนาที สาเหตุหลักมักมาจากสายสัญญาณหลวมหรือหักใน, หัวต่อสกปรก, สัญญาณแสงไฟเบอร์อ่อน (Low Rx Optical Power) หรือโมดูล SFP ร้อนจัด/เสีย', 'พอร์ตติดๆ ดับๆ วนลูป (สายหลวม / แสงไฟเบอร์อ่อน)', 3, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('d7fc826b-f19a-498b-9e3d-962eee81ee91', 'network:09-l1l2:fc04', 2, 'ff620473-be72-44d1-bbee-3112ba85188d', 'Spanning Tree Protocol (STP) และ RSTP มีหน้าที่หลักอะไรในระบบสวิตช์?', 'ตรวจจับเส้นทางสำรองที่ทำให้เกิด Loop แล้วสั่งบล็อกพอร์ตนั้นไว้ (Blocking state) และเมื่อสายหลักขาด จะปลดบล็อกพอร์ตสำรองกลับมาส่งข้อมูลอัตโนมัติ (Forwarding state) โดย RSTP สลับสายได้ใน 1-2 วินาที', 'ตรวจจับและบล็อกเส้นทาง Loop อัตโนมัติ', 4, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('4f0e98af-cae9-4b3d-b904-2f4182a92b9a', 'network:09-l1l2:fc05', 2, 'ff620473-be72-44d1-bbee-3112ba85188d', 'โปรโตคอล LACP (Link Aggregation Control Protocol) ช่วยแก้ปัญหาอะไร?', 'ช่วยรวมพอร์ตทางกายภาพหลายพอร์ต (เช่น 2x 1Gbps) ให้ทำงานเสมือนเป็นพอร์ตเดียว (Port-Channel 2Gbps) เพิ่ม Bandwidth และสำรองสายโดยไม่ถูกโปรโตคอล STP สั่งบล็อกทิ้ง', 'รวมสายเพิ่มแบนด์วิดท์และสำรองลิงก์ (IEEE 802.3ad)', 5, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('6b3e73fa-757a-49da-b1a4-455dca06c7a7', 'network:10-pcap:fc01', 2, '7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 'ประโยชน์ของแฟล็ก ''-nn'' ในคำสั่ง tcpdump คืออะไร?', 'สั่งให้ tcpdump ไม่ต้องพยายามแปลง IP Address เป็น Hostname (-n) และไม่ต้องแปลง Port เป็นชื่อ Protocol (-nn) ช่วยให้ผลลัพธ์แสดงได้รวดเร็วทันที ไม่กระตุกจาก DNS Lookup และไม่สร้าง DNS Traffic รบกวน', 'ไม่ Resolve ทั้ง IP และ Port', 1, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('998f1bdf-e774-40e5-8b53-1befa140a1a9', 'network:10-pcap:fc02', 2, '7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 'ถอดรหัส TCP Flags ใน tcpdump: [S], [S.], [.], [P], [F], [R] มีความหมายอย่างไร?', '[S] = SYN (ขอเชื่อมต่อ)
+[S.] = SYN-ACK (ตอบรับและขอเชื่อมต่อกลับ)
+[.] = ACK (ยืนยันสำเร็จ ESTABLISHED)
+[P] = PUSH (ส่งข้อมูลแอปพลิเคชัน)
+[F] = FIN (ขอปิดเซสชันแบบปกติ)
+[R] = RST (Reset / ปฏิเสธการเชื่อมต่อทันที)', 'SYN, SYN-ACK, ACK, PUSH, FIN, RST', 2, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('e37404d0-4d44-42d5-bbdc-70ea0a9199df', 'network:10-pcap:fc03', 2, '7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 'หากเห็นแพ็กเก็ตส่ง Flags [S] ออกไปซ้ำๆ แต่ไม่มีใครตอบกลับมาเลย แสดงว่าเกิดอะไรขึ้น?', 'แพ็กเก็ตถูกทิ้งเงียบๆ (DROP) โดย Firewall / Security Group ระหว่างทาง หรือเครื่องปลายทางปิดเครื่องอยู่ ทำให้เกิดอาการ Connection Timed Out', 'ติด Firewall หรือปลายทางไม่ตอบ (Connection Timed Out)', 3, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('e2756d10-6745-435e-a2c7-9a944dd2124e', 'network:10-pcap:fc04', 2, '7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 'หากส่ง Flags [S] แล้วได้รับ Flags [R] (RST) สวนกลับมาทันที แสดงว่าเกิดอะไรขึ้น?', 'เครือข่ายเชื่อมต่อไปถึงเครื่องปลายทางได้ปกติ (Layer 1-3 สมบูรณ์) แต่ไม่มี Service/Application รันรองรับอยู่ที่พอร์ตนั้น (Connection Refused)', 'เครือข่ายปกติ แต่ไม่มีแอปเปิดฟังพอร์ตนั้น (Connection Refused)', 4, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('3ac99d71-ec5e-4079-a8b3-790a299fc67f', 'network:10-pcap:fc05', 2, '7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 'คำสั่งใดใช้บันทึกแพ็กเก็ตจาก tcpdump เป็นไฟล์ .pcap เพื่อนำไปเปิดใน Wireshark?', 'ใช้แฟล็ก ''-w <filename.pcap>'' เช่น: sudo tcpdump -nn -i eth0 port 80 -c 100 -w /tmp/capture.pcap และสามารถนำกลับมาอ่านด้วยแฟล็ก ''-r''', 'แฟล็ก -w (Write) และ -r (Read)', 5, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
 
 
 --
@@ -3652,6 +3839,697 @@ openssl x509 -in /etc/ssl/certs/mycert.crt -noout -enddate
 > ⚠️ **ข้อควรระวัง (Warning)**:
 > เมื่อเปลี่ยนไฟล์ SSL Certificate บนเซิร์ฟเวอร์เสร็จแล้ว ต้องสั่ง **Reload Web Server เสมอ** (เช่น `sudo systemctl reload nginx`) มิฉะนั้น Nginx จะยังคงใช้ Certificate เก่าที่อยู่ในหน่วยความจำ
 ', 8, 'intermediate', 3, true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.lessons VALUES ('6b461aa2-fd34-427d-8b52-fe4455276c56', 2, 'network-osi-layered-troubleshooting', 'โมเดล OSI/TCP-IP และการวิเคราะห์ปัญหาเครือข่ายทีละชั้น (OSI & Layered Troubleshooting)', 'เจาะลึก OSI 7 Layers เทียบ TCP/IP 4 Layers, บทบาทของอุปกรณ์และโปรโตคอลในแต่ละชั้น, และกระบวนการคิดแบบ Bottom-Up จากสายสัญญาณจนถึงหน้าแอปพลิเคชัน', '
+# โมเดล OSI/TCP-IP และการวิเคราะห์ปัญหาเครือข่ายทีละชั้น
+
+สำหรับวิศวกรหรือเจ้าหน้าที่ **Network Engineer**, **NOC (Network Operations Center)** และ **Technical Support** กรอบความคิดที่มีค่าที่สุดในการแก้ปัญหาคือ **OSI 7 Layers Model** เพราะเมื่อระบบล่มหรือเครื่องเซิร์ฟเวอร์ต่อเครือข่ายไม่ได้ หากไม่มีกรอบความคิด คุณจะสับสนและทดสอบมั่ว แต่ถ้าใช้หลักการแยกชั้น (Layered Approach) คุณจะตัดสาเหตุที่เป็นไปไม่ได้ออกทีละขั้นและเจอปัญหาได้อย่างรวดเร็ว
+
+---
+
+## 1. การเปรียบเทียบ OSI 7 Layers และ TCP/IP Model
+
+โมเดล OSI (Open Systems Interconnection) ถูกออกแบบเป็นมาตรฐานทฤษฎี 7 ชั้น ขณะที่การทำงานจริงของอินเทอร์เน็ตใช้สถาปัตยกรรม **TCP/IP Model (4 หรือ 5 ชั้น)** โดยทั้งสองแบบเทียบเคียงกันได้ดังนี้:
+
+![ตารางเปรียบเทียบ OSI 7 ชั้นเทียบกับ TCP/IP Model พร้อมอุปกรณ์และโปรโตคอล](/images/network/osi-vs-tcpip-layers.png)
+
+| Layer OSI | ชื่อชั้น (OSI Layer) | หน้าที่หลัก | Protocol / เทคโนโลยี | อุปกรณ์ที่ทำงานในชั้นนี้ | หน่วยข้อมูล (PDU) |
+|---|---|---|---|---|---|
+| **Layer 7** | **Application** | ติดต่อกับผู้ใช้และซอฟต์แวร์แอปพลิเคชัน | HTTP, HTTPS, DNS, SSH, DHCP, SMTP, FTP | Web Browser, Nginx, App Server | Data |
+| **Layer 6** | **Presentation** | จัดรูปแบบ เข้ารหัส บีบอัดข้อมูล | TLS/SSL, ASCII, JPEG, JSON | - | Data |
+| **Layer 5** | **Session** | จัดการ เปิด ปิด เซสชันการสื่อสาร | RPC, NetBIOS, TLS Session | - | Data |
+| **Layer 4** | **Transport** | ขนส่งข้อมูลแบบ Port-to-Port รับประกันการส่ง (TCP) หรือเน้นความเร็ว (UDP) | **TCP, UDP** (พอร์ต 80, 443, 22, 53) | Firewall (Stateful), Load Balancer L4 | **Segment** (TCP) / Datagram (UDP) |
+| **Layer 3** | **Network** | การระบุที่อยู่ตรรกะ (Logical Addressing) และค้นหาเส้นทางข้ามเครือข่าย | **IPv4, IPv6, ICMP**, OSPF, BGP, ARP | **Router**, L3 Switch | **Packet** |
+| **Layer 2** | **Data Link** | การส่งข้อมูลบนเครือข่ายท้องถิ่น (LAN) อ้างอิง Physical Address | **Ethernet, MAC Address, VLAN (802.1Q)** | **Switch (L2)**, NIC (Network Card) | **Frame** |
+| **Layer 1** | **Physical** | การส่งสัญญาณบิตไฟฟ้า แสง หรือคลื่นวิทยุผ่านสื่อกลาง | Copper RJ45 (Cat6), Fiber Optic, SFP | สายสัญญาณ, Patch Panel, Hub, Transceiver | **Bits** |
+
+> **สูตรจำชื่อ 7 ชั้นจากบนลงล่าง**: **A**ll **P**eople **S**eem **T**o **N**eed **D**ata **P**rocessing  
+> **สูตรจำชื่อ 7 ชั้นจากล่างขึ้นบน**: **P**lease **D**o **N**ot **T**hrow **S**ausage **P**izza **A**way
+
+---
+
+## 2. วิธีคิดในการแก้ปัญหาแบบทีละชั้น (Layered Troubleshooting Methodologies)
+
+เมื่อลูกค้าหรือระบบ Monitor ร้องเตือนว่า *"เข้าเว็บไม่ได้"* หรือ *"เซิร์ฟเวอร์ A ต่อฐานข้อมูล B ไม่ได้"* ช่างเทคนิคจะเลือกวิธีการวิเคราะห์ 3 รูปแบบหลัก:
+
+### 1) วิธีล่างขึ้นบน: Bottom-Up Approach (แนะนำมากที่สุดสำหรับปัญหาฮาร์ดแวร์/เครือข่ายใหม่)
+เริ่มตรวจจาก Layer 1 ขึ้นไป Layer 7:
+1. **L1 (Physical)**: ไฟพอร์ต Link ติดไหม? สายหลุดไหม? ขั้วไฟเบอร์สลับไหม?
+2. **L2 (Data Link)**: ได้รับ MAC Address ไหม? อยู่ใน VLAN ถูกต้องไหม? พอร์ต Switch เป็น Up/Up หรือไม่?
+3. **L3 (Network)**: เครื่องได้รับ IP Address ไหม? Gateway ถูกไหม? `ping` หา Gateway ติดไหม?
+4. **L4 (Transport)**: พอร์ตปลายทางเปิดฟังอยู่ไหม (`nc -zv`, `ss -tan`)? ติด Firewall ภายในหรือนอกไหม?
+5. **L7 (Application)**: เว็บเซอร์วิส (Nginx/Node) ตอบกลับ HTTP 200 หรือ Error 500/502?
+
+### 2) วิธีบนลงล่าง: Top-Down Approach (เหมาะสำหรับผู้ใช้ทั่วไปแจ้งปัญหาแอป)
+เริ่มจากดูหน้า UI หรือ Application Layer ก่อน เช่น ทดสอบเปิดผ่านเบราว์เซอร์ หากเจอ `HTTP 404` แสดงว่าเครือข่ายปกติ ปัญหาอยู่ที่แอปพลิเคชัน แต่ถ้าเจอ `DNS_PROBE_FINISHED_NXDOMAIN` หรือ `Connection Timed Out` จึงค่อยไล่ลงไปหา DNS (L7), Firewall (L4) หรือ Network (L3)
+
+### 3) วิธีแบ่งครึ่ง: Divide-and-Conquer (วิธีที่เร็วที่สุดสำหรับผู้มีประสบการณ์)
+เริ่มทดสอบที่ **Layer 3 หรือ Layer 4 ทันที** ด้วยคำสั่ง `ping` หรือ `curl`:
+- ถ้า `ping` เจอ Gateway และปลายทางได้ ➔ ตัดปัญหา Layer 1, 2, 3 ทิ้งได้ทันที 100%! ไปโฟกัสที่ Layer 4 (Port/Firewall) หรือ Layer 7 (App)
+- ถ้า `ping` ไม่ติดตั้งแต่ Default Gateway ➔ รู้ทันทีว่าปัญหาอยู่ที่ Layer 1-3 ในระดับ Local Network แน่นอน ไม่ต้องเสียเวลาไปเช็กการตั้งค่าแอปพลิเคชัน
+
+---
+
+## 3. Checklist การใช้คำสั่งตรวจเช็กไล่ทีละชั้นบน Linux
+
+เมื่อต้องแก้ไขปัญหาเครือข่ายบนเซิร์ฟเวอร์ ให้จำลำดับขั้นตอนคำสั่งต่อไปนี้:
+
+```bash
+# -------------------------------------------------------------
+# ขั้นที่ 1: ตรวจสอบ Layer 1 & 2 (Link State & Interface)
+# -------------------------------------------------------------
+# ตรวจสอบว่า Interface มีสายเสียบและมีไฟ Link ติดหรือไม่ (State UP)
+ip link show eth0
+# ตรวจสอบความเร็วและการเชื่อมต่อทางกายภาพด้วย ethtool
+ethtool eth0 | grep -E "Speed|Duplex|Link detected"
+
+# -------------------------------------------------------------
+# ขั้นที่ 2: ตรวจสอบ Layer 3 (IP, Subnet, Route & Gateway)
+# -------------------------------------------------------------
+# ดู IP Address ที่เครื่องได้รับ
+ip -4 addr show eth0
+
+# ดู Default Gateway
+ip route show
+
+# ปิงทดสอบ Gateway ท้องถิ่น (ถ้าไม่ติด ปัญหาอยู่ที่สาย/Switch/VLAN/IP ชน)
+ping -c 3 192.168.1.1
+
+# ปิงทดสอบ Public IP ภายนอก (เช่น 8.8.8.8 ถ้าติด แสดงว่าออกเน็ตได้ ปัญหาไม่ใช่ Routing)
+ping -c 3 8.8.8.8
+
+# -------------------------------------------------------------
+# ขั้นที่ 3: ตรวจสอบ Layer 7 (DNS Resolution)
+# -------------------------------------------------------------
+# ทดสอบแปลงชื่อโฮสต์เป็นไอพี (ถ้า 8.8.8.8 ปิงติด แต่ปิง google.com ไม่ได้ แสดงว่าเป็นที่ DNS)
+dig google.com +short
+
+# -------------------------------------------------------------
+# ขั้นที่ 4: ตรวจสอบ Layer 4 (Port & Firewall)
+# -------------------------------------------------------------
+# ทดสอบเชื่อมต่อไปยังพอร์ตปลายทาง (เช่น พอร์ต 443 หรือ 5432)
+nc -zvw3 api.example.com 443
+
+# ตรวจสอบพอร์ตที่เปิด Listening อยู่ในเครื่องตัวเอง
+ss -tulpn
+```
+
+---
+
+## 4. สรุปความผิดพลาดคลาสสิกแยกตามชั้น (Error Mapping)
+
+| ปัญหาที่พบ | ชั้น OSI ที่รับผิดชอบ | สาเหตุที่เป็นไปได้ |
+|---|---|---|
+| ไฟ Link ดับ / สายไม่แน่น / Transceiver ร้อนจัด | **Layer 1** | สาย LAN ขาดใน, หัวไฟเบอร์สกปรก, เสียบผิดพอร์ต |
+| ค่า CRC Error พุ่งสูง / Duplex Mismatch / เครื่องไม่เห็น MAC ของ Gateway | **Layer 2** | สายมีสัญญาณรบกวน, Switch ตั้งค่า VLAN ผิด, พอร์ตโดน STP บล็อก |
+| `Destination Host Unreachable` / ไอพีชนกัน (IP Conflict) | **Layer 3** | Default Gateway ผิด, ตั้ง Subnet Mask ไม่ตรงวง, ตาราง Routing หาย |
+| `Connection Refused` / `Connection Timed Out` | **Layer 4** | พอร์ตปลายทางไม่ได้เปิดรัน Service, ติด Security Group / iptables / Firewall |
+| `SSL Certificate Expired` / `Handshake Failure` | **Layer 6** | ใบรับรองหมดอายุ, Cipher Suite ไม่ตรงกัน |
+| `HTTP 502 Bad Gateway` / `DNS NXDOMAIN` | **Layer 7** | แอปพลิเคชันหลังบ้านล่ม (Node/PHP ตาย), ตั้งค่า DNS ผิด |
+', 10, 'beginner', 5, true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.lessons VALUES ('d297f4f2-4aec-41db-b324-a8e4ae10ea05', 2, 'network-switching-vlan-trunk', 'การทำงานของ Switch, ARP, VLAN และ Trunk 802.1Q (Switching & VLANs)', 'กลไก MAC Address Table, Address Resolution Protocol (ARP), การแบ่งกลุ่ม Network ด้วย VLAN, โหมดพอร์ต Access vs Trunk, Native VLAN และ Inter-VLAN Routing', '
+# การทำงานของ Switch, ARP, VLAN และ Trunk 802.1Q
+
+ในเครือข่ายระดับองค์กรและศูนย์ข้อมูล (Data Center) อุปกรณ์ที่มีจำนวนพอร์ตมากที่สุดคือ **Network Switch** ทำหน้าที่เชื่อมโยงเครื่องเซิร์ฟเวอร์ พีซี และเราเตอร์เข้าด้วยกัน การเข้าใจว่าสวิตช์เรียนรู้เส้นทางอย่างไร และทำไมต้องแบ่ง **VLAN** เป็นความรู้ภาคบังคับที่ผู้ดูแลระบบทุกคนต้องเข้าใจอย่างถ่องแท้
+
+---
+
+## 1. กลไกการทำงานของ Switch: MAC Address Table
+
+สวิตช์ Layer 2 ไม่สนใจ IP Address แต่มันส่งต่อข้อมูลด้วย **MAC Address (48-bit Physical Address)** ผ่านตารางจับคู่ที่เรียกว่า **MAC Address Table (หรือ CAM Table)**:
+
+### กระบวนการ 3 ขั้นตอนของ Switch:
+1. **Learning (เรียนรู้)**: เมื่อมี Frame วิ่งเข้ามาที่พอร์ตใดพอร์ตหนึ่ง สวิตช์จะดู **Source MAC Address** ใน Frame ทันที แล้วจดบันทึกลงตารางว่า *"MAC Address นี้ ต่ออยู่กับพอร์ตไหน (และอยู่ใน VLAN อะไร)"*
+2. **Forwarding (ส่งต่อแบบเจาะจง)**: หากสวิตช์รู้จัก **Destination MAC Address** อยู่แล้วในตาราง มันจะส่ง Frame นั้นออกไปที่พอร์ตปลายทางเพียงพอร์ตเดียว (Unicast)
+3. **Flooding (ส่งกระจายทุกพอร์ต)**: หาก Destination MAC Address ยังไม่อยู่ในตาราง (Unknown Unicast) หรือเป็น Broadcast (`FF:FF:FF:FF:FF:FF`) สวิตช์จะส่ง Frame นั้นออกไป **ทุกพอร์ตที่อยู่ใน VLAN เดียวกัน** (ยกเว้นพอร์ตที่รับเข้ามา)
+
+```bash
+# ตรวจสอบ MAC Address Table บน Cisco Switch
+Switch# show mac address-table
+          Mac Address Table
+-------------------------------------------
+Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+  10    5254.0012.3456    DYNAMIC     Gi0/1
+  10    5254.00ab.cdef    DYNAMIC     Gi0/2
+  20    5254.0099.8877    DYNAMIC     Gi0/5
+```
+
+---
+
+## 2. ARP (Address Resolution Protocol): ตัวเชื่อม IP กับ MAC
+
+เนื่องจากแอปพลิเคชันต้องการส่งข้อมูลไปยัง IP Address (Layer 3) แต่การ์ดแลนในระบบ Ethernet ส่งข้อมูลด้วย MAC Address (Layer 2) จึงต้องมีโปรโตคอล **ARP** ทำหน้าที่ถามหาว่า: *"IP นี้ คือ MAC Address อะไร?"*
+
+### ขั้นตอนการทำงานของ ARP:
+1. เครื่อง A (192.168.1.10) ต้องการส่งข้อมูลหาเครื่อง B (192.168.1.20) แต่ยังไม่รู้ MAC Address ของ B
+2. เครื่อง A ส่ง **ARP Request (Broadcast)** กระจายทั่วทั้งเครือข่าย: *"ใครถือ IP 192.168.1.20 ช่วยบอก MAC Address ให้ 192.168.1.10 ทราบที"*
+3. ทุกเครื่องในวงได้รับ แต่เฉพาะเครื่อง B ที่ถือ IP นั้น จะตอบกลับเป็น **ARP Reply (Unicast)**: *"ฉันเอง 192.168.1.20 MAC ของฉันคือ 00:1a:2b:3c:4d:5e"*
+4. เครื่อง A จดบันทึกคู่นี้ไว้ใน **ARP Cache** ของตนเอง เพื่อไม่ต้องถามใหม่อีกในระยะเวลาหนึ่ง
+
+```bash
+# บนเซิร์ฟเวอร์ Linux ดูตาราง ARP Cache
+ip neigh show
+# หรือคำสั่งดั้งเดิม
+arp -an
+
+# ลบ ARP Cache ในกรณีที่เปลี่ยนการ์ดแลนหรือไอพีแล้วข้อมูลค้าง
+ip neigh flush all
+```
+
+---
+
+## 3. ทำไมต้องแบ่ง VLAN (Virtual Local Area Network)?
+
+หากไม่มี VLAN ทุกเครื่องที่เสียบสายเข้าสวิตช์จะอยู่ใน **Broadcast Domain เดียวกัน**:
+- หากมีเครื่องใดติดไวรัสหรือส่ง Broadcast มหาศาล ทุกเครื่องในองค์กรจะต้องรับฟัง ส่งผลให้เครือข่ายอืด (Network Congestion)
+- ขาดความปลอดภัย ฝ่ายบุคคล การเงิน และเซิร์ฟเวอร์ฐานข้อมูลสามารถดักฟังแพ็กเก็ตของกันและกันได้
+
+**VLAN** คือการตัดแบ่งสวิตช์ตัวจริง 1 ตัว ให้ทำหน้าที่เสมือนมีสวิตช์เสมือนหลายตัวแยกขาดจากกัน:
+- **เครื่องที่อยู่ต่าง VLAN กัน จะไม่สามารถคุยกันได้โดยตรงที่ Layer 2** (แม้จะเสียบสวิตช์ตัวเดียวกัน)
+- หากต้องการให้ต่าง VLAN คุยกัน ต้องส่งผ่าน **Router หรือ Layer 3 Switch (เรียกว่า Inter-VLAN Routing)**
+
+![การเชื่อมต่อระหว่าง Switch ด้วยพอร์ต Access และ Trunk 802.1Q](/images/network/vlan-access-trunk.png)
+
+---
+
+## 4. โหมดของพอร์ต Switch: Access Port vs Trunk Port
+
+เมื่อคอนฟิกพอร์ตบนสวิตช์ จะต้องระบุว่าพอร์ตนั้นทำหน้าที่เป็น **Access** หรือ **Trunk**:
+
+| คุณสมบัติ | Access Port | Trunk Port (Tagging) |
+|---|---|---|
+| **อุปกรณ์ที่นำมาเชื่อมต่อ** | เครื่องลูกข่าย, เซิร์ฟเวอร์ทั่วไป, พรินเตอร์, กล้องวงจรปิด | สวิตช์เชื่อมกับสวิตช์ (Switch-to-Switch), สวิตช์เชื่อม Router, เซิร์ฟเวอร์ VMware ESXi |
+| **จำนวน VLAN ที่รองรับ** | **VLAN เดียวเท่านั้น** (เช่น รับเฉพาะ VLAN 10) | **หลาย VLAN พร้อมกัน** (เช่น อนุญาต VLAN 10, 20, 30 วิ่งผ่านสายเส้นเดียว) |
+| **การใส่ Tag (802.1Q)** | **Untagged**: Frame ที่ส่งเข้าคอมพิวเตอร์จะเป็นเฟรมปกติ ไม่มี VLAN Tag แปะหัว | **Tagged**: สวิตช์จะแปะ **VLAN Tag (802.1Q Header ขนาด 4 bytes)** เพื่อระบุว่าเฟรมนี้เป็นของ VLAN ใด |
+
+### แนวคิด Native VLAN บน Trunk Port:
+พอร์ต Trunk จะยอมให้มี **VLAN พิเศษ 1 อันที่ไม่ต้องแปะ Tag (Untagged)** เรียกว่า **Native VLAN** (ค่าเริ่มต้นมักเป็น VLAN 1) หากมีเฟรมธรรมดาที่ไม่มี Tag วิ่งเข้ามาที่พอร์ต Trunk สวิตช์จะโยนเฟรมนั้นเข้าสู่ Native VLAN ทันที
+
+> **Security Warning**: ในการใช้งานจริง แนะนำให้เปลี่ยน Native VLAN จากค่าเริ่มต้น (VLAN 1) ไปเป็น VLAN อื่นที่ไม่ได้ใช้งาน (เช่น VLAN 999) เพื่อป้องกันการโจมตีประเภท **VLAN Hopping Attack**
+
+---
+
+## 5. การตั้งค่าบน Cisco CLI เบื้องต้น
+
+```text
+! กำหนดพอร์ต Gi0/1 เป็น Access Port สำหรับเครื่องฝ่ายบัญชี (VLAN 10)
+Switch(config)# interface GigabitEthernet0/1
+Switch(config-if)# description Accounting-PC-01
+Switch(config-if)# switchport mode access
+Switch(config-if)# switchport access vlan 10
+Switch(config-if)# exit
+
+! กำหนดพอร์ต Gi0/24 เป็น Trunk Port เชื่อมต่อไปยัง Core Switch
+Switch(config)# interface GigabitEthernet0/24
+Switch(config-if)# description Uplink-to-CoreSwitch
+Switch(config-if)# switchport mode trunk
+Switch(config-if)# switchport trunk allowed vlan 10,20,30
+Switch(config-if)# exit
+```
+
+---
+
+## 6. สรุป Checklist แก้ปัญหาเมื่อเครื่องคุยกันไม่ได้ในระบบ Switch/VLAN
+
+1. **เช็ก Access VLAN**: พอร์ตของเครื่องทั้งสองฝั่งตั้งค่า VLAN ตรงกันหรือไม่ (`show mac address-table` หรือ `show vlan brief`)
+2. **เช็ก Trunk Allowed VLAN**: พอร์ต Trunk ระหว่างสวิตช์มีการ `allowed` VLAN นั้นให้วิ่งผ่านหรือไม่? (ปัญหาคลาสสิก: สร้าง VLAN ที่ Access Switch แล้ว แต่ลืม allow ใน Trunk Uplink)
+3. **เช็ก Default Gateway**: หากเครื่องอยู่คนละ VLAN (เช่น เครื่อง A อยู่ VLAN 10 เครื่อง B อยู่ VLAN 20) เครื่องต้องชี้ Default Gateway ไปที่ IP ของ Router/L3 Switch ไม่อย่างนั้นจะไม่สามารถส่งข้ามวงได้
+', 10, 'intermediate', 6, true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.lessons VALUES ('11100691-a71e-441a-abe3-ba9a1d4ba021', 2, 'network-dhcp-nat', 'ระบบแจกไอพี DHCP และการแปลงแอดเดรส NAT/PAT (DHCP & Network Address Translation)', 'ขั้นตอนการขอ IP (DORA Process), อายุสัญญา Lease Time, ข้อผิดพลาด APIPA (169.254.x.x), กลไก DHCP Relay, และความแตกต่างของ Static NAT, Dynamic NAT และ PAT (NAT Overload)', '
+# ระบบแจกไอพี DHCP และการแปลงแอดเดรส NAT/PAT
+
+ในงาน Support ปัญหาเครือข่ายกว่า 40% ที่ผู้ใช้ทั่วไปหรือเซิร์ฟเวอร์เปิดใหม่ต่อเน็ตไม่ได้ เกิดจากสองเรื่องนี้: **ขอไอพีไม่ได้ (DHCP Failure)** หรือ **วิ่งออกสู่อินเทอร์เน็ตไม่ได้ (NAT Failure)** การเข้าใจกลไกและขั้นตอนเบื้องหลังจะช่วยให้คุณวิเคราะห์ปัญหาได้ในเวลาไม่กี่นาที
+
+---
+
+## 1. การทำงานของ DHCP และขั้นตอน 4 สเต็ป: DORA Process
+
+**DHCP (Dynamic Host Configuration Protocol)** ทำงานบนโปรโตคอล **UDP พอร์ต 67 (Server) และ 68 (Client)** ทำหน้าที่จ่าย IP Address, Subnet Mask, Default Gateway และ DNS Server ให้เครื่องลูกข่ายโดยอัตโนมัติ
+
+เมื่อเครื่องคอมพิวเตอร์หรือเซิร์ฟเวอร์เปิดเครื่องขึ้นมา จะขอ IP ตามลำดับ **D-O-R-A**:
+
+![แผนภาพขั้นตอนการขอไอพีด้วย DHCP แบบ DORA Process](/images/network/dhcp-dora-flow.png)
+
+1. **Discover (Broadcast)**: เครื่องลูกข่ายยังไม่มี IP จึงส่งเฟรม Broadcast ออกไปทั้งเครือข่าย  
+   - Source IP: `0.0.0.0` | Destination IP: `255.255.255.255`  
+   - ใจความ: *"มี DHCP Server อยู่ในวงนี้ไหม? ฉันต้องการ IP Address"*
+2. **Offer (Unicast หรือ Broadcast)**: DHCP Server ได้รับ จึงตอบกลับพร้อมเสนอไอพีที่ว่างอยู่  
+   - ใจความ: *"ฉันคือ DHCP Server เสนอให้ใช้ IP 192.168.1.50 นะ"*
+3. **Request (Broadcast)**: เครื่องลูกข่ายตอบรับเพื่อยืนยันขอใช้ไอพีนั้น  
+   - ใจความ: *"ตกลง ฉันขอรับ IP 192.168.1.50 จาก DHCP Server ตัวนี้นะ"* (ส่งแบบ Broadcast เพื่อให้ DHCP Server ตัวอื่นที่ส่ง Offer มาทราบว่าเครื่องเลือกข้อเสนอของใคร)
+4. **Acknowledge / ACK (Unicast หรือ Broadcast)**: DHCP Server ยืนยันสัญญาสุดท้าย  
+   - ใจความ: *"บันทึกข้อมูลแล้ว คุณสามารถใช้ IP 192.168.1.50 ได้เป็นเวลา 24 ชั่วโมง (Lease Time)"*
+
+---
+
+## 2. ปัญหาคลาสสิกของ DHCP ที่ต้องจำให้ขึ้นใจ
+
+### 1) ได้ไอพีแปลกประหลาด: 169.254.x.x (APIPA)
+หากเปิดเครื่องแล้วรันคำสั่ง `ip addr` หรือ `ipconfig` แล้วพบว่าได้ไอพีขึ้นต้นด้วย **`169.254.x.x`**:
+- นี่คือ **APIPA (Automatic Private IP Addressing)**
+- **ความหมายทันที**: เครื่องของคุณ **ไม่ได้รับสัญญาณตอบกลับจาก DHCP Server** (DHCP ขอไม่สำเร็จ) ระบบปฏิบัติการจึงสุ่มไอพีนี้มาให้เพื่อใช้สื่อสารเฉพาะกิจในเครื่องข้างเคียง
+- **สาเหตุที่เป็นไปได้**:
+  - สายแลนเสียบผิด VLAN หรือพอร์ตสวิตช์ไม่ได้ต่อกับ DHCP
+  - DHCP Server ล่ม หรือ **DHCP Pool เต็ม** (ไม่มีไอพีว่างเหลือแจก)
+  - มี Firewall บล็อก UDP พอร์ต 67/68
+
+### 2) DHCP Relay Agent (ip helper-address)
+DHCP Discover ส่งแบบ **Broadcast** ซึ่งเราเตอร์จะไม่ยอมให้ Broadcast วิ่งข้ามวง (ข้าม Subnet):
+- หากเครื่องลูกข่ายอยู่ VLAN 10 แต่เครื่อง DHCP Server อยู่ใน Server Farm VLAN 100 ➔ ลูกข่ายจะขอไอพีไม่ได้
+- **ทางแก้**: ต้องคอนฟิกฟังก์ชัน **DHCP Relay (บน Cisco คือคำสั่ง `ip helper-address <IP_DHCP_Server>`)** ไว้ที่ Interface Gateway ของเราเตอร์ เพื่อให้เราเตอร์แปลง Broadcast นั้นเป็น Unicast ส่งตรงไปยัง DHCP Server ข้ามวงได้
+
+```text
+! ตัวอย่างการตั้งค่า DHCP Relay บน Cisco Router / L3 Switch
+Router(config)# interface vlan 10
+Router(config-if)# ip address 192.168.10.1 255.255.255.0
+Router(config-if)# ip helper-address 10.0.0.100
+Router(config-if)# exit
+```
+
+---
+
+## 3. ทำความรู้จัก NAT (Network Address Translation)
+
+IPv4 มีจำนวนจำกัดเพียงประมาณ 4.3 พันล้านหมายเลข ไม่เพียงพอกับอุปกรณ์ทั่วโลก จึงต้องแบ่งเป็น **Private IP** (เช่น `192.168.x.x`, `10.x.x.x`, `172.16-31.x.x`) และ **Public IP** (ไอพีจริงบนอินเทอร์เน็ต)
+
+**NAT** คือกระบวนการที่ทำหน้าที่ **แปลง Private IP เป็น Public IP** เมื่อข้อมูลจะวิ่งออกสู่อินเทอร์เน็ต และแปลงกลับเมื่อข้อมูลตอบกลับมา
+
+![แผนภาพเปรียบเทียบการทำงานของ NAT และ PAT ในการแปลงแอดเดรส](/images/network/nat-pat-diagram.png)
+
+### ประเภทของ NAT 3 รูปแบบ:
+
+| ประเภท NAT | หลักการทำงาน | กรณีใช้งานจริง |
+|---|---|---|
+| **Static NAT (1-to-1)** | แมปปิ้ง 1 Private IP คู่กับ 1 Public IP แบบถาวร | เซิร์ฟเวอร์ในศูนย์ข้อมูลที่ต้องการให้ภายนอกยิงเข้ามาหาได้ เช่น Web Server หรือ Mail Server |
+| **Dynamic NAT (Pool-to-Pool)** | มีกลุ่ม Public IP (Pool) ว่างอยู่ ใครต่อออกเน็ตก่อนก็ยืมไปใช้ เมื่อเลิกใช้ก็คืน Pool | ไม่ค่อยนิยมแล้วในปัจจุบัน |
+| **PAT / NAT Overload (Many-to-One)** | อุปกรณ์นับร้อยนับพันเครื่องในบ้านหรือองค์กร **ใช้ Public IP จริงเพียงเบอร์เดียวพร้อมกันได้** โดยอาศัยการจำแนกด้วย **Port Number (เช่น พอร์ต 50001, 50002)** | ใช้งานในบ้าน สำนักงาน ออฟฟิศ และ Cloud VPC (NAT Gateway) |
+
+---
+
+## 4. กลไกของ PAT (Port Address Translation / NAT Overload)
+
+ทำไมมือถือ คอมพิวเตอร์ และสมาร์ตทีวีในบ้าน 20 เครื่อง ออกอินเทอร์เน็ตผ่านเราเตอร์ตัวเดียวที่มี Public IP เดียวได้พร้อมกัน?
+
+1. เครื่องลูกข่าย A (`192.168.1.10:52134`) ส่งคำขอเปิดเว็บ `8.8.8.8:443`
+2. เราเตอร์ (NAT Gateway) ทำการแปลง Source:
+   - แปลง IP ต้นทางจาก `192.168.1.10` ➔ เป็น Public IP `203.0.113.5`
+   - สุ่ม Port ภายนอกขึ้นมา เช่น `61001`
+   - จดลง **NAT Translation Table**: `192.168.1.10:52134 <--> 203.0.113.5:61001`
+3. เว็บปลายทางตอบกลับมาหา `203.0.113.5:61001`
+4. เราเตอร์เปิดตารางดู พบว่าพอร์ต `61001` เป็นของเครื่อง A จึงแปลงปลายทางกลับเป็น `192.168.1.10:52134` แล้วส่งต่อไปยังเครื่อง A ได้อย่างถูกต้อง
+
+```bash
+# ตรวจสอบ Public IP ที่เครื่องของคุณออกเน็ต ณ ปัจจุบัน
+curl -s ifconfig.me
+# หรือ
+curl -s api.ipify.org
+
+# ดูรายละเอียดตาราง NAT บนเราเตอร์ Cisco
+Router# show ip nat translations
+Pro Inside global      Inside local       Outside local      Outside global
+tcp 203.0.113.5:61001  192.168.1.10:52134 8.8.8.8:443        8.8.8.8:443
+```
+
+---
+
+## 5. สรุป Checklist วิเคราะห์ปัญหา DHCP และ NAT
+
+| อาการที่ตรวจพบ | ข้อวินิจฉัย | แนวทางแก้ไข |
+|---|---|---|
+| เครื่องได้ไอพี `169.254.x.x` | ขอ DHCP ไม่สำเร็จ | ตรวจสอบสายแลน, ตรวจสอบสถานะ DHCP Service, ตรวจสอบว่า IP Pool เต็มหรือไม่ |
+| ได้ไอพีปกติ ปิง Default Gateway ติด แต่เปิดเว็บไม่ได้และปิง `8.8.8.8` ไม่ติด | NAT หรือ Routing ขาออกมีปัญหา | ตรวจสอบคอนฟิก NAT บน Router / Firewall ว่ามีการเปิด Overload ให้ Subnet นี้หรือไม่ |
+| ปิง `8.8.8.8` ติด แต่เปิดเว็บไม่ได้ | ไม่เกี่ยวกับ NAT เป็นปัญหาที่ DNS | ตรวจสอบไฟล์ `/etc/resolv.conf` ว่าระบุ Nameserver ถูกต้องหรือไม่ |
+| เครื่องจากภายนอกเข้า Web Server ภายในไม่ได้ | ไม่ได้ทำ Port Forwarding หรือ Static NAT | คอนฟิก Static NAT หรือ Port Forwarding จาก Public IP พอร์ต 80/443 ไปยัง Private IP ของเซิร์ฟเวอร์ |
+', 10, 'intermediate', 7, true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.lessons VALUES ('c349c769-a0a4-4287-a5dd-73daeaa0f3a8', 2, 'network-cli-show-commands', 'คำสั่งสำรวจและตรวจสอบเครือข่าย Cisco/Network CLI (Show Commands & Diagnostics)', 'การเชื่อมต่อผ่าน Console Cable, โครงสร้าง User EXEC vs Privileged EXEC, สูตรคำสั่ง show ยอดฮิต: show ip int brief, show interfaces, show vlan brief, show mac address-table และ show ip route', '
+# คำสั่งสำรวจและตรวจสอบเครือข่าย Cisco/Network CLI
+
+ไม่ว่าคุณจะดูแลอุปกรณ์ **Cisco, Juniper, Huawei, Aruba หรือ MikroTik** แม้ไวยากรณ์จะต่างกันเล็กน้อย แต่แนวคิดการจัดการผ่าน **Command Line Interface (CLI)** ล้วนมีโครงสร้างแบบเดียวกัน ในฐานะ Junior Network หรือ Support ประจำศูนย์ข้อมูล การรู้วิธีเข้า Console และใช้คำสั่งกลุ่ม `show` คือกุญแจสำคัญในการวินิจฉัยปัญหาโดยไม่สร้างความเสี่ยงให้เครือข่ายล่ม
+
+---
+
+## 1. วิธีเชื่อมต่อและการเข้าสู่ CLI (Console Access)
+
+เมื่อสวิตช์หรือเราเตอร์เครื่องใหม่ยังไม่ได้ตั้ง IP หรือระบบเครือข่ายล่มจนไม่สามารถรีโมตผ่าน SSH ได้ คุณจะต้องต่อสายเข้าเครื่องโดยตรง:
+
+1. **สาย Console**: สายสีฟ้า RJ45-to-DB9 (หรือสายยุคใหม่เป็น USB-C / USB Type-A to RJ45) เสียบเข้าที่พอร์ต **Console** ด้านหน้าหรือหลังอุปกรณ์
+2. **โปรแกรม Terminal Emulator**: บนคอมพิวเตอร์ของคุณ เปิดโปรแกรมเช่น **PuTTY, Tera Term หรือ SecureCRT**
+3. **พารามิเตอร์การเชื่อมต่อ (Serial Settings)**:
+   - **Baud Rate (Speed)**: `9600` (ค่ามาตรฐานสากล)
+   - **Data Bits**: `8`
+   - **Parity**: `None`
+   - **Stop Bits**: `1`
+   - **Flow Control**: `None`
+
+---
+
+## 2. ลำดับโหมดของ Cisco IOS CLI (Command Modes)
+
+Cisco แบ่งระดับการทำงานเพื่อความปลอดภัยออกเป็น 3 โหมดหลัก:
+
+```text
+Switch>             <-- 1. User EXEC Mode (ดูข้อมูลทั่วไปได้อย่างจำกัด ไม่สามารถแก้คอนฟิก)
+Switch> enable      <-- พิมพ์คำสั่ง enable และใส่รหัสผ่าน เพื่อยกระดับสิทธิ์
+Switch#             <-- 2. Privileged EXEC Mode (ดูข้อมูลเชิงลึกได้ทุกอย่าง รันคำสั่ง show ได้ครบ)
+Switch# configure terminal
+Switch(config)#     <-- 3. Global Configuration Mode (แก้ไขการตั้งค่าของสวิตช์/เราเตอร์)
+```
+
+> **กฎเหล็กของงาน Support & NOC**: เมื่อได้รับมอบหมายให้ตรวจสอบปัญหา ให้ทำงานใน **Privileged EXEC Mode (`#`)** เท่านั้น ห้ามเข้าสู่ `configure terminal` หากไม่ได้รับอนุมัติใน Change Request เพราะการพิมพ์คำสั่งผิดในโหมด config อาจทำให้พอร์ตดับหรือเน็ตเวิร์กล่มทั้งระบบ
+
+---
+
+## 3. มหาคัมภีร์คำสั่ง Show ที่ต้องใช้เป็นประจำ
+
+![ตัวอย่างผลลัพธ์คำสั่ง show ip interface brief บน Cisco Switch](/images/network/cisco-show-ip-int-brief.png)
+
+### 1) ตรวจสอบสถานะพอร์ตและ IP อย่างรวดเร็ว: `show ip interface brief`
+คำสั่งอันดับ 1 ที่วิศวกรทุกคนต้องพิมพ์เป็นคำสั่งแรก:
+
+```text
+Switch# show ip interface brief
+Interface              IP-Address      OK? Method Status                Protocol
+GigabitEthernet0/1     unassigned      YES unset  up                    up      
+GigabitEthernet0/2     unassigned      YES unset  up                    down    
+GigabitEthernet0/3     unassigned      YES unset  down                  down    
+GigabitEthernet0/4     unassigned      YES unset  administratively down down    
+Vlan1                  192.168.1.2     YES NVRAM  up                    up      
+```
+
+#### ถอดรหัสคอลัมน์ `Status` และ `Protocol`:
+- **Status (Layer 1 - Physical)**: สายสัญญาณเสียบอยู่ไหม? มีสัญญาณไฟฟ้า/แสงเข้ามาไหม?
+- **Protocol (Layer 2 - Data Link)**: คุยกันรู้เรื่องไหม? มีการรับส่ง Keepalive หรือ Clock สัญญาณถูกต้องหรือไม่?
+
+| Status | Protocol | ความหมายเชิงลึก | สาเหตุและวิธีแก้ |
+|---|---|---|---|
+| **up** | **up** | พอร์ตทำงานสมบูรณ์ 100% | พร้อมใช้งานปกติ |
+| **up** | **down** | มีสัญญาณทางกายภาพ (L1 ผ่าน) แต่ L2 คุยไม่ผ่าน | มีปัญหาเรื่อง Encapsulation, Duplex Mismatch หรือพอร์ตอีกฝั่งไม่ได้เปิด Protocol |
+| **down** | **down** | ไม่มีสัญญาณทั้ง L1 และ L2 | สายแลนหลุด, หัวไฟเบอร์สลับ Tx/Rx, ปลายทางปิดเครื่อง, หรือพอร์ตเสีย |
+| **administratively down** | **down** | พอร์ตถูกสั่งปิดใช้งานด้วยคำสั่ง `shutdown` | แอดมินจงใจปิดไว้ หากต้องการเปิดต้องสั่ง `no shutdown` |
+
+---
+
+### 2) ตรวจสอบรายละเอียดทางกายภาพและ Error Counters: `show interfaces <port>`
+เมื่อพบว่าความเร็วเครือข่ายตกหรือสัญญาณติดๆ ดับๆ ให้เจาะลึกที่พอร์ตนั้น:
+
+```text
+Switch# show interfaces GigabitEthernet0/1
+GigabitEthernet0/1 is up, line protocol is up 
+  Hardware is Gigabit Ethernet, address is 5254.0012.3456
+  Description: Link to DB-Server-01
+  MTU 1500 bytes, BW 1000000 Kbit/sec, DLY 10 usec, 
+     Full-duplex, 1000Mb/s, media type is 10/100/1000BaseTX
+  Input flow-control is off, output flow-control is unsupported
+  5 minute input rate 125000 bits/sec, 142 packets/sec
+  5 minute output rate 280000 bits/sec, 210 packets/sec
+     12894523 packets input, 891238475 bytes, 0 no buffer
+     Received 24 broadcasts (0 multicasts)
+     0 runts, 0 giants, 0 throttles
+     15842 input errors, 15840 CRC, 0 frame, 0 overrun, 2 ignored
+     0 watchdog, 0 multicast, 0 pause input
+     0 output errors, 0 collisions, 2 interface resets
+```
+
+- **CRC Errors**: หากตัวเลขนี้เพิ่มขึ้นเรื่อยๆ แสดงว่า **สายสัญญาณมีสัญญาณรบกวน** หัวสายไม่แน่น หรือสายยาวเกินมาตรฐาน
+- **Collisions / Late Collisions**: หากพบค่านี้ในระบบ Switch แสดงว่าเกิด **Duplex Mismatch** (ฝั่งหนึ่งเป็น Full-duplex อีกฝั่งเป็น Half-duplex)
+
+---
+
+### 3) ตรวจสอบการจัดสรร VLAN: `show vlan brief`
+
+```text
+Switch# show vlan brief
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+1    default                          active    Gi0/5, Gi0/6, Gi0/7, Gi0/8
+10   Management                       active    Gi0/1, Gi0/2
+20   App-Servers                      active    Gi0/3, Gi0/4
+30   Database                         active    
+```
+- ใช้เช็กทันทีว่า พอร์ตของเครื่องที่กำลังมีปัญหา ถูก assign ให้อยู่ใน VLAN ที่ถูกต้องแล้วหรือไม่
+- พอร์ตที่ทำเป็น **Trunk จะไม่ปรากฏในตารางนี้** (เพราะ Trunk ส่งได้หลาย VLAN ให้ใช้คำสั่ง `show interfaces trunk` แทน)
+
+---
+
+### 4) ตรวจสอบพอร์ต Trunk: `show interfaces trunk`
+
+```text
+Switch# show interfaces trunk
+Port        Mode             Encapsulation  Status        Native vlan
+Gi0/24      on               802.1q         trunking      1
+
+Port        Vlans allowed on trunk
+Gi0/24      10,20,30
+
+Port        Vlans in spanning tree forwarding state and not pruned
+Gi0/24      10,20,30
+```
+- ดูว่าพอร์ต Uplink กำลังทำงานเป็น Trunk จริงหรือไม่ (`trunking`)
+- ดูค่า **Native VLAN** ว่าตรงกับสวิตช์ฝั่งตรงข้ามหรือไม่ (หากไม่ตรงจะเกิด Native VLAN Mismatch Error)
+- ดูว่า VLAN ของเราได้รับอนุญาต (`allowed`) ให้ผ่านสาย Trunk เส้นนี้หรือไม่
+
+---
+
+### 5) ตรวจสอบเส้นทางเครือข่ายบน Router: `show ip route`
+
+```text
+Router# show ip route
+Gateway of last resort is 203.0.113.1 to network 0.0.0.0
+
+S*    0.0.0.0/0 [1/0] via 203.0.113.1
+C     192.168.10.0/24 is directly connected, GigabitEthernet0/1
+C     192.168.20.0/24 is directly connected, GigabitEthernet0/2
+O     10.50.0.0/16 [110/2] via 192.168.10.254, 01:45:12, GigabitEthernet0/1
+```
+- **`C` (Connected)**: เครือข่ายที่ต่ออยู่กับขาเราเตอร์โดยตรง
+- **`S*` (Static Default Route)**: เส้นทาง `0.0.0.0/0` ที่ชี้ไปยัง Gateway สำหรับส่งข้อมูลออกนอกเครือข่าย
+- **`O` (OSPF)**: เส้นทางที่เรียนรู้มาผ่าน Dynamic Routing Protocol
+
+---
+
+## 4. สรุปเคล็ดลับการใช้งาน CLI อย่างมือโปร
+
+1. **ใช้ปุ่ม `Tab` เพื่อเติมคำอัตโนมัติ**: เช่น พิมพ์ `sh ip int br` แล้วกด Tab ระบบจะเติมเต็มให้อัตโนมัติ
+2. **ใช้เครื่องหมาย `?` เมื่อจำคำสั่งไม่ได้**: เช่น พิมพ์ `show interfaces ?` เพื่อดูตัวเลือกทั้งหมด
+3. **การกรองผลลัพธ์ด้วย Pipe (`|`)**: บน Cisco สามารถใช้ pipe เพื่อตัดคำเหมือนบน Linux ได้:
+   - `show ip interface brief | include up` ➔ ดูเฉพาะพอร์ตที่ UP
+   - `show running-config | section interface` ➔ ดูเฉพาะท่อนคอนฟิก Interface
+   - `show interfaces | include CRC` ➔ หาพอร์ตที่มีค่า CRC error ทันที
+', 10, 'intermediate', 8, true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.lessons VALUES ('ff620473-be72-44d1-bbee-3112ba85188d', 2, 'network-layer1-2-problems', 'ถอดรหัสปัญหา Layer 1 และ Layer 2 หน้างาน (L1/L2 Troubleshooting & Storms)', 'อาการและวิธีแก้ปัญหา Duplex Mismatch (Half vs Full), การอ่านเคาน์เตอร์ CRC/Input Errors, ปัญหา Port Flapping, Loop ในสวิตช์และ Broadcast Storm (STP), รวมถึงการรวมสายด้วย LACP (Port-Channel)', '
+# ถอดรหัสปัญหา Layer 1 และ Layer 2 หน้างาน
+
+ปัญหาเครือข่ายที่ชวนปวดหัวที่สุดไม่ใช่เรื่อง Routing หรือ Firewall แต่คือปัญหา **สัญญาณติดๆ ดับๆ ความเร็วตกฮวบ หรือระบบสวิตช์ค้างทั้งตึก** อาการเหล่านี้กว่า 80% เกิดจากความผิดปกติใน **Layer 1 (Physical)** และ **Layer 2 (Data Link)** ซึ่งช่างเทคนิคและวิศวกร Support ต้องสังเกตอาการและชี้จุดตายให้ขาด
+
+---
+
+## 1. วิกฤต Duplex Mismatch (Half-Duplex vs Full-Duplex)
+
+หนึ่งในปัญหาคลาสสิกที่ทำให้เครือข่ายใช้งานได้แต่ *"ช้าเหมือนเต่าคลาน"* (ส่งไฟล์ไม่กี่ MB แต่ใช้เวลาเป็นชั่วโมง) คือ **Duplex Mismatch**:
+
+- **Full-Duplex**: ส่งและรับข้อมูลได้พร้อมกันในเวลาเดียวกัน (โทรศัพท์สองทาง)
+- **Half-Duplex**: ส่งหรือรับได้ทีละฝั่งเท่านั้น หากส่งพร้อมกันจะเกิดการชนกันของสัญญาณ (**Collision**) เหมือนวิทยุสื่อสาร วอ.
+
+### อาการเกิดขึ้นได้อย่างไร?
+ตามมาตรฐาน Ethernet มีระบบ **Auto-Negotiation (เจรจาความเร็วและ Duplex อัตโนมัติ)**:
+- หากฝั่งหนึ่งตั้งค่าเป็น `Auto` แต่อีกฝั่งหนึ่งถูกแอดมิน **Hardcode (Force)** ให้เป็น `1000Mbps Full-Duplex`
+- ฝั่งที่เป็น Auto จะไม่สามารถตรวจจับ Duplex ของอีกฝั่งได้ ตามมาตรฐานมันจะ Fallback ลงไปเป็น **Half-Duplex ทันทีเพื่อความปลอดภัย!**
+- **ผลลัพธ์ที่ตามมา**:
+  - ฝั่ง Full-Duplex ส่งข้อมูลเมื่อไหร่ก็ได้ เพราะไม่คิดว่าจะมีการชนกัน
+  - ฝั่ง Half-Duplex คิดว่ามีการชนกันของสัญญาณ จึงส่งสัญญาณ Jamming และสั่งหยุดส่ง ทำให้เกิด **Late Collisions** และ Packet Loss มหาศาลเมื่อมี Traffic เยอะ!
+
+```text
+! อาการในคำสั่ง show interfaces:
+Switch# show interfaces Gi0/1
+  Full-duplex, 100Mb/s, media type is 10/100/1000BaseTX
+  ...
+  15200 late collision, 420 deferred
+```
+
+> **กฎเหล็กเรื่อง Duplex**: หากจะตั้ง ให้ตั้งเป็น **Auto/Auto ทั้งสองฝั่ง** หรือหากจำเป็นต้องฟิกซ์ ให้ **Hardcode Speed และ Duplex ให้ตรงกันทั้งสองฝั่ง 100%** ห้ามตั้ง Auto ฝั่งหนึ่งและ Force อีกฝั่งหนึ่งเด็ดขาด
+
+---
+
+## 2. ปัญหา Port Flapping (พอร์ตติดๆ ดับๆ)
+
+**Port Flapping** คืออาการที่พอร์ตสวิตช์ขึ้นสถานะ **UP** แล้วสลับเป็น **DOWN** วนลูปต่อเนื่องหลายสิบครั้งต่อนาที:
+
+```text
+%LINK-3-UPDOWN: Interface GigabitEthernet0/5, changed state to up
+%LINEPROTO-5-UPDOWN: Line protocol on Interface GigabitEthernet0/5, changed state to up
+%LINK-3-UPDOWN: Interface GigabitEthernet0/5, changed state to down
+%LINEPROTO-5-UPDOWN: Line protocol on Interface GigabitEthernet0/5, changed state to down
+```
+
+### ผลกระทบ:
+- เครื่องเซิร์ฟเวอร์หลุดการเชื่อมต่อเป็นระยะ
+- ทำให้โปรโตคอล Spanning Tree (STP) และ Routing ทำการคำนวณใหม่ (Topology Change Notification - TCN) ตลอดเวลา ส่งผลให้สวิตช์ตัวอื่นในเครือข่าย CPU พุ่งสูง 100%!
+
+### สาเหตุและวิธีตรวจสอบ:
+1. **สายสัญญาณหลวมหรือหักใน**: ลองขยับหัว RJ45 หรือเปลี่ยนสาย Patch Cord เส้นใหม่
+2. **แสงไฟเบอร์อ่อน (Low Optical Power)**: หัวไฟเบอร์สกปรก หรือสายไฟเบอร์ถูกงอเกินรัศมีโค้งงอ (Bend Radius) ให้ใช้คำสั่ง `show interfaces transceiver detail` ดูค่า **Rx Optical Power (dBm)** หากต่ำกว่า -18 dBm แสงจะเริ่มขาดช่วง
+3. **โมดูล SFP ชำรุดหรือร้อนเกินไป**: ลองสลับเปลี่ยนหัว SFP ตัวใหม่
+
+---
+
+## 3. มหาภัยพิบัติ Switching Loop และ Broadcast Storm
+
+ในระบบ Ethernet เฟรม Layer 2 **ไม่มีฟิลด์ TTL (Time-to-Live)** เหมือนกับ IP Packet ใน Layer 3:
+- หากใครสักคนเผลอเสียบสาย LAN จากพอร์ตหนึ่งของสวิตช์ วนกลับเข้าไปอีกพอร์ตหนึ่งของสวิตช์เดียวกัน หรือเชื่อมสวิตช์สองตัวเข้าด้วยกันด้วยสายคู่โดยไม่ได้ทำ Link Aggregation
+- เมื่อมีเฟรม Broadcast (เช่น ARP Request หรือ DHCP Discover) ส่งเข้ามา สวิตช์จะส่งกระจายออกทุกพอร์ต (Flooding) วนกลับมาหาตัวมันเอง และส่งกระจายซ้ำทวีคูณเป็นล้านๆ เฟรมต่อวินาที!
+- อาการนี้เรียกว่า **Broadcast Storm (พายุบรอดคาสต์)**:
+  - ไฟสถานะทุกพอร์ตบนสวิตช์จะ **กะพริบถี่พร้อมกันจนเกือบเป็นไฟค้าง**
+  - CPU สวิตช์พุ่งแตะ 100% จนหยุดตอบสนอง
+  - ระบบเครือข่ายของทั้งออฟฟิศหรือ Data Center จะล่มสนิททันที
+
+![แผนภาพการเกิด Switching Loop และการป้องกันด้วย Spanning Tree Protocol](/images/network/stp-loop-broadcast-storm.png)
+
+### ฮีโร่ผู้พิทักษ์: Spanning Tree Protocol (STP / RSTP - 802.1w)
+STP ทำหน้าที่ตรวจจับ Loop ในสวิตช์ โดยจะส่งแพ็กเก็ตพิเศษที่ชื่อว่า **BPDU (Bridge Protocol Data Unit)**:
+- หากพบว่ามีเส้นทางสำรองที่ทำให้เกิด Loop สวิตช์จะสั่งให้พอร์ตหนึ่งเข้าสู่สถานะ **Blocking (หรือ Discarding)** เพื่อตัดวงจรไม่ให้เกิด Loop
+- หากสายเส้นหลักขาด STP จะปลดบล็อกพอร์ตสำรองกลับมาเป็น **Forwarding** อัตโนมัติ (RSTP ใช้เวลาเพียง 1-2 วินาที)
+
+#### ฟีเจอร์ความปลอดภัย STP ที่ต้องรู้จัก:
+- **PortFast**: เปิดใช้กับพอร์ตที่ต่อเครื่องลูกข่าย/เซิร์ฟเวอร์เท่านั้น เพื่อให้พอร์ตเปลี่ยนเป็น Forwarding ทันทีโดยไม่ต้องรอตรวจ STP 30 วินาที
+- **BPDU Guard**: หากเปิด PortFast ต้องเปิด BPDU Guard ควบคู่เสมอ หากมีใครแอบเอาสวิตช์ตัวอื่นมาเสียบเข้าพอร์ตนี้ พอร์ตจะสั่งตัดไฟและเข้าสู่สถานะ `err-disabled` ทันทีเพื่อป้องกัน Loop!
+
+```text
+! คอนฟิก PortFast และ BPDU Guard บนพอร์ตที่ต่อเซิร์ฟเวอร์
+Switch(config-if)# spanning-tree portfast
+Switch(config-if)# spanning-tree bpduguard enable
+```
+
+---
+
+## 4. รวมสายเพิ่มความเร็วและป้องกัน Loop ด้วย LACP (Link Aggregation)
+
+หากเราต้องการต่อสาย 2 หรือ 4 เส้นระหว่าง Server กับ Switch เพื่อเพิ่ม Bandwidth จาก 1Gbps เป็น 2Gbps หรือทำ Redundancy สำรองสาย หากเสียบสายตรงๆ STP จะบล็อกสายเส้นที่สองทิ้ง!
+
+**ทางแก้**: ต้องรวมพอร์ตทางกายภาพหลายพอร์ต ให้ทำหน้าที่เสมือนเป็นพอร์ตตรรกะพอร์ตเดียว เรียกว่า **Port-Channel (หรือ NIC Teaming / Bonding)** โดยใช้โปรโตคอลมาตรฐาน **LACP (Link Aggregation Control Protocol - IEEE 802.3ad)**
+
+```text
+! รวมพอร์ต Gi0/1 และ Gi0/2 เข้าสู่ Port-Channel 1 ด้วย LACP
+Switch(config)# interface range GigabitEthernet0/1 - 2
+Switch(config-if-range)# channel-group 1 mode active
+Switch(config-if-range)# exit
+
+! ตรวจสอบสถานะการรวมสาย LACP
+Switch# show etherchannel summary
+Group  Port-channel  Protocol    Ports
+------+-------------+-----------+-----------------------------------------------
+1      Po1(SU)         LACP      Gi0/1(P)    Gi0/2(P)
+```
+- **`SU`**: **S**witch, **U**p in use (ทำงานสมบูรณ์)
+- **`P`**: Bundled in **P**ort-channel (พอร์ตรวมสายสำเร็จ)
+- หากขึ้นสถานะ **`D` (Down)** หรือ **`I` (Individual)** แสดงว่าการตั้งค่าของพอร์ตทั้งสองฝั่งไม่ตรงกัน (เช่น Speed, Duplex, หรือ VLAN ต่างกัน)
+', 11, 'intermediate', 9, true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.lessons VALUES ('7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 2, 'network-packet-capture-tcpdump', 'การดักจับและวิเคราะห์แพ็กเก็ตด้วย tcpdump และ Wireshark (Packet Capture & Analysis)', 'ธงสำคัญของ tcpdump, การกรองตาม Host, Port, Interface, การจับ TCP Flags (SYN, ACK, RST, FIN), การเซฟไฟล์ .pcap และวิธีเปิดวิเคราะห์ TCP Handshake ใน Wireshark', '
+# การดักจับและวิเคราะห์แพ็กเก็ตด้วย tcpdump และ Wireshark
+
+เมื่อคุณไล่ตรวจสอบตามขั้นตอนปกติ (`ping`, `curl`, `ss`, firewall) แล้วยังไม่ทราบสาเหตุ หรือมีข้อโต้แย้งระหว่างทีม (เช่น ทีม Developer บอกว่าเซิร์ฟเวอร์ฐานข้อมูลไม่ตอบ แต่ทีม Database บอกว่าไม่เคยได้รับคำขอเข้ามาเลย) เครื่องมือขั้นสูงสุดที่จะนำความจริงมาตัดสินคือ **การดักจับแพ็กเก็ต (Packet Capture)** เพราะ *"แพ็กเก็ตไม่เคยโกหก (Packets Never Lie)"*
+
+---
+
+## 1. คำสั่ง tcpdump พื้นฐานและ Flags สำคัญ
+
+บนเซิร์ฟเวอร์ Linux ที่ไม่มีหน้าจอ GUI เครื่องมือหลักในการดักจับแพ็กเก็ตคือ **`tcpdump`**:
+
+```bash
+# รูปแบบคำสั่งทั่วไป
+sudo tcpdump [flags] [filter_expression]
+```
+
+### ตารางธงสำคัญ (Essential Flags) ที่ต้องจำ:
+
+| Flag | ความหมาย | ประโยชน์ในการใช้งาน |
+|---|---|---|
+| **`-i <interface>`** | ระบุ Interface ที่ต้องการดักฟัง | เช่น `-i eth0` หรือ `-i any` (ดักฟังทุกการ์ดแลนในเครื่อง) |
+| **`-n`** | **ไม่แปลง IP เป็นชื่อ Hostname** | **สำคัญมาก!** ป้องกันไม่ให้ tcpdump เสียเวลายิงถาม DNS ซึ่งทำให้ผลลัพธ์ช้าและลวงตา |
+| **`-nn`** | **ไม่แปลงทั้ง IP และไม่แปลง Port** | แสดงพอร์ตเป็นตัวเลขดิบ เช่น แสดง `80` แทน `http`, แสดง `443` แทน `https` |
+| **`-v` / `-vv`** | แสดงรายละเอียดแบบละเอียดยิ่งขึ้น (Verbose) | แสดงค่า TTL, IP ID, และความยาวข้อมูล |
+| **`-c <count>`** | กำหนดจำนวนแพ็กเก็ตแล้วหยุดอัตโนมัติ | เช่น `-c 10` ดักจับแค่ 10 แพ็กเก็ตแล้วตัดจบ ป้องกันข้อมูลล้นหน้าจอ |
+| **`-w <file.pcap>`** | **บันทึกข้อมูลดิบลงไฟล์ .pcap** | เพื่อดาวน์โหลดไปเปิดดูด้วย Wireshark แบบกราฟิกบนเครื่องส่วนตัว |
+| **`-r <file.pcap>`** | อ่านไฟล์ .pcap ย้อนหลัง | ใช้อ่านไฟล์ที่เคยดักจับไว้ |
+| **`-X` / `-XX`** | แสดงเนื้อหาข้อมูล Payload เป็น Hex และ ASCII | ใช้แอบดูข้อความที่ส่งมา (เช่น HTTP หรือ SQL Query) |
+
+---
+
+## 2. สูตรการกรองแพ็กเก็ตยอดนิยมในงานจริง (Capture Filters)
+
+หากรัน `tcpdump` ดิบๆ คุณจะถูกถล่มด้วยแพ็กเก็ตเซสชัน SSH ของตัวคุณเองจนหน้าจอเลื่อนค้าง! คุณจึงต้องใส่ Filter เสมอ:
+
+```bash
+# 1. กรองเฉพาะพอร์ตที่สนใจ (เช่น พอร์ตฐานข้อมูล 5432 หรือ 3306)
+sudo tcpdump -nn -i eth0 port 5432
+
+# 2. กรองเฉพาะการสื่อสารกับ IP เครื่องเป้าหมาย (Host filter)
+sudo tcpdump -nn -i eth0 host 10.0.1.50
+
+# 3. ตัดทราฟฟิก SSH ของตนเองทิ้ง และดูเฉพาะไอพีปลายทาง
+sudo tcpdump -nn -i eth0 host 10.0.1.50 and not port 22
+
+# 4. ดักจับเฉพาะการเรียกดูเว็บ HTTP/HTTPS จาก Subnet ที่ระบุ
+sudo tcpdump -nn -i eth0 net 192.168.10.0/24 and \(port 80 or port 443\)
+
+# 5. ดักจับแพ็กเก็ต ICMP (Ping) เพื่อดูว่าเครื่องได้รับ Request และส่ง Reply หรือไม่
+sudo tcpdump -nn -i eth0 icmp
+```
+
+---
+
+## 3. ถอดรหัส TCP Flags ในผลลัพธ์ tcpdump
+
+เมื่อดูผลลัพธ์ของ TCP คุณจะเห็นตัวย่อสถานะ Flag ในเครื่องหมายก้ามปู `[...]`:
+
+```text
+10:15:30.123456 IP 192.168.1.10.51234 > 10.0.1.50.80: Flags [S], seq 123456789, win 64240, length 0
+10:15:30.124567 IP 10.0.1.50.80 > 192.168.1.10.51234: Flags [S.], seq 987654321, ack 123456790, win 65160, length 0
+10:15:30.124890 IP 192.168.1.10.51234 > 10.0.1.50.80: Flags [.], ack 987654322, win 64240, length 0
+```
+
+- **`[S]` (SYN)**: ร้องขอเปิดการเชื่อมต่อ (สเต็ป 1 ของ 3-way handshake)
+- **`[S.]` (SYN-ACK)**: ปลายทางตอบรับและขอจับมือกลับ (สเต็ป 2)
+- **`[.]` (ACK)**: ยืนยันการจับมือสำเร็จ (สเต็ป 3 ➔ เชื่อมต่อ ESTABLISHED พร้อมส่งข้อมูล)
+- **`[P]` (PUSH)**: มีการส่งข้อมูลแอปพลิเคชันจริง
+- **`[F]` (FIN)**: ร้องขอปิดการเชื่อมต่อแบบสุภาพ (Graceful Shutdown)
+- **`[R]` (RST / Reset)**: **ตัดการเชื่อมต่อทันที (Connection Refused)** หรือปฏิเสธการคุย
+
+> **Support Insight**: หากคุณเห็น `Flags [S]` ส่งออกไปซ้ำๆ แต่ไม่มี `[S.]` ตอบกลับมาเลย แสดงว่า **ติด Firewall หรือเครื่องปลายทางล่ม** แต่ถ้าเห็น `Flags [R]` สวนกลับมาทันที แสดงว่า **เครื่องปลายทางยังมีชีวิตอยู่ แต่พอร์ตนั้นไม่มี Service มารองรับ (Connection Refused)**
+
+---
+
+## 4. วิเคราะห์ไฟล์ PCAP ด้วย Wireshark
+
+เพื่อความสะดวกในการวิเคราะห์ ให้ดักจับข้อมูลเป็นไฟล์ `.pcap` แล้วดาวน์โหลดมาเปิดบน Wireshark:
+
+```bash
+# สั่งดักจับ 100 แพ็กเก็ตที่พอร์ต 443 เซฟลงไฟล์ incident.pcap
+sudo tcpdump -nn -i eth0 port 443 -c 100 -w /tmp/incident.pcap
+
+# ดาวน์โหลดออกมาที่เครื่องด้วย scp
+scp user@server:/tmp/incident.pcap ./incident.pcap
+```
+
+![หน้าจอโปรแกรม Wireshark แสดงการวิเคราะห์ TCP Handshake และแพ็กเก็ต](/images/network/wireshark-tcp-handshake.png)
+
+### ฟิลเตอร์เด็ดใน Wireshark (Display Filters):
+- `ip.addr == 10.0.1.50` ➔ ดึงเฉพาะทราฟฟิกของ IP นี้
+- `tcp.port == 80 || tcp.port == 443` ➔ กรองเฉพาะทราฟฟิกเว็บ
+- `tcp.flags.reset == 1` ➔ **หาแพ็กเก็ตที่ถูกตัดสายทิ้ง (Connection RST)** เพื่อชี้ชัดจุดที่มีปัญหา
+- `dns.flags.response == 1 && dns.rcode != 0` ➔ หาปัญหา DNS Error เช่น NXDOMAIN
+- **คลิกขวาที่แพ็กเก็ต ➔ Follow ➔ TCP Stream**: Wireshark จะแกะข้อความสนทนาทั้งหมดตั้งแต่ต้นจนจบออกมาให้อ่านเป็นภาษาคนได้อย่างง่ายดาย
+
+---
+
+## 5. ตารางสรุปการจับผิดด้วย Packet Capture
+
+| สิ่งที่เห็นใน tcpdump / Wireshark | การวินิจฉัยเชิงลึก |
+|---|---|
+| ส่ง `SYN` ออกไปหลายครั้ง มีระยะห่างเพิ่มขึ้น (Retransmission) ไม่มีใครตอบ | ติด Firewall กรองแพ็กเก็ตทิ้ง (Drop) หรือ Default Gateway ชี้ทางผิด |
+| ส่ง `SYN` แล้วได้รับ `RST, ACK` กลับมาทันควัน | เครือข่ายปกติ 100% แต่พอร์ตปลายทางไม่มีโปรแกรมรันอยู่ (Service Down) |
+| ส่ง `SYN` ได้รับ `SYN-ACK` ส่ง `ACK` กลับ แต่หลังจากส่งข้อมูลไม่มีการตอบกลับ | ปัญหา MTU ข้อมูลขนาดใหญ่ติดปัญหา Packet Fragmentation หรือติด WAF |
+| ส่งคำขอ DNS Query แต่ไม่มี DNS Response กลับมา | DNS Server ไอพีผิด หรือพอร์ต UDP 53 ถูกปิดกั้น |
+', 11, 'intermediate', 10, true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
 
 
 --
@@ -3697,6 +4575,7 @@ INSERT INTO public.questions VALUES ('583a1f9b-0196-4bd5-b6ca-18b2fd163774', 'dc
 INSERT INTO public.questions VALUES ('30e66b8d-6030-4b13-8c81-97a7a8358886', 'dc:interview:q15', 10, 'e2bdf887-4d4b-4710-b6c1-8dd61f020fdc', '[คำถามสัมภาษณ์ทัศนคติ] หากผู้สัมภาษณ์ถามว่า ''คุณเชื่อมสายไฟเบอร์ด้วยเครื่อง Fusion Splicer เป็นหรือไม่?'' แต่คุณยังไม่เคยทำมาก่อน คำตอบใดเหมาะสมและสร้างความประทับใจมากที่สุด?', NULL, 'easy', 'multiple_choice', 'ความซื่อสัตย์ (Integrity) เป็นสิ่งสำคัญมากในการทำงาน Data Center หากทำไม่เป็นต้องตอบตามตรงว่ายังไม่เคยทำจริง แต่อธิบายความรู้พื้นฐานที่เกี่ยวข้อง (เช่น ชนิดสายไฟเบอร์ การทำความสะอาดหัวสาย) และแสดงความพร้อมที่จะเรียนรู้เพิ่มเติมอย่างรวดเร็ว', '{interview,honesty,mindset,fiber}', true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.questions VALUES ('5e788bf5-347f-4201-9344-7e3f4c9e180f', 'docker:02-troubleshooting-exit-codes:q01', 5, '13d2405e-0e29-4bf2-9f78-03f4f29d3aef', 'Container ตัวหนึ่งดับลงโดยแสดงสถานะ ''Exited (137)'' และเมื่อ inspect ดูพบว่า OOMKilled เป็น true ข้อใดคือสาเหตุที่แท้จริง?', 'บริการประมวลผลไฟล์ภาพขนาดใหญ่ดับลงกะทันหันในขณะที่มีผู้ใช้งานอัปโหลดไฟล์เข้ามาพร้อมกันเป็นจำนวนมาก', 'medium', 'multiple_choice', 'Exit Code 137 เท่ากับ 128 + 9 (SIGKILL) ซึ่งเกิดขึ้นเมื่อคอนเทนเนอร์ใช้งานหน่วยความจำ RAM เกินกว่าขีดจำกัด (Memory Limit) ที่กำหนดไว้ ทำให้ถูก Linux Kernel OOM (Out Of Memory) Killer ส่งสัญญาณสั่งฆ่าทันที', '{docker,exit-codes,oomkilled,memory}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.questions VALUES ('5d2f59f3-3800-4751-84af-43e8f7a2c8f4', 'docker:02-troubleshooting-exit-codes:q02', 5, '13d2405e-0e29-4bf2-9f78-03f4f29d3aef', 'Exit Code ใดใน Docker ที่บ่งบอกว่า Container ได้รับคำสั่งสั่งปิดการทำงานอย่างสุภาพ (Graceful Shutdown ด้วย SIGTERM)?', 'คำถามสัมภาษณ์งานตำแหน่ง DevOps / Support Engineer', 'easy', 'multiple_choice', 'Exit Code 143 คำนวณมาจาก 128 + 15 (SIGTERM) ซึ่งเป็นสัญญาณที่ส่งเมื่อมีการสั่ง docker stop หรือระบบ Orchestrator สั่งยุติเพื่อทำการ Deploy เวอร์ชันใหม่', '{docker,exit-codes,sigterm}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('6164b7cc-ad3b-4035-8811-281134f2b57d', 'network:01-ip-subnetting:q01', 2, 'd8929572-6865-40b4-bf65-a32bfcdb15a5', 'Subnet ขนาด /28 มีจำนวน IP Address ที่สามารถนำไปกำหนดให้กับ Host ใช้งานได้จริงกี่ IP?', 'ทีม Network แจ้งว่าได้จัดสรรวง Subnet 192.168.10.64/28 ให้กับเซิร์ฟเวอร์ชุดใหม่ใน DMZ', 'medium', 'multiple_choice', '/28 มีบิตเหลือสำหรับ Host คือ 32 - 28 = 4 บิต จำนวน IP ทั้งหมดคือ 2^4 = 16 IP แต่ต้องหัก Network ID (ตัวแรก) และ Broadcast ID (ตัวสุดท้าย) ออก 2 ค่าเสมอ จึงเหลือ Host ใช้งานได้จริง 14 IP', '{network,subnetting,cidr}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.questions VALUES ('424f36a8-1a09-4c7c-8511-fe7c60417e2e', 'linux:02-basics:q04', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'เมื่อต้องตรวจสอบไฟล์ `application.log` ที่มีขนาดใหญ่ถึง 2.5 GB บนเซิร์ฟเวอร์ Production เหตุใดจึงไม่ควรใช้คำสั่ง `cat application.log`?', NULL, 'medium', 'multiple_choice', '`cat` จะอ่านและพิมพ์เนื้อหาทั้งไฟล์ออกทางหน้าจอรวดเดียว สำหรับไฟล์ขนาดหลาย GB จะทำให้หน้าจอค้าง สิ้นเปลือง I/O และแบนด์วิดท์ของเซสชัน SSH ควรใช้ `less` (อ่านทีละหน้า) หรือ `tail` (ดูเฉพาะท้ายไฟล์) แทน', '{cat,less,tail,logs}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.questions VALUES ('ff930bba-7a53-42c5-acae-936a295c3727', 'linux:02-basics:q05', 1, '2f157328-48ee-496e-bcef-7afd1b6a8d1f', 'จากเหตุการณ์ในหน้าจอ Terminal ด้านล่าง หากผู้ใช้งานกด Enter เพื่อรันคำสั่งดังกล่าว จะเกิดผลกระทบอย่างไร?', 'root@app-prod-01:/var/www/html# pwd
 /var/www/html
@@ -3742,6 +4621,7 @@ INSERT INTO public.questions VALUES ('a2fad7a4-377c-4205-a3dd-ba2639d4f345', 'li
 203.0.113.50 - - [03/Nov/2026:14:00:01 +0700] "GET /api/v1/items HTTP/1.1" 200 1420
 198.51.100.12 - - [03/Nov/2026:14:00:02 +0700] "POST /api/v1/login HTTP/1.1" 401 85
 203.0.113.50 - - [03/Nov/2026:14:00:02 +0700] "GET /api/v1/items HTTP/1.1" 200 1420', 'medium', 'scenario', 'IP Address อยู่ในคอลัมน์ที่ 1 จึงใช้ `awk ''{print $1}''` ดึงออกมา จากนั้นต้องใช้ `sort` เพื่อให้ IP เดียวกันมาเรียงติดกันก่อนส่งให้ `uniq -c` นับจำนวน แล้วจึงใช้ `sort -nr` เรียงตามตัวเลขจากมากไปน้อย ปิดท้ายด้วย `head -n 5`', '{awk,sort,uniq,logs}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('6beac71f-ab96-429b-ba53-7d8e90efdf67', 'network:06-vlan:q05', 2, 'd297f4f2-4aec-41db-b324-a8e4ae10ea05', 'บนเครื่องเซิร์ฟเวอร์ Linux คำสั่งใดใช้สำหรับตรวจสอบตารางจับคู่ระหว่าง IP Address และ MAC Address (ARP Table)?', 'การตรวจสอบปัญหาความขัดแย้งของเครือข่ายบนเครื่องลูกข่าย', 'easy', 'multiple_choice', 'บน Linux ยุคใหม่ใช้คำสั่ง ''ip neigh show'' (ย่อมาจาก neighbor) หรือคำสั่งดั้งเดิม ''arp -an'' เพื่อดูตาราง ARP Cache', '{network,arp,linux,commands}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
 INSERT INTO public.questions VALUES ('ebbab95e-1663-4e95-9c8e-47efd927b2b5', 'linux:05-text-tools:q04', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'ในการตรวจสอบไฟล์ `access.log` พบว่ามีบรรทัดของระบบตรวจสอบสุขภาพ `/healthcheck` ปะปนอยู่จำนวนมาก หากต้องการกรองเอาเฉพาะบรรทัดที่ **ไม่มี** คำว่า `healthcheck` ออกมาดู 20 บรรทัดสุดท้าย ควรใช้คำสั่งใด?', NULL, 'medium', 'multiple_choice', 'ตัวเลือก `-v` (invert match) ของ `grep` จะคัดกรองเอาเฉพาะบรรทัดที่ไม่มีคำค้นหานั้น เมื่อส่งผ่าน Pipe ไปยัง `tail -n 20` จะได้ 20 บรรทัดล่าสุดที่ไม่ใช่ healthcheck', '{grep,tail,pipe}', true, '2026-11-03 10:24:40.983748+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.questions VALUES ('beef98a0-5be8-485d-84d7-dc1947afead4', 'linux:05-text-tools:q05', 1, 'f96ce3b7-1a44-4b37-b45c-aa3ee895c375', 'จากคำสั่งและผลลัพธ์ด้านล่าง เหตุใดผลลัพธ์ของคำสั่ง `uniq -c` จึงยังมีชื่อสถานะ `ERROR` แยกกันอยู่ 2 บรรทัดแทนที่จะรวมกันเป็น 3 ครั้ง?', '$ cat status.txt
 ERROR
@@ -3852,7 +4732,6 @@ LISTEN 0 511 *:9000 *:* users:(("java",pid=1544,fd=77))', 'medium', 'scenario', 
 INSERT INTO public.questions VALUES ('d63a08cb-8a15-4783-8eba-9dec781d11b9', 'linux:10-health-check:q07', 1, '9ed1b0db-122c-4d06-9d9c-bd4613afd6dd', 'คำสั่ง curl ได้ผลลัพธ์ HTTP 502 Bad Gateway จาก Nginx ควรตรวจอะไรเป็นอันดับแรก?', '$ curl -I https://shop.example.com
 HTTP/2 502
 server: nginx/1.24.0', 'hard', 'scenario', '502 หมายถึง Nginx ทำงานอยู่แต่ได้คำตอบที่ใช้ไม่ได้หรือต่อ Upstream ไม่ได้ จึงควรตรวจ Service และ Port ของ Backend และอ่าน error.log ของ Nginx เพื่อดูข้อความ upstream', '{nginx,502,curl,upstream}', true, '2026-11-03 16:05:54.729798+00', '2026-11-04 15:19:45.48554+00');
-INSERT INTO public.questions VALUES ('6164b7cc-ad3b-4035-8811-281134f2b57d', 'network:01-ip-subnetting:q01', 2, 'd8929572-6865-40b4-bf65-a32bfcdb15a5', 'Subnet ขนาด /28 มีจำนวน IP Address ที่สามารถนำไปกำหนดให้กับ Host ใช้งานได้จริงกี่ IP?', 'ทีม Network แจ้งว่าได้จัดสรรวง Subnet 192.168.10.64/28 ให้กับเซิร์ฟเวอร์ชุดใหม่ใน DMZ', 'medium', 'multiple_choice', '/28 มีบิตเหลือสำหรับ Host คือ 32 - 28 = 4 บิต จำนวน IP ทั้งหมดคือ 2^4 = 16 IP แต่ต้องหัก Network ID (ตัวแรก) และ Broadcast ID (ตัวสุดท้าย) ออก 2 ค่าเสมอ จึงเหลือ Host ใช้งานได้จริง 14 IP', '{network,subnetting,cidr}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.questions VALUES ('98df92a1-ad7f-46d6-9529-d780a7dad658', 'network:01-ip-subnetting:q02', 2, 'd8929572-6865-40b4-bf65-a32bfcdb15a5', 'หากเครื่องเซิร์ฟเวอร์เปิดขึ้นมาแล้วรัน ip addr พบว่าได้รับ IP เป็น 169.254.12.34 ปัญหาน่าจะเกิดจากอะไร?', 'ได้รับแจ้งจากลูกค้าว่าตู้ Kiosk ไม่สามารถเชื่อมต่อกับ Backend API ได้ ตรวจสอบพบ IP 169.254.x.x', 'easy', 'multiple_choice', 'IP ในช่วง 169.254.0.0/16 คือ APIPA (Automatic Private IP Addressing) ซึ่งระบบปฏิบัติการจะกำหนดขึ้นเองเมื่อไม่สามารถขอ IP จาก DHCP Server ได้ หรือสาย LAN หลุด/ไม่เชื่อมต่อ', '{network,ip,dhcp,troubleshooting}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.questions VALUES ('b4c8e401-d6ff-494a-84f3-715e4b84eaba', 'network:01-ip-subnetting:q03', 2, 'd8929572-6865-40b4-bf65-a32bfcdb15a5', 'IP Address ใดต่อไปนี้จัดเป็น Public IP ที่สามารถวิ่งบน Public Internet ได้จริง?', 'คุณต้องตรวจสอบ Whitelist ใน Firewall ของลูกค้าว่าไอพีที่เข้ามาเป็น Private IP หรือ Public IP', 'easy', 'multiple_choice', 'Private IP ตาม RFC 1918 คือ 10.0.0.0/8, 172.16.0.0/12 (172.16-172.31), 192.168.0.0/16 ดังนั้น 172.32.1.1 จึงอยู่นอกช่วง Private และเป็น Public IP', '{network,ip,rfc1918}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.questions VALUES ('a6917e20-839e-4d3c-821d-4541711f8053', 'network:01-ip-subnetting:q04', 2, 'd8929572-6865-40b4-bf65-a32bfcdb15a5', 'เมื่อสั่ง ip route show แล้วไม่พบข้อความ ''default via ...'' ผลกระทบที่จะเกิดขึ้นกับเซิร์ฟเวอร์คือข้อใด?', 'เครื่องเซิร์ฟเวอร์เพิ่งถูกแก้ไขคอนฟิกเน็ตเวิร์ก หลังจากรีสตาร์ทสามารถ ping เครื่องข้างเคียงในวงเดียวกันเจอ แต่ออกเน็ตไม่ได้', 'medium', 'multiple_choice', 'default via ระบุ Default Gateway หากไม่มี จะทำให้เซิร์ฟเวอร์คุยได้เฉพาะเครื่องใน Local Subnet เดียวกันเท่านั้น แต่ไม่สามารถส่ง Packet ข้ามวงหรือออกอินเทอร์เน็ตได้', '{network,routing,gateway}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
@@ -3860,6 +4739,7 @@ INSERT INTO public.questions VALUES ('9b606785-3b1d-4039-8aef-d077d30d52dc', 'ne
 INSERT INTO public.questions VALUES ('f3360feb-004a-49b9-9366-b7b9899c587f', 'network:02-dns-resolution:q02', 2, '04cb05e0-09ef-4ee4-8cf5-1ed7d502bbfe', 'หากเครื่องเซิร์ฟเวอร์ resolve ชื่อโดเมนได้เป็น IP เดิมที่เลิกใช้ไปแล้ว ทั้งๆ ที่ผู้ให้บริการ DNS ยืนยันว่าเปลี่ยน IP แล้ว สาเหตุที่น่าจะเป็นไปได้มากที่สุดคืออะไร?', 'ระบบเพิ่ง Migrate เซิร์ฟเวอร์และเปลี่ยน IP ใน Cloudflare เมื่อ 10 นาทีที่แล้ว แต่ Web Server เครื่องหนึ่งยังยิงไป IP เก่า', 'easy', 'multiple_choice', 'DNS Resolver ฝั่ง Local หรือ ISP จะแคชค่าไว้จนกว่าค่า TTL (Time-To-Live) ของ Record นั้นจะหมดอายุลง เรียกว่าระยะ DNS Propagation', '{network,dns,ttl,caching}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.questions VALUES ('611c9533-5018-4260-93b1-75368ecf0e4b', 'network:02-dns-resolution:q03', 2, '04cb05e0-09ef-4ee4-8cf5-1ed7d502bbfe', 'หากต้องการตรวจสอบว่า IP 203.0.113.50 ผูกกับชื่อโฮสต์ใด (Reverse DNS Lookup) ควรใช้คำสั่งใด?', 'คุณได้รับ Alert จาก Firewall แจ้ง IP ต้องสงสัยเข้ามาและต้องการตรวจสอบย้อนกลับว่าเป็นชื่อโดเมนอะไร', 'medium', 'multiple_choice', 'การทำ Reverse DNS (PTR Record) ด้วย dig จะใช้แฟล็ก -x ตามด้วย IP เช่น dig -x 203.0.113.50', '{network,dns,ptr,reverse-dns}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.questions VALUES ('b8d26fbb-9136-4651-a96a-004a0568191c', 'network:03-routing-latency:q01', 2, '240e3caf-58b9-4b37-9d41-8d7a2830fe79', 'หากรัน mtr แล้วพบว่า Hop ที่ 4 มี Loss 40% แต่ Hop ที่ 5, 6 และปลายทางมี Loss 0% และ Latency ปกติ ข้อใดคือการวิเคราะห์ที่ถูกต้องที่สุด?', 'ผู้ใช้งานแจ้งว่าระบบช้า คุณทดสอบ mtr เพื่อนำข้อมูลไปแจ้งผู้ให้บริการ ISP', 'hard', 'multiple_choice', 'เราเตอร์กลางทาง (Hop 4) มักจะตั้งค่า ICMP Rate-limiting เพื่อป้องกัน CPU Overload ซึ่งจะดรอปเฉพาะ ICMP ที่วิ่งมาหาตัวมันเอง แต่ยัง Forward ทราฟฟิกจริงไปยัง Hop ถัดไปได้อย่างสมบูรณ์ จึงไม่ถือว่าเครือข่ายมีปัญหา', '{network,mtr,icmp,troubleshooting}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('62acd40b-f56e-4c54-ab90-2fa76164588b', 'network:06-vlan:q04', 2, 'd297f4f2-4aec-41db-b324-a8e4ae10ea05', 'เมื่อ Switch ได้รับ Frame ที่มี Destination MAC Address ที่ ''ไม่มีอยู่ใน MAC Address Table'' สวิตช์จะทำพฤติกรรมใด?', 'กลไกการส่งต่อข้อมูลพื้นฐานของสวิตช์ (Switch Learning & Forwarding)', 'medium', 'multiple_choice', 'หากสวิตช์ไม่รู้จัก Destination MAC Address จะเกิดพฤติกรรมเรียกว่า ''Unknown Unicast Flooding'' โดยสวิตช์จะส่งเฟรมนั้นออกไปยังทุกพอร์ตที่อยู่ใน VLAN เดียวกัน ยกเว้นพอร์ตที่รับเข้ามา', '{network,switching,mac-table,flooding}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
 INSERT INTO public.questions VALUES ('15081888-fb1c-4b94-9d2a-5bab1372ddd3', 'network:03-routing-latency:q02', 2, '240e3caf-58b9-4b37-9d41-8d7a2830fe79', 'ทำไมการทดสอบ ping ไปยังเซิร์ฟเวอร์ปลายทางแล้วได้ Request Timed Out จึงไม่สามารถฟันธงได้ว่าเซิร์ฟเวอร์ล่ม?', 'ลูกค้าแจ้งว่าเซิร์ฟเวอร์เว็บล่มเพราะลอง ping แล้วไม่ตอบกลับ', 'easy', 'multiple_choice', 'ping ใช้โปรโตคอล ICMP ซึ่งเซิร์ฟเวอร์และ Firewall ส่วนใหญ่ปิดการตอบรับ ICMP เพื่อป้องกันการสแกนและการโจมตี แต่เว็บเซิร์ฟเวอร์ที่เปิด Port 80/443 (TCP) อาจยังทำงานได้ตามปกติ', '{network,ping,icmp,firewall}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.questions VALUES ('809eec81-5754-4afb-8940-ff635ec0484c', 'network:04-tcp-ports-firewall:q01', 2, '3ff8610b-94c3-43a7-8e1f-436f27946647', 'เมื่อสั่ง nc -zv db-server 5432 แล้วได้รับผลลัพธ์ว่า ''Connection refused'' สาเหตุที่เป็นไปได้มากที่สุดคือข้อใด?', 'แอปพลิเคชันขึ้น Error ไม่สามารถเชื่อมต่อกับฐานข้อมูล PostgreSQL บนเครื่อง db-server ได้', 'medium', 'multiple_choice', 'Connection refused หมายถึงแพ็กเก็ตวิ่งไปถึงเครื่องปลายทางแล้ว แต่ OS ฝั่งปลายทางส่ง TCP RST กลับมาเพราะไม่มี Service ใดเปิด LISTEN อยู่ที่พอร์ต 5432 หรือ Service ดับอยู่', '{network,tcp,ports,connection-refused}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.questions VALUES ('9305fed3-82a6-4ca9-a25b-a0ae68b2049d', 'network:04-tcp-ports-firewall:q02', 2, '3ff8610b-94c3-43a7-8e1f-436f27946647', 'หากรันคำสั่ง ss -tulpn บนเซิร์ฟเวอร์ฐานข้อมูลแล้วพบว่า Local Address คือ ''127.0.0.1:5432'' จะส่งผลอย่างไรต่อการเชื่อมต่อ?', 'เครื่อง Backend Server ที่อยู่คนละเครื่องพยายามต่อ Database เครื่องนี้แต่ล้มเหลว', 'medium', 'multiple_choice', '127.0.0.1 คือ Loopback Interface การ Bind ที่ IP นี้จะทำให้รับการเชื่อมต่อได้เฉพาะจากภายในเครื่องตัวเองเท่านั้น หากต้องการให้เครื่องภายนอกเชื่อมต่อได้ ต้องตั้งค่าใน postgresql.conf ให้ listen_addresses = ''*'' หรือ bind ที่ 0.0.0.0', '{network,tcp,bind,postgresql}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
@@ -3880,6 +4760,36 @@ INSERT INTO public.questions VALUES ('9a165cbe-1a6d-41a7-994d-d7f2c50274c7', 'tr
 INSERT INTO public.questions VALUES ('cad3c17c-591e-452d-bc6f-28238eee28f1', 'troubleshooting:02-root-cause-escalation:q02', 6, '782f94c6-acb3-408b-b091-a093bf7d0c40', 'หัวใจหลักของแนวคิด ''Blameless Post-Mortem'' ในกระบวนการ RCA หลังเกิดระบบล่มคืออะไร?', 'การประชุมสรุปบทเรียนหลังจากเหตุการณ์ระบบล่มครั้งใหญ่', 'easy', 'multiple_choice', 'Blameless Post-Mortem เชื่อว่ามนุษย์ทุกคนมีโอกาสผิดพลาดได้ หัวใจสำคัญไม่ใช่การหาตัวคนผิดมาลงโทษ แต่เป็นการปรับปรุงกระบวนการและสร้างระบบป้องกันที่ทำให้ความผิดพลาดของมนุษย์ไม่สามารถพังระบบได้', '{troubleshooting,rca,blameless,culture}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.questions VALUES ('e6ac9105-39ae-46e1-85cb-1df0720cf127', 'web-api:01-http-status-codes:q01', 4, '8cd3f8e6-7571-47ca-bd5b-cd313f6179c6', 'ผู้ใช้งานเปิดหน้าเว็บแล้วพบข้อผิดพลาด ''502 Bad Gateway'' จาก Nginx ข้อใดคือสาเหตุที่เป็นไปได้มากที่สุด?', 'ระบบแจ้งเตือนว่าหน้าเว็บล่ม Nginx ส่ง 502 Bad Gateway กลับมายัง Client', 'medium', 'multiple_choice', '502 Bad Gateway เกิดจากตัว Reverse Proxy (Nginx) พยายามส่งต่อคำขอไปยัง Backend Upstream Service แต่ Backend ดับอยู่ ไม่ได้เปิดพอร์ต หรือแครช ทำให้เกิด Connection Refused', '{web,http,status-codes,502,nginx}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.questions VALUES ('5b92c358-a418-4117-a664-1c45579f5e01', 'web-api:01-http-status-codes:q02', 4, '8cd3f8e6-7571-47ca-bd5b-cd313f6179c6', 'ความแตกต่างระหว่างรหัส HTTP 401 Unauthorized และ 403 Forbidden คือข้อใด?', 'คำถามสัมภาษณ์งานตำแหน่ง Technical Support Engineer', 'easy', 'multiple_choice', '401 คือไม่พบข้อมูลยืนยันตัวตน (ยังไม่ได้ Login หรือ Token ผิด/หมดอายุ) ส่วน 403 คือระบบรู้จักตัวตนแล้วแต่ผู้ใช้นั้นไม่มีสิทธิ์ (No Permission) ในการเข้าถึงทรัพยากรนั้น', '{web,http,auth,interview}', true, '2026-11-04 10:43:13.16724+00', '2026-11-04 15:19:45.48554+00');
+INSERT INTO public.questions VALUES ('327a3f1f-ee09-4088-b3ec-5b8dc48e5c8c', 'network:01-ip-subnetting:q05', 2, 'd8929572-6865-40b4-bf65-a32bfcdb15a5', 'กำหนดให้ IP Address คือ 192.168.1.130/26 จงหา Network ID และ Broadcast IP ของ Subnet นี้?', 'ข้อสอบคำนวณ Subnetting ภาคปฏิบัติในการคัดเลือก Junior Network Engineer', 'hard', 'multiple_choice', '/26 มี Subnet Mask คือ 255.255.255.192 ขนาด Block Size = 256 - 192 = 64 ช่วงของ Subnet คือ: 0-63, 64-127, 128-191, 192-255 ตัวเลข .130 ตกอยู่ในช่วง 128-191 ดังนั้น Network ID คือ 192.168.1.128 และ Broadcast IP คือ 192.168.1.191 (Host ใช้งานได้คือ .129 ถึง .190)', '{network,subnetting,cidr,calculation}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('38803ea5-5df5-408e-b93f-89f392bbb11f', 'network:01-ip-subnetting:q06', 2, 'd8929572-6865-40b4-bf65-a32bfcdb15a5', 'ต้องการจัดสรร Subnet ให้กับแผนกหนึ่งที่มีเครื่องคอมพิวเตอร์และเซิร์ฟเวอร์รวม 28 เครื่อง ควรเลือก Subnet Mask ขนาดใดที่ประหยัด IP ที่สุดและเพียงพอต่อการใช้งาน?', 'การวางแผน Subnet ในการขยายสาขาใหม่ของบริษัท', 'medium', 'multiple_choice', 'ต้องการ 28 เครื่อง ต้องหา 2^n - 2 >= 28 ถ้า n=4 (2^4-2 = 14) ไม่พอ ถ้า n=5 (2^5-2 = 30 เครื่อง) เพียงพอ ดังนั้น Host bit = 5 บิต และ Prefix length = 32 - 5 = /27 (Mask 255.255.255.224)', '{network,subnetting,cidr,calculation}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('e75e4f1e-eac7-4c46-bc80-4535f39071c8', 'network:05-osi:q01', 2, '6b461aa2-fd34-427d-8b52-fe4455276c56', 'ผู้ใช้งานแจ้งว่าเข้าเว็บ https://portal.internal ไม่ได้ ช่างตรวจสอบพบว่า ''ping 192.168.10.1 (Gateway)'' ติด และ ''ping 8.8.8.8'' ติด แต่ ''ping portal.internal'' แจ้งว่า ''Name or service not known'' ปัญหาน่าจะเกิดที่ชั้นใดในโมเดล OSI?', 'ช่างกำลังใช้วิธี Divide-and-Conquer ไล่ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตของเครื่องลูกข่าย', 'medium', 'multiple_choice', 'การที่ ping IP ทั้งภายในและภายนอกติด แสดงว่า Layer 1 (Physical), Layer 2 (Data Link) และ Layer 3 (Network Routing) ทำงานสมบูรณ์ แต่แปลงชื่อโดเมนไม่ได้เกิดจาก DNS ซึ่งเป็นโปรโตคอลที่ทำงานใน Layer 7 (Application Layer)', '{network,osi,dns,troubleshooting}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('6e981c68-db2f-4533-9f5d-8a923e156a67', 'network:05-osi:q02', 2, '6b461aa2-fd34-427d-8b52-fe4455276c56', 'หน่วยข้อมูล (PDU: Protocol Data Unit) ใน Layer 2 (Data Link) และ Layer 3 (Network) มีชื่อเรียกตามลำดับว่าอย่างไร?', 'คำถามสัมภาษณ์พื้นฐานสำหรับตำแหน่ง Junior Network Engineer', 'easy', 'multiple_choice', 'ใน Layer 2 ข้อมูลที่มีการหุ้ม MAC Header เรียกว่า ''Frame'' ส่วนใน Layer 3 ที่มี IP Header เรียกว่า ''Packet'' (และใน Layer 4 TCP เรียกว่า Segment)', '{network,osi,pdu,fundamentals}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('d1fd2b23-0add-4fd1-95ea-8e56dc91c7cb', 'network:05-osi:q03', 2, '6b461aa2-fd34-427d-8b52-fe4455276c56', 'เมื่อสั่ง ''nc -zvw3 10.0.1.50 3306'' แล้วระบบแจ้งกลับมาว่า ''Connection timed out'' แต่ ''ping 10.0.1.50'' มีการตอบกลับปกติ อาการนี้ชี้ชัดที่สุดว่าปัญหาอยู่ที่ชั้นใด?', 'Application Support กำลังทดสอบเชื่อมต่อไปยังฐานข้อมูล MySQL บนอีกเครื่องหนึ่ง', 'medium', 'multiple_choice', 'การที่ ping (ICMP) ติด แสดงว่า Layer 1-3 สมบูรณ์ แต่พอร์ต 3306 เกิด Timeout หมายถึงแพ็กเก็ต TCP ถูกทิ้งเงียบๆ โดย Firewall หรือ Security Group ซึ่งกรองข้อมูลที่ Layer 4 (Transport Layer)', '{network,osi,transport,firewall,nc}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('ce1f94cc-3909-4aa0-baf9-6db3001a8836', 'network:05-osi:q04', 2, '6b461aa2-fd34-427d-8b52-fe4455276c56', 'อุปกรณ์ Switch Layer 2 และ Router ทำงานที่ชั้นใดของโมเดล OSI ตามลำดับ?', 'ความรู้เรื่องอุปกรณ์เครือข่ายพื้นฐาน', 'easy', 'multiple_choice', 'Switch ทั่วไป (Layer 2) ส่งข้อมูลโดยอ้างอิง MAC Address ซึ่งอยู่ใน Data Link Layer ส่วน Router ส่งข้อมูลโดยอ้างอิง IP Address ซึ่งอยู่ใน Network Layer (Layer 3)', '{network,osi,hardware,switch,router}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('811e4d06-268a-48ee-8694-c9d2e24494bf', 'network:05-osi:q05', 2, '6b461aa2-fd34-427d-8b52-fe4455276c56', 'แนวทางการแก้ปัญหาแบบ ''Bottom-Up Approach'' เหมาะสมที่สุดในสถานการณ์ใด?', 'การเลือกระเบียบวิธีวิเคราะห์ปัญหาในการปฏิบัติงานจริง', 'medium', 'multiple_choice', 'วิธี Bottom-Up เริ่มตรวจตั้งแต่สายสัญญาณ ฮาร์ดแวร์ พอร์ต ไปจนถึงคอนฟิก จึงเหมาะสมที่สุดเมื่อมีการติดตั้งเครื่องใหม่ ย้ายตู้แร็ค หรือเพิ่งเดินสายสัญญาณใหม่', '{network,osi,methodology,troubleshooting}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('d5a6607b-d2ab-4160-b0f5-bf5a8e021c1d', 'network:06-vlan:q01', 2, 'd297f4f2-4aec-41db-b324-a8e4ae10ea05', 'เครื่อง Server A (IP 192.168.10.5) เสียบเข้าพอร์ต Gi0/1 (VLAN 10) และเครื่อง Server B (IP 192.168.20.5) เสียบเข้าพอร์ต Gi0/2 (VLAN 20) บน Switch ตัวเดียวกัน ทั้งสองเครื่องไม่สามารถ ping หากันได้เพราะสาเหตุใด?', 'ช่างเทคนิคเสียบเซิร์ฟเวอร์สองตัวเข้าที่สวิตช์ตัวเดียวกัน แล้วสงสัยว่าทำไมปิงไม่ติด', 'medium', 'multiple_choice', 'เครื่องที่อยู่คนละ VLAN จะถูกแยก Broadcast Domain ออกจากกันอย่างเด็ดขาดที่ Layer 2 แม้จะอยู่บนสวิตช์ฮาร์ดแวร์ตัวเดียวกัน หากต้องการสื่อสารข้าม VLAN จะต้องมีอุปกรณ์ Layer 3 (Router หรือ L3 Switch) ทำหน้าที่ Inter-VLAN Routing', '{network,vlan,switching,routing}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('7c3302c8-0a22-43e9-ab9a-6f3e9cb1b549', 'network:06-vlan:q02', 2, 'd297f4f2-4aec-41db-b324-a8e4ae10ea05', 'มาตรฐานสากลที่ใช้ในการแปะหัว Tag ขนาด 4 bytes ลงใน Ethernet Frame เพื่อระบุหมายเลข VLAN บนพอร์ต Trunk คือมาตรฐานใด?', 'คำถามมาตรฐานในข้อสอบ Network Certification', 'easy', 'multiple_choice', 'IEEE 802.1Q (หรือเรียกสั้นๆ ว่า Dot1q) คือมาตรฐานสากลสำหรับการทำ VLAN Tagging บนพอร์ต Trunk', '{network,vlan,standards,trunk}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('7d3ba65b-d6e0-4272-be9d-2132dc332262', 'network:06-vlan:q03', 2, 'd297f4f2-4aec-41db-b324-a8e4ae10ea05', 'เมื่อมีเฟรมที่ ''ไม่มี Tag'' (Untagged Frame) วิ่งเข้ามาที่พอร์ต Trunk สวิตช์จะจัดการกับเฟรมนั้นอย่างไร?', 'การทำความเข้าใจหลักการ Native VLAN บนพอร์ต Trunk', 'medium', 'multiple_choice', 'พอร์ต Trunk จะส่งต่อเฟรมที่ไม่มี Tag ไปยัง ''Native VLAN'' (ซึ่งค่าเริ่มต้นบนสวิตช์มักเป็น VLAN 1)', '{network,vlan,trunk,native-vlan}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('a3d59ff8-03bc-4ee8-a561-93a6feb5cf8e', 'network:07-dhcp:q01', 2, '11100691-a71e-441a-abe3-ba9a1d4ba021', 'ขั้นตอน 4 สเต็ปในการขอรับ IP Address จาก DHCP Server เรียงตามลำดับอย่างถูกต้องตามข้อใด?', 'คำถามพื้นฐานเรื่อง DORA Process ในการสอบสัมภาษณ์สายไอทีซัพพอร์ตและเน็ตเวิร์ก', 'easy', 'multiple_choice', 'ขั้นตอนของ DHCP คือ Discover (ส่งหา) -> Offer (เสนอไอพี) -> Request (ขอยืนยัน) -> Acknowledge (ตอบรับสัญญาสุดท้าย) เรียกย่อว่า D-O-R-A', '{network,dhcp,dora,protocols}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('a4d3b42b-b063-43a3-b338-578b87fae333', 'network:07-dhcp:q02', 2, '11100691-a71e-441a-abe3-ba9a1d4ba021', 'หากเครื่องคอมพิวเตอร์ที่ตั้งค่าให้รับ IP อัตโนมัติ ได้หมายเลขไอพีเป็น ''169.254.120.45'' และ Subnet Mask ''255.255.0.0'' อาการนี้บ่งบอกถึงสิ่งใดอย่างชัดเจนที่สุด?', 'ผู้ใช้งานแจ้งว่าเปิดเครื่องขึ้นมาแล้วเข้าอินเทอร์เน็ตไม่ได้ ช่างสั่ง ipconfig พบไอพีดังกล่าว', 'easy', 'multiple_choice', 'ไอพีในย่าน 169.254.0.0/16 คือ APIPA ซึ่งระบบปฏิบัติการจะกำหนดขึ้นมาเองโดยอัตโนมัติเมื่อเครื่องไม่สามารถติดต่อขอรับ IP จาก DHCP Server ได้สำเร็จ', '{network,dhcp,apipa,troubleshooting}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('79645a39-48ce-4bfd-b6f6-b8809dfba87c', 'network:07-dhcp:q03', 2, '11100691-a71e-441a-abe3-ba9a1d4ba021', 'หากเครื่องลูกข่ายอยู่ใน VLAN 10 แต่เครื่อง DHCP Server ตั้งอยู่ใน Server Farm VLAN 100 ข้ามเราเตอร์ ช่างเทคนิคต้องเปิดใช้งานฟังก์ชันใดบน Interface ของ Router เพื่อให้เครื่องลูกข่ายขอไอพีได้?', 'การออกแบบเครือข่ายองค์กรที่มีการรวมศูนย์ DHCP Server ไว้ที่ Data Center', 'medium', 'multiple_choice', 'เนื่องจาก DHCP Discover เป็น Broadcast ซึ่งวิ่งข้าม Router ไม่ได้ จึงต้องเปิดฟังก์ชัน DHCP Relay Agent (บน Cisco คือคำสั่ง ''ip helper-address <IP>'') เพื่อแปลง Broadcast เป็น Unicast ส่งไปยัง DHCP Server ข้ามวง', '{network,dhcp,dhcp-relay,cisco}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('c81e6aa9-e017-4ee8-bd8a-f170ba5d2e30', 'network:07-dhcp:q04', 2, '11100691-a71e-441a-abe3-ba9a1d4ba021', 'เทคโนโลยีการแปลงแอดเดรสแบบใดที่ช่วยให้อุปกรณ์หลายร้อยเครื่องที่ถือ Private IP สามารถออกสู่อินเทอร์เน็ตได้พร้อมกันผ่าน Public IP จริงเพียงเบอร์เดียว โดยอาศัยการจำแนกด้วยหมายเลขพอร์ต?', 'การทำความเข้าใจความแตกต่างของเทคโนโลยี NAT ประเภทต่างๆ', 'medium', 'multiple_choice', 'PAT (Port Address Translation) หรือที่นิยมเรียกว่า NAT Overload เป็นวิธีที่แมป Private IP จำนวนมากเข้ากับ Public IP เดียวโดยใช้ Port Number ในการแยกเซสชัน', '{network,nat,pat,firewall}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('49da2415-c6d1-440c-b962-0d129a95f694', 'network:07-dhcp:q05', 2, '11100691-a71e-441a-abe3-ba9a1d4ba021', 'เซิร์ฟเวอร์เปิดเว็บในระบบคลาวด์มี Private IP เป็น 10.0.1.10 ต้องการให้ลูกค้าภายนอกสามารถเข้าชมเว็บไซต์ผ่าน Public IP 203.0.113.88 พอร์ต 443 ได้ จะต้องตั้งค่าการแปลงแอดเดรสแบบใด?', 'การตั้งค่าเผยแพร่เว็บเซิร์ฟเวอร์หลังบ้านออกสู่อินเทอร์เน็ต', 'medium', 'multiple_choice', 'การอนุญาตให้ภายนอกยิงเข้ามาหาบริการภายในที่ระบุแน่นอน ต้องใช้ Static NAT (1-to-1) หรือ Port Forwarding (Destination NAT) จาก Public IP:Port มายัง Private IP:Port', '{network,nat,port-forwarding,cloud}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('078a7bed-80ff-486c-8dee-ef31175e5ef5', 'network:08-cli:q01', 2, 'c349c769-a0a4-4287-a5dd-73daeaa0f3a8', 'ในผลลัพธ์ของคำสั่ง ''show ip interface brief'' บน Cisco Switch หากพอร์ตแสดงสถานะเป็น ''administratively down / down'' มีความหมายว่าอย่างไร?', 'การวิเคราะห์สถานะพอร์ตสวิตช์ของช่างเทคนิคศูนย์ข้อมูล', 'easy', 'multiple_choice', 'สถานะ ''administratively down'' หมายถึงพอร์ตนั้นถูกแอดมินสั่งปิดใช้งานด้วยคำสั่ง ''shutdown'' ด้วยตนเอง หากต้องการให้พอร์ตกลับมาทำงานต้องสั่ง ''no shutdown'' ในโหมด interface configuration', '{network,cisco,cli,show-commands}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('52df195e-483c-4a2b-a982-463827ca7fbd', 'network:08-cli:q02', 2, 'c349c769-a0a4-4287-a5dd-73daeaa0f3a8', 'เมื่อสั่ง ''show interfaces GigabitEthernet0/1'' บนสวิตช์ แล้วพบว่าค่า ''CRC errors'' เพิ่มขึ้นอย่างต่อเนื่องตลอดเวลา ปัญหาน่าจะเกิดจากสิ่งใดมากที่สุด?', 'ผู้ใช้งานแจ้งว่าการโอนไฟล์ขนาดใหญ่ไปยังเซิร์ฟเวอร์ช้าผิดปกติและหลุดบ่อยครั้ง', 'medium', 'multiple_choice', 'CRC (Cyclic Redundancy Check) Errors เกิดจากเฟรมที่ส่งมาเกิดความเสียหายระหว่างทาง สาเหตุหลักมักมาจากสายสัญญาณมีสัญญาณรบกวน (Noise/EMI), หัวต่อ RJ45 หรือ Fiber เข้าหัวไม่ดี, หรือความยาวสายเกินมาตรฐาน 100 เมตร', '{network,cisco,troubleshooting,layer1,crc}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('69303d68-e689-49b4-9c70-5faa75c07553', 'network:08-cli:q03', 2, 'c349c769-a0a4-4287-a5dd-73daeaa0f3a8', 'หากต้องการตรวจสอบว่าพอร์ตใดถูกกำหนดให้อยู่ใน VLAN ใดบ้างอย่างรวดเร็วบน Cisco Switch ควรใช้คำสั่งใด?', 'การตรวจสอบคอนฟิกพอร์ตของทีมซัพพอร์ต', 'easy', 'multiple_choice', 'คำสั่ง ''show vlan brief'' จะสรุปรายการ VLAN ทั้งหมด พร้อมรายชื่อพอร์ตที่เป็น Access Port ของแต่ละ VLAN ให้เห็นในหน้าเดียวอย่างชัดเจน', '{network,cisco,vlan,cli}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('8d7e57ad-f961-4347-ad2d-199066471909', 'network:08-cli:q04', 2, 'c349c769-a0a4-4287-a5dd-73daeaa0f3a8', 'ในการเชื่อมต่อคอมพิวเตอร์เข้ากับพอร์ต Console ของอุปกรณ์เครือข่ายด้วยโปรแกรม PuTTY ค่า Baud Rate (Speed) มาตรฐานสากลที่ต้องตั้งคือเท่าใด?', 'การเข้าจัดการอุปกรณ์ Network ผ่านสาย Console ประจำศูนย์ข้อมูล', 'easy', 'multiple_choice', 'ค่าความเร็วการสื่อสารแบบ Serial Console ของอุปกรณ์ Cisco และอุปกรณ์เครือข่ายส่วนใหญ่ตามมาตรฐานคือ 9600 bps (8 data bits, no parity, 1 stop bit)', '{network,console,cisco,hardware}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('0248a868-1d00-463b-8b08-6f3f8cf82efb', 'network:08-cli:q05', 2, 'c349c769-a0a4-4287-a5dd-73daeaa0f3a8', 'ในตาราง Routing Table ของคำสั่ง ''show ip route'' สัญลักษณ์ตัวอักษร ''C'' และ ''S*'' หมายถึงเส้นทางประเภทใดตามลำดับ?', 'การอ่านผลลัพธ์ตาราง Routing บนเราเตอร์', 'medium', 'multiple_choice', '''C'' ย่อมาจาก Connected (เครือข่ายที่เชื่อมต่ออยู่กับขา Interface ของเราเตอร์โดยตรง) ส่วน ''S*'' หมายถึง Static Route ที่เป็น Default Route (Gateway of last resort)', '{network,routing,cisco,show-ip-route}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('29a4fa57-6dd7-4b04-9a94-3f64ef1ea7ab', 'network:09-l1l2:q01', 2, 'ff620473-be72-44d1-bbee-3112ba85188d', 'ปัญหา ''Duplex Mismatch'' ระหว่างสองอุปกรณ์ (ฝั่งหนึ่งเป็น Full-Duplex อีกฝั่งเป็น Half-Duplex) จะส่งผลกระทบและแสดงอาการแบบใดที่ชัดเจนที่สุดในระบบเครือข่าย?', 'ผู้ใช้งานแจ้งว่าการทดสอบปิงขนาดเล็ก (ping) ผ่านปกติ แต่เมื่อเริ่มดาวน์โหลดหรืออัปโหลดไฟล์ขนาดใหญ่ ความเร็วจะตกต่ำมากและมี Packet Loss สูง', 'medium', 'multiple_choice', 'เมื่อ Traffic น้อย ปัญหาจะไม่ชัดเจน แต่เมื่อเริ่มมีข้อมูลวิ่งเยอะ ฝั่ง Half-duplex จะมองว่ามีการส่งสวนทางจึงนึกว่าเกิด Collision แล้วส่ง Jam signal สั่งหยุดส่ง ทำให้เกิด Late Collisions และ Packet Loss มหาศาล', '{network,duplex,layer1,troubleshooting,collisions}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('48a688b6-b7e4-4d4f-8164-32df8b03b281', 'network:09-l1l2:q02', 2, 'ff620473-be72-44d1-bbee-3112ba85188d', 'อะไรคือสาเหตุหลักที่ทำให้เกิด ''Broadcast Storm'' บนเครือข่าย Layer 2 และเหตุใดมันจึงไม่หยุดวนเวียนจนกระทั่งเน็ตเวิร์กล่ม?', 'จู่ๆ สวิตช์ทั้งออฟฟิศไฟกะพริบถี่พร้อมกัน และผู้ใช้ทุกคนหลุดจากเครือข่ายทั้งหมด', 'medium', 'multiple_choice', 'เกิดจากมี Loop ในสายเชื่อมต่อของ Switch และเนื่องจาก Ethernet Frame ใน Layer 2 ''ไม่มีฟิลด์ TTL (Time-to-Live)'' เฟรมบรอดคาสต์จึงถูกส่งกระจายวนเวียนซ้ำไปมาอย่างไม่มีที่สิ้นสุดจนแบนด์วิดท์และ CPU เต็ม', '{network,broadcast-storm,stp,switching-loop}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('6742174c-264e-4fba-a6da-56b09a01ac39', 'network:09-l1l2:q03', 2, 'ff620473-be72-44d1-bbee-3112ba85188d', 'โปรโตคอลใดทำหน้าที่ป้องกันการเกิด Switching Loop ในระบบเครือข่าย Ethernet สวิตช์?', 'ความรู้เรื่องโปรโตคอลมาตรฐานของ Switch', 'easy', 'multiple_choice', 'STP (Spanning Tree Protocol - IEEE 802.1D / 802.1w RSTP) ทำหน้าที่ตรวจจับและบล็อกพอร์ตที่เป็นเส้นทางสำรองเพื่อป้องกันไม่ให้เกิด Loop', '{network,stp,switching,loop-prevention}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('1e185f85-4700-463f-a971-4c02526fc962', 'network:09-l1l2:q04', 2, 'ff620473-be72-44d1-bbee-3112ba85188d', 'ฟีเจอร์ความปลอดภัย ''BPDU Guard'' บน Cisco Switch มีหน้าที่สำคัญอย่างไรเมื่อใช้งานคู่กับพอร์ตที่เปิด PortFast?', 'การตั้งค่าความปลอดภัยของพอร์ตที่เชื่อมต่อเครื่องลูกข่ายหรือเซิร์ฟเวอร์', 'medium', 'multiple_choice', 'หากมีใครนำ Switch ตัวอื่นมาเสียบเข้าพอร์ตที่เปิด PortFast สวิตช์จะได้รับแพ็กเก็ต BPDU ซึ่ง BPDU Guard จะสั่งปิดพอร์ตนั้นทันที (เข้าสู่สถานะ err-disabled) เพื่อป้องกันไม่ให้เกิด Switching Loop หรือแย่งชิงสิทธิ์ Root Bridge', '{network,cisco,stp,bpdu-guard,portfast}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('34d76a3b-7fb2-4a41-b949-84b1bbd4537d', 'network:09-l1l2:q05', 2, 'ff620473-be72-44d1-bbee-3112ba85188d', 'หากต้องการรวมสายสัญญาณ Gigabit Ethernet 2 เส้นระหว่าง Server กับ Switch เพื่อเพิ่ม Bandwidth และทำ Redundancy สำรองสาย ต้องใช้โปรโตคอลมาตรฐานสากลใด?', 'การตั้งค่า Network Teaming / Bonding ของเซิร์ฟเวอร์ในศูนย์ข้อมูล', 'easy', 'multiple_choice', 'LACP (Link Aggregation Control Protocol ตามมาตรฐาน IEEE 802.3ad) คือโปรโตคอลมาตรฐานสากลสำหรับการเจรจารวมพอร์ตทางกายภาพเข้าเป็น Port-Channel หรือ Bond เดียวกัน', '{network,lacp,bonding,link-aggregation}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('eed83e79-382d-4cd4-b70c-a794fdc8d5be', 'network:10-pcap:q01', 2, '7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 'ในการใช้งานคำสั่ง tcpdump บนเซิร์ฟเวอร์ Linux เหตุใดจึงแนะนำอย่างยิ่งให้ใส่แฟล็ก ''-nn'' ร่วมด้วยเสมอ?', 'การใช้งานคำสั่งดักจับแพ็กเก็ตอย่างปลอดภัยและมีประสิทธิภาพ', 'easy', 'multiple_choice', 'แฟล็ก -nn สั่งให้ tcpdump ไม่ต้องพยายามแปลง IP Address เป็น Hostname และไม่ต้องแปลง Port เป็นชื่อบริการ ซึ่งช่วยป้องกันไม่ให้ระบบส่ง DNS Query เพิ่มเติมจนทำให้ผลลัพธ์ช้าหรือหน้าจอค้าง', '{network,tcpdump,cli,packet-capture}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('4179d86f-e2c7-4331-a1f3-c90aae750b83', 'network:10-pcap:q02', 2, '7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 'ในผลลัพธ์ของ tcpdump หากเห็นเครื่องต้นทางส่งแพ็กเก็ตที่มี ''Flags [S]'' ออกไปซ้ำๆ แต่ไม่มีแพ็กเก็ตใดตอบกลับมาเลย พฤติกรรมนี้บ่งบอกถึงสาเหตุใดมากที่สุด?', 'ช่างเทคนิคกำลังตรวจสอบว่าทำไมระบบ Web Application จึงเชื่อมต่อไปยังหลังบ้านไม่ได้', 'medium', 'multiple_choice', 'Flags [S] คือการส่ง SYN เพื่อขอเริ่มทำ 3-Way Handshake หากส่งซ้ำๆ (SYN Retransmission) โดยไม่มี SYN-ACK หรือ RST ตอบกลับมาเลย แสดงว่าแพ็กเก็ตถูกทิ้งเงียบๆ (Drop/Timeout) โดย Firewall หรือเครื่องปลายทางล่มสนิท', '{network,tcp,tcpdump,handshake,firewall}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('d3078369-34bc-435c-a843-0aa4c32c9797', 'network:10-pcap:q03', 2, '7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 'หากเครื่องต้นทางส่งแพ็กเก็ต ''Flags [S]'' (SYN) ออกไป แล้วได้รับแพ็กเก็ตที่มี ''Flags [R]'' (RST / Reset) ตอบกลับมาในทันที ข้อสรุปใดถูกต้องที่สุด?', 'การแยกแยะอาการระหว่าง Connection Timed Out กับ Connection Refused ด้วย Packet Capture', 'medium', 'multiple_choice', 'การได้รับ RST กลับมาแสดงว่าเส้นทางเครือข่ายและ Firewall ปล่อยให้แพ็กเก็ตผ่านไปถึงเครื่องปลายทางเรียบร้อยแล้ว แต่ที่เครื่องปลายทางไม่มีแอปพลิเคชันเปิดดักฟัง (Listen) อยู่ที่พอร์ตนั้น OS จึงปฏิเสธการเชื่อมต่อกลับมา', '{network,tcp,tcp-flags,reset,troubleshooting}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('caf4b43f-815a-4731-afe7-e459846dc1fe', 'network:10-pcap:q04', 2, '7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 'คำสั่ง tcpdump ในข้อใดถูกต้องในการดักจับแพ็กเก็ตบนการ์ดแลน eth0 เฉพาะพอร์ต 443 จำนวน 50 แพ็กเก็ต แล้วบันทึกลงไฟล์ชื่อ /tmp/ssl_test.pcap โดยไม่ Resolve ชื่อ?', 'การดึงหลักฐานเพื่อนำไปวิเคราะห์ปัญหา SSL Handshake บน Wireshark', 'easy', 'multiple_choice', 'ไวยากรณ์ที่ถูกต้องคือ tcpdump -nn -i eth0 port 443 -c 50 -w /tmp/ssl_test.pcap', '{network,tcpdump,cli,pcap}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('70b5a05d-a58c-4b52-8750-07b0d905cae1', 'network:10-pcap:q05', 2, '7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 'ในโปรแกรม Wireshark หากต้องการวิเคราะห์ข้อความหรือข้อมูลดิบที่แอปพลิเคชันคุยกันในเซสชัน TCP ตั้งแต่เริ่มจนจบการเชื่อมต่ออย่างต่อเนื่อง ควรใช้ฟีเจอร์ใด?', 'การแกะดูเนื้อหาคำสั่ง HTTP หรือข้อความที่มีปัญหาใน Wireshark', 'easy', 'multiple_choice', 'การคลิกขวาที่แพ็กเก็ตแล้วเลือก ''Follow -> TCP Stream'' จะช่วยให้ Wireshark รวม Segment ทั้งหมดมารวบเป็นบทสนทนาแบบอ่านง่าย (เช่น ข้อความ HTTP Request และ Response ทั้งหมด)', '{network,wireshark,tcp-stream,packet-analysis}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
 
 
 --
@@ -3928,7 +4838,7 @@ INSERT INTO public.topics VALUES (4, 'web-api', 'Web & HTTP/API', 'HTTP Status C
 -- Name: topics_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.topics_id_seq', 16, true);
+SELECT pg_catalog.setval('public.topics_id_seq', 10, true);
 
 
 --
