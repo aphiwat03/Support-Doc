@@ -97,6 +97,11 @@ export function formatSidebarTitle(title: string): string {
     'ฮาร์ดแวร์เซิร์ฟเวอร์ การเข้าตู้แร็ค และระบบจัดการระยะไกล (Server Hardware & OOB)': 'Server Hardware & iDRAC/iLO',
     'เครือข่าย OOB, กระบวนการ PXE Boot, ระบบ SAN Zoning และ Blade Server': 'PXE Boot, SAN & Blade',
     'ระบบไฟฟ้า 1/3 เฟส, UPS/ATS, การจัดการลมร้อน-ลมเย็น และระบบดับเพลิง DC': 'ระบบไฟ UPS & Hot/Cold Aisle',
+    'ระบบจัดเก็บข้อมูลเซิร์ฟเวอร์: RAID, Hot-Swap และ SMART Diagnostics (Storage, RAID & SMART)': 'ระบบ RAID, Hot-Swap & SMART',
+    'การวินิจฉัยฮาร์ดแวร์เซิร์ฟเวอร์เสีย และอ่าน System Event Log (Hardware Troubleshooting & SEL)': 'วินิจฉัย Hardware & SEL Log',
+    'การติดตั้ง OS ระยะไกล และการอัปเดต Firmware เซิร์ฟเวอร์อย่างปลอดภัย (OS Provisioning & Firmware Lifecycle)': 'ติดตั้ง OS & อัปเดต Firmware',
+    'มาตรฐานการเดินสายสัญญาณ, ป้ายกำกับ และการจัดการสินทรัพย์ DCIM (Structured Cabling, Labeling & DCIM)': 'มาตรฐานจัดสาย, Label & DCIM',
+    'กระบวนการปฏิบัติงาน, ความปลอดภัยทางกายภาพ และมาตรฐาน Tier (DC Operations, Safety & Tier Standards)': 'ปฏิบัติงาน DC, Safety & Tier',
     'ทัศนคติ ความปลอดภัย และเทคนิคพิชิตสัมภาษณ์งาน Data Center (Hosting vs Colocation)': 'เทคนิคสัมภาษณ์ & Mindset',
   };
 

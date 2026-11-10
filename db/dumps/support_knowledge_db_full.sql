@@ -893,6 +893,106 @@ INSERT INTO public.choices VALUES ('0d70c6da-293e-4b09-be5d-166fb3bf814a', '70b5
 INSERT INTO public.choices VALUES ('29de3bdf-3bc9-490c-9b48-1be6d23cdb7b', '70b5a05d-a58c-4b52-8750-07b0d905cae1', 'เลือกเมนู File -> Export Objects -> JSON', false, 'ผิด ไม่ใช่การอ่านสตรีมข้อมูล TCP', 2);
 INSERT INTO public.choices VALUES ('dd599aa7-a6cb-435e-8ec1-3ab05728710d', '70b5a05d-a58c-4b52-8750-07b0d905cae1', 'คลิกเลือก Apply as Filter -> Selected MAC', false, 'ผิด เป็นเพียงการกรอง MAC Address', 3);
 INSERT INTO public.choices VALUES ('60eeab6e-dd15-47c9-b732-e48f38df3ba5', '70b5a05d-a58c-4b52-8750-07b0d905cae1', 'กดปุ่ม Restart Capture ทันที', false, 'ผิด จะเป็นการเริ่มดักจับใหม่และล้างข้อมูลเก่า', 4);
+INSERT INTO public.choices VALUES ('6ac24d33-8d64-4af8-9828-05a8ee913627', 'a98c2c8e-00de-4244-837b-4ba6540ceb62', 'RAID 6 ได้ 8 TB และ RAID 10 ได้ 6 TB', true, 'ถูกต้อง RAID 6 = (N-2)*Size = 8TB, RAID 10 = (N/2)*Size = 6TB', 1);
+INSERT INTO public.choices VALUES ('ea150cf5-d5de-4f40-b0dc-5a44a5fc060f', 'a98c2c8e-00de-4244-837b-4ba6540ceb62', 'RAID 6 ได้ 10 TB และ RAID 10 ได้ 8 TB', false, 'ผิด 10 TB คือความจุของ RAID 5 (N-1)', 2);
+INSERT INTO public.choices VALUES ('ac93ef2f-9cf2-4405-a876-b39fb99c32c7', 'a98c2c8e-00de-4244-837b-4ba6540ceb62', 'RAID 6 ได้ 6 TB และ RAID 10 ได้ 12 TB', false, 'ผิด RAID 10 ใช้พื้นที่ครึ่งหนึ่งทำ Mirror จึงเหลือ 6 TB ไม่ใช่ 12 TB', 3);
+INSERT INTO public.choices VALUES ('390b5043-6d36-4e20-9b39-244fef064f8b', '8b74d788-98ec-4a05-8a4b-d7301a0ec4b2', 'สายไฟเข้าพาวเวอร์ซัพพลายหลวม', false, 'ผิด ไม่เกี่ยวกับสายไฟ PSU', 3);
+INSERT INTO public.choices VALUES ('f7f5fe45-7301-42cf-ba10-1e5087155267', 'a98c2c8e-00de-4244-837b-4ba6540ceb62', 'ได้ 12 TB เท่ากันทั้งสองแบบ', false, 'ผิด เฉพาะ RAID 0 เท่านั้นที่ได้ความจุเต็ม 12 TB', 4);
+INSERT INTO public.choices VALUES ('bf18bc26-630e-4045-9123-dfeadf04e988', 'a49c6a82-b2f6-4f5a-bcf4-870770ee3d9b', 'โวลุ่ม RAID 5 จะล่มทันที (Volume Failed) เนื่องจากเสียดิสก์เกินจำนวนที่ทนได้ (เกิน 1 ลูก)', true, 'ถูกต้อง RAID 5 ทนเสียได้แค่ 1 ลูก การดึงลูกดีออกเท่ากับเสีย 2 ลูกพร้อมกัน', 1);
+INSERT INTO public.choices VALUES ('b8fa0444-f86e-4ec9-8adf-3558a01da4ff', 'a49c6a82-b2f6-4f5a-bcf4-870770ee3d9b', 'ระบบจะสลับไปใช้ CPU จำลองข้อมูลแทนโดยไม่มีผลกระทบใดๆ', false, 'ผิด ไม่สามารถจำลองข้อมูลได้หากขาดดิสก์เกินจำนวน Parity', 2);
+INSERT INTO public.choices VALUES ('fd43ec60-0d23-4586-bbed-1df8a5c503c0', 'a49c6a82-b2f6-4f5a-bcf4-870770ee3d9b', 'ระบบจะแปลงตัวเองเป็น RAID 0 โดยอัตโนมัติ', false, 'ผิด RAID 5 ไม่สามารถแปลงเป็น RAID 0 เองเมื่อดิสก์หลุด', 3);
+INSERT INTO public.choices VALUES ('1fb9f99c-fbce-43b9-8b8a-7cbbafdb3e27', 'a49c6a82-b2f6-4f5a-bcf4-870770ee3d9b', 'ไม่มีผลกระทบใดๆ เพราะ RAID 5 ทนดิสก์เสียได้ถึง 3 ลูก', false, 'ผิด RAID 5 ทนดิสก์เสียได้เพียง 1 ลูกเท่านั้น', 4);
+INSERT INTO public.choices VALUES ('57e57d12-95da-40c4-84de-5b0e8220d34d', 'af06e4f6-6e32-44a7-af4b-e131ce5c199f', 'เป็นไฟชี้ตำแหน่ง (Locator / Identify LED) ที่สั่งเปิดจากระบบจัดการระยะไกลเพื่อระบุตัวดิสก์ที่ถูกต้อง', true, 'ถูกต้อง ไฟสีน้ำเงินใช้สำหรับชี้เป้า (Locate) เพื่อป้องกันการดึงผิดช่อง', 1);
+INSERT INTO public.choices VALUES ('caf28f8d-9e32-406d-8cb4-503ef0db9f55', 'af06e4f6-6e32-44a7-af4b-e131ce5c199f', 'แสดงว่าดิสก์ลูกนั้นมีอุณหภูมิเย็นจัดเกินไป', false, 'ผิด ไม่เกี่ยวกับอุณหภูมิ', 2);
+INSERT INTO public.choices VALUES ('2cef72b5-5675-4057-861f-3a6d62114fa8', 'af06e4f6-6e32-44a7-af4b-e131ce5c199f', 'แสดงว่าดิสก์ลูกนั้นเชื่อมต่อผ่าน Bluetooth', false, 'ผิด เซิร์ฟเวอร์ไม่ใช้ Bluetooth กับฮาร์ดดิสก์', 3);
+INSERT INTO public.choices VALUES ('6fa23714-158f-4d84-b728-154b7cbb82a1', 'af06e4f6-6e32-44a7-af4b-e131ce5c199f', 'แสดงว่าดิสก์ลูกนั้นเป็นดิสก์ปลอมที่ไม่ผ่านมาตรฐาน', false, 'ผิด ไฟเตือนดิสก์มีปัญหามักเป็นสีส้ม/อำพัน (Amber)', 4);
+INSERT INTO public.choices VALUES ('3b9eba5f-5997-4015-b962-1ed4b7d5cf00', '9f4e6bb4-4c0d-4f17-b5f9-a5d1eb4768ec', 'เพื่อให้ระบบปฏิบัติการมองเห็นและควบคุมดิสก์แต่ละลูกได้โดยตรงโดยไม่ผ่านการรวมโวลุ่มของการ์ด RAID', true, 'ถูกต้อง HBA/Passthrough ส่งดิสก์แต่ละลูกให้ OS จัดการโดยตรง', 1);
+INSERT INTO public.choices VALUES ('040061b1-ca23-4a17-a76f-dc0e5bfc4afe', '9f4e6bb4-4c0d-4f17-b5f9-a5d1eb4768ec', 'เพื่อปิดการทำงานของพัดลมระบายความร้อนในเครื่อง', false, 'ผิด ไม่เกี่ยวกับพัดลม', 2);
+INSERT INTO public.choices VALUES ('10dc3631-c705-4030-a63d-4a98811e501b', '9f4e6bb4-4c0d-4f17-b5f9-a5d1eb4768ec', 'เพื่อบังคับให้ดิสก์ทำงานที่ความเร็วครึ่งเดียว', false, 'ผิด HBA ให้ความเร็วเต็มประสิทธิภาพของดิสก์', 3);
+INSERT INTO public.choices VALUES ('634cfb8c-1f2b-42f5-83f8-b71287d74c23', '9f4e6bb4-4c0d-4f17-b5f9-a5d1eb4768ec', 'เพื่อให้สามารถถอดสายไฟ PSU ออกได้', false, 'ผิด ไม่เกี่ยวกับระบบไฟ', 4);
+INSERT INTO public.choices VALUES ('fbb9e93a-6d48-4202-8fd7-eb887ff436f6', 'd6d47579-3742-448d-ab63-850146c740bd', 'ดิสก์เริ่มมี Bad Sector และกำลังเสื่อมสภาพ (Predictive Failure) ควรวางแผนเปลี่ยนดิสก์ลูกนั้นก่อนที่จะพังสนิท', true, 'ถูกต้อง Reallocated และ Pending Sector คือสัญญาณเตือนว่าดิสก์เริ่มเสียทางกายภาพ', 1);
+INSERT INTO public.choices VALUES ('80b4bcf8-bae4-47dd-9a9f-dd9f43a7785d', 'd6d47579-3742-448d-ab63-850146c740bd', 'ดิสก์เพิ่งได้รับการจัดเรียงข้อมูล (Defragment) เสร็จสมบูรณ์', false, 'ผิด ไม่ใช่การ Defragment', 2);
+INSERT INTO public.choices VALUES ('40be60e9-eede-497f-bea6-719541042080', 'd6d47579-3742-448d-ab63-850146c740bd', 'พาร์ทิชันมีไฟล์ถูกบีบอัดเป็น .gz มากเกินไป', false, 'ผิด SMART ตรวจระดับฮาร์ดแวร์ ไม่ขึ้นกับนามสกุลไฟล์', 3);
+INSERT INTO public.choices VALUES ('b056a2ee-d841-4d75-be8e-8e2a7a887474', 'd6d47579-3742-448d-ab63-850146c740bd', 'สายแลนของเซิร์ฟเวอร์เกิดอาการหลวม', false, 'ผิด smartctl เป็นการตรวจดิสก์ ไม่เกี่ยวกับสายแลน', 4);
+INSERT INTO public.choices VALUES ('3ca7e05c-ba80-4916-abc0-f78523b17879', '4cd3080a-83c4-4ea4-99f0-b166c7c3d551', 'CE สามารถซ่อมแซมบิตที่เพี้ยนได้อัตโนมัติโดยเครื่องยังทำงานต่อได้ ส่วน UCE ซ่อมไม่ได้และทำให้เครื่องแฮงก์หรือรีบูตทันที', true, 'ถูกต้อง CE = Single-bit ซ่อมได้, UCE = Multi-bit เครื่องดับ/แฮงก์ทันที', 1);
+INSERT INTO public.choices VALUES ('c22c2a42-8832-4d1f-9ca0-dc332ada5633', '4cd3080a-83c4-4ea4-99f0-b166c7c3d551', 'CE ทำให้ฮาร์ดดิสก์พัง ส่วน UCE ทำให้การ์ดจอพัง', false, 'ผิด ทั้งคู่เป็นข้อผิดพลาดของหน่วยความจำ RAM', 2);
+INSERT INTO public.choices VALUES ('7d714092-00d0-45b1-a767-6c633a11ee4b', '4cd3080a-83c4-4ea4-99f0-b166c7c3d551', 'CE เกิดเฉพาะวันหยุด ส่วน UCE เกิดเฉพาะวันทำงาน', false, 'ผิด ไม่เกี่ยวข้องกับวันเวลา', 3);
+INSERT INTO public.choices VALUES ('a81832b8-f50c-4d69-8c50-9b6cf1ac36fc', '4cd3080a-83c4-4ea4-99f0-b166c7c3d551', 'UCE สามารถซ่อมได้ด้วยการล้างแคชเบราว์เซอร์', false, 'ผิด UCE เป็นปัญหาฮาร์ดแวร์ระดับกายภาพของชิปแรม', 4);
+INSERT INTO public.choices VALUES ('f23ae1f5-47b5-458f-9c24-9c3294ded113', '8b74d788-98ec-4a05-8a4b-d7301a0ec4b2', 'ตัวแผงหน่วยความจำ (RAM Module) แถวนั้นชำรุด ต้องส่งเคลมเฉพาะตัวแรม', true, 'ถูกต้อง อาการเสียย้ายตามชิ้นส่วนไป แสดงว่าตัวชิ้นส่วนนั้นเสีย', 1);
+INSERT INTO public.choices VALUES ('3f86e77b-63fc-4094-b04d-dab29e7b6c82', '8b74d788-98ec-4a05-8a4b-d7301a0ec4b2', 'ช่องเสียบบนเมนบอร์ด (DIMM Slot A1) ชำรุด ต้องเปลี่ยนเมนบอร์ด', false, 'ผิด ถ้าเมนบอร์ดเสีย อาการจะต้องฟ้องที่ช่อง A1 เหมือนเดิมแม้จะเปลี่ยนแรมแล้ว', 2);
+INSERT INTO public.choices VALUES ('ed3e8c60-9d28-4109-b5fb-e0e6826b0150', '8b74d788-98ec-4a05-8a4b-d7301a0ec4b2', 'พัดลมระบายความร้อนหมุนกลับด้าน', false, 'ผิด ไม่เกี่ยวกับพัดลม', 4);
+INSERT INTO public.choices VALUES ('de9f90ea-c16f-4f76-b7a1-67a8d077098b', '290bd7fb-a136-4e0a-8251-0315c238a1a1', 'System Event Log (SEL) ในระบบ iDRAC/iLO หรือใช้คำสั่ง ipmitool sel elist', true, 'ถูกต้อง ชิป BMC ทำงานแยกจาก OS จึงบันทึกเหตุการณ์ไฟดับ/ความร้อน/RAM พัง ลงใน SEL ได้เสมอ', 1);
+INSERT INTO public.choices VALUES ('047126db-5fe6-4954-95c2-e98c399c66ab', '290bd7fb-a136-4e0a-8251-0315c238a1a1', 'ประวัติการเข้าชมเว็บไซต์ในโปรแกรม Chrome', false, 'ผิด ไม่เกี่ยวข้องกับเซิร์ฟเวอร์', 2);
+INSERT INTO public.choices VALUES ('dc9657b5-6f70-49cb-b857-6da9c91b479b', '290bd7fb-a136-4e0a-8251-0315c238a1a1', 'ไฟล์ /tmp ที่ถูกล้างตอนรีบูต', false, 'ผิด /tmp มักถูกล้างเมื่อเครื่องรีบูต', 3);
+INSERT INTO public.choices VALUES ('7f341e14-e4d2-44ab-b1e8-887bbb5eca29', '290bd7fb-a136-4e0a-8251-0315c238a1a1', 'ตาราง ARP Cache ของสวิตช์', false, 'ผิด ARP Cache ไม่ได้บันทึกสาเหตุฮาร์ดแวร์เซิร์ฟเวอร์ดับ', 4);
+INSERT INTO public.choices VALUES ('bd4eb23c-e56b-4b8d-ad75-fbc1be69d120', '6ce08b38-2b09-43bb-b2e4-18a321887e7e', 'sudo ipmitool sdr list', true, 'ถูกต้อง SDR ย่อมาจาก Sensor Data Repository ใช้แสดงค่าเซนเซอร์ทั้งหมด', 1);
+INSERT INTO public.choices VALUES ('c9254c0e-5638-4ea4-aa1a-3dd6bcb07d71', '6ce08b38-2b09-43bb-b2e4-18a321887e7e', 'sudo ipmitool chassis power off', false, 'ผิด คำสั่งนี้เป็นการสั่งตัดไฟปิดเครื่องเซิร์ฟเวอร์!', 2);
+INSERT INTO public.choices VALUES ('252bb0f0-fbe5-4448-8121-b5757209065d', '6ce08b38-2b09-43bb-b2e4-18a321887e7e', 'sudo ipmitool sel clear', false, 'ผิด คำสั่งนี้ใช้ล้างประวัติ Event Log', 3);
+INSERT INTO public.choices VALUES ('6f7e0807-c089-47ab-8ffb-85486f5361e8', '6ce08b38-2b09-43bb-b2e4-18a321887e7e', 'sudo ipmitool user list', false, 'ผิด คำสั่งนี้ใช้ดูรายชื่อผู้ใช้ในระบบ BMC', 4);
+INSERT INTO public.choices VALUES ('152eb04d-c7f6-4a18-aa7b-5010b65b66e3', 'cb7dbfcd-a8ce-4e92-a1bb-34ba1207ff7c', 'เร่งความเร็วรอบพัดลมตัวที่เหลือทั้งหมดให้หมุนสูงสุด (100%) เพื่อชดเชยแรงลม และขึ้นไฟเตือนสีส้ม', true, 'ถูกต้อง เป็นกลไก Fail-safe มาตรฐานของเซิร์ฟเวอร์ทุกยี่ห้อ', 1);
+INSERT INTO public.choices VALUES ('1390c29f-151b-45a9-ab35-a3135d958135', 'cb7dbfcd-a8ce-4e92-a1bb-34ba1207ff7c', 'สั่งหยุดพัดลมทุกตัวที่เหลือเพื่อให้เงียบลง', false, 'ผิด หากหยุดพัดลมเครื่องจะร้อนจัดจนดับทันที', 2);
+INSERT INTO public.choices VALUES ('3eac5635-056c-41de-a5d2-9af57568165f', 'cb7dbfcd-a8ce-4e92-a1bb-34ba1207ff7c', 'สั่งฟอร์แมตฮาร์ดดิสก์ทั้งหมดโดยอัตโนมัติ', false, 'ผิด ไม่เกี่ยวข้องกัน', 3);
+INSERT INTO public.choices VALUES ('012e4411-8147-4638-af6e-34cd0c5a096a', 'cb7dbfcd-a8ce-4e92-a1bb-34ba1207ff7c', 'เปลี่ยน IP Address ของเครื่องเป็นค่าเริ่มต้น', false, 'ผิด พัดลมเสียไม่ทำให้ IP เปลี่ยน', 4);
+INSERT INTO public.choices VALUES ('aecf8a7c-32c3-4a64-8e12-cb73d08d22bc', '608b4ca0-6f74-4428-9dcc-a4d91e2e7fd6', 'Virtual Media (ภายในหน้าต่าง Virtual Console)', true, 'ถูกต้อง Virtual Media ใช้จำลองไฟล์ ISO ให้เป็นไดรฟ์บูตเสมือนระยะไกล', 1);
+INSERT INTO public.choices VALUES ('a74b02e1-ba39-4ce4-92af-c8edbb0fb82f', '608b4ca0-6f74-4428-9dcc-a4d91e2e7fd6', 'SNMP Trap Receiver', false, 'ผิด SNMP ใช้ส่งการแจ้งเตือน ไม่ใช่การจำลองไดรฟ์', 2);
+INSERT INTO public.choices VALUES ('43e1c591-3293-456f-a151-578f3d67a800', '608b4ca0-6f74-4428-9dcc-a4d91e2e7fd6', 'Serial over LAN (SOL) แบบข้อความล้วน', false, 'ผิด SOL ส่งเฉพาะข้อความคอนโซล ไม่ได้แนบไฟล์อิมเมจ ISO', 3);
+INSERT INTO public.choices VALUES ('c14b90b7-9d8e-4944-a217-0145984fca57', '608b4ca0-6f74-4428-9dcc-a4d91e2e7fd6', 'VLAN Tagging', false, 'ผิด เป็นเรื่องของการแบ่งเครือข่ายบนสวิตช์', 4);
+INSERT INTO public.choices VALUES ('ecf23490-21d6-447c-bbb4-ee74e49674bd', '3ead4a3b-6128-4695-a9f2-cbc18355084f', 'BMC Firmware (เช่น iDRAC หรือ iLO)', true, 'ถูกต้อง ชิป BMC ทำงานแยกอิสระจาก CPU หลัก จึงรีบูตเฉพาะตัว BMC ได้โดย OS ไม่ดับ', 1);
+INSERT INTO public.choices VALUES ('55055591-d410-429d-9c52-fa196d1b088e', '3ead4a3b-6128-4695-a9f2-cbc18355084f', 'System BIOS / UEFI', false, 'ผิด การใช้ค่า BIOS ใหม่จำเป็นต้องรีบูตเครื่องเซิร์ฟเวอร์จริงเสมอ', 2);
+INSERT INTO public.choices VALUES ('627f8a9a-ca78-4f60-ae5f-4cc7afd10228', '3ead4a3b-6128-4695-a9f2-cbc18355084f', 'RAID Controller Firmware ขณะกำลังเขียนดิสก์หนักๆ', false, 'ผิด การอัปเดต RAID Controller มักต้องรีบูตหรือหยุด I/O เพื่อความปลอดภัย', 3);
+INSERT INTO public.choices VALUES ('5d5792da-737c-4177-a409-961cd6f951a7', '3ead4a3b-6128-4695-a9f2-cbc18355084f', 'การเปลี่ยนโหมด CPU Virtualization ใน BIOS', false, 'ผิด ต้องรีบูตเครื่องจึงจะมีผล', 4);
+INSERT INTO public.choices VALUES ('3b8f2813-2198-4d3f-837a-f4836b156d62', '855868fc-446e-4fb2-b42c-99a6ff11a6e3', 'Kickstart file (ks.cfg)', true, 'ถูกต้อง Kickstart คือระบบ Answer File มาตรฐานของตระกูล Red Hat/Rocky Linux', 1);
+INSERT INTO public.choices VALUES ('6965def2-f305-4edf-a0ac-dad55d85af18', '855868fc-446e-4fb2-b42c-99a6ff11a6e3', 'Unattend.xml', false, 'ผิด Unattend.xml เป็นของฝั่ง Windows Server', 2);
+INSERT INTO public.choices VALUES ('42fe9769-755d-45a9-b214-35d701dccbe2', '855868fc-446e-4fb2-b42c-99a6ff11a6e3', 'package.json', false, 'ผิด package.json เป็นไฟล์ของโปรเจกต์ Node.js', 3);
+INSERT INTO public.choices VALUES ('1c00f134-edac-40b1-8d3d-ff6137f29c8c', '855868fc-446e-4fb2-b42c-99a6ff11a6e3', 'robots.txt', false, 'ผิด robots.txt ใช้สำหรับ Search Engine บนเว็บไซต์', 4);
+INSERT INTO public.choices VALUES ('c9f0bd57-c5a7-4ae6-8236-e9d97d0119e0', 'c9d0a4bf-c55e-4e83-a1dc-81e5d2b1eb32', 'สลับไปบูตจาก Backup BIOS ROM ผ่านหน้า iDRAC/iLO หรือปรับ Recovery Jumper / Switch บนเมนบอร์ด', true, 'ถูกต้อง เซิร์ฟเวอร์องค์กรมี Dual/Redundant BIOS ROM สำหรับกู้คืนโดยเฉพาะ', 1);
+INSERT INTO public.choices VALUES ('ccee8129-6d8a-4823-b6eb-3b34db648fec', 'c9d0a4bf-c55e-4e83-a1dc-81e5d2b1eb32', 'เปลี่ยนสายแลนเป็นสายไฟเบอร์ออปติก', false, 'ผิด สายสัญญาณไม่เกี่ยวกับการกู้คืนชิป BIOS', 2);
+INSERT INTO public.choices VALUES ('cacf7c38-21ab-4223-a628-64069e4c3c63', 'c9d0a4bf-c55e-4e83-a1dc-81e5d2b1eb32', 'ถอดฮาร์ดดิสก์ออกแล้วเขย่าเบาๆ', false, 'ผิด การเขย่าดิสก์ทำให้ดิสก์พังและไม่เกี่ยวกับ BIOS', 3);
+INSERT INTO public.choices VALUES ('7311fd4a-96ae-42aa-aa38-60603c0938e2', 'c9d0a4bf-c55e-4e83-a1dc-81e5d2b1eb32', 'ไม่สามารถกู้คืนได้ทุกกรณี ต้องทุบทำลายเครื่องทิ้งเท่านั้น', false, 'ผิด สามารถกู้ผ่าน Backup ROM หรือเปลี่ยนเมนบอร์ดภายใต้ประกันได้', 4);
+INSERT INTO public.choices VALUES ('2665d60d-9e7d-480e-a06d-18f7c0329f80', '7d3b8788-3089-4c1e-bcee-d2937b6f029f', 'เพราะไฟล์ ISO มีขนาดใหญ่ การโหลดภายในวง LAN เดียวกันให้ความเร็วสูงและไม่เสี่ยงหลุดกลางคันหาก VPN ของช่างกระตุก', true, 'ถูกต้อง รวดเร็วและเสถียรกว่าการส่งผ่านเน็ตบ้านข้าม VPN มาก', 1);
+INSERT INTO public.choices VALUES ('0bdb0f7c-676d-4767-adff-d3b24b526b71', '7d3b8788-3089-4c1e-bcee-d2937b6f029f', 'เพราะแล็ปท็อปทั่วไปไม่สามารถเก็บไฟล์นามสกุล .iso ได้', false, 'ผิด แล็ปท็อปเก็บไฟล์ .iso ได้ปกติ', 2);
+INSERT INTO public.choices VALUES ('648e3db2-3ae7-4471-8fe0-5f31d88b6bd0', '7d3b8788-3089-4c1e-bcee-d2937b6f029f', 'เพราะ VPN จะเปลี่ยนไฟล์ Linux ให้กลายเป็น Windows', false, 'ผิด VPN ไม่ได้ดัดแปลงเนื้อหาไฟล์', 3);
+INSERT INTO public.choices VALUES ('1b4cc757-652d-484e-ae8a-3f9062dfd4ba', '7d3b8788-3089-4c1e-bcee-d2937b6f029f', 'เพราะระบบ iDRAC อนุญาตให้ใช้ได้เฉพาะวันจันทร์เท่านั้น', false, 'ผิด iDRAC ใช้งานได้ตลอด 24 ชั่วโมงทุกวัน', 4);
+INSERT INTO public.choices VALUES ('a9c53f1e-f7e2-4d08-93b1-3c7d436c1dfb', '35b7ef7c-568b-45f1-832d-aaa946957ac3', 'เพราะตีนตุ๊กแกไม่บีบรัดสายจนเกิดความเสียหายต่อแกนไฟเบอร์ และสามารถแกะออกเพื่อเพิ่มหรือซ่อมสายได้โดยไม่ต้องใช้คีมตัด', true, 'ถูกต้อง ป้องกัน Micro-bending และไม่ต้องเสี่ยงใช้ของมีคมตัดใกล้สายสัญญาณ', 1);
+INSERT INTO public.choices VALUES ('38bbcb3c-fbbc-44dd-8362-14444baf4b9a', '35b7ef7c-568b-45f1-832d-aaa946957ac3', 'เพราะตีนตุ๊กแกช่วยเพิ่มความเร็วแสงในสายไฟเบอร์ให้เร็วขึ้น 2 เท่า', false, 'ผิด สายรัดไม่ได้เพิ่มความเร็วแสง', 2);
+INSERT INTO public.choices VALUES ('925d3ea8-36db-48ee-852c-99a43d00e9bb', '35b7ef7c-568b-45f1-832d-aaa946957ac3', 'เพราะเคเบิลไทร์พลาสติกเป็นตัวนำไฟฟ้าแรงสูง', false, 'ผิด พลาสติกเป็นฉนวนไฟฟ้า แต่มีข้อเสียเรื่องแรงบีบรัด', 3);
+INSERT INTO public.choices VALUES ('4b3d31af-b63a-4faa-ac94-b9b03e50547a', '35b7ef7c-568b-45f1-832d-aaa946957ac3', 'เพราะตีนตุ๊กแกสามารถกันไฟไหม้ได้นาน 24 ชั่วโมง', false, 'ผิด เหตุผลหลักคือการถนอมสายและความสะดวกในการบำรุงรักษา', 4);
+INSERT INTO public.choices VALUES ('3e7cd1cc-a61a-4ba4-b158-eff78f67e7f3', '9a28af2c-2332-44f7-956d-28c33b97cbc0', 'ติดตั้งสวิตช์ไว้ประจำทุกตู้แร็ค โดยเซิร์ฟเวอร์ในตู้จะต่อสายสั้นๆ เข้ากับสวิตช์ในตู้ตัวเองก่อนส่ง Uplink ไปยังสวิตช์หลัก', true, 'ถูกต้อง ToR ช่วยลดจำนวนสายยาวที่ต้องลากข้ามตู้ได้มหาศาล', 1);
+INSERT INTO public.choices VALUES ('a97ed02d-24ca-4d35-b352-3c4e2590acdc', '9a28af2c-2332-44f7-956d-28c33b97cbc0', 'วางเซิร์ฟเวอร์ไว้บนหลังคาอาคารเพื่อรับลมธรรมชาติ', false, 'ผิด ไม่ใช่การวางบนหลังคาอาคาร', 2);
+INSERT INTO public.choices VALUES ('3b557cc4-f231-484a-8f22-813c84a199a4', '9a28af2c-2332-44f7-956d-28c33b97cbc0', 'ลากสายแลนจากเซิร์ฟเวอร์ทุกเครื่องในห้องไปเสียบรวมกันที่ผู้ให้บริการอินเทอร์เน็ตโดยตรง', false, 'ผิด นั่นไม่ใช่สถาปัตยกรรม ToR', 3);
+INSERT INTO public.choices VALUES ('4a244d69-5ab7-4a0b-844e-8b1d667379b2', '9a28af2c-2332-44f7-956d-28c33b97cbc0', 'ห้ามติดตั้งสวิตช์ในตู้แร็คเด็ดขาด', false, 'ผิด ToR คือการมีสวิตช์อยู่ในทุกตู้แร็ค', 4);
+INSERT INTO public.choices VALUES ('eff43e51-3a34-476e-8e84-b21d6cbf8bb7', 'd9a0cafa-ab7f-4017-8a74-8790c9115acd', 'ติดป้ายที่ปลายสายทั้งสองฝั่ง โดยระบุรหัสตู้ ชั้น U ชื่ออุปกรณ์ และหมายเลขพอร์ต ของทั้งฝั่งต้นทางและปลายทาง', true, 'ถูกต้อง ช่วยให้ตรวจสอบปลายทางได้ทันทีจากทั้งสองฝั่งโดยไม่ต้องดึงสาย', 1);
+INSERT INTO public.choices VALUES ('9af58310-82af-44ad-ae2a-141c94670e62', 'd9a0cafa-ab7f-4017-8a74-8790c9115acd', 'เขียนแค่ชื่อเล่นของช่างที่เดินสายไว้ตรงกลางสายจุดเดียว', false, 'ผิด ไม่สามารถใช้ระบุตำแหน่งพอร์ตต้นทางและปลายทางได้', 2);
+INSERT INTO public.choices VALUES ('02d903cf-c95f-45f9-963d-827581eeb031', 'd9a0cafa-ab7f-4017-8a74-8790c9115acd', 'เขียนแค่วันที่ซื้อสายไว้ที่ฝั่งเดียว', false, 'ผิด ขาดข้อมูลพอร์ตเชื่อมต่อที่จำเป็นในการแก้ปัญหา', 3);
+INSERT INTO public.choices VALUES ('c1591ab3-f74d-498b-9565-ba74be825d64', 'd9a0cafa-ab7f-4017-8a74-8790c9115acd', 'ไม่ต้องติดป้ายใดๆ เพื่อประหยัดงบประมาณ', false, 'ผิด การไม่ติดป้ายทำให้ซ่อมบำรุงยากและเสี่ยงดึงสายผิดเส้น', 4);
+INSERT INTO public.choices VALUES ('6b710973-2411-4ae4-8a6a-a82d95697283', '10ee6d5a-fcd8-4f5b-a1ba-bcfb8d54577e', 'ไม่มีแสงเดินทางมาถึงขารับ (Rx) ของพอร์ตเรา เช่น สายไฟเบอร์ขาด/หลุด หรืออุปกรณ์ฝั่งตรงข้ามปิดอยู่', true, 'ถูกต้อง Rx Power ต่ำถึง -39.5 dBm แปลว่าขารับไม่ได้รับแสงจากฝั่งตรงข้ามเลย', 1);
+INSERT INTO public.choices VALUES ('a7887883-5fa9-4dfe-81ce-fa2ad52b7388', '10ee6d5a-fcd8-4f5b-a1ba-bcfb8d54577e', 'หัว SFP ฝั่งเรามีแสงแรงเกินไปจนทะลุพิกัด', false, 'ผิด ค่าติดลบมากๆ (-39.5 dBm) แปลว่าแสงอ่อนมากจนเกือบเป็นศูนย์ ไม่ใช่แสงแรงเกิน', 2);
+INSERT INTO public.choices VALUES ('6728a3aa-578b-4efc-b070-dda69e53f902', '10ee6d5a-fcd8-4f5b-a1ba-bcfb8d54577e', 'พอร์ตกำลังทำงานด้วยความเร็วสูงสุดเป็นพิเศษ', false, 'ผิด พอร์ตขึ้น Low Alarm และลิงก์ไม่ขึ้น', 3);
+INSERT INTO public.choices VALUES ('d61ef8c8-7870-445a-a434-1a356ee7f085', '10ee6d5a-fcd8-4f5b-a1ba-bcfb8d54577e', 'ตั้งค่า Default Gateway ในระบบปฏิบัติการผิด', false, 'ผิด ค่าแสงเป็นเรื่อง Layer 1 ทางกายภาพ ไม่เกี่ยวกับ Gateway', 4);
+INSERT INTO public.choices VALUES ('b381319a-67d8-44f5-91a8-d0bd4fb38c0d', '997a72f5-5b33-446f-97b8-2c613c1665e6', 'เป็นฐานข้อมูลกลางบันทึกผังตู้แร็ค (Rack Elevation), ทะเบียนสินทรัพย์ฮาร์ดแวร์, เส้นทางสายเชื่อมต่อ และการจัดการ IP (IPAM)', true, 'ถูกต้อง NetBox/DCIM คือหัวใจของการทำเอกสารและคลังสินทรัพย์ใน Data Center ยุคใหม่', 1);
+INSERT INTO public.choices VALUES ('f92a11da-b071-414c-9b0f-1dcef08fd046', '997a72f5-5b33-446f-97b8-2c613c1665e6', 'เป็นโปรแกรมสำหรับตัดต่อวิดีโอและตกแต่งรูปภาพ', false, 'ผิด ไม่เกี่ยวข้องกัน', 2);
+INSERT INTO public.choices VALUES ('58910807-bf8e-45bf-b565-d365f767a9ab', '997a72f5-5b33-446f-97b8-2c613c1665e6', 'เป็นระบบปฏิบัติการที่ใช้แทน Linux บนเซิร์ฟเวอร์', false, 'ผิด DCIM เป็นเว็บแอปพลิเคชันจัดการฐานข้อมูลโครงสร้างพื้นฐาน', 3);
+INSERT INTO public.choices VALUES ('98f68b4b-2ba1-411d-b3c4-2d5b1d77cc78', '997a72f5-5b33-446f-97b8-2c613c1665e6', 'เป็นโปรแกรมแอนตี้ไวรัสสำหรับเครื่องลูกข่าย', false, 'ผิด ไม่ใช่โปรแกรมแอนตี้ไวรัส', 4);
+INSERT INTO public.choices VALUES ('e54557e2-30d6-4e5f-8c03-80411dbba0ab', '5e77e5f5-b2a6-4ef7-b604-cd1bb221d8de', 'เพราะกล่องกระดาษปล่อยฝุ่นผงเข้าไปอุดตันระบบระบายความร้อน และเป็นเชื้อเพลิงที่ติดไฟง่าย (Fire Hazard)', true, 'ถูกต้อง ทั้งเรื่องฝุ่นละอองและการป้องกันอัคคีภัยคือเหตุผลหลัก', 1);
+INSERT INTO public.choices VALUES ('422f8247-18b5-4ea1-9685-fabec9e3dff3', '5e77e5f5-b2a6-4ef7-b604-cd1bb221d8de', 'เพราะสีน้ำตาลของกล่องกระดาษจะรบกวนสัญญาณ Wi-Fi', false, 'ผิด สีกล่องไม่รบกวนสัญญาณ', 2);
+INSERT INTO public.choices VALUES ('ee8194af-ceb4-43a2-b6a7-3982314662f5', '5e77e5f5-b2a6-4ef7-b604-cd1bb221d8de', 'เพราะกล่องกระดาษจะดูดซับแสงจากสายไฟเบอร์ออปติก', false, 'ผิด แสงไฟเบอร์ถูกหุ้มอยู่ในสายมิดชิด', 3);
+INSERT INTO public.choices VALUES ('d9d7b27d-8163-4745-a02f-be8764686b55', '5e77e5f5-b2a6-4ef7-b604-cd1bb221d8de', 'เพราะกล้องวงจรปิดไม่สามารถมองเห็นกล่องกระดาษได้', false, 'ผิด กล้องมองเห็นได้ปกติ', 4);
+INSERT INTO public.choices VALUES ('53ebe6d6-c58c-4926-a165-2824314843bd', '89c6c052-d4f4-417e-b26f-b8dc659a4deb', 'สามารถปิดซ่อมบำรุงอุปกรณ์ระบบไฟหรือแอร์ตามแผนได้โดยที่เซิร์ฟเวอร์ยังทำงานต่อเนื่องไม่เกิด Downtime (Concurrently Maintainable)', true, 'ถูกต้อง นี่คือนิยามสำคัญที่สุดของ Tier III', 1);
+INSERT INTO public.choices VALUES ('fc36f3d8-d769-441c-82f5-4e2bb66a6469', '89c6c052-d4f4-417e-b26f-b8dc659a4deb', 'ไม่มีการใช้เครื่องสำรองไฟ UPS เลยเพื่อประหยัดงบประมาณ', false, 'ผิด Tier III ต้องมีระบบ UPS และ Generator สำรองครบถ้วน', 2);
+INSERT INTO public.choices VALUES ('c33b9c22-dd42-4b91-8a42-6d9e6a66f878', '89c6c052-d4f4-417e-b26f-b8dc659a4deb', 'ต้องปิดศูนย์ข้อมูลทั้งหมดปีละ 7 วันเพื่อทำความสะอาด', false, 'ผิด Tier III ออกแบบมาเพื่อไม่ให้ต้องปิดระบบตอนซ่อมบำรุง', 3);
+INSERT INTO public.choices VALUES ('6488e201-dc1e-449a-b689-48b8bb870e58', '89c6c052-d4f4-417e-b26f-b8dc659a4deb', 'อนุญาตให้บุคคลภายนอกเดินเข้าออกได้โดยไม่ต้องแลกบัตร', false, 'ผิด ศูนย์ข้อมูลมีระบบรักษาความปลอดภัยเข้มงวด', 4);
+INSERT INTO public.choices VALUES ('52b7a246-43c7-4f9b-bce2-dd37c1d30507', '8dc5b9d6-8e1f-4760-a9dd-dc4539c06fad', 'สวมสายรัดข้อมือป้องกันไฟฟ้าสถิต (ESD Wrist Strap) และหนีบเข้ากับจุดกราวด์ของโครงตู้แร็ค', true, 'ถูกต้อง ป้องกัน Electrostatic Discharge ทำลายชิปเซมิคอนดักเตอร์', 1);
+INSERT INTO public.choices VALUES ('766e6f05-a0b6-4ced-a1e2-f0da1aa40b30', '8dc5b9d6-8e1f-4760-a9dd-dc4539c06fad', 'ถูมือกับพรมให้เกิดประกายไฟก่อนจับแรม', false, 'ผิด การถูกับพรมจะยิ่งสร้างไฟฟ้าสถิตทำลายแรมทันที!', 2);
+INSERT INTO public.choices VALUES ('80746f07-5b4b-40de-949c-059593459729', '8dc5b9d6-8e1f-4760-a9dd-dc4539c06fad', 'พรมน้ำลงบนเมนบอร์ดเพื่อให้เย็นตัว', false, 'ผิด น้ำทำให้เกิดการลัดวงจร', 3);
+INSERT INTO public.choices VALUES ('13370897-de59-4303-870c-5e2d82d9bd4d', '8dc5b9d6-8e1f-4760-a9dd-dc4539c06fad', 'สวมแว่นกันแดดสีดำขณะเปลี่ยนแรม', false, 'ผิด ไม่ช่วยป้องกันไฟฟ้าสถิต', 4);
+INSERT INTO public.choices VALUES ('1e16277f-4f88-48b8-9570-801a411676bb', '3c363e7c-9f30-455c-b6db-be46fb48c093', '1.5', true, 'ถูกต้อง PUE = 1,500 / 1,000 = 1.5', 1);
+INSERT INTO public.choices VALUES ('d2e4c359-8894-4159-9625-3da1ce792015', '3c363e7c-9f30-455c-b6db-be46fb48c093', '0.67', false, 'ผิด ค่า PUE ไม่มีทางต่ำกว่า 1.0 เพราะไฟรวมทั้งตึกต้องมากกว่าหรือเท่ากับไฟไอทีเสมอ', 2);
+INSERT INTO public.choices VALUES ('5a568056-dee2-42b5-ae05-f2367e58bcce', '3c363e7c-9f30-455c-b6db-be46fb48c093', '500', false, 'ผิด PUE คืออัตราส่วนการหาร ไม่ใช่การลบ', 3);
+INSERT INTO public.choices VALUES ('7b575f0d-0c9a-44c9-920d-539aa09a17d8', '3c363e7c-9f30-455c-b6db-be46fb48c093', '2,500', false, 'ผิด ไม่ใช่การนำมาบวกกัน', 4);
+INSERT INTO public.choices VALUES ('fcf075b7-0b04-423f-9451-6de4df508ec2', '7a926c05-18f5-464f-b5ad-6fe69d1f02a7', 'Rollback Plan (แผนการย้อนกลับสู่สถานะเดิมเมื่อเกิดปัญหา)', true, 'ถูกต้อง หากไม่มี Rollback Plan จะไม่ได้รับอนุมัติให้ทำ Change บนระบบ Production', 1);
+INSERT INTO public.choices VALUES ('d21942f9-155a-4e5a-9a27-41c4937fcc9a', '7a926c05-18f5-464f-b5ad-6fe69d1f02a7', 'รายชื่อร้านอาหารรอบศูนย์ข้อมูล', false, 'ผิด ไม่ใช่ส่วนประกอบทางเทคนิคของ MOP', 2);
+INSERT INTO public.choices VALUES ('902df83e-82bd-471d-a46b-91307c81cc6e', '7a926c05-18f5-464f-b5ad-6fe69d1f02a7', 'ประวัติการศึกษาของผู้บริหารทั้งหมด', false, 'ผิด ไม่เกี่ยวข้องกับขั้นตอนปฏิบัติงาน', 3);
+INSERT INTO public.choices VALUES ('f25d5361-8106-4c50-8a25-b8308d7c382b', '7a926c05-18f5-464f-b5ad-6fe69d1f02a7', 'ใบเสร็จค่าเช่าบ้านของช่างเทคนิค', false, 'ผิด ไม่เกี่ยวข้องกัน', 4);
 
 
 --
@@ -1355,6 +1455,60 @@ INSERT INTO public.flashcards VALUES ('998f1bdf-e774-40e5-8b53-1befa140a1a9', 'n
 INSERT INTO public.flashcards VALUES ('e37404d0-4d44-42d5-bbdc-70ea0a9199df', 'network:10-pcap:fc03', 2, '7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 'หากเห็นแพ็กเก็ตส่ง Flags [S] ออกไปซ้ำๆ แต่ไม่มีใครตอบกลับมาเลย แสดงว่าเกิดอะไรขึ้น?', 'แพ็กเก็ตถูกทิ้งเงียบๆ (DROP) โดย Firewall / Security Group ระหว่างทาง หรือเครื่องปลายทางปิดเครื่องอยู่ ทำให้เกิดอาการ Connection Timed Out', 'ติด Firewall หรือปลายทางไม่ตอบ (Connection Timed Out)', 3, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
 INSERT INTO public.flashcards VALUES ('e2756d10-6745-435e-a2c7-9a944dd2124e', 'network:10-pcap:fc04', 2, '7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 'หากส่ง Flags [S] แล้วได้รับ Flags [R] (RST) สวนกลับมาทันที แสดงว่าเกิดอะไรขึ้น?', 'เครือข่ายเชื่อมต่อไปถึงเครื่องปลายทางได้ปกติ (Layer 1-3 สมบูรณ์) แต่ไม่มี Service/Application รันรองรับอยู่ที่พอร์ตนั้น (Connection Refused)', 'เครือข่ายปกติ แต่ไม่มีแอปเปิดฟังพอร์ตนั้น (Connection Refused)', 4, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
 INSERT INTO public.flashcards VALUES ('3ac99d71-ec5e-4079-a8b3-790a299fc67f', 'network:10-pcap:fc05', 2, '7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 'คำสั่งใดใช้บันทึกแพ็กเก็ตจาก tcpdump เป็นไฟล์ .pcap เพื่อนำไปเปิดใน Wireshark?', 'ใช้แฟล็ก ''-w <filename.pcap>'' เช่น: sudo tcpdump -nn -i eth0 port 80 -c 100 -w /tmp/capture.pcap และสามารถนำกลับมาอ่านด้วยแฟล็ก ''-r''', 'แฟล็ก -w (Write) และ -r (Read)', 5, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.flashcards VALUES ('3f78c093-4633-4481-a91a-6dc665aad309', 'datacenter:06-raid:fc01', 10, '75403d93-f9e9-4644-9d96-62d933af29b7', 'เปรียบเทียบจำนวนดิสก์ที่ทนเสียได้พร้อมกันและสูตรคำนวณความจุของ RAID 5, RAID 6 และ RAID 10', 'RAID 5: ความจุ = N - 1 ลูก (ทนเสียได้ 1 ลูก)
+RAID 6: ความจุ = N - 2 ลูก (ทนเสียได้ 2 ลูก)
+RAID 10: ความจุ = N / 2 ลูก (ทนเสียได้ฝั่งละ 1 ลูกในแต่ละคู่ Mirror)', 'N-1, N-2, N/2', 1, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('aaf70700-02ba-458c-979e-ed5a5eed9741', 'datacenter:06-raid:fc02', 10, '75403d93-f9e9-4644-9d96-62d933af29b7', 'สีไฟสถานะบนถาดดิสก์ (Drive Caddy): สีเขียว, สีส้ม/อำพัน (Amber) และสีน้ำเงิน มีความหมายอย่างไร?', 'สีเขียว: ดิสก์ทำงานปกติ (Online/Activity)
+สีส้ม/อำพัน: ดิสก์เสียหรือมีปัญหา (Fault/Predictive Failure)
+สีน้ำเงิน: ไฟชี้ตำแหน่ง (Locator LED) ที่แอดมินสั่งเปิดเพื่อระบุตัวดิสก์ให้ช่างถอดไม่ผิดลูก', 'เขียว=ปกติ, ส้ม=เสีย, น้ำเงิน=ชี้เป้า', 2, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('3adad30c-1f7f-40d4-92df-b93579cdb0f6', 'datacenter:06-raid:fc03', 10, '75403d93-f9e9-4644-9d96-62d933af29b7', 'HBA Mode (IT Mode / Passthrough) แตกต่างจาก Hardware RAID Mode อย่างไร?', 'Hardware RAID: การ์ดรวมดิสก์เป็นก้อนเดียวแล้วส่งให้ OS เห็นเป็น Logical Volume
+HBA Mode: การ์ดส่งดิสก์ทุกลูกแยกกันให้ OS เห็นโดยตรง เหมาะสำหรับทำ Software RAID เช่น ZFS หรือ Ceph', 'การ์ดรวมดิสก์เอง vs ส่งดิสก์ตรงให้ OS', 3, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('3e5c9d95-67df-449c-8e89-6e2cf21ffd33', 'datacenter:06-raid:fc04', 10, '75403d93-f9e9-4644-9d96-62d933af29b7', 'คำสั่งใดบน Linux ใช้ตรวจสอบค่าสุขภาพ S.M.A.R.T. ของฮาร์ดดิสก์?', 'ใช้คำสั่ง "smartctl -H /dev/sdX" เพื่อดูผลสรุปสุขภาพ (PASSED/FAILED) และ "smartctl -a /dev/sdX" เพื่อดูตารางค่าสถิติทั้งหมด เช่น Reallocated_Sector_Ct', 'smartctl -a /dev/sdX', 4, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('7a60c4f6-9060-44ce-87ad-f889b0605eef', 'datacenter:06-raid:fc05', 10, '75403d93-f9e9-4644-9d96-62d933af29b7', 'หากดูไฟล์ /proc/mdstat บน Linux แล้วเห็นสัญลักษณ์ [UU] กับ [U_] มีความหมายต่างกันอย่างไร?', '[UU] หมายถึงดิสก์ในโวลุ่ม Software RAID ทั้ง 2 ลูกทำงานปกติครบถ้วน
+[U_] หมายถึงดิสก์ลูกที่สองหลุดหรือเสียไป 1 ลูก โวลุ่มกำลังอยู่ในสถานะ Degraded', 'U = Up, _ = Down/Missing', 5, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('697f7554-3c14-419d-9ff9-c7f1d5237d2d', 'datacenter:07-sel:fc01', 10, 'c64810d8-bf76-49f4-aadd-3cd45d92d14b', 'Correctable ECC Error (CE) กับ Uncorrectable ECC Error (UCE) ของหน่วยความจำ RAM ต่างกันอย่างไร?', 'CE (Single-bit): บิตเพี้ยน 1 บิต ชิป ECC แก้ไขได้อัตโนมัติ เครื่องไม่ดับ (แต่ถ้าเกิดถี่ควรวางแผนเปลี่ยน)
+UCE (Multi-bit): บิตเพี้ยนหลายบิตเกินกว่าจะซ่อมได้ เครื่องจะแฮงก์ (Kernel Panic) หรือรีบูตทันที', 'Single-bit ซ่อมได้ vs Multi-bit เครื่องแฮงก์', 1, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('9088a4bf-1207-459e-86ff-f612902c9bc3', 'datacenter:07-sel:fc02', 10, 'c64810d8-bf76-49f4-aadd-3cd45d92d14b', 'อธิบายวิธีทำ Memory Swap Test เมื่อพบแจ้งเตือนแรมมีปัญหาที่ช่อง DIMM_A1', 'สลับนำแรมจากช่อง DIMM_A1 ไปใส่ช่องอื่น (เช่น DIMM_B1)
+- ถ้า Error ย้ายตามไปเกิดที่ DIMM_B1 ➔ ตัวแผง RAM เสีย
+- ถ้า Error ยังเกิดที่ DIMM_A1 ที่เดิม ➔ สล็อตบน Mainboard หรือ CPU Socket เสีย', 'สลับช่องดูว่า Error ย้ายตามแรมหรืออยู่ที่สล็อตเดิม', 2, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('834e7f0d-8a92-4d80-bbde-8be64c89bb44', 'datacenter:07-sel:fc03', 10, 'c64810d8-bf76-49f4-aadd-3cd45d92d14b', 'System Event Log (SEL) คืออะไร และเก็บอยู่ที่ไหน?', 'คือบันทึกเหตุการณ์ระดับฮาร์ดแวร์ (ไฟดับ, ความร้อนเกิน, พัดลมตาย, แรมเพี้ยน) ที่จัดเก็บอยู่ในหน่วยความจำ NVRAM ของชิป BMC (iDRAC/iLO) สามารถเปิดดูได้แม้ OS จะล่มหรือบูตไม่ขึ้น', 'บันทึกฮาร์ดแวร์ในชิป BMC (iDRAC/iLO)', 3, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('3f360749-0da5-4b79-8320-fd3bed33b425', 'datacenter:07-sel:fc04', 10, 'c64810d8-bf76-49f4-aadd-3cd45d92d14b', 'คำสั่ง ipmitool ใดใช้อ่านบันทึก SEL และคำสั่งใดใช้อ่านค่าเซนเซอร์อุณหภูมิ/พัดลม?', '- อ่านบันทึกเหตุการณ์ฮาร์ดแวร์: sudo ipmitool sel elist
+- อ่านค่าเซนเซอร์อุณหภูมิ/พัดลม/ไฟ: sudo ipmitool sdr list', 'sel elist และ sdr list', 4, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('c97ff6fb-793e-4c29-8bce-f6a6e068f5b8', 'datacenter:07-sel:fc05', 10, 'c64810d8-bf76-49f4-aadd-3cd45d92d14b', 'ทำไมเซิร์ฟเวอร์ที่มีพัดลมเสียไปเพียง 1 ตัว ถึงส่งเสียงดังเหมือนเครื่องบินเจ็ต?', 'เพราะชิป BMC เข้าสู่โหมด Fail-safe โดยสั่งเร่งความเร็วรอบพัดลมตัวที่เหลือทั้งหมดให้หมุนที่ 100% เพื่อชดเชยปริมาณลมระบายความร้อนไม่ให้ CPU ร้อนเกินพิกัด', 'BMC เร่งพัดลมตัวที่เหลือเป็น 100%', 5, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('2ce6f3b1-abd7-417a-80c0-1e17d3e10869', 'datacenter:08-fw:fc01', 10, 'a20fa558-7295-4a2a-bbf2-0700729e95e9', 'Virtual Media บนระบบ iDRAC / iLO คืออะไร และช่วยงานช่าง Data Center อย่างไร?', 'คือฟีเจอร์จำลองไฟล์อิมเมจ .iso จากระยะไกลให้เซิร์ฟเวอร์มองเห็นเสมือนเป็นแผ่น CD/DVD หรือ USB เสียบอยู่ที่ตัวเครื่อง ช่วยให้ติดตั้ง OS หรือบูตแผ่นซ่อมแซมได้โดยไม่ต้องเดินไปเสียบแฟลชไดรฟ์หน้าตู้แร็ค', 'จำลองไฟล์ .iso เป็นไดรฟ์บูตระยะไกล', 1, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('4ba68195-94d8-4d8e-8fcb-c7387b7f27f2', 'datacenter:08-fw:fc02', 10, 'a20fa558-7295-4a2a-bbf2-0700729e95e9', 'ไฟล์ Answer File สำหรับติดตั้ง OS อัตโนมัติ (Unattended Install) ของ RHEL/Rocky, Ubuntu ยุคใหม่ และ Windows Server มีชื่อเรียกว่าอะไรตามลำดับ?', '- RHEL / Rocky Linux: Kickstart (ks.cfg)
+- Ubuntu Server (20.04+): Autoinstall / Cloud-Init (user-data)
+- Windows Server: Unattend.xml (ร่วมกับ WDS)', 'Kickstart, Cloud-Init, Unattend.xml', 2, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('7250a1a2-259d-4b27-8a55-d07cf63f32e3', 'datacenter:08-fw:fc03', 10, 'a20fa558-7295-4a2a-bbf2-0700729e95e9', 'การอัปเดต BMC Firmware (iDRAC/iLO) มีข้อได้เปรียบด้าน Downtime อย่างไรเมื่อเทียบกับการอัปเดต System BIOS?', 'การอัปเดต BMC (iDRAC/iLO) สามารถรีสตาร์ทเฉพาะชิปจัดการได้โดยไม่ต้องรีบูตเครื่องเซิร์ฟเวอร์หลัก (Zero OS Downtime) ในขณะที่การอัปเดต BIOS บังคับต้องรีบูตเครื่องเซิร์ฟเวอร์จริงเสมอ', 'BMC รีสตาร์ทตัวเองได้โดย OS ไม่ดับ', 3, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('763820ad-0527-436f-8263-c931d26584d7', 'datacenter:08-fw:fc04', 10, 'a20fa558-7295-4a2a-bbf2-0700729e95e9', 'เรียงลำดับการอัปเดต Firmware ในเซิร์ฟเวอร์ที่ปลอดภัยตามมาตรฐานผู้ผลิต', '1. BMC Firmware (iDRAC / iLO)
+2. System BIOS / UEFI
+3. RAID Controller / HBA Firmware
+4. Network Card (NIC) Firmware
+5. Drive Firmware (HDD / SSD)', 'BMC -> BIOS -> RAID/NIC -> Drive', 4, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('50e163e0-2dcf-4a9c-8846-361a7bd96ddd', 'datacenter:08-fw:fc05', 10, 'a20fa558-7295-4a2a-bbf2-0700729e95e9', 'หากเกิดเหตุไฟดับขณะกำลัง Flash BIOS จนเซิร์ฟเวอร์บูตไม่ขึ้น จะสามารถกู้คืนได้อย่างไร?', 'ใช้ฟีเจอร์ Dual/Redundant BIOS ROM โดยสั่งสลับไปบูตจาก Backup BIOS Bank ผ่านหน้าเว็บ iDRAC/iLO หรือปรับพิน System Maintenance Switch / Recovery Jumper บนเมนบอร์ด', 'สลับไปใช้ Backup BIOS ROM', 5, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('fe78c77f-9966-4801-83d4-4ee1f0c5e358', 'datacenter:09-dcim:fc01', 10, '14d01b82-65c5-4700-b72d-d0b9e1d84c75', 'เปรียบเทียบการวางสวิตช์แบบ Top-of-Rack (ToR) กับ End-of-Row (EoR)', 'ToR: มีสวิตช์ติดอยู่บนสุดของทุกตู้แร็ค เซิร์ฟเวอร์ใช้สายสั้นต่อขึ้นหัวตู้ตัวเองแล้วลากเฉพาะสาย Uplink ออกไป
+EoR: ลากสายจากเซิร์ฟเวอร์ทุกตู้ผ่าน Patch Panel ไปรวมที่ตู้สวิตช์หลักที่อยู่ปลายแถว', 'สวิตช์ประจำทุกตู้ vs สวิตช์รวมที่ปลายแถว', 1, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('094ace9f-74d6-4460-a08c-1902b98e0873', 'datacenter:09-dcim:fc02', 10, '14d01b82-65c5-4700-b72d-d0b9e1d84c75', 'ทำไมใน Data Center จึงห้ามใช้สายรัดพลาสติก (Zip Tie) กับมัดสายไฟเบอร์และสายแลน แต่ให้ใช้ตีนตุ๊กแก (Velcro)?', 'เพราะ Zip Tie บีบรัดสายแน่นเกินไปจนแกนไฟเบอร์เกิด Micro-bending (แสงรั่ว) และตอนเอาออกต้องใช้คีมตัดซึ่งเสี่ยงตัดโดนสายข้างเคียงขาด ส่วน Velcro ไม่บีบสายและแกะปรับปรุงซ้ำได้ปลอดภัย', 'ป้องกันการบีบสายและไม่ต้องใช้คีมตัด', 2, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('ffe2ee8c-3caf-43c1-81db-36a5bad18910', 'datacenter:09-dcim:fc03', 10, '14d01b82-65c5-4700-b72d-d0b9e1d84c75', 'ฟีเจอร์ DOM / DDM ในหัว Transceiver SFP มีประโยชน์อย่างไรในการแก้ปัญหาหน้างาน?', 'ช่วยอ่านค่าความเข้มแสงขาออก (Tx Power) และขาเข้า (Rx Power) เป็นหน่วย dBm รวมถึงอุณหภูมิหัว SFP ได้แบบเรียลไทม์ผ่าน CLI ช่วยให้รู้ทันทีว่าแสงอ่อน สายหักงอ หรือสายขาดโดยไม่ต้องถอดสายมาวัด', 'วัดค่าความเข้มแสง Tx/Rx Power (dBm) ผ่าน CLI', 3, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('fca02f1f-e6fb-4f86-b63c-b09168a44db0', 'datacenter:09-dcim:fc04', 10, '14d01b82-65c5-4700-b72d-d0b9e1d84c75', 'ห้อง MMR (Meet-Me Room) และสาย Cross-Connect ในศูนย์ข้อมูล Colocation คืออะไร?', 'MMR คือห้องชุมสายกลางที่รวมจุดเชื่อมต่อของผู้ให้บริการโครงข่าย (ISP/Carriers) และลูกค้าภายในศูนย์ข้อมูล โดยการเชื่อมสายระหว่างกันจะทำผ่านแผงกระจายสายในห้องนี้ เรียกว่า Cross-Connect', 'ห้องชุมสายกลางเชื่อมต่อระหว่าง ISP และตู้ลูกค้า', 4, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('dde9fd6a-c6ee-4e47-8817-3daf787dbf86', 'datacenter:09-dcim:fc05', 10, '14d01b82-65c5-4700-b72d-d0b9e1d84c75', 'ระบบ DCIM (เช่น NetBox) เก็บข้อมูลสำคัญอะไรบ้าง?', '1. ผังการจัดวางอุปกรณ์ในตู้แร็คแต่ละชั้น U (Rack Elevation)
+2. ทะเบียนสินทรัพย์และ Serial Number
+3. ตารางการเชื่อมต่อสายแลน/ไฟเบอร์/สายไฟ (Cable Trace)
+4. การจัดสรร IP Address และ VLAN (IPAM)', 'Rack Elevation + Asset + Cable Trace + IPAM', 5, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('545c826b-7bcb-4146-807b-05518a9e6810', 'datacenter:10-ops:fc01', 10, '4239ddec-0437-4d0e-9b43-7cf2d26d3c23', 'เอกสาร MOP (Method of Procedure) คืออะไร และต้องมีองค์ประกอบหลัก 4 ส่วนอะไรบ้าง?', 'คือคู่มือขั้นตอนการปฏิบัติงานสำหรับการเปลี่ยนแปลงใน Data Center ประกอบด้วย:
+1. Pre-checks (ตรวจก่อนทำ)
+2. Execution Steps (ขั้นตอนลงมือทำ)
+3. Post-checks (ตรวจยืนยันผลหลังทำ)
+4. Rollback Plan (แผนย้อนกลับเมื่อล้มเหลว)', 'Pre-check, Execution, Post-check, Rollback', 1, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('f4b3620e-e118-403d-a1ed-5287d6d38e1a', 'datacenter:10-ops:fc02', 10, '4239ddec-0437-4d0e-9b43-7cf2d26d3c23', 'ประตู Mantrap (Airlock) ในศูนย์ข้อมูลทำหน้าที่ป้องกันความเสี่ยงด้านความปลอดภัยใด?', 'ป้องกันการเดินตามหลังกันเข้าไปโดยไม่ผ่านการยืนยันตัวตน (Anti-Tailgating / Piggybacking) โดยบังคับให้ประตูบานแรกต้องปิดล็อกก่อน ประตูบานที่สองจึงจะเปิดได้', 'ป้องกัน Tailgating (เดินตามกันเข้าประตู)', 2, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('847d2bad-fcbe-4508-8291-db1467fef999', 'datacenter:10-ops:fc03', 10, '4239ddec-0437-4d0e-9b43-7cf2d26d3c23', 'ทำไมห้ามนำกล่องกระดาษลูกฟูก (Cardboard) เข้าไปในห้อง Data Hall และทำไมต้องจัดการฮาร์ดดิสก์เสียก่อนส่งเคลม RMA?', '- กล่องกระดาษ: ปล่อยฝุ่นเยื่อกระดาษอุดตันพัดลม และเป็นเชื้อเพลิงติดไฟง่าย
+- ดิสก์ส่งเคลม RMA: ต้องทำ Secure Wipe, Degauss (ล้างแม่เหล็ก) หรือบดทำลาย (Shredding) เพื่อป้องกันข้อมูลความลับของลูกค้ารั่วไหล', 'ฝุ่น/ไฟไหม้ และป้องกันข้อมูลรั่วไหล (Data Security)', 3, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('36c302fc-8541-460e-a6eb-f399f2a24a9a', 'datacenter:10-ops:fc04', 10, '4239ddec-0437-4d0e-9b43-7cf2d26d3c23', 'สรุปความแตกต่างของมาตรฐาน Uptime Institute: Tier I, Tier II, Tier III และ Tier IV', '- Tier I (N): ไม่มีระบบสำรอง
+- Tier II (N+1): มีอุปกรณ์สำรอง แต่สายส่งเส้นเดียว
+- Tier III (N+1, 2 เส้นทาง): ซ่อมบำรุงได้โดยไม่ต้องดับระบบ (Concurrently Maintainable)
+- Tier IV (2N): ทนทานต่ออุบัติเหตุรุนแรงโดยระบบไม่สะดุดเลย (Fault Tolerant)', 'N, N+1, Concurrently Maintainable, Fault Tolerant (2N)', 4, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.flashcards VALUES ('f849a0ee-c1f7-42f4-a9d1-201c61f1d422', 'datacenter:10-ops:fc05', 10, '4239ddec-0437-4d0e-9b43-7cf2d26d3c23', 'สูตรคำนวณค่า PUE (Power Usage Effectiveness) คืออะไร และค่าที่ดีควรเป็นเท่าใด?', 'PUE = พลังงานไฟฟ้าทั้งหมดที่อาคารใช้ (Total Facility Power) / พลังงานที่อุปกรณ์ไอทีใช้จริง (IT Equipment Power)
+ค่าอุดมคติคือ 1.0 (ยิ่งใกล้ 1.0 ยิ่งประหยัดพลังงานแอร์และระบบไฟ)', 'Total Facility Power / IT Equipment Power (ยิ่งใกล้ 1.0 ยิ่งดี)', 5, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
 
 
 --
@@ -2665,82 +2819,6 @@ $$\text{Power (Watts)} = \text{Voltage (V)} \times \text{Current (Amps)}$$
    - **จุดเด่น**: ไม่นำไฟฟ้า ไม่ทิ้งคราบสกปรก และเซิร์ฟเวอร์ยังสามารถทำงานต่อไปได้โดยไม่เสียหาย
    - บริเวณประตูทางออกจะมีปุ่มสีเหลือง **Emergency Abort / Hold Button** สำหรับกดหน่วงเวลาปล่อยแก๊สหากเจ้าหน้าที่ตรวจสอบแล้วพบว่าเป็นสัญญาณเตือนผิดพลาด (False Alarm)
 ', 9, 'intermediate', 4, true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
-INSERT INTO public.lessons VALUES ('e2bdf887-4d4b-4710-b6c1-8dd61f020fdc', 10, 'dc-interview-and-mindset', 'ทัศนคติ ความปลอดภัย และเทคนิคพิชิตสัมภาษณ์งาน Data Center (Hosting vs Colocation)', 'วิธีคิดเรื่องความปลอดภัยและสติเมื่อเกิดเหตุฉุกเฉิน, ความซื่อสัตย์ในการตอบสัมภาษณ์, ความต่างของบริษัท Hosting vs Colocation และแนวคำตอบ STAR Method', '
-# ทัศนคติ ความปลอดภัย และเทคนิคพิชิตสัมภาษณ์งาน Data Center
-
-ในการสัมภาษณ์งานสาย **Data Center Technician / Data Center Operations (DC Ops)** สิ่งที่ผู้จัดการทีม (Hiring Manager) ให้ความสำคัญมากที่สุด **ไม่ใช่แค่ว่าคุณท่องจำคำสั่งได้มากแค่ไหน** แต่คือ **"คุณเป็นคนที่ไว้ใจให้ถือบัตรผ่านเข้าไปเดินในห้องที่มีเซิร์ฟเวอร์มูลค่าหลายร้อยล้านบาทโดยไม่ทำระบบล่มได้หรือไม่?"**
-
----
-
-## 1. ทัศนคติหลักที่ผู้สัมภาษณ์มองหา (Mindset & Safety First)
-
-### 1.1 ความรอบคอบ มีสติ และไม่ตื่นตระหนกเมื่อเกิดวิกฤต (Calmness Under Pressure)
-ผู้จัดการกังวลเรื่อง **Human Error (ความผิดพลาดจากความประมาทหรือความตกใจของคน)** มากที่สุด เพราะการกดปุ่มผิดหรือสับเบรกเกอร์ผิดเพียงครั้งเดียวอาจทำให้ระบบธนาคารหรืออีคอมเมิร์ซล่มทั้งประเทศ
-
-#### กรณีศึกษาคำถามวัดใจในห้องสัมภาษณ์:
-> **คำถาม**: *"สมมติคุณเดินตรวจความเรียบร้อยใน Data Hall แล้วเห็นประกายไฟช็อตสั้นๆ หรือได้กลิ่นไหม้มาจาก Power Supply (PSU) ลูกหนึ่งของเซิร์ฟเวอร์เครื่องหนึ่งในตู้แร็ค คุณจะวิ่งไปสับเบรกเกอร์ไฟหลักของทั้งตู้แร็คลงทันทีเลยไหม?"*
-
-- **คำตอบที่ผิด (ตกสัมภาษณ์ทันที)**: *"รีบวิ่งไปสับเบรกเกอร์ไฟหลักของตู้แร็คหรือกดปุ่ม EPO (Emergency Power Off) ทันทีครับ เพื่อความปลอดภัย"*
-  - **ทำไมถึงผิด?** เพราะในตู้แร็ค 1 ตู้ มีเซิร์ฟเวอร์ของลูกค้าหรือระบบ Production อื่นที่ไม่ได้เกี่ยวข้องด้วยอีก 20–40 เครื่อง การสับไฟหลักของตู้แร็คจะทำให้อุปกรณ์ที่เหลือดับตามไปด้วย (Outage วงกว้างโดยไม่จำเป็น)
-- **แนวทางคำตอบที่ถูกต้องและแสดงถึงสติระดับมืออาชีพ**:
-  1. **ตั้งสติและประเมินสถานการณ์ทันที (Assess without Panic)**: ดูว่ามีเปลวไฟลุกไหม้ต่อเนื่องที่เป็นอันตรายต่อชีวิตหรือไม่ หากเป็นเพียงอาการช็อตภายในตัวลูก PSU ของเซิร์ฟเวอร์เครื่องเดียว (ซึ่งปกติมีวงจรตัดไฟตัวมันเองและมีลูกที่สองเป็น Redundant PSU รับช่วงต่ออยู่) **จะไม่ไปสับเบรกเกอร์หลักของทั้งตู้แร็คเด็ดขาด**
-  2. **ตรวจสอบและจำกัดวงความเสียหาย (Isolate the Fault)**: ตรวจสอบหมายเลขเครื่อง/ตำแหน่ง U และดูสถานะไฟของ PSU ลูกที่มีปัญหา หากปลอดภัยที่จะทำได้ ให้ถอดเฉพาะสายไฟเส้นที่จ่ายเข้า PSU ลูกที่ช็อตออก (เพื่อให้เครื่องรันต่อด้วย PSU อีกลูกบนอีก Feed หนึ่ง)
-  3. **แจ้งเตือนตามลำดับขั้น (Escalate & Document)**: รีบแจ้งหัวหน้ากะ (Shift Lead), ทีม NOC และทีม Facilities ทันทีเพื่อตรวจสอบค่ากระแสไฟบน PDU และวางแผนเปลี่ยนอะไหล่ PSU ตัวใหม่ตามขั้นตอนมาตรฐาน (MOP/SOP)
-
----
-
-### 1.2 ความซื่อสัตย์ (Integrity & Honesty)
-ในสายงานโครงสร้างพื้นฐาน **การโกหกหรือแสร้งทำเป็นรู้ในสิ่งที่ตัวเองทำไม่เป็น คือสัญญาณอันตรายร้ายแรงที่สุด**
-
-- หากผู้สัมภาษณ์ถามทักษะเฉพาะทางที่คุณยังไม่เคยทำจริง เช่น:
-  - *"คุณเข้าหัวสายไฟเบอร์ด้วยการเชื่อมต่อใยแก้ว (Fusion Fiber Splicing) เป็นไหม?"*
-  - *"คุณเคยตั้งค่า Zoning บนสวิตช์ Brocade Fibre Channel ด้วยตัวเองไหม?"*
-- **วิธีตอบที่ได้คะแนนความน่าเชื่อถือสูงสุด**:
-  > *"สำหรับการใช้เครื่อง Fusion Splicer เชื่อมสายไฟเบอร์โดยตรง ผมยังไม่เคยลงมือทำหน้างานจริงครับ แต่ผมเข้าใจหลักการแยกชนิดสาย Single-mode/Multi-mode การทำความสะอาดหัวสายด้วย One-Click Cleaner และการวัดค่าการสูญเสียแสงด้วย Optical Power Meter ครับ ซึ่งผมเป็นคนเรียนรู้เครื่องมือใหม่ได้เร็วและพร้อมฝึกปฏิบัติตามมาตรฐานของทีมทันทีครับ"*
-- **ทำไมคำตอบนี้ถึงชนะใจผู้สัมภาษณ์?**
-  1. แสดงความซื่อสัตย์ ไม่เสี่ยงไปทำอุปกรณ์ราคาแพงพังหน้างานเพราะไม่กล้าถาม
-  2. แสดงให้เห็นว่ามีความรู้พื้นฐานที่เกี่ยวข้อง และมีความกระตือรือร้นที่จะเรียนรู้ต่อยอด
-
----
-
-## 2. เข้าใจธรรมชาติของบริษัทที่ไปสัมภาษณ์: Hosting vs Colocation
-
-ก่อนเข้าห้องสัมภาษณ์ ให้ตรวจสอบว่าบริษัทนั้นทำธุรกิจหลักรูปแบบใด เพื่อเน้นจุดแข็งให้ตรงเป้า:
-
-| รูปแบบบริษัท | ลักษณะงานหลัก | หัวข้อที่จะถูกถามเจาะลึก |
-|---|---|---|
-| **1. บริษัท Hosting / Cloud / Enterprise DC ของตัวเอง**<br>*(มีเซิร์ฟเวอร์เป็นของบริษัทเองหลายพันเครื่อง)* | ดูแลตั้งแต่ฮาร์ดแวร์ไปจนถึงการลง OS และแก้ปัญหาให้ระบบกลับมาออนไลน์ | • การติดตั้งและแก้ปัญหา **Linux / Windows Server**<br>• กระบวนการบูตเครื่อง, **PXE Boot**, การตั้งค่า RAID<br>• การใช้ **iDRAC / iLO / IPMI** ดู Log ฮาร์ดแวร์และเปลี่ยน CPU, RAM, Disk<br>• คำสั่งตรวจเช็กเครือข่าย (`ip`, `ping`, `traceroute`, `ss`, `ethtool`) |
-| **2. บริษัท Colocation Data Center**<br>*(เช่น Equinix, NTT, STT GDC, Telehouse — ให้เช่าพื้นที่ตู้แร็ค ไฟ และ Cross-Connect)* | งานบริการลูกค้าหน้าตู้ (**Smart Hands**) และการเดินสายเชื่อมต่อระหว่างตู้ (**Cross-Connect**) โดยไม่ได้ล็อกอินเข้า OS ของลูกค้า | • ความแม่นยำเรื่อง **Cabling & Fiber** (SMF vs MMF, SC/LC/MPO, SR/LR)<br>• การไล่สายบน **Patch Panel**, การสลับขั้วสายไฟเบอร์ (**Rolling Fiber Tx/Rx**)<br>• การใช้เครื่องมือวัดสาย (**Fluke Tester, Visual Fault Locator, Optical Power Meter**)<br>• ระบบไฟ **A/B Feed**, **Hot/Cold Aisle**, และระเบียบความปลอดภัยในการเข้าพื้นที่ลูกค้า |
-
----
-
-## 3. เทคนิคการตอบคำถามเชิงพฤติกรรม (Behavioral Questions) ด้วย STAR Method
-
-ในการสัมภาษณ์เกือบทุกที่ จะมีคำถามแนวเล่าประสบการณ์จริงที่ขึ้นต้นด้วย **"จงเล่าเหตุการณ์ตอนที่คุณต้องรับมือกับ..."** (*"Tell me about a time when..."*)
-
-ให้จัดระเบียบคำตอบเป็น 4 ส่วนตามโครงสร้าง **STAR Method** เสมอ เพื่อให้เรื่องเล่ากระชับ ชัดเจน และเห็นผลลัพธ์:
-
-- **S — Situation (สถานการณ์)**: เหตุการณ์เกิดขึ้นที่ไหน เมื่อไหร่ และบริบทคืออะไร (เล่าสั้นๆ 1–2 ประโยค)
-- **T — Task (ภารกิจ/โจทย์ที่ต้องแก้)**: ปัญหาหรือความท้าทายที่คุณรับผิดชอบในตอนนั้นคืออะไร
-- **A — Action (สิ่งที่คุณลงมือทำอย่างเป็นระบบ)**: ขั้นตอนการตรวจสอบ การใช้สติ การสื่อสารกับทีม และการป้องกันไม่ให้กระทบส่วนอื่น
-- **R — Result (ผลลัพธ์ที่ได้และบทเรียน)**: แก้ปัญหาสำเร็จอย่างไร ใช้เวลาเท่าไหร่ และได้ปรับปรุงคู่มือ (Runbook) อย่างไรเพื่อไม่ให้เกิดซ้ำ
-
----
-
-### ตัวอย่างคำถามและแนวคำตอบแบบ STAR Method
-
-#### คำถามที่ 1: "จงเล่าเหตุการณ์ตอนที่คุณต้องทำงานภายใต้ความกดดัน หรือเจอปัญหาหน้างานที่ไม่เคยเจอมาก่อน"
-- **Situation**: *"ในการฝึกซ้อมแล็บจำลองเหตุการณ์วิกฤต (Incident P1) เซิร์ฟเวอร์เว็บหลักไม่สามารถสตาร์ทบริการ Nginx ขึ้นมาได้หลังการอัปเดตระบบ"*
-- **Task**: *"ผมต้องหาสาเหตุที่แท้จริงและทำให้บริการเว็บกลับมาออนไลน์ให้เร็วที่สุดโดยไม่ทำข้อมูลหรือการตั้งค่าเดิมเสียหาย"*
-- **Action**: *"แทนที่จะสุ่มรีบูตเครื่องซ้ำๆ ผมตั้งสติและไล่ตามขั้นตอนมาตรฐาน เริ่มจากเช็ก `systemctl status nginx` และอ่าน Log ด้วย `journalctl -u nginx` จนพบ Error ว่า `Address already in use` บนพอร์ต 80 จากนั้นใช้ `ss -tulnp` ตรวจสอบจนเจอว่ามีบริการ `apache2` แอบรันขึ้นมาแย่งพอร์ต 80 อยู่ จึงสั่งหยุด `apache2` แล้วสตาร์ท `nginx` ใหม่ พร้อมทดสอบด้วย `curl -I http://localhost`"*
-- **Result**: *"ระบบเว็บกลับมาตอบกลับ `200 OK` ได้ภายในเวลาไม่ถึง 5 นาทีโดยไม่ต้องรีบูตเซิร์ฟเวอร์ และผมได้บันทึกขั้นตอนการเช็กพอร์ตชนไว้ใน Runbook เพื่อเป็นแนวทางให้ทีมต่อไปครับ"*
-
-#### คำถามที่ 2: "คุณมีวิธีป้องกันความผิดพลาด (Human Error) เวลาต้องถอดสายหรือปิดเครื่องเซิร์ฟเวอร์ในตู้แร็คอย่างไร?"
-- **แนวคำตอบ**:
-  1. **ตรวจสอบใบงาน (Change Ticket / Work Order)** ให้ตรงกันอย่างน้อย 3 จุดเสมอ: **หมายเลขตู้ (Rack ID) → ตำแหน่งความสูง (U Position) → หมายเลขเครื่อง/Serial Number (Service Tag)**
-  2. สั่งเปิด **ไฟกระพริบสีฟ้า (UID / Chassis Identify LED)** จากระบบ iDRAC/iLO ก่อนเดินไปหลังตู้แร็ค เพื่อให้เห็นเครื่องเป้าหมายชัดเจนทั้งด้านหน้าและด้านหลัง
-  3. ตรวจสอบป้ายกำกับสาย (**Cable Label**) ทั้งฝั่งต้นทางและปลายทาง และยืนยันกับทีม NOC ในสายโทรศัพท์หรือแชตก่อนดึงสายออกจริงทุกครั้ง (**Measure twice, cut once**)
-', 8, 'beginner', 5, true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.lessons VALUES ('5a93786b-3b53-4b51-8232-c77e8324453b', 1, 'linux-cron-schedule', 'การตรวจสอบงานตั้งเวลาด้วย Cron และ Crontab (crontab -l, /etc/cron.d, Cron Log)', 'โครงสร้างเวลา 5 ฟิลด์ของ Crontab ความต่างของบริการ cron บน Ubuntu กับ RHEL และวิธีไล่ปัญหาเมื่อ Batch Job ไม่ทำงานตามเวลา', '
 # การตรวจสอบงานตั้งเวลาด้วย Cron (Scheduled Jobs)
 
@@ -4530,6 +4608,453 @@ scp user@server:/tmp/incident.pcap ./incident.pcap
 | ส่ง `SYN` ได้รับ `SYN-ACK` ส่ง `ACK` กลับ แต่หลังจากส่งข้อมูลไม่มีการตอบกลับ | ปัญหา MTU ข้อมูลขนาดใหญ่ติดปัญหา Packet Fragmentation หรือติด WAF |
 | ส่งคำขอ DNS Query แต่ไม่มี DNS Response กลับมา | DNS Server ไอพีผิด หรือพอร์ต UDP 53 ถูกปิดกั้น |
 ', 11, 'intermediate', 10, true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.lessons VALUES ('e2bdf887-4d4b-4710-b6c1-8dd61f020fdc', 10, 'dc-interview-and-mindset', 'ทัศนคติ ความปลอดภัย และเทคนิคพิชิตสัมภาษณ์งาน Data Center (Hosting vs Colocation)', 'วิธีคิดเรื่องความปลอดภัยและสติเมื่อเกิดเหตุฉุกเฉิน, ความซื่อสัตย์ในการตอบสัมภาษณ์, ความต่างของบริษัท Hosting vs Colocation และแนวคำตอบ STAR Method', '
+# ทัศนคติ ความปลอดภัย และเทคนิคพิชิตสัมภาษณ์งาน Data Center
+
+ในการสัมภาษณ์งานสาย **Data Center Technician / Data Center Operations (DC Ops)** สิ่งที่ผู้จัดการทีม (Hiring Manager) ให้ความสำคัญมากที่สุด **ไม่ใช่แค่ว่าคุณท่องจำคำสั่งได้มากแค่ไหน** แต่คือ **"คุณเป็นคนที่ไว้ใจให้ถือบัตรผ่านเข้าไปเดินในห้องที่มีเซิร์ฟเวอร์มูลค่าหลายร้อยล้านบาทโดยไม่ทำระบบล่มได้หรือไม่?"**
+
+---
+
+## 1. ทัศนคติหลักที่ผู้สัมภาษณ์มองหา (Mindset & Safety First)
+
+### 1.1 ความรอบคอบ มีสติ และไม่ตื่นตระหนกเมื่อเกิดวิกฤต (Calmness Under Pressure)
+ผู้จัดการกังวลเรื่อง **Human Error (ความผิดพลาดจากความประมาทหรือความตกใจของคน)** มากที่สุด เพราะการกดปุ่มผิดหรือสับเบรกเกอร์ผิดเพียงครั้งเดียวอาจทำให้ระบบธนาคารหรืออีคอมเมิร์ซล่มทั้งประเทศ
+
+#### กรณีศึกษาคำถามวัดใจในห้องสัมภาษณ์:
+> **คำถาม**: *"สมมติคุณเดินตรวจความเรียบร้อยใน Data Hall แล้วเห็นประกายไฟช็อตสั้นๆ หรือได้กลิ่นไหม้มาจาก Power Supply (PSU) ลูกหนึ่งของเซิร์ฟเวอร์เครื่องหนึ่งในตู้แร็ค คุณจะวิ่งไปสับเบรกเกอร์ไฟหลักของทั้งตู้แร็คลงทันทีเลยไหม?"*
+
+- **คำตอบที่ผิด (ตกสัมภาษณ์ทันที)**: *"รีบวิ่งไปสับเบรกเกอร์ไฟหลักของตู้แร็คหรือกดปุ่ม EPO (Emergency Power Off) ทันทีครับ เพื่อความปลอดภัย"*
+  - **ทำไมถึงผิด?** เพราะในตู้แร็ค 1 ตู้ มีเซิร์ฟเวอร์ของลูกค้าหรือระบบ Production อื่นที่ไม่ได้เกี่ยวข้องด้วยอีก 20–40 เครื่อง การสับไฟหลักของตู้แร็คจะทำให้อุปกรณ์ที่เหลือดับตามไปด้วย (Outage วงกว้างโดยไม่จำเป็น)
+- **แนวทางคำตอบที่ถูกต้องและแสดงถึงสติระดับมืออาชีพ**:
+  1. **ตั้งสติและประเมินสถานการณ์ทันที (Assess without Panic)**: ดูว่ามีเปลวไฟลุกไหม้ต่อเนื่องที่เป็นอันตรายต่อชีวิตหรือไม่ หากเป็นเพียงอาการช็อตภายในตัวลูก PSU ของเซิร์ฟเวอร์เครื่องเดียว (ซึ่งปกติมีวงจรตัดไฟตัวมันเองและมีลูกที่สองเป็น Redundant PSU รับช่วงต่ออยู่) **จะไม่ไปสับเบรกเกอร์หลักของทั้งตู้แร็คเด็ดขาด**
+  2. **ตรวจสอบและจำกัดวงความเสียหาย (Isolate the Fault)**: ตรวจสอบหมายเลขเครื่อง/ตำแหน่ง U และดูสถานะไฟของ PSU ลูกที่มีปัญหา หากปลอดภัยที่จะทำได้ ให้ถอดเฉพาะสายไฟเส้นที่จ่ายเข้า PSU ลูกที่ช็อตออก (เพื่อให้เครื่องรันต่อด้วย PSU อีกลูกบนอีก Feed หนึ่ง)
+  3. **แจ้งเตือนตามลำดับขั้น (Escalate & Document)**: รีบแจ้งหัวหน้ากะ (Shift Lead), ทีม NOC และทีม Facilities ทันทีเพื่อตรวจสอบค่ากระแสไฟบน PDU และวางแผนเปลี่ยนอะไหล่ PSU ตัวใหม่ตามขั้นตอนมาตรฐาน (MOP/SOP)
+
+---
+
+### 1.2 ความซื่อสัตย์ (Integrity & Honesty)
+ในสายงานโครงสร้างพื้นฐาน **การโกหกหรือแสร้งทำเป็นรู้ในสิ่งที่ตัวเองทำไม่เป็น คือสัญญาณอันตรายร้ายแรงที่สุด**
+
+- หากผู้สัมภาษณ์ถามทักษะเฉพาะทางที่คุณยังไม่เคยทำจริง เช่น:
+  - *"คุณเข้าหัวสายไฟเบอร์ด้วยการเชื่อมต่อใยแก้ว (Fusion Fiber Splicing) เป็นไหม?"*
+  - *"คุณเคยตั้งค่า Zoning บนสวิตช์ Brocade Fibre Channel ด้วยตัวเองไหม?"*
+- **วิธีตอบที่ได้คะแนนความน่าเชื่อถือสูงสุด**:
+  > *"สำหรับการใช้เครื่อง Fusion Splicer เชื่อมสายไฟเบอร์โดยตรง ผมยังไม่เคยลงมือทำหน้างานจริงครับ แต่ผมเข้าใจหลักการแยกชนิดสาย Single-mode/Multi-mode การทำความสะอาดหัวสายด้วย One-Click Cleaner และการวัดค่าการสูญเสียแสงด้วย Optical Power Meter ครับ ซึ่งผมเป็นคนเรียนรู้เครื่องมือใหม่ได้เร็วและพร้อมฝึกปฏิบัติตามมาตรฐานของทีมทันทีครับ"*
+- **ทำไมคำตอบนี้ถึงชนะใจผู้สัมภาษณ์?**
+  1. แสดงความซื่อสัตย์ ไม่เสี่ยงไปทำอุปกรณ์ราคาแพงพังหน้างานเพราะไม่กล้าถาม
+  2. แสดงให้เห็นว่ามีความรู้พื้นฐานที่เกี่ยวข้อง และมีความกระตือรือร้นที่จะเรียนรู้ต่อยอด
+
+---
+
+## 2. เข้าใจธรรมชาติของบริษัทที่ไปสัมภาษณ์: Hosting vs Colocation
+
+ก่อนเข้าห้องสัมภาษณ์ ให้ตรวจสอบว่าบริษัทนั้นทำธุรกิจหลักรูปแบบใด เพื่อเน้นจุดแข็งให้ตรงเป้า:
+
+| รูปแบบบริษัท | ลักษณะงานหลัก | หัวข้อที่จะถูกถามเจาะลึก |
+|---|---|---|
+| **1. บริษัท Hosting / Cloud / Enterprise DC ของตัวเอง**<br>*(มีเซิร์ฟเวอร์เป็นของบริษัทเองหลายพันเครื่อง)* | ดูแลตั้งแต่ฮาร์ดแวร์ไปจนถึงการลง OS และแก้ปัญหาให้ระบบกลับมาออนไลน์ | • การติดตั้งและแก้ปัญหา **Linux / Windows Server**<br>• กระบวนการบูตเครื่อง, **PXE Boot**, การตั้งค่า RAID<br>• การใช้ **iDRAC / iLO / IPMI** ดู Log ฮาร์ดแวร์และเปลี่ยน CPU, RAM, Disk<br>• คำสั่งตรวจเช็กเครือข่าย (`ip`, `ping`, `traceroute`, `ss`, `ethtool`) |
+| **2. บริษัท Colocation Data Center**<br>*(เช่น Equinix, NTT, STT GDC, Telehouse — ให้เช่าพื้นที่ตู้แร็ค ไฟ และ Cross-Connect)* | งานบริการลูกค้าหน้าตู้ (**Smart Hands**) และการเดินสายเชื่อมต่อระหว่างตู้ (**Cross-Connect**) โดยไม่ได้ล็อกอินเข้า OS ของลูกค้า | • ความแม่นยำเรื่อง **Cabling & Fiber** (SMF vs MMF, SC/LC/MPO, SR/LR)<br>• การไล่สายบน **Patch Panel**, การสลับขั้วสายไฟเบอร์ (**Rolling Fiber Tx/Rx**)<br>• การใช้เครื่องมือวัดสาย (**Fluke Tester, Visual Fault Locator, Optical Power Meter**)<br>• ระบบไฟ **A/B Feed**, **Hot/Cold Aisle**, และระเบียบความปลอดภัยในการเข้าพื้นที่ลูกค้า |
+
+---
+
+## 3. เทคนิคการตอบคำถามเชิงพฤติกรรม (Behavioral Questions) ด้วย STAR Method
+
+ในการสัมภาษณ์เกือบทุกที่ จะมีคำถามแนวเล่าประสบการณ์จริงที่ขึ้นต้นด้วย **"จงเล่าเหตุการณ์ตอนที่คุณต้องรับมือกับ..."** (*"Tell me about a time when..."*)
+
+ให้จัดระเบียบคำตอบเป็น 4 ส่วนตามโครงสร้าง **STAR Method** เสมอ เพื่อให้เรื่องเล่ากระชับ ชัดเจน และเห็นผลลัพธ์:
+
+- **S — Situation (สถานการณ์)**: เหตุการณ์เกิดขึ้นที่ไหน เมื่อไหร่ และบริบทคืออะไร (เล่าสั้นๆ 1–2 ประโยค)
+- **T — Task (ภารกิจ/โจทย์ที่ต้องแก้)**: ปัญหาหรือความท้าทายที่คุณรับผิดชอบในตอนนั้นคืออะไร
+- **A — Action (สิ่งที่คุณลงมือทำอย่างเป็นระบบ)**: ขั้นตอนการตรวจสอบ การใช้สติ การสื่อสารกับทีม และการป้องกันไม่ให้กระทบส่วนอื่น
+- **R — Result (ผลลัพธ์ที่ได้และบทเรียน)**: แก้ปัญหาสำเร็จอย่างไร ใช้เวลาเท่าไหร่ และได้ปรับปรุงคู่มือ (Runbook) อย่างไรเพื่อไม่ให้เกิดซ้ำ
+
+---
+
+### ตัวอย่างคำถามและแนวคำตอบแบบ STAR Method
+
+#### คำถามที่ 1: "จงเล่าเหตุการณ์ตอนที่คุณต้องทำงานภายใต้ความกดดัน หรือเจอปัญหาหน้างานที่ไม่เคยเจอมาก่อน"
+- **Situation**: *"ในการฝึกซ้อมแล็บจำลองเหตุการณ์วิกฤต (Incident P1) เซิร์ฟเวอร์เว็บหลักไม่สามารถสตาร์ทบริการ Nginx ขึ้นมาได้หลังการอัปเดตระบบ"*
+- **Task**: *"ผมต้องหาสาเหตุที่แท้จริงและทำให้บริการเว็บกลับมาออนไลน์ให้เร็วที่สุดโดยไม่ทำข้อมูลหรือการตั้งค่าเดิมเสียหาย"*
+- **Action**: *"แทนที่จะสุ่มรีบูตเครื่องซ้ำๆ ผมตั้งสติและไล่ตามขั้นตอนมาตรฐาน เริ่มจากเช็ก `systemctl status nginx` และอ่าน Log ด้วย `journalctl -u nginx` จนพบ Error ว่า `Address already in use` บนพอร์ต 80 จากนั้นใช้ `ss -tulnp` ตรวจสอบจนเจอว่ามีบริการ `apache2` แอบรันขึ้นมาแย่งพอร์ต 80 อยู่ จึงสั่งหยุด `apache2` แล้วสตาร์ท `nginx` ใหม่ พร้อมทดสอบด้วย `curl -I http://localhost`"*
+- **Result**: *"ระบบเว็บกลับมาตอบกลับ `200 OK` ได้ภายในเวลาไม่ถึง 5 นาทีโดยไม่ต้องรีบูตเซิร์ฟเวอร์ และผมได้บันทึกขั้นตอนการเช็กพอร์ตชนไว้ใน Runbook เพื่อเป็นแนวทางให้ทีมต่อไปครับ"*
+
+#### คำถามที่ 2: "คุณมีวิธีป้องกันความผิดพลาด (Human Error) เวลาต้องถอดสายหรือปิดเครื่องเซิร์ฟเวอร์ในตู้แร็คอย่างไร?"
+- **แนวคำตอบ**:
+  1. **ตรวจสอบใบงาน (Change Ticket / Work Order)** ให้ตรงกันอย่างน้อย 3 จุดเสมอ: **หมายเลขตู้ (Rack ID) → ตำแหน่งความสูง (U Position) → หมายเลขเครื่อง/Serial Number (Service Tag)**
+  2. สั่งเปิด **ไฟกระพริบสีฟ้า (UID / Chassis Identify LED)** จากระบบ iDRAC/iLO ก่อนเดินไปหลังตู้แร็ค เพื่อให้เห็นเครื่องเป้าหมายชัดเจนทั้งด้านหน้าและด้านหลัง
+  3. ตรวจสอบป้ายกำกับสาย (**Cable Label**) ทั้งฝั่งต้นทางและปลายทาง และยืนยันกับทีม NOC ในสายโทรศัพท์หรือแชตก่อนดึงสายออกจริงทุกครั้ง (**Measure twice, cut once**)
+', 8, 'beginner', 10, true, '2026-11-04 15:19:45.48554+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.lessons VALUES ('75403d93-f9e9-4644-9d96-62d933af29b7', 10, 'dc-storage-raid-smart', 'ระบบจัดเก็บข้อมูลเซิร์ฟเวอร์: RAID, Hot-Swap และ SMART Diagnostics (Storage, RAID & SMART)', 'เปรียบเทียบ RAID 0/1/5/6/10, การคำนวณความจุและจำนวนดิสก์ที่ทนเสียได้, การอ่านไฟสถานะ Hot-Swap Drive Bay, ความต่างของ HBA Mode vs RAID Mode และการตรวจสุขภาพดิสก์ด้วย smartctl', '# ระบบจัดเก็บข้อมูลเซิร์ฟเวอร์: RAID, Hot-Swap และ SMART Diagnostics
+
+ในศูนย์ข้อมูล (Data Center) ชิ้นส่วนที่มีโอกาสเสื่อมสภาพและเสียบ่อยที่สุดในเซิร์ฟเวอร์คือ **ฮาร์ดดิสก์ (HDD/SSD)** เพราะมีการทำงานอ่าน-เขียนตลอด 24 ชั่วโมง ช่างเทคนิคประจำ Data Center จึงต้องเข้าใจหลักการของ **RAID**, วิธีสังเกตไฟหน้าช่องใส่ดิสก์เพื่อถอดเปลี่ยนแบบ **Hot-Swap** โดยไม่ถอดผิดลูก และการใช้คำสั่งตรวจสอบสุขภาพดิสก์
+
+---
+
+## 1. ทำความเข้าใจระดับของ RAID (RAID Levels Comparison)
+
+**RAID (Redundant Array of Independent Disks)** คือการนำดิสก์หลายลูกมารวมกันเป็น Logical Drive เดียว เพื่อเพิ่มความเร็ว (Performance) หรือเพิ่มความทนทานต่อการสูญเสียข้อมูล (Fault Tolerance):
+
+![แผนภาพเปรียบเทียบการเรียงข้อมูลและความทนทานของ RAID 0, 1, 5, 6 และ 10](/images/datacenter/raid-levels-comparison.png)
+
+| ระดับ RAID | กลไกการทำงาน | จำนวนดิสก์ขั้นต่ำ | ความจุที่ใช้งานได้จริง (Usable Capacity) | ทนดิสก์เสียพร้อมกันได้สูงสุด | งานที่เหมาะสมใน Data Center |
+|---|---|---|---|---|---|
+| **RAID 0** | **Striping** (แบ่งกระจายข้อมูล) | 2 ลูก | **100%** ($N$ ลูก) | **0 ลูก (ห้ามเสียแม้แต่ลูกเดียว!)** | Scratch Disk, แคชชั่วคราวที่ต้องการความเร็วสูงสุดและข้อมูลหายได้ |
+| **RAID 1** | **Mirroring** (สำเนาข้อมูลเหมือนกัน 2 ชุด) | 2 ลูก | **50%** ($N / 2$) | **1 ลูก** | ดิสก์สำหรับติดตั้งระบบปฏิบัติการ (OS Boot Drive) ของเซิร์ฟเวอร์ |
+| **RAID 5** | **Striping + Single Parity** | 3 ลูก | **$N - 1$ ลูก** | **1 ลูก** | ระบบจัดเก็บไฟล์ทั่วไป (ไม่แนะนำสำหรับดิสก์ความจุสูงเกิน 8TB เพราะใช้เวลา Rebuild นาน) |
+| **RAID 6** | **Striping + Dual Parity** | 4 ลูก | **$N - 2$ ลูก** | **2 ลูกพร้อมกัน** | File Server, Backup Storage หรือคลังข้อมูลขนาดใหญ่ |
+| **RAID 10 (1+0)** | **Mirror ก่อน แล้วนำมา Stripe** | 4 ลูก (เลขคู่) | **50%** ($N / 2$) | **1 ลูกในแต่ละคู่ Mirror** (สูงสุดครึ่งหนึ่งหากเสียคนละกลุ่ม) | **Database Server (MySQL, PostgreSQL)** ที่ต้องการทั้งความเร็วเขียนสูงและความปลอดภัยสูงสุด |
+
+> **ตัวอย่างการคำนวณความจุ (ออกสอบสัมภาษณ์บ่อยมาก!)**:  
+> หากมีดิสก์ขนาดลูกละ **4 TB จำนวน 6 ลูก**:
+> - ทำ **RAID 5** จะได้พื้นที่ใช้งานจริง = $(6 - 1) \times 4\text{ TB} = \mathbf{20\text{ TB}}$ (ทนเสียได้ 1 ลูก)
+> - ทำ **RAID 6** จะได้พื้นที่ใช้งานจริง = $(6 - 2) \times 4\text{ TB} = \mathbf{16\text{ TB}}$ (ทนเสียได้ 2 ลูก)
+> - ทำ **RAID 10** จะได้พื้นที่ใช้งานจริง = $(6 / 2) \times 4\text{ TB} = \mathbf{12\text{ TB}}$ (เร็วและปลอดภัยสูงสุด)
+
+---
+
+## 2. การอ่านไฟสถานะหน้าช่องดิสก์ และการเปลี่ยนแบบ Hot-Swap
+
+เซิร์ฟเวอร์ระดับองค์กรรองรับการถอดเปลี่ยนดิสก์ที่เสียและเสียบลูกใหม่เข้าไปแทนที่ **โดยไม่ต้องปิดเครื่อง (Hot-Swap)** แต่กฎเหล็กคือ **ห้ามดึงดิสก์ผิดลูกเด็ดขาด!** เพราะถ้าดึงลูกที่ยังดีออกมาในขณะที่ RAID กำลัง处于สถานะ **Degraded** ข้อมูลทั้งโวลุ่มจะพังทลายทันที!
+
+![ภาพช่องใส่ดิสก์ Hot-Swap Drive Bay และความหมายของไฟสถานะ LED](/images/datacenter/server-drive-bay-led.png)
+
+### ความหมายของไฟ LED บนถาดดิสก์ (Drive Caddy):
+1. **ไฟสีเขียวติดค้างหรือกะพริบ (Solid/Blinking Green)**: ดิสก์ทำงานปกติ (Online / Activity) **ห้ามถอด!**
+2. **ไฟสีส้ม/อำพันติดค้าง หรือกะพริบ (Solid/Blinking Amber)**: ดิสก์ลูกนั้นเสีย (**Fault / Failed / Predictive Failure**) ต้องได้รับการเปลี่ยน
+3. **ไฟสีเขียวสลับส้มกะพริบช้าๆ**: ดิสก์ลูกใหม่กำลังทำการสร้างข้อมูลกลับคืน (**Rebuilding**) ห้ามถอดหรือรีบูตเครื่องโดยไม่จำเป็นจนกว่าจะเสร็จ
+4. **ไฟสีน้ำเงินกะพริบ (Blinking Blue - Locator LED)**: แอดมินสั่งเปิดไฟชี้เป้า (Blink / Locate Drive) จาก iDRAC/iLO เพื่อให้ช่างหน้างานรู้ว่าต้องดึงลูกไหนอย่างแม่นยำ
+
+> **แนวปฏิบัติมาตรฐาน (SOP) ก่อนดึงดิสก์**:  
+> ให้ตรวจสอบทั้ง **หมายเลข Slot (เช่น Bay 0, Bay 1)**, **Serial Number ของดิสก์ใน iDRAC/iLO** และสั่งเปิด **Locator LED สีน้ำเงิน** ยืนยันตรงกันทั้ง 3 อย่างก่อนกดสลักดึงดิสก์ออกเสมอ
+
+---
+
+## 3. การ์ดควบคุมดิสก์: RAID Mode vs HBA Mode (IT Mode / Passthrough)
+
+ภายในเซิร์ฟเวอร์จะมีแผ่นการ์ดเชื่อมต่อดิสก์ (เช่น **Dell PERC** หรือ **HPE Smart Array**) ซึ่งตั้งโหมดการทำงานได้ 2 แบบ:
+
+- **Hardware RAID Mode**: ตัวการ์ดเป็นคนรวมดิสก์และคำนวณ Parity เอง (มักมีแบตเตอรี่หรือคาปาซิเตอร์ **BBWC / FBWC** ช่วยจำข้อมูลใน Write Cache เวลาไฟดับ) ระบบปฏิบัติการจะมองเห็นเป็นดิสก์ก้อนเดียว (เช่น `/dev/sda`)
+- **HBA Mode (Host Bus Adapter / IT Mode / Passthrough)**: ตัวการ์ดส่งดิสก์ทุกลูกแยกกันให้ระบบปฏิบัติการเห็นโดยตรง (เช่น `/dev/sda, /dev/sdb, /dev/sdc`) นิยมใช้กับระบบ **Software-Defined Storage เช่น ZFS, Ceph, VMware vSAN** ที่ต้องการจัดการดิสก์ด้วยตนเอง
+
+---
+
+## 4. คำสั่งตรวจสอบสถานะ RAID และสุขภาพดิสก์ด้วย SMART บน Linux
+
+```bash
+# 1. ดูรายการบล็อกดิสก์และพาร์ทิชันทั้งหมดในเครื่อง
+lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL
+
+# 2. ตรวจสอบสถานะ Software RAID (mdadm) บน Linux
+cat /proc/mdstat
+# ตัวอย่างผลลัพธ์: [UU] = ดิสก์ 2 ลูกปกติครบ, [U_] = ดิสก์เสียไป 1 ลูก (Degraded!)
+
+# 3. ตรวจสอบสุขภาพดิสก์เชิงลึกด้วย S.M.A.R.T. (smartmontools)
+sudo smartctl -H /dev/sda
+# ผลลัพธ์ปกติ: SMART overall-health self-assessment test result: PASSED
+
+# 4. ดูค่าสถิติความเสื่อมของดิสก์ทั้งหมด (ดูค่า Reallocated_Sector_Ct และ Media_Wearout)
+sudo smartctl -a /dev/sda | grep -E "Reallocated|Pending|Uncorrectable|Wear|Temperature"
+```
+
+### ค่า SMART อันตรายที่บ่งบอกว่าดิสก์กำลังจะพัง (Predictive Failure):
+- **Reallocated_Sector_Ct > 0**: ดิสก์เริ่มมี Bad Sector และต้องย้ายข้อมูลไปใช้พื้นที่สำรอง
+- **Current_Pending_Sector > 0**: มีเซกเตอร์ที่อ่านไม่ออก รอการซ่อมแซม
+- **Media_Wearout_Indicator / Percentage Used**: ใน SSD หากเข้าใกล้ 100% แสดงว่าเซลล์หน่วยความจำใกล้หมดอายุขัยการเขียน (TBW)
+', 11, 'intermediate', 5, true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.lessons VALUES ('c64810d8-bf76-49f4-aadd-3cd45d92d14b', 10, 'dc-hardware-troubleshooting-sel', 'การวินิจฉัยฮาร์ดแวร์เซิร์ฟเวอร์เสีย และอ่าน System Event Log (Hardware Troubleshooting & SEL)', 'การอ่านไฟเตือนหน้าเครื่องและรหัส POST Code, การแยกปัญหา ECC Memory (Single-bit vs Multi-bit Error) ด้วยเทคนิค Swap Test, ปัญหา PSU/Fan และการดึง System Event Log (SEL) ด้วย iDRAC/iLO และ ipmitool', '# การวินิจฉัยฮาร์ดแวร์เซิร์ฟเวอร์เสีย และอ่าน System Event Log (SEL)
+
+เมื่อเซิร์ฟเวอร์เกิดอาการแฮงก์ รีบูตเองกลางดึก หรือเปิดไม่ติด สิ่งที่แยกช่างเทคนิคระดับมืออาชีพออกจากมือใหม่คือ **การอ่านหลักฐานทางฮาร์ดแวร์จาก System Event Log (SEL)** และการทำ **Component Isolation (แยกชิ้นส่วนทดสอบ)** อย่างเป็นระบบแทนการเดาสุ่ม
+
+---
+
+## 1. แผงไฟสถานะหน้าเครื่อง (Front Panel Health LEDs & LCD)
+
+เมื่อเดินตรวจตู้แร็คในห้อง Data Hall (Visual Inspection) เซิร์ฟเวอร์ทุกยี่ห้อจะมีไฟแจ้งสถานะสุขภาพหลัก (System Health Indicator):
+
+![ภาพแผงหน้าปัดไฟสถานะและจอ LCD แจ้งรหัสข้อผิดพลาดของเซิร์ฟเวอร์](/images/datacenter/server-post-led-codes.png)
+
+- **Dell PowerEdge**:
+  - **ไฟสีน้ำเงินนิ่ง**: เครื่องทำงานปกติ
+  - **ไฟสีส้ม/อำพันกะพริบ (Blinking Amber)** พร้อมข้อความบนจอ LCD ด้านหน้า: มีชิ้นส่วนฮาร์ดแวร์เกิดข้อผิดพลาด เช่น `MEM0702: Correctable memory error rate exceeded for DIMM_A1` หรือ `PS0100: Power Supply 1 Status is off`
+- **HPE ProLiant**:
+  - **Health LED สีเขียว**: ปกติ
+  - **Health LED สีส้มกะพริบ (Degraded)**: มีชิ้นส่วนสำรองเสียไป 1 จุด แต่เครื่องยังรันต่อได้ (เช่น พัดลมเสีย 1 ตัว หรือ PSU ดับ 1 ลูก)
+  - **Health LED สีแดงกะพริบ (Critical)**: เกิดวิกฤตที่ทำให้ระบบหยุดทำงานหรือเปิดไม่ติด (เช่น อุณหภูมิเกินพิกัด หรือ RAM แถวหลักพัง)
+
+---
+
+## 2. เจาะลึกปัญหาหน่วยความจำ ECC Memory (CE vs UCE)
+
+เซิร์ฟเวอร์ใช้แรมชนิดพิเศษที่เรียกว่า **ECC RAM (Error-Correcting Code)** ซึ่งสามารถตรวจจับและซ่อมแซมบิตข้อมูลที่เพี้ยนจากรังสีคอสมิกหรือสัญญาณแม่เหล็กไฟฟ้าได้ โดยความผิดพลาดแบ่งเป็น 2 ระดับที่ต้องแยกให้ขาด:
+
+| ประเภทข้อผิดพลาด | ชื่อเต็ม | อาการและผลกระทบ | แนวทางปฏิบัติของช่าง Data Center |
+|---|---|---|---|
+| **CE** | **Correctable Error (Single-Bit Error)** | บิตข้อมูลเพี้ยน 1 บิต ชิป ECC **ซ่อมแซมให้อัตโนมัติ** เครื่องยังทำงานต่อได้โดยไม่ดับ แต่ถ้าเกิดซ้ำถี่ๆ ระบบจะบันทึกเตือนว่า `Correctable memory error logging disabled` | วางแผนขอ Maintenance Window เพื่อถอดทำความสะอาดหน้าสัมผัส หรือเคลมเปลี่ยนแถว RAM นั้นก่อนที่จะลามเป็น UCE |
+| **UCE** | **Uncorrectable Error (Multi-Bit Error)** | บิตข้อมูลเพี้ยนพร้อมกันหลายบิตเกินขีดจำกัดที่ ECC จะซ่อมได้ **เครื่องเซิร์ฟเวอร์จะแฮงก์ (Kernel Panic / จอฟ้า / รีบูตทันที)** เพื่อป้องกันข้อมูลในฐานข้อมูลเสียหาย! | เป็นเหตุฉุกเฉิน (Critical) ต้องเปลี่ยนแถว RAM ที่มีปัญหาออกทันที |
+
+### เทคนิคไม้ตาย: การสลับแถวทดสอบ (Memory Swap Test / Isolation)
+เมื่อระบบแจ้งว่าเกิด Memory Error ที่ช่อง **`DIMM_A1`** เราจะรู้ได้อย่างไรว่า **"ตัวการ์ด RAM เสีย"** หรือ **"ช่องเสียบบน Mainboard (DIMM Slot) เสีย"**?
+
+1. ปิดเครื่อง ถอดปลั๊กไฟ และสวมสายรัดข้อมือป้องกันไฟฟ้าสถิต (ESD Wrist Strap)
+2. สลับนำ RAM จากช่องที่มีปัญหา (**`DIMM_A1`**) ไปเสียบที่ช่อง **`DIMM_B1`** (และนำของ `DIMM_B1` มาเสียบ `DIMM_A1` แทน)
+3. เปิดเครื่องและรันทดสอบ หากข้อความ Error **ย้ายตามไปเกิดที่ช่อง `DIMM_B1`** ➔ ฟันธง 100% ว่า **ตัวการ์ด RAM แถวนั้นเสีย!** (ส่งเคลมเฉพาะตัว RAM)
+4. แต่ถ้าข้อความ Error **ยังคงเกิดที่ช่อง `DIMM_A1` เหมือนเดิม** ➔ ฟันธงว่า **ช่องเสียบบน Mainboard หรือขา CPU Socket เสีย!** (ต้องเคลมเปลี่ยน Mainboard)
+
+---
+
+## 3. การอ่าน System Event Log (SEL) ผ่าน iDRAC/iLO และ ipmitool
+
+**System Event Log (SEL)** คือบันทึกเหตุการณ์ระดับฮาร์ดแวร์ที่ถูกจัดเก็บไว้ในชิป **BMC (iDRAC/iLO)** แยกต่างหากจากฮาร์ดดิสก์ ต่อให้เครื่องเซิร์ฟเวอร์แฮงก์ ดิสก์พัง หรือบูตเข้า OS ไม่ได้ คุณก็ยังเปิดอ่าน SEL เพื่อดูสาเหตุการตายของเครื่องได้เสมอ!
+
+![หน้าจอแสดงรายการ System Event Log (SEL) บนระบบจัดการระยะไกล](/images/datacenter/idrac-sel-log.png)
+
+### การดึงข้อมูล SEL และเซนเซอร์ผ่าน CLI ด้วย `ipmitool`:
+
+```bash
+# 1. แสดงรายการบันทึกเหตุการณ์ฮาร์ดแวร์ทั้งหมด (System Event Log)
+sudo ipmitool sel elist
+# ตัวอย่างผลลัพธ์:
+#  1 | 11/08/2026 | 02:14:10 | Power Supply #0x51 | Power Supply AC lost | Asserted
+#  2 | 11/08/2026 | 03:45:22 | Memory #0x60 | Correctable ECC | Asserted
+#  3 | 11/08/2026 | 03:45:25 | Temperature #0x30 | Upper Critical going high | Asserted
+
+# 2. อ่านค่าเซนเซอร์ความร้อน ความเร็วรอบพัดลม (RPM) และแรงดันไฟแบบสดๆ (SDR)
+sudo ipmitool sdr list
+# ตัวอย่างผลลัพธ์:
+# Inlet Temp       | 22 degrees C      | ok
+#CPU1 Temp        | 68 degrees C      | ok
+# Fan1 RPM         | 7200 RPM          | ok
+# PS1 Status       | 0x01              | ok
+
+# 3. ตรวจสอบข้อความแจ้งเตือนจาก Kernel ของ Linux เกี่ยวกับฮาร์ดแวร์ (EDAC / MCE)
+sudo dmesg -T | grep -iE "edac|mce|hardware error|thermal"
+
+# 4. ล้างประวัติ SEL หลังจากซ่อมแซมและบันทึกหลักฐานแนบ Ticket เรียบร้อยแล้ว
+sudo ipmitool sel clear
+```
+
+---
+
+## 4. ปัญหาพัดลม (Fan Failure) และระบบป้องกันความร้อน (Thermal Shutdown)
+
+- เซิร์ฟเวอร์จะมีพัดลมเรียงกัน 6–8 ตัวแบบ **Redundant Hot-Swap**
+- หากพัดลมเสียไป 1 ตัว ชิป BMC จะสั่งเร่งความเร็วพัดลมตัวที่เหลือทั้งหมดให้หมุนที่ **100% (เสียงดังสนั่นเหมือนเครื่องบินเจ็ต)** เพื่อชดเชยแรงลม
+- หากพัดลมเสียหลายตัวพร้อมกันหรือฝุ่นอุดตันหน้าเครื่องจนอุณหภูมิ CPU ทะลุจุดวิกฤต (มักประมาณ 95–100°C) ระบบจะลดความเร็วสัญญาณนาฬิกา (**Thermal Throttling**) และหากยังร้อนขึ้นอีก BMC จะสั่งตัดไฟปิดเครื่องอัตโนมัติ (**Thermal Shutdown**) เพื่อป้องกันชิป CPU ไหม้
+', 11, 'intermediate', 6, true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.lessons VALUES ('a20fa558-7295-4a2a-bbf2-0700729e95e9', 10, 'dc-os-install-firmware', 'การติดตั้ง OS ระยะไกล และการอัปเดต Firmware เซิร์ฟเวอร์อย่างปลอดภัย (OS Provisioning & Firmware Lifecycle)', 'การติดตั้ง OS ผ่าน Virtual Media บน iDRAC/iLO, ระบบอัตโนมัติ PXE + Kickstart/Preseed/Cloud-Init, ลำดับการอัปเดต Firmware (BMC -> BIOS -> NIC/RAID) และแผนป้องกันเครื่อง Brick', '# การติดตั้ง OS ระยะไกล และการอัปเดต Firmware เซิร์ฟเวอร์อย่างปลอดภัย
+
+ในอดีตการลงระบบปฏิบัติการ (OS) หรืออัปเดต BIOS ต้องถือแฟลชไดรฟ์และเข็นรถจอภาพ (Crash Cart) เข้าไปเสียบหน้าตู้แร็คในห้องเซิร์ฟเวอร์ที่หนาวและเสียงดัง แต่ในงาน Data Center ยุคใหม่ กว่า 99% ดำเนินการจากระยะไกลผ่าน **Virtual Media** หรือระบบอัตโนมัติ **Unattended Provisioning**
+
+---
+
+## 1. การติดตั้ง OS ผ่าน Virtual Media (iDRAC / iLO HTML5 Console)
+
+เมื่อต้องติดตั้ง OS ให้เซิร์ฟเวอร์จำนวน 1–5 เครื่อง วิธีที่สะดวกที่สุดคือฟีเจอร์ **Virtual Media**:
+
+1. เปิดเบราว์เซอร์ล็อกอินเข้าหน้าเว็บ **iDRAC (Dell)** หรือ **iLO (HPE)** ผ่านเครือข่าย OOB
+2. เปิดหน้าต่าง **Virtual Console (HTML5)**
+3. คลิกเมนู **Virtual Media ➔ Connect Virtual Media ➔ Map CD/DVD**
+4. เลือกไฟล์อิมเมจ `.iso` (เช่น `Ubuntu-24.04-live-server.iso` หรือ `VMware-ESXi.iso`) จากเครื่องคอมพิวเตอร์ของคุณ หรือชี้ไปยัง HTTP/NFS Share ภายในเครือข่าย
+5. คลิกเมนู **Next Boot ➔ Virtual CD/DVD/ISO** แล้วสั่ง **Power Cycle / Reset** เครื่องเซิร์ฟเวอร์
+6. เซิร์ฟเวอร์จะมองเห็นไฟล์ ISO นั้นเสมือนว่ามีแผ่นดีวีดีเสียบอยู่หน้าเครื่องจริงๆ และบูตเข้าหน้าติดตั้งทันที!
+
+> **Support Tip**: การ Map ไฟล์ ISO ขนาดใหญ่ (4–8 GB) จากแล็ปท็อปของคุณผ่าน VPN อาจทำให้การติดตั้งช้ามาก แนะนำให้วางไฟล์ ISO ไว้บน **Jump Host หรือ HTTP/Samba Server ที่อยู่ในวง OOB ของ Data Center** แล้วทำการ Mount จากที่นั่น จะติดตั้งเสร็จภายในไม่กี่นาที
+
+---
+
+## 2. การติดตั้งอัตโนมัติจำนวนมาก: PXE + Kickstart / Preseed / Cloud-Init
+
+หากบริษัทสั่งซื้อเซิร์ฟเวอร์เข้ามาใหม่พร้อมกัน 50 เครื่อง การคลิก Next ทีละเครื่องย่อมไม่ทันการณ์และเสี่ยงตั้งค่าผิดพลาด จึงต้องใช้ระบบ **Unattended Installation (ติดตั้งแบบไร้คนเฝ้า)**:
+
+![แผนภาพขั้นตอนการติดตั้งระบบปฏิบัติการอัตโนมัติด้วย PXE Boot และไฟล์คำตอบ Kickstart](/images/datacenter/kickstart-pxe-install-flow.png)
+
+- **RHEL / Rocky Linux / AlmaLinux**: ใช้ไฟล์คำตอบที่เรียกว่า **Kickstart (`ks.cfg`)**
+- **Debian / Ubuntu (รุ่นเก่า)**: ใช้ไฟล์ **Preseed (`preseed.cfg`)**
+- **Ubuntu Server ยุคใหม่ (20.04+) & Cloud Images**: ใช้ระบบ **Autoinstall (`user-data` ในรูปแบบ YAML ของ Cloud-Init)**
+- **Windows Server**: ใช้ **WDS (Windows Deployment Services)** คู่กับไฟล์ **`Unattend.xml`**
+
+### สิ่งที่กำหนดไว้ในไฟล์ Answer File (เช่น `ks.cfg` หรือ `user-data`):
+- ภาษา, Timezone (`Asia/Bangkok`), และ NTP Server
+- การแบ่งพาร์ทิชันดิสก์และ LVM อัตโนมัติ
+- การสร้าง User, รหัสผ่านที่เข้ารหัสแล้ว, และการฝัง **SSH Public Key** ของทีมแอดมิน
+- สคริปต์หลังติดตั้งเสร็จ (`%post` script) เช่น สั่งลง Monitoring Agent และตั้งค่า IP อัตโนมัติ
+
+---
+
+## 3. การอัปเดต Firmware เซิร์ฟเวอร์อย่างปลอดภัย (Firmware Lifecycle)
+
+เซิร์ฟเวอร์หนึ่งเครื่องไม่ได้มีแค่ BIOS แต่มีไมโครคอนโทรลเลอร์แยกอยู่ในทุกชิ้นส่วน การอัปเดต Firmware ช่วยแก้บั๊กฮาร์ดแวร์ อุดช่องโหว่ความปลอดภัย และเพิ่มความเสถียร
+
+### ลำดับการอัปเดต Firmware ที่แนะนำ (Recommended Order):
+1. **BMC Firmware (iDRAC / iLO)** ➔ อัปเดตเป็นอันดับแรก! (ข้อดี: การอัปเดต iDRAC/iLO เพียงอย่างเดียว **สามารถรีบูตเฉพาะชิป BMC ได้โดยที่ระบบปฏิบัติการหลักของเซิร์ฟเวอร์ไม่ต้องรีบูตและไม่เกิด Downtime!**)
+2. **System BIOS / UEFI** ➔ ต้องรีบูตเครื่องเซิร์ฟเวอร์จริงเพื่อเขียนรหัสใหม่ตอน POST
+3. **RAID Controller / HBA & Backplane Firmware** ➔ ป้องกันดิสก์หลุดหรือค้าง
+4. **Network Card (NIC) & Fiber HBA Firmware** ➔ แก้ปัญหาพอร์ต Flapping หรือเข้ากันไม่ได้กับ Switch
+5. **Drive Firmware (HDD / NVMe SSD)** ➔ แก้บั๊กของคอนโทรลเลอร์ในตัวดิสก์
+
+---
+
+## 4. กฎเหล็กความปลอดภัย: ป้องกันเซิร์ฟเวอร์กลายเป็นที่ทับกระดาษ (Bricking Prevention)
+
+1. **ห้ามถอดปลั๊กไฟหรือสั่ง Force Reset ขณะกำลัง Flash BIOS เด็ดขาด!**: หากไฟดับกลางคันขณะที่ชิป ROM กำลังเขียนทับ เครื่องจะเปิดไม่ติดอีกเลย (Bricked) ต้องมั่นใจว่าเครื่องต่อไฟผ่าน UPS ทั้งสองฝั่ง (Dual PSU A/B Feed)
+2. **อย่าข้ามรุ่นไกลเกินไป (Stepping Stone Upgrades)**: หาก Firmware ปัจจุบันเก่ามาก (เช่น ห่างกัน 4 ปี) ให้อ่าน **Release Notes** เสมอ บางรุ่นบังคับว่าต้องอัปเดตเป็นเวอร์ชันกลางก่อน จึงจะกระโดดไปเวอร์ชันล่าสุดได้
+3. **รู้จักกลไกกู้คืนเมื่อ BIOS พัง (BIOS Recovery)**:
+   - เซิร์ฟเวอร์ระดับองค์กรสมัยใหม่มี **Dual BIOS / Redundant ROM (Primary & Backup Bank)**
+   - หากอัปเดตแล้วบูตไม่ขึ้น สามารถเข้าไปสั่งสลับกลับไปบูตจาก **Backup ROM** ผ่านหน้าเว็บ iDRAC/iLO หรือสลับพิน **System Maintenance Switch / Recovery Jumper** บนเมนบอร์ดเพื่อกู้ชีพเครื่องกลับมาได้
+', 10, 'intermediate', 7, true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.lessons VALUES ('14d01b82-65c5-4700-b72d-d0b9e1d84c75', 10, 'dc-structured-cabling-dcim', 'มาตรฐานการเดินสายสัญญาณ, ป้ายกำกับ และการจัดการสินทรัพย์ DCIM (Structured Cabling, Labeling & DCIM)', 'สถาปัตยกรรมสาย ToR vs EoR, การเชื่อมโยง Patch Panel และ Cross-Connect, มาตรฐานการติด Label สายสัญญาณ, เหตุผลที่ใช้ตีนตุ๊กแกแทนเคเบิลไทร์, การอ่านค่าแสง DOM/DDM และการบริหารคลังด้วย DCIM', '# มาตรฐานการเดินสายสัญญาณ, ป้ายกำกับ และการจัดการสินทรัพย์ DCIM
+
+ในห้อง Data Hall ที่มีตู้แร็คนับร้อยตู้และสายสัญญาณหลายหมื่นเส้น หากเดินสายไร้ระเบียบและไม่มีป้ายกำกับ (Label) ตู้แร็คจะกลายเป็น *"ม่านเส้นก๋วยเตี๋ยว (Spaghetti Cabling)"* ซึ่งขวางทางระบายความร้อนและทำให้การซ่อมบำรุงแทบเป็นไปไม่ได้ มาตรฐาน **Structured Cabling** และระบบ **DCIM** จึงเป็นหัวใจของการทำงานในศูนย์ข้อมูลระดับสากล
+
+---
+
+## 1. สถาปัตยกรรมการวางสวิตช์และเดินสาย: ToR vs EoR
+
+การเชื่อมต่อสายจากเซิร์ฟเวอร์ไปยังสวิตช์ใน Data Center แบ่งออกเป็น 2 รูปแบบหลัก:
+
+| รูปแบบ | ชื่อเต็ม | ลักษณะการติดตั้ง | ข้อดีและข้อสังเกต |
+|---|---|---|---|
+| **ToR** | **Top-of-Rack** | ติดตั้งสวิตช์ไว้บนสุดของตู้แร็คทุกตู้ เซิร์ฟเวอร์ในตู้เสียบสายสั้นๆ (1–3 เมตร) ขึ้นไปหาสวิตช์บนหัวตู้ตัวเอง แล้วลากสายไฟเบอร์ Uplink เพียงไม่กี่เส้นไปหา Core/Spine Switch | **นิยมที่สุดในยุคปัจจุบัน!** ใช้สายสั้น จัดระเบียบง่าย เพิ่มขยายตู้แร็คใหม่ได้เร็ว แต่ต้องดูแลจำนวนสวิตช์มากขึ้นตามจำนวนตู้ |
+| **EoR / MoR** | **End-of-Row / Middle-of-Row** | ไม่มีสวิตช์ประจำตู้ แต่ลากสายจากทุกตู้ไปรวมที่ตู้สวิตช์ขนาดใหญ่ (Chassis Switch) ที่ตั้งอยู่หัวแถวหรือกลางแถว โดยผ่านแผง **Patch Panel** | บริหารจัดการสวิตช์น้อยตัวลง แต่ต้องเดินสายยาวและมีสายจำนวนมากบนรางเหนือตู้ (Overhead Cable Tray) |
+
+---
+
+## 2. การใช้ Patch Panel และ Cross-Connect ใน Colocation
+
+ในศูนย์ข้อมูลแบบ **Colocation (เช่น Equinix, NTT, STT GDC)** ห้ามลากสายยาวจากเซิร์ฟเวอร์ในตู้ของลูกค้า A วิ่งทะลุห้องไปเสียบเข้าตู้ของลูกค้า B หรือตู้ผู้ให้บริการอินเทอร์เน็ต (ISP) โดยตรง!
+
+![แผนภาพการเชื่อมต่อสายสัญญาณผ่าน Patch Panel และห้องชุมสาย Meet-Me Room](/images/datacenter/patch-panel-cross-connect.png)
+
+- ทุกการเชื่อมต่อข้ามตู้หรือเชื่อมกับผู้ให้บริการเครือข่าย ต้องผ่านแผงกระจายสาย (**Patch Panel**) และไปบรรจบกันที่ห้องชุมสายกลางที่เรียกว่า **MMR (Meet-Me Room)**
+- สายที่เชื่อมระหว่างโครงข่ายในห้อง MMR เรียกว่า **Cross-Connect (XC)**
+- **ข้อดี**: เวลาต้องย้ายพอร์ตหรือเปลี่ยนสาย ช่างเพียงแค่สลับสาย Patch Cord เส้นสั้นๆ ที่หน้าแผง Patch Panel โดยไม่ต้องรื้อสายหลักที่เดินไว้ใต้พื้นหรือบนราง
+
+---
+
+## 3. กฎเหล็กการจัดระเบียบสายและติดป้ายกำกับ (Labeling & Cable Management)
+
+![ตัวอย่างมาตรฐานการติดป้ายกำกับสายสัญญาณทั้งสองปลายและการรัดสายด้วยตีนตุ๊กแก](/images/datacenter/cable-labeling-standard.png)
+
+### 1) มาตรฐานการติด Label สองฝั่ง (Dual-End Labeling)
+สายทุกเส้นในตู้แร็ค **ต้องมีป้าย Label ติดที่ปลายสายทั้ง 2 ฝั่งเสมอ** โดยระบุทั้ง **"ต้นทาง (A-End)"** และ **"ปลายทาง (Z-End)"** ในป้ายเดียวกัน:
+```text
+รูปแบบมาตรฐาน: <Rack>-<RU>-<Device>-<Port>  <--->  <Rack>-<RU>-<Device>-<Port>
+ตัวอย่างบนป้าย: R04-U42-SW01-Gi1/0/5  <--->  R04-U15-SRV08-eno1
+```
+- ประโยชน์: เมื่อคุณจับดูสายที่หลังเครื่องเซิร์ฟเวอร์ คุณจะทราบทันทีว่าปลายอีกฝั่งเสียบอยู่ที่พอร์ตไหนของสวิตช์ตัวใด โดยไม่ต้องออกแรงดึงไล่สาย!
+
+### 2) ทำไมห้ามใช้สายรัดพลาสติก (Zip Tie) แต่ต้องใช้ตีนตุ๊กแก (Velcro Strap)?
+- **ห้ามใช้เคเบิลไทร์พลาสติก (Plastic Zip Tie)**: เพราะการดึงรัดแน่นเกินไปจะบีบฉนวนสายทองแดงจนเกลียวคู่ภายในเสียรูป (เกิด Crosstalk) หรือบีบสายไฟเบอร์ออปติกจนเกิด **Micro-bending** ทำให้แสงรั่วไหล และเวลาต้องเพิ่มสายใหม่จะต้องใช้คีมตัดซึ่งเสี่ยงตัดโดนสายข้างเคียงขาด!
+- **ต้องใช้สายรัดตีนตุ๊กแก (Velcro / Hook-and-Loop Strap)**: กระจายแรงรัดนุ่มนวล ไม่บีบสายไฟเบอร์ และสามารถแกะออกเพื่อเพิ่มหรือถอดสายซ่อมบำรุงได้ซ้ำตลอดอายุการใช้งาน
+
+---
+
+## 4. การตรวจวัดระดับแสงไฟเบอร์ด้วย DOM / DDM (Optical Power Monitoring)
+
+หัว Transceiver สมัยใหม่มีฟีเจอร์ **DOM (Digital Optical Monitoring)** หรือ **DDM** ที่ช่วยวัดความเข้มแสงขาออก (**Tx Power**) และความเข้มแสงขาเข้า (**Rx Power**) เป็นหน่วย **dBm** ได้แบบเรียลไทม์ผ่าน CLI ของสวิตช์:
+
+```text
+Switch# show interfaces TenGigabitEthernet1/0/1 transceiver
+ITU Channel not available (Wavelength not available),
+Transceiver is internally calibrated.
+mA: milliamperes, dBm: decibels (milliwatts), NA or N/A: not applicable.
+++ : high alarm, +  : high warning, -  : low warning, -- : low alarm.
+------------------------------------------------------------------------
+Port       Temp   Voltage  Current   Tx Power  Rx Power
+          (Celsius) (Volts)  (mA)      (dBm)     (dBm)
+------------------------------------------------------------------------
+Te1/0/1    38.5   3.29     6.5       -2.1      -3.4     <-- ปกติ (อยู่ในช่วง -1 ถึง -9 dBm)
+Te1/0/2    41.0   3.28     6.8       -2.2      -24.8 -- <-- ผิดปกติ! แสงขาเข้าอ่อนมาก (Low Alarm)
+```
+
+- **ค่าปกติของ SFP+ SR/LR ทั่วไป**: มักอยู่ในช่วง **`-1.0 dBm` ถึง `-9.0 dBm`**
+- หากค่า **Rx Power ต่ำกว่า `-15 dBm` ถึง `-20 dBm` (หรือขึ้น `-40 dBm` คือไม่มีแสงเลย)**: แสดงว่าหัวไฟเบอร์สกปรก, สายหักงอ, หรือสายขาดระหว่างทาง
+
+---
+
+## 5. ระบบบริหารจัดการสินทรัพย์ศูนย์ข้อมูล: DCIM & NetBox
+
+**DCIM (Data Center Infrastructure Management)** เช่นซอฟต์แวร์โอเพนซอร์สยอดฮิตอย่าง **NetBox** คือฐานข้อมูลกลาง ("Source of Truth") ที่ใช้บันทึกทุกอย่างในศูนย์ข้อมูล:
+- ผังตู้แร็ค (**Rack Elevation**): ช่อง U ไหนว่าง ช่อง U ไหนติดตั้งเครื่องอะไร
+- ทะเบียนอุปกรณ์ (**Asset Tag / Serial Number / Warranty**): สแกนบาร์โค้ดติดตามตั้งแต่ห้องรับของ (Loading Dock) จนขึ้นตู้แร็ค
+- ผังการเชื่อมต่อสายไฟและสายแลนทุกเส้น และการจัดสรร IP Address (**IPAM**)
+', 10, 'beginner', 8, true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.lessons VALUES ('4239ddec-0437-4d0e-9b43-7cf2d26d3c23', 10, 'dc-operations-safety', 'กระบวนการปฏิบัติงาน, ความปลอดภัยทางกายภาพ และมาตรฐาน Tier (DC Operations, Safety & Tier Standards)', 'กระบวนการ Change Management (MOP), งาน Remote Hands, การเคลม RMA และการทำลายข้อมูลดิสก์, มาตรฐานความปลอดภัย ESD / Server Lift / LOTO, ระบบ Mantrap และระดับ Tier I-IV กับค่า PUE', '# กระบวนการปฏิบัติงาน, ความปลอดภัยทางกายภาพ และมาตรฐาน Tier
+
+ศูนย์ข้อมูลคือหัวใจของธุรกิจการเงิน โรงพยาบาล และคลาวด์ระดับโลก ความผิดพลาดเพียงครั้งเดียวจากความประมาทของคน (Human Error) อาจสร้างความเสียหายนับสิบล้านบาท ดังนั้นการทำงานใน Data Center จึงถูกควบคุมด้วย **ระเบียบปฏิบัติ (Operations Process)**, **มาตรฐานความปลอดภัย (Safety)** และ **ระดับความพร้อมใช้งาน (Uptime Tier)** อย่างเคร่งครัด
+
+---
+
+## 1. กระบวนการปฏิบัติงานมาตรฐาน: Change Management & MOP
+
+ใน Data Center คุณไม่สามารถเดินเข้าไปถอดสายหรือรีบูตอุปกรณ์สำคัญตามใจชอบได้ ทุกการเปลี่ยนแปลงต้องผ่านกระบวนการ **Change Management**:
+
+1. **Change Request (CR) & Maintenance Window**: ต้องขออนุมัติช่วงเวลาทำงานล่วงหน้า (มักเป็นช่วงดึกที่มีผู้ใช้งานน้อย เช่น 01:00–04:00 น.)
+2. **MOP (Method of Procedure)**: เอกสารคู่มือการปฏิบัติงานแบบละเอียดทีละขั้นตอน (Step-by-Step Checklist) ซึ่งต้องระบุครบ 4 ส่วน:
+   - **Pre-checks**: ตรวจสอบสถานะระบบก่อนเริ่มงานว่าปกติและมีระบบสำรองพร้อมทำงาน
+   - **Execution Steps**: ขั้นตอนการลงมือทำอย่างละเอียด พร้อมระบุชื่อเครื่อง พอร์ต และเวลา
+   - **Post-checks / Verification**: วิธีตรวจสอบหลังทำเสร็จว่าระบบกลับมาทำงานสมบูรณ์ 100%
+   - **Rollback Plan (แผนถอยกลับ)**: หากทำแล้วเกิดปัญหาและแก้ไม่สำเร็จภายในเวลาที่กำหนด (เช่น เหลือเวลาก่อนหมดช่วง Maintenance 30 นาที) จะต้องย้อนกลับสู่สภาพเดิมอย่างไรให้ปลอดภัยที่สุด
+
+---
+
+## 2. งานบริการ Remote Hands / Smart Hands และการเคลม RMA
+
+### 1) Remote Hands (Smart Hands)
+ในบริษัท Colocation ลูกค้าไม่จำเป็นต้องเดินทางมาที่ศูนย์ข้อมูลเอง แต่สามารถเปิด Ticket สั่งให้ช่างประจำศูนย์ข้อมูลช่วยปฏิบัติงานหน้าตู้แร็คแทนได้ เช่น:
+- เดินไปถ่ายรูปไฟสถานะหน้าเครื่องเซิร์ฟเวอร์และสวิตช์ (**Visual Inspection**)
+- กดปุ่ม Power / รีบูตเครื่อง หรือเสียบสาย Console/KVM Cart ให้ลูกค้ารีโมตเข้ามาแก้ปัญหา
+- เปลี่ยนฮาร์ดดิสก์ แรม โมดูล SFP หรือเสียบสาย Patch Cord ตามพอร์ตที่ลูกค้าระบุ
+
+### 2) กระบวนการ RMA (Return Merchandise Authorization) และความปลอดภัยของข้อมูลดิสก์
+เมื่อฮาร์ดแวร์อยู่ในประกันและเสีย ช่างจะต้องทำเรื่องเคลมเปลี่ยนอะไหล่กับผู้ผลิต (เช่น Dell, HPE, Cisco) เรียกว่า **RMA**:
+> **กฎเหล็กด้าน Data Security (ISO 27001 / PDPA)**:  
+> สำหรับ **ฮาร์ดดิสก์หรือ SSD ที่เสีย** ห้ามส่งดิสก์ที่มีข้อมูลความลับของลูกค้าออกไปให้บุคคลภายนอกโดยไม่ทำลายข้อมูลเด็ดขาด!  
+> - หากดิสก์ยังพอเขียนได้ ต้องทำการ **Secure Erase / Zero Wipe** ล้างข้อมูลทั้งหมด  
+> - หากดิสก์พังจนอ่านเขียนไม่ได้ ต้องเข้าเครื่อง **ล้างสนามแม่เหล็ก (Degausser)** หรือ **เครื่องบดทำลายดิสก์ทางกายภาพ (Physical Shredder / Crusher)** หรือใช้บริการประกันประเภท **Keep Your Hard Drive (KYHD)** ที่ผู้ผลิตส่งดิสก์ลูกใหม่มาให้โดยไม่ต้องส่งลูกเก่าคืน
+
+---
+
+## 3. ความปลอดภัยในการทำงาน (Workplace Safety & ESD)
+
+![ภาพการสวมสายรัดข้อมือป้องกันไฟฟ้าสถิต ESD Wrist Strap และอุปกรณ์ความปลอดภัยในศูนย์ข้อมูล](/images/datacenter/esd-safety-ppe.png)
+
+1. **การป้องกันไฟฟ้าสถิต (ESD - Electrostatic Discharge)**:
+   - ร่างกายมนุษย์มีไฟฟ้าสถิตสะสมซึ่งสามารถช็อตชิป RAM, CPU หรือ Mainboard พังได้ทันทีโดยที่เราไม่รู้สึกตัว
+   - **ก่อนเปิดฝาเครื่องและจับแผงวงจรทุกครั้ง ต้องสวมสายรัดข้อมือป้องกันไฟฟ้าสถิต (ESD Wrist Strap)** โดยหนีบปลายสายเข้ากับโครงโลหะของตู้แร็คที่ต่อสายดินไว้ และวางอะไหล่บนแผ่นรองหรือถุงป้องกันไฟฟ้าสถิต (**Antistatic Mat / ESD Bag**) เสมอ
+2. **การยกของหนักและเครื่องช่วยยก (Ergonomics & Server Lift)**:
+   - เซิร์ฟเวอร์ขนาด 2U–4U หรือเครื่องเก็บข้อมูล (Storage Array) อาจมีน้ำหนักสูงถึง **25–60 กิโลกรัม**
+   - ห้ามก้มยกด้วยหลังคนเดียวเด็ดขาด! ต้องยกด้วยกำลังขาร่วมกันอย่างน้อย 2 คน (**Team Lift**) หรือใช้รถยกเซิร์ฟเวอร์ไฮดรอลิก (**Server Lift**) เพื่อป้องกันอุบัติเหตุเครื่องหล่นทับหรือกระดูกสันหลังบาดเจ็บ
+3. **LOTO (Lockout / Tagout)**:
+   - เมื่อมีการซ่อมบำรุงระบบไฟฟ้าหรือเบรกเกอร์ ต้องทำการ **ใส่กุญแจล็อกเบรกเกอร์ (Lockout)** และ **แขวนป้ายเตือนห้ามสับสวิตช์เด็ดขาด (Tagout)** เพื่อป้องกันไม่ให้คนอื่นมาเผลอสับไฟจ่ายเข้ามาขณะช่างกำลังทำงาน
+
+---
+
+## 4. ความปลอดภัยทางกายภาพ (Physical Security) และกฎระเบียบห้อง Data Hall
+
+1. **Mantrap (Airlock Door)**: ประตูนิรภัยสองชั้นที่บังคับให้ประตูด่านแรกต้องปิดล็อกสนิทก่อน ประตูด่านที่สองจึงจะยอมเปิดออก พร้อมระบบสแกนลายนิ้วมือ/ม่านตา เพื่อป้องกันการเดินตามหลังกันเข้ามาโดยไม่สแกนบัตร (**Anti-Tailgating / Piggybacking**)
+2. **สิ่งต้องห้ามนำเข้าห้อง Data Hall เด็ดขาด**:
+   - **ห้ามนำน้ำดื่ม กาแฟ หรืออาหารเข้ามา** (เสี่ยงหกใส่อุปกรณ์ไฟฟ้าและดึงดูดสัตว์กัดแทะ)
+   - **ห้ามนำกล่องกระดาษลูกฟูก (Cardboard Boxes) เข้ามาในห้องเซิร์ฟเวอร์!** ➔ ต้องแกะกล่องกระดาษออกตั้งแต่ห้องรับของ (Staging / Unpacking Room) เพราะกล่องกระดาษปล่อย **ฝุ่นผงเยื่อกระดาษ** เข้าไปอุดตันพัดลมเซิร์ฟเวอร์ และเป็น **เชื้อเพลิงชั้นดีที่ทำให้ไฟลุกลาม**
+
+---
+
+## 5. มาตรฐานระดับศูนย์ข้อมูล (Uptime Tier I–IV) และค่า PUE
+
+### 1) มาตรฐาน Uptime Institute Tier Classification:
+
+| ระดับ Tier | ชื่อเรียก | สถาปัตยกรรมระบบสำรอง (Redundancy) | เวลาหยุดทำงานสูงสุดต่อปี | Uptime SLA |
+|---|---|---|---|---|
+| **Tier I** | Basic Capacity | **$N$** (ไม่มีระบบสำรอง ปิดซ่อมต้องดับระบบ) | ~28.8 ชั่วโมง/ปี | 99.671% |
+| **Tier II** | Redundant Components | **$N+1$** (มีอุปกรณ์สำรองเพิ่ม 1 ตัว แต่ใช้สายส่งเส้นเดียว) | ~22.0 ชั่วโมง/ปี | 99.741% |
+| **Tier III** | **Concurrently Maintainable** | **$N+1$ อุปกรณ์ และมีเส้นทางจ่ายไฟ 2 เส้น** (สามารถปิดซ่อมบำรุงได้โดยไม่ต้องดับระบบเลย!) | ~1.6 ชั่วโมง/ปี | **99.982%** |
+| **Tier IV** | **Fault Tolerant** | **$2N$ หรือ $2(N+1)$** (แยกอิสระสมบูรณ์ 2 ระบบ ต่อให้อุปกรณ์ระเบิดหรือไฟไหม้ 1 ฝั่ง ระบบอีกฝั่งก็รับช่วงต่อทันทีโดยไม่กระตุก) | ~26 นาที/ปี | **99.995%** |
+
+### 2) ค่าความคุ้มค่าพลังงาน: PUE (Power Usage Effectiveness)
+$$\text{PUE} = \frac{\text{Total Facility Power (พลังงานไฟฟ้าทั้งหมดที่ทั้งตึกใช้)}}{\text{IT Equipment Power (พลังงานไฟฟ้าที่เซิร์ฟเวอร์และอุปกรณ์ไอทีใช้จริง)}}$$
+- **ค่าอุดมคติคือ `1.0`** (แปลว่าไฟทุกวัตต์ถูกใช้โดยเซิร์ฟเวอร์ 100% ไม่เสียไปกับแอร์หรือความร้อนเลย)
+- Data Center ทั่วไปมีค่า PUE ประมาณ **`1.4 – 1.8`** ส่วน Data Center ยุคใหม่ที่ประหยัดพลังงานสูงจะมีค่า PUE ต่ำกว่า **`1.2`**
+', 11, 'beginner', 9, true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
 
 
 --
@@ -4790,6 +5315,31 @@ INSERT INTO public.questions VALUES ('4179d86f-e2c7-4331-a1f3-c90aae750b83', 'ne
 INSERT INTO public.questions VALUES ('d3078369-34bc-435c-a843-0aa4c32c9797', 'network:10-pcap:q03', 2, '7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 'หากเครื่องต้นทางส่งแพ็กเก็ต ''Flags [S]'' (SYN) ออกไป แล้วได้รับแพ็กเก็ตที่มี ''Flags [R]'' (RST / Reset) ตอบกลับมาในทันที ข้อสรุปใดถูกต้องที่สุด?', 'การแยกแยะอาการระหว่าง Connection Timed Out กับ Connection Refused ด้วย Packet Capture', 'medium', 'multiple_choice', 'การได้รับ RST กลับมาแสดงว่าเส้นทางเครือข่ายและ Firewall ปล่อยให้แพ็กเก็ตผ่านไปถึงเครื่องปลายทางเรียบร้อยแล้ว แต่ที่เครื่องปลายทางไม่มีแอปพลิเคชันเปิดดักฟัง (Listen) อยู่ที่พอร์ตนั้น OS จึงปฏิเสธการเชื่อมต่อกลับมา', '{network,tcp,tcp-flags,reset,troubleshooting}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
 INSERT INTO public.questions VALUES ('caf4b43f-815a-4731-afe7-e459846dc1fe', 'network:10-pcap:q04', 2, '7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 'คำสั่ง tcpdump ในข้อใดถูกต้องในการดักจับแพ็กเก็ตบนการ์ดแลน eth0 เฉพาะพอร์ต 443 จำนวน 50 แพ็กเก็ต แล้วบันทึกลงไฟล์ชื่อ /tmp/ssl_test.pcap โดยไม่ Resolve ชื่อ?', 'การดึงหลักฐานเพื่อนำไปวิเคราะห์ปัญหา SSL Handshake บน Wireshark', 'easy', 'multiple_choice', 'ไวยากรณ์ที่ถูกต้องคือ tcpdump -nn -i eth0 port 443 -c 50 -w /tmp/ssl_test.pcap', '{network,tcpdump,cli,pcap}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
 INSERT INTO public.questions VALUES ('70b5a05d-a58c-4b52-8750-07b0d905cae1', 'network:10-pcap:q05', 2, '7c93ea29-3948-44d5-a0bb-77f87d3fedcd', 'ในโปรแกรม Wireshark หากต้องการวิเคราะห์ข้อความหรือข้อมูลดิบที่แอปพลิเคชันคุยกันในเซสชัน TCP ตั้งแต่เริ่มจนจบการเชื่อมต่ออย่างต่อเนื่อง ควรใช้ฟีเจอร์ใด?', 'การแกะดูเนื้อหาคำสั่ง HTTP หรือข้อความที่มีปัญหาใน Wireshark', 'easy', 'multiple_choice', 'การคลิกขวาที่แพ็กเก็ตแล้วเลือก ''Follow -> TCP Stream'' จะช่วยให้ Wireshark รวม Segment ทั้งหมดมารวบเป็นบทสนทนาแบบอ่านง่าย (เช่น ข้อความ HTTP Request และ Response ทั้งหมด)', '{network,wireshark,tcp-stream,packet-analysis}', true, '2026-11-10 11:59:34.484964+00', '2026-11-10 11:59:34.484964+00');
+INSERT INTO public.questions VALUES ('a98c2c8e-00de-4244-837b-4ba6540ceb62', 'datacenter:06-raid:q01', 10, '75403d93-f9e9-4644-9d96-62d933af29b7', 'เซิร์ฟเวอร์ฐานข้อมูลมีฮาร์ดดิสก์ขนาดลูกละ 2 TB จำนวน 6 ลูก หากตั้งค่าเป็น RAID 6 และ RAID 10 จะได้พื้นที่ใช้งานจริง (Usable Capacity) เท่าใดตามลำดับ?', 'การคำนวณพื้นที่จัดเก็บข้อมูลก่อนจัดเตรียมเซิร์ฟเวอร์ให้ทีม Database', 'medium', 'multiple_choice', 'RAID 6 หักดิสก์ทำ Dual Parity 2 ลูก เหลือ (6 - 2) * 2 TB = 8 TB ส่วน RAID 10 หักครึ่งหนึ่งทำ Mirror เหลือ (6 / 2) * 2 TB = 6 TB', '{datacenter,raid,storage,calculation}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('a49c6a82-b2f6-4f5a-bcf4-870770ee3d9b', 'datacenter:06-raid:q02', 10, '75403d93-f9e9-4644-9d96-62d933af29b7', 'เมื่อโวลุ่ม RAID 5 (มีดิสก์ 4 ลูก) เกิดดิสก์เสียไป 1 ลูก สถานะของ RAID จะเปลี่ยนเป็น "Degraded" หากช่างเผลอดึงดิสก์ลูกที่ยังดีอยู่ออกมาผิดลูกในขณะนั้น จะเกิดอะไรขึ้น?', 'ความเสี่ยงสูงสุดในการเปลี่ยนดิสก์แบบ Hot-Swap หน้าตู้แร็ค', 'easy', 'multiple_choice', 'RAID 5 ทนดิสก์เสียได้เพียง 1 ลูกเท่านั้น หากดิสก์ลูกที่สองหลุดออกพร้อมกัน โวลุ่ม RAID จะล่ม (Failed/Offline) ทันที ทำให้ระบบล่มและข้อมูลเสียหาย', '{datacenter,raid,hotswap,incident}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('af06e4f6-6e32-44a7-af4b-e131ce5c199f', 'datacenter:06-raid:q03', 10, '75403d93-f9e9-4644-9d96-62d933af29b7', 'ไฟสถานะ LED สีน้ำเงินกะพริบ (Blinking Blue) บนถาดดิสก์หน้าเครื่องเซิร์ฟเวอร์มีความหมายว่าอย่างไร?', 'การปฏิบัติงานเปลี่ยนดิสก์ร่วมกันระหว่างทีม NOC และช่างประจำห้อง Data Hall', 'easy', 'multiple_choice', 'ไฟสีน้ำเงินคือ Locator / UID LED ที่แอดมินสั่งเปิดผ่าน iDRAC/iLO เพื่อชี้ตำแหน่งดิสก์ลูกที่ต้องการให้ช่างหน้างานเห็นอย่างชัดเจน ป้องกันการถอดดิสก์ผิดลูก', '{datacenter,hardware,led,hotswap}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('9f4e6bb4-4c0d-4f17-b5f9-a5d1eb4768ec', 'datacenter:06-raid:q04', 10, '75403d93-f9e9-4644-9d96-62d933af29b7', 'ในการติดตั้งระบบ Software-Defined Storage เช่น ZFS หรือ Ceph เหตุใดวิศวกรจึงต้องตั้งค่าการ์ดควบคุมดิสก์ให้อยู่ในโหมด "HBA Mode (IT Mode / Passthrough)" แทนการใช้ Hardware RAID?', 'การตั้งค่า BIOS/Storage Controller ก่อนส่งมอบเครื่องให้ทีม Infrastructure', 'medium', 'multiple_choice', 'ระบบอย่าง ZFS และ Ceph ต้องการเข้าถึงและควบคุมดิสก์แต่ละลูกโดยตรง (เห็นดิสก์แยกกันทุกใบและอ่านค่า SMART ได้โดยตรง) เพื่อจัดการการทำสำเนาและตรวจจับข้อมูลเพี้ยน (Bit rot) ด้วยซอฟต์แวร์เอง', '{datacenter,storage,hba,zfs,ceph}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('d6d47579-3742-448d-ab63-850146c740bd', 'datacenter:06-raid:q05', 10, '75403d93-f9e9-4644-9d96-62d933af29b7', 'เมื่อตรวจสอบสุขภาพดิสก์บน Linux ด้วยคำสั่ง "smartctl -a /dev/sda" หากพบว่าค่า "Reallocated_Sector_Ct" และ "Current_Pending_Sector" เพิ่มสูงขึ้นอย่างต่อเนื่อง หมายความว่าอย่างไร?', 'การวิเคราะห์ปัญหาดิสก์อ่านข้อมูลช้าและเกิด I/O error ในระบบ', 'medium', 'multiple_choice', 'ค่าทั้งสองบ่งชี้ว่าพื้นผิวของฮาร์ดดิสก์เริ่มเกิด Bad Sector และมีเซกเตอร์ที่อ่านข้อมูลไม่ออก เป็นสัญญาณเตือนล่วงหน้า (Predictive Failure) ว่าดิสก์กำลังจะเสีย ควรเตรียมเปลี่ยนดิสก์ทันที', '{datacenter,smartctl,linux,storage,troubleshooting}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('4cd3080a-83c4-4ea4-99f0-b166c7c3d551', 'datacenter:07-sel:q01', 10, 'c64810d8-bf76-49f4-aadd-3cd45d92d14b', 'ความแตกต่างที่สำคัญที่สุดระหว่าง "Correctable ECC Memory Error (CE)" กับ "Uncorrectable ECC Memory Error (UCE)" คือข้อใด?', 'การประเมินความเร่งด่วนเมื่อระบบ Monitoring แจ้งเตือนปัญหาหน่วยความจำบนเซิร์ฟเวอร์', 'medium', 'multiple_choice', 'Correctable Error (Single-bit) ชิป ECC สามารถแก้ไขบิตที่เพี้ยนให้อัตโนมัติโดยเครื่องไม่ดับ ส่วน Uncorrectable Error (Multi-bit) เกินขีดความสามารถในการซ่อมแซม ส่งผลให้ระบบเกิด Kernel Panic หรือรีบูตทันทีเพื่อปกป้องข้อมูล', '{datacenter,memory,ecc,hardware,troubleshooting}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('8b74d788-98ec-4a05-8a4b-d7301a0ec4b2', 'datacenter:07-sel:q02', 10, 'c64810d8-bf76-49f4-aadd-3cd45d92d14b', 'เมื่อเซิร์ฟเวอร์แจ้งเตือน Memory Error ที่ช่อง "DIMM_A1" ช่างเทคนิคจึงถอดแรมจากช่อง DIMM_A1 ไปสลับใส่ช่อง DIMM_B1 แล้วเปิดเครื่องใหม่ ปรากฏว่าข้อผิดพลาดย้ายตามไปฟ้องที่ "DIMM_B1" ข้อสรุปใดถูกต้อง?', 'การใช้เทคนิค Swap Test เพื่อแยกแยะชิ้นส่วนที่เสียก่อนเปิดเคสเคลมประกัน (RMA)', 'easy', 'multiple_choice', 'เมื่อสลับแรมแล้วอาการเสียย้ายตามตัวแรมไปยังช่องใหม่ แปลว่าตัวแผงการ์ด RAM แถวนั้นเสียแน่นอน ไม่ใช่สล็อตบนเมนบอร์ดเสีย', '{datacenter,memory,troubleshooting,rma}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('997a72f5-5b33-446f-97b8-2c613c1665e6', 'datacenter:09-dcim:q05', 10, '14d01b82-65c5-4700-b72d-d0b9e1d84c75', 'ซอฟต์แวร์ประเภท DCIM (เช่น NetBox) มีบทบาทสำคัญอย่างไรในการบริหารจัดการศูนย์ข้อมูล?', 'การใช้ระบบสารสนเทศเพื่อจัดการโครงสร้างพื้นฐานในห้องเซิร์ฟเวอร์', 'easy', 'multiple_choice', 'DCIM และ NetBox ทำหน้าที่เป็นฐานข้อมูลกลาง (Source of Truth) สำหรับบันทึกผังตู้แร็ค (Rack Elevation), ตำแหน่งอุปกรณ์แต่ละชั้น U, การเชื่อมโยงสายสัญญาณและสายไฟ, ไปจนถึงการบริหารจัดการ IP Address (IPAM)', '{datacenter,dcim,netbox,asset-management}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('290bd7fb-a136-4e0a-8251-0315c238a1a1', 'datacenter:07-sel:q03', 10, 'c64810d8-bf76-49f4-aadd-3cd45d92d14b', 'หากเซิร์ฟเวอร์เกิดอาการรีบูตเองเมื่อคืนเวลา 02:15 น. แต่ในบันทึก /var/log/messages ของ Linux ไม่มีข้อมูลใดๆ ก่อนเครื่องดับ ช่างควรตรวจสอบบันทึกเหตุการณ์ฮาร์ดแวร์จากแหล่งใดที่จะยังเก็บร่องรอยสาเหตุไว้ได้?', 'การหา Root Cause เมื่อระบบไฟดับหรือเกิดความร้อนสูงจนเครื่องตัดไฟฉุกเฉิน', 'easy', 'multiple_choice', 'System Event Log (SEL) ถูกบันทึกโดยชิป BMC (iDRAC/iLO) ลงในหน่วยความจำไม่ลบเลือน (NVRAM) แม้ OS จะแฮงก์กระทันหันและเขียนดิสก์ไม่ทัน แต่ BMC จะยังบันทึกเหตุการณ์ เช่น Power Supply AC lost หรือ Thermal Trip ไว้เสมอ', '{datacenter,sel,idrac,ilo,ipmitool}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('6ce08b38-2b09-43bb-b2e4-18a321887e7e', 'datacenter:07-sel:q04', 10, 'c64810d8-bf76-49f4-aadd-3cd45d92d14b', 'คำสั่ง ipmitool ในข้อใดใช้สำหรับดูค่าเซนเซอร์วัดอุณหภูมิ ความเร็วรอบพัดลม (RPM) และแรงดันไฟฟ้าของเซิร์ฟเวอร์ทั้งหมด?', 'การตรวจสอบอุณหภูมิหน้าเครื่องและสถานะพัดลมผ่านคอมมานด์ไลน์', 'medium', 'multiple_choice', 'คำสั่ง "ipmitool sdr list" (Sensor Data Repository) จะดึงค่าการอ่านของเซนเซอร์ทุกตัวในเซิร์ฟเวอร์ ทั้งอุณหภูมิ พัดลม และแรงดันไฟ ออกมาแสดง', '{datacenter,ipmitool,sdr,sensors,cli}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('cb7dbfcd-a8ce-4e92-a1bb-34ba1207ff7c', 'datacenter:07-sel:q05', 10, 'c64810d8-bf76-49f4-aadd-3cd45d92d14b', 'เมื่อพัดลมระบายความร้อนภายในเซิร์ฟเวอร์เสียไป 1 ตัวจากทั้งหมด 6 ตัว พฤติกรรมปกติที่ชิป BMC จะสั่งการทันทีเพื่อปกป้องเครื่องคือข้อใด?', 'ช่างได้ยินเสียงพัดลมดังผิดปกติจากเซิร์ฟเวอร์ตัวหนึ่งในตู้แร็คพร้อมไฟสีส้มกะพริบ', 'easy', 'multiple_choice', 'เพื่อป้องกันไม่ให้เกิดจุดอับความร้อน ชิป BMC จะสั่งเร่งความเร็วรอบพัดลมตัวที่เหลือทั้งหมดให้หมุนที่ความเร็วสูงสุด (100% Duty Cycle) จนเกิดเสียงดังชัดเจน และแจ้งเตือนสถานะ Redundancy Lost/Degraded', '{datacenter,hardware,cooling,fan,bmc}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('608b4ca0-6f74-4428-9dcc-a4d91e2e7fd6', 'datacenter:08-fw:q01', 10, 'a20fa558-7295-4a2a-bbf2-0700729e95e9', 'ฟีเจอร์ใดบนระบบ iDRAC หรือ iLO ที่ช่วยให้วิศวกรสามารถนำไฟล์ .iso ของระบบปฏิบัติการไปเชื่อมต่อให้เซิร์ฟเวอร์มองเห็นเสมือนเป็นแผ่นดีวีดีเสียบอยู่หน้าเครื่องผ่านเครือข่ายระยะไกล?', 'การลง OS ใหม่ให้เซิร์ฟเวอร์จากที่บ้านโดยไม่ต้องเดินทางเข้าห้อง Data Hall', 'easy', 'multiple_choice', 'ฟีเจอร์ Virtual Media ในหน้า Virtual Console ของ iDRAC/iLO ช่วยจำลองไฟล์ .iso จากเครื่องแอดมินหรือไฟล์แชร์ให้กลายเป็นไดรฟ์ CD/DVD เสมือนต่อเข้ากับเซิร์ฟเวอร์โดยตรง', '{datacenter,idrac,ilo,virtual-media,os-install}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('3ead4a3b-6128-4695-a9f2-cbc18355084f', 'datacenter:08-fw:q02', 10, 'a20fa558-7295-4a2a-bbf2-0700729e95e9', 'การอัปเดตเฟิร์มแวร์ส่วนใดของเซิร์ฟเวอร์ที่โดยทั่วไปสามารถดำเนินการและรีสตาร์ทตัวชิปนั้นได้ทันที "โดยไม่ต้องรีบูตเครื่องเซิร์ฟเวอร์หลักและไม่ทำให้ระบบปฏิบัติการหยุดทำงาน (Zero OS Downtime)"?', 'การวางแผนบำรุงรักษาเซิร์ฟเวอร์ที่มีบริการรันอยู่ตลอดเวลา', 'medium', 'multiple_choice', 'ชิป BMC (iDRAC / iLO) เป็นระบบคอมพิวเตอร์ขนาดเล็กที่แยกอิสระจาก CPU และ OS หลัก ดังนั้นการอัปเดตและรีบูตเฉพาะ iDRAC/iLO จึงไม่กระทบต่อระบบปฏิบัติการที่กำลังรันอยู่บนเซิร์ฟเวอร์', '{datacenter,firmware,bmc,idrac,ilo}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('855868fc-446e-4fb2-b42c-99a6ff11a6e3', 'datacenter:08-fw:q03', 10, 'a20fa558-7295-4a2a-bbf2-0700729e95e9', 'เมื่อต้องการติดตั้งระบบปฏิบัติการตระกูล RHEL / Rocky Linux ให้กับเซิร์ฟเวอร์ใหม่ 50 เครื่องพร้อมกันผ่าน PXE Boot โดยไม่ต้องมานั่งกรอกข้อมูลทีละหน้า จะต้องใช้ไฟล์กำหนดค่าอัตโนมัติ (Answer File) ที่เรียกว่าอะไร?', 'การทำ Automated Server Provisioning ในศูนย์ข้อมูลขนาดใหญ่', 'medium', 'multiple_choice', 'ระบบปฏิบัติการตระกูล Red Hat (RHEL, CentOS, Rocky, AlmaLinux) ใช้ระบบติดตั้งอัตโนมัติที่เรียกว่า Kickstart (ไฟล์ ks.cfg) ส่วน Ubuntu ยุคใหม่ใช้ Cloud-Init Autoinstall', '{datacenter,pxe,kickstart,linux,provisioning}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('c9d0a4bf-c55e-4e83-a1dc-81e5d2b1eb32', 'datacenter:08-fw:q04', 10, 'a20fa558-7295-4a2a-bbf2-0700729e95e9', 'หากเกิดอุบัติเหตุไฟดับหรือมีคนเผลอกดปุ่มรีเซ็ตเครื่องกลางคันในขณะที่เซิร์ฟเวอร์กำลังเขียนทับชิป BIOS (Flashing BIOS) จนเครื่องเปิดไม่ติด ช่างเทคนิคสามารถกู้คืนเครื่องด้วยกลไกใดที่มีในเซิร์ฟเวอร์ระดับองค์กร?', 'การกู้ชีพเซิร์ฟเวอร์เมื่อการอัปเดต BIOS ล้มเหลวกลางคัน', 'medium', 'multiple_choice', 'เซิร์ฟเวอร์ระดับ Enterprise (เช่น Dell PowerEdge, HPE ProLiant) มีชิป ROM สำรอง (Redundant / Backup BIOS ROM) ซึ่งสามารถสั่งสลับให้บูตจาก Backup ROM ผ่านหน้าจัดการ iDRAC/iLO หรือตั้งค่า NVRAM/Recovery Jumper บนเมนบอร์ดได้', '{datacenter,bios,firmware,recovery,troubleshooting}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('7d3b8788-3089-4c1e-bcee-d2937b6f029f', 'datacenter:08-fw:q05', 10, 'a20fa558-7295-4a2a-bbf2-0700729e95e9', 'เหตุใดเมื่อต้องติดตั้ง OS ผ่าน Virtual Media จากระยะไกล จึงแนะนำให้นำไฟล์ .iso ไปวางไว้บน File Share (HTTP/NFS/SMB) ภายในวงเครือข่ายของ Data Center แทนการอัปโหลดตรงจากแล็ปท็อปของช่างผ่าน VPN?', 'แนวทางปฏิบัติที่ดีที่สุด (Best Practice) ในการลง OS ระยะไกล', 'easy', 'multiple_choice', 'ไฟล์ ISO มีขนาดใหญ่หลายกิกะไบต์ การดึงผ่านอินเทอร์เน็ตและ VPN จากบ้านของช่างมีความเร็วต่ำและหากเน็ตบ้านกระตุกจะทำให้การติดตั้งค้างกลางคัน การวาง ISO ไว้บนเซิร์ฟเวอร์ในวงเดียวกับ iDRAC/iLO จะโอนถ่ายด้วยความเร็วระดับ Gigabit และเสถียรมากกว่า', '{datacenter,virtual-media,oob,best-practices}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('35b7ef7c-568b-45f1-832d-aaa946957ac3', 'datacenter:09-dcim:q01', 10, '14d01b82-65c5-4700-b72d-d0b9e1d84c75', 'ในการจัดระเบียบมัดสายสัญญาณ (โดยเฉพาะสายไฟเบอร์ออปติกและสาย Cat6A) ภายในตู้แร็ค เหตุใดมาตรฐาน Data Center จึงกำหนดให้ใช้สายรัดตีนตุ๊กแก (Velcro Strap) แทนการใช้เคเบิลไทร์พลาสติก (Plastic Zip Tie)?', 'คำถามสัมภาษณ์ยอดฮิตเพื่อทดสอบประสบการณ์หน้างานจริงของช่างเทคนิค Data Center', 'easy', 'multiple_choice', 'เคเบิลไทร์พลาสติกมักถูกรัดแน่นจนกดทับแกนสายไฟเบอร์ (ทำให้เกิด Micro-bending แสงดรอป) และเวลาต้องแก้ไขต้องใช้คีมตัดซึ่งเสี่ยงตัดโดนสายอื่นขาด ส่วนตีนตุ๊กแกไม่บีบสายและแกะออกเพื่อเพิ่มลดสายได้ง่าย', '{datacenter,cabling,velcro,best-practices}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('9a28af2c-2332-44f7-956d-28c33b97cbc0', 'datacenter:09-dcim:q02', 10, '14d01b82-65c5-4700-b72d-d0b9e1d84c75', 'สถาปัตยกรรมการเดินสายแบบ "Top-of-Rack (ToR)" มีลักษณะการจัดวางอุปกรณ์อย่างไร?', 'การออกแบบระบบเครือข่ายภายในแถวตู้แร็คของศูนย์ข้อมูล', 'easy', 'multiple_choice', 'Top-of-Rack (ToR) คือการติดตั้ง Network Switch ไว้ที่ด้านบนสุดของตู้แร็คแต่ละตู้ เพื่อให้เซิร์ฟเวอร์ทุกเครื่องในตู้นั้นเสียบสาย Patch Cord สั้นๆ ขึ้นไปยังสวิตช์ประจำตู้ตัวเอง แล้วจึงลากเฉพาะสาย Uplink ออกไปหา Spine/Core Switch', '{datacenter,tor,architecture,cabling}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('d9a0cafa-ab7f-4017-8a74-8790c9115acd', 'datacenter:09-dcim:q03', 10, '14d01b82-65c5-4700-b72d-d0b9e1d84c75', 'ข้อมูลที่ควรระบุบนป้ายกำกับสายสัญญาณ (Cable Label) ที่ถูกต้องตามมาตรฐาน Data Center คือข้อใด?', 'การติดป้ายกำกับสาย LAN และสายไฟเบอร์ที่เพิ่งเดินใหม่ในตู้เซิร์ฟเวอร์', 'easy', 'multiple_choice', 'ป้าย Label มาตรฐานต้องติดที่ปลายสายทั้งสองฝั่ง โดยระบุทั้งตำแหน่งต้นทาง (A-End: Rack, U, Device, Port) และตำแหน่งปลายทาง (Z-End: Rack, U, Device, Port) เพื่อให้รู้ทันทีว่าสายมาจากไหนและไปที่ไหน', '{datacenter,labeling,cabling,operations}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('10ee6d5a-fcd8-4f5b-a1ba-bcfb8d54577e', 'datacenter:09-dcim:q04', 10, '14d01b82-65c5-4700-b72d-d0b9e1d84c75', 'เมื่อตรวจสอบค่าแสงของหัวไฟเบอร์ SFP+ บนสวิตช์ผ่านฟีเจอร์ DOM/DDM พบว่าพอร์ต Te1/0/2 มีค่า "Tx Power = -2.1 dBm" แต่ค่า "Rx Power = -39.5 dBm (Low Alarm)" และพอร์ตไม่ขึ้น Link สาเหตุใดเป็นไปได้มากที่สุด?', 'การวิเคราะห์ปัญหาไฟเบอร์ออปติกด้วยตัวเลขความเข้มแสง dBm', 'medium', 'multiple_choice', 'ค่า Tx Power (-2.1 dBm) ปกติ แปลว่าหัว SFP ฝั่งเราปล่อยแสงออกปกติ แต่ Rx Power (-39.5 dBm คือแทบไม่มีแสงเข้ามาเลย) แปลว่าแสงจากฝั่งตรงข้ามมาไม่ถึงเรา เช่น สายไฟเบอร์ขาเข้าขาด, หลุด, เสียบสลับขั้ว หรือหัว SFP ฝั่งตรงข้ามดับ', '{datacenter,fiber,dom,ddm,troubleshooting}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('5e77e5f5-b2a6-4ef7-b604-cd1bb221d8de', 'datacenter:10-ops:q01', 10, '4239ddec-0437-4d0e-9b43-7cf2d26d3c23', 'เหตุใดศูนย์ข้อมูลมาตรฐานสากลจึงมีกฎห้ามนำ "กล่องกระดาษลูกฟูก (Cardboard Boxes)" เข้าไปในห้องเซิร์ฟเวอร์ (Data Hall) โดยต้องแกะอุปกรณ์ออกจากกล่องตั้งแต่ห้องพักของด้านนอกเสมอ?', 'กฎระเบียบความปลอดภัยและความสะอาดภายในห้อง Data Hall', 'easy', 'multiple_choice', 'กล่องกระดาษลูกฟูกเป็นแหล่งกำเนิดฝุ่นละอองและเส้นใยกระดาษที่ปลิวเข้าไปอุดตันแผ่นกรองแอร์และพัดลมเซิร์ฟเวอร์ อีกทั้งยังเป็นเชื้อเพลิงติดไฟง่าย (Fire Hazard) ที่อันตรายในห้องเซิร์ฟเวอร์', '{datacenter,safety,operations,fire-safety}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('89c6c052-d4f4-417e-b26f-b8dc659a4deb', 'datacenter:10-ops:q02', 10, '4239ddec-0437-4d0e-9b43-7cf2d26d3c23', 'มาตรฐานศูนย์ข้อมูลระดับ "Tier III (Concurrently Maintainable)" มีคุณสมบัติเด่นที่แตกต่างจาก Tier I และ Tier II อย่างไร?', 'การทำความเข้าใจระดับมาตรฐาน Uptime Institute Tier', 'medium', 'multiple_choice', 'คำว่า Concurrently Maintainable ของ Tier III หมายถึง มีเส้นทางจ่ายไฟและระบบทำความเย็นสำรองที่ช่วยให้สามารถปิดซ่อมบำรุงอุปกรณ์ชิ้นใดชิ้นหนึ่งตามแผนได้ "โดยไม่ต้องหยุดการทำงานของเซิร์ฟเวอร์ในศูนย์ข้อมูลเลย"', '{datacenter,tier,uptime,redundancy}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('8dc5b9d6-8e1f-4760-a9dd-dc4539c06fad', 'datacenter:10-ops:q03', 10, '4239ddec-0437-4d0e-9b43-7cf2d26d3c23', 'ก่อนที่จะเปิดฝาเครื่องเซิร์ฟเวอร์เพื่อเปลี่ยนแผงหน่วยความจำ (RAM) หรือเมนบอร์ด ช่างเทคนิคต้องปฏิบัติสิ่งใดเพื่อป้องกันไม่ให้ชิปอิเล็กทรอนิกส์เสียหายจากร่างกายของช่าง?', 'ขั้นตอนความปลอดภัยพื้นฐานในการซ่อมบำรุงฮาร์ดแวร์', 'easy', 'multiple_choice', 'ต้องสวมสายรัดข้อมือป้องกันไฟฟ้าสถิต (ESD Wrist Strap) และต่อสายกราวด์เข้ากับโครงโลหะของตู้แร็ค เพื่อคายประจุไฟฟ้าสถิตจากร่างกายลงดินก่อนสัมผัสแผงวงจร', '{datacenter,esd,hardware,safety}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('3c363e7c-9f30-455c-b6db-be46fb48c093', 'datacenter:10-ops:q04', 10, '4239ddec-0437-4d0e-9b43-7cf2d26d3c23', 'หากศูนย์ข้อมูลแห่งหนึ่งใช้พลังงานไฟฟ้ารวมทั้งอาคาร (Total Facility Power) เท่ากับ 1,500 kW โดยเป็นพลังงานที่ใช้กับเครื่องเซิร์ฟเวอร์และอุปกรณ์ไอที (IT Equipment Power) เท่ากับ 1,000 kW ค่า PUE ของศูนย์ข้อมูลนี้มีค่าเท่าใด?', 'การคำนวณดัชนีวัดประสิทธิภาพการใช้พลังงานของ Data Center', 'medium', 'multiple_choice', 'สูตร PUE = Total Facility Power / IT Equipment Power = 1,500 / 1,000 = 1.5 (ยิ่งเข้าใกล้ 1.0 ยิ่งประหยัดพลังงาน)', '{datacenter,pue,power,calculation}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
+INSERT INTO public.questions VALUES ('7a926c05-18f5-464f-b5ad-6fe69d1f02a7', 'datacenter:10-ops:q05', 10, '4239ddec-0437-4d0e-9b43-7cf2d26d3c23', 'เอกสาร "MOP (Method of Procedure)" ที่ใช้ในการขออนุมัติทำงานเปลี่ยนแปลงระบบใน Data Center มีองค์ประกอบสำคัญที่ไม่สามารถขาดได้คือส่วนใด เพื่อรองรับกรณีที่การเปลี่ยนแปลงล้มเหลว?', 'การเตรียมเอกสาร Change Management ก่อนเข้าช่วง Maintenance Window', 'easy', 'multiple_choice', 'ทุก MOP ต้องมี Rollback Plan (แผนการย้อนกลับสู่สภาพเดิม) ที่ชัดเจนและระบุเวลาตัดสินใจ (Cut-off time) เพื่อให้มั่นใจว่าหากเกิดปัญหาที่ไม่คาดคิด ระบบจะถูกกู้คืนกลับสู่สภาพปกติได้ทันก่อนหมดเวลา Maintenance', '{datacenter,mop,change-management,rollback}', true, '2026-11-10 12:41:13.45737+00', '2026-11-10 12:41:13.45737+00');
 
 
 --
