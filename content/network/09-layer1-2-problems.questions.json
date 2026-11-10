@@ -1,0 +1,162 @@
+[
+  {
+    "seed_key": "network:09-l1l2:q01",
+    "lesson_slug": "network-layer1-2-problems",
+    "question_text": "ปัญหา 'Duplex Mismatch' ระหว่างสองอุปกรณ์ (ฝั่งหนึ่งเป็น Full-Duplex อีกฝั่งเป็น Half-Duplex) จะส่งผลกระทบและแสดงอาการแบบใดที่ชัดเจนที่สุดในระบบเครือข่าย?",
+    "scenario_text": "ผู้ใช้งานแจ้งว่าการทดสอบปิงขนาดเล็ก (ping) ผ่านปกติ แต่เมื่อเริ่มดาวน์โหลดหรืออัปโหลดไฟล์ขนาดใหญ่ ความเร็วจะตกต่ำมากและมี Packet Loss สูง",
+    "difficulty": "medium",
+    "question_type": "multiple_choice",
+    "explanation": "เมื่อ Traffic น้อย ปัญหาจะไม่ชัดเจน แต่เมื่อเริ่มมีข้อมูลวิ่งเยอะ ฝั่ง Half-duplex จะมองว่ามีการส่งสวนทางจึงนึกว่าเกิด Collision แล้วส่ง Jam signal สั่งหยุดส่ง ทำให้เกิด Late Collisions และ Packet Loss มหาศาล",
+    "tags": ["network", "duplex", "layer1", "troubleshooting", "collisions"],
+    "choices": [
+      {
+        "choice_text": "เกิด Late Collisions จำนวนมาก และมี Packet Loss สูงมากเมื่อมีการรับส่งข้อมูลปริมาณมาก",
+        "is_correct": true,
+        "explanation": "ถูกต้อง นี่คืออาการจำเพาะของ Duplex Mismatch"
+      },
+      {
+        "choice_text": "พอร์ตจะดับ (down/down) สนิททันทีตั้งแต่เริ่มเสียบสาย",
+        "is_correct": false,
+        "explanation": "ผิด พอร์ตจะยังขึ้น up/up และใช้งานได้ช้าๆ"
+      },
+      {
+        "choice_text": "เครื่องลูกข่ายจะได้รับไอพีเป็น 169.254.x.x เสมอ",
+        "is_correct": false,
+        "explanation": "ผิด ไม่เกี่ยวกับ APIPA"
+      },
+      {
+        "choice_text": "สวิตช์จะปิดระบบดับเพลิงในห้องเซิร์ฟเวอร์",
+        "is_correct": false,
+        "explanation": "ผิด ไม่เกี่ยวข้องกัน"
+      }
+    ]
+  },
+  {
+    "seed_key": "network:09-l1l2:q02",
+    "lesson_slug": "network-layer1-2-problems",
+    "question_text": "อะไรคือสาเหตุหลักที่ทำให้เกิด 'Broadcast Storm' บนเครือข่าย Layer 2 และเหตุใดมันจึงไม่หยุดวนเวียนจนกระทั่งเน็ตเวิร์กล่ม?",
+    "scenario_text": "จู่ๆ สวิตช์ทั้งออฟฟิศไฟกะพริบถี่พร้อมกัน และผู้ใช้ทุกคนหลุดจากเครือข่ายทั้งหมด",
+    "difficulty": "medium",
+    "question_type": "multiple_choice",
+    "explanation": "เกิดจากมี Loop ในสายเชื่อมต่อของ Switch และเนื่องจาก Ethernet Frame ใน Layer 2 'ไม่มีฟิลด์ TTL (Time-to-Live)' เฟรมบรอดคาสต์จึงถูกส่งกระจายวนเวียนซ้ำไปมาอย่างไม่มีที่สิ้นสุดจนแบนด์วิดท์และ CPU เต็ม",
+    "tags": ["network", "broadcast-storm", "stp", "switching-loop"],
+    "choices": [
+      {
+        "choice_text": "เกิด Loop ทางกายภาพใน Switch และ Ethernet Frame ไม่มีฟิลด์ TTL จึงวนเวียนไม่สิ้นสุด",
+        "is_correct": true,
+        "explanation": "ถูกต้อง เพราะ Layer 2 ไม่มี TTL มาคอยตัดรอบเหมือน Layer 3 IP Packet"
+      },
+      {
+        "choice_text": "เกิดจากมีคนตั้งค่า Default Gateway ซ้ำกันเกิน 2 เครื่อง",
+        "is_correct": false,
+        "explanation": "ผิด Gateway ชนกันไม่ทำให้เกิด Broadcast Storm ระดับสวิตช์ล่ม"
+      },
+      {
+        "choice_text": "เกิดจากสายไฟเบอร์ถูกดัดงอเกินรัศมี Bend Radius",
+        "is_correct": false,
+        "explanation": "ผิด สัญญาณแสงดรอปไม่ทำให้เกิด Storm"
+      },
+      {
+        "choice_text": "เกิดจากระบบ DNS มีการตั้งค่า TTL เป็น 0",
+        "is_correct": false,
+        "explanation": "ผิด DNS TTL คือการแคชชื่อโดเมน ไม่เกี่ยวกับ Ethernet Frame loop"
+      }
+    ]
+  },
+  {
+    "seed_key": "network:09-l1l2:q03",
+    "lesson_slug": "network-layer1-2-problems",
+    "question_text": "โปรโตคอลใดทำหน้าที่ป้องกันการเกิด Switching Loop ในระบบเครือข่าย Ethernet สวิตช์?",
+    "scenario_text": "ความรู้เรื่องโปรโตคอลมาตรฐานของ Switch",
+    "difficulty": "easy",
+    "question_type": "multiple_choice",
+    "explanation": "STP (Spanning Tree Protocol - IEEE 802.1D / 802.1w RSTP) ทำหน้าที่ตรวจจับและบล็อกพอร์ตที่เป็นเส้นทางสำรองเพื่อป้องกันไม่ให้เกิด Loop",
+    "tags": ["network", "stp", "switching", "loop-prevention"],
+    "choices": [
+      {
+        "choice_text": "STP (Spanning Tree Protocol)",
+        "is_correct": true,
+        "explanation": "ถูกต้อง STP คือโปรโตคอลหลักในการป้องกัน Switching Loop"
+      },
+      {
+        "choice_text": "BGP (Border Gateway Protocol)",
+        "is_correct": false,
+        "explanation": "ผิด BGP คือโปรโตคอล Routing บนอินเทอร์เน็ต"
+      },
+      {
+        "choice_text": "SNMP (Simple Network Management Protocol)",
+        "is_correct": false,
+        "explanation": "ผิด SNMP ใช้สำหรับ Monitoring ตรวจสอบอุปกรณ์"
+      },
+      {
+        "choice_text": "OSPF (Open Shortest Path First)",
+        "is_correct": false,
+        "explanation": "ผิด OSPF คือโปรโตคอล Dynamic Routing ใน Layer 3"
+      }
+    ]
+  },
+  {
+    "seed_key": "network:09-l1l2:q04",
+    "lesson_slug": "network-layer1-2-problems",
+    "question_text": "ฟีเจอร์ความปลอดภัย 'BPDU Guard' บน Cisco Switch มีหน้าที่สำคัญอย่างไรเมื่อใช้งานคู่กับพอร์ตที่เปิด PortFast?",
+    "scenario_text": "การตั้งค่าความปลอดภัยของพอร์ตที่เชื่อมต่อเครื่องลูกข่ายหรือเซิร์ฟเวอร์",
+    "difficulty": "medium",
+    "question_type": "multiple_choice",
+    "explanation": "หากมีใครนำ Switch ตัวอื่นมาเสียบเข้าพอร์ตที่เปิด PortFast สวิตช์จะได้รับแพ็กเก็ต BPDU ซึ่ง BPDU Guard จะสั่งปิดพอร์ตนั้นทันที (เข้าสู่สถานะ err-disabled) เพื่อป้องกันไม่ให้เกิด Switching Loop หรือแย่งชิงสิทธิ์ Root Bridge",
+    "tags": ["network", "cisco", "stp", "bpdu-guard", "portfast"],
+    "choices": [
+      {
+        "choice_text": "หากมีเฟรม BPDU ส่งเข้ามาที่พอร์ตนั้น สวิตช์จะสั่งปิดพอร์ตทันที (err-disabled) เพื่อป้องกันการต่อสวิตช์เถื่อนมาทำ Loop",
+        "is_correct": true,
+        "explanation": "ถูกต้อง BPDU Guard ปกป้องพอร์ต edge ไม่ให้มีอุปกรณ์สวิตช์อื่นมาเชื่อมต่อ"
+      },
+      {
+        "choice_text": "ช่วยเพิ่มความเร็วในการดาวน์โหลดไฟล์ของพอร์ตนั้นเป็น 2 เท่า",
+        "is_correct": false,
+        "explanation": "ผิด ไม่ได้เพิ่มความเร็ว"
+      },
+      {
+        "choice_text": "ทำการสำรองข้อมูลการคอนฟิกเก็บไว้ใน Flash memory อัตโนมัติ",
+        "is_correct": false,
+        "explanation": "ผิด ไม่เกี่ยวกับแบ็กอัปคอนฟิก"
+      },
+      {
+        "choice_text": "อนุญาตให้พอร์ตนั้นรองรับเฉพาะการต่อสายไฟเบอร์ออปติกเท่านั้น",
+        "is_correct": false,
+        "explanation": "ผิด ใช้ได้ทั้งสายทองแดงและสายไฟเบอร์"
+      }
+    ]
+  },
+  {
+    "seed_key": "network:09-l1l2:q05",
+    "lesson_slug": "network-layer1-2-problems",
+    "question_text": "หากต้องการรวมสายสัญญาณ Gigabit Ethernet 2 เส้นระหว่าง Server กับ Switch เพื่อเพิ่ม Bandwidth และทำ Redundancy สำรองสาย ต้องใช้โปรโตคอลมาตรฐานสากลใด?",
+    "scenario_text": "การตั้งค่า Network Teaming / Bonding ของเซิร์ฟเวอร์ในศูนย์ข้อมูล",
+    "difficulty": "easy",
+    "question_type": "multiple_choice",
+    "explanation": "LACP (Link Aggregation Control Protocol ตามมาตรฐาน IEEE 802.3ad) คือโปรโตคอลมาตรฐานสากลสำหรับการเจรจารวมพอร์ตทางกายภาพเข้าเป็น Port-Channel หรือ Bond เดียวกัน",
+    "tags": ["network", "lacp", "bonding", "link-aggregation"],
+    "choices": [
+      {
+        "choice_text": "LACP (Link Aggregation Control Protocol - IEEE 802.3ad)",
+        "is_correct": true,
+        "explanation": "ถูกต้อง LACP คือมาตรฐานเปิดที่รองรับการรวมสายข้ามยี่ห้อ"
+      },
+      {
+        "choice_text": "VTP (VLAN Trunking Protocol)",
+        "is_correct": false,
+        "explanation": "ผิด VTP ใช้ซิงค์ฐานข้อมูล VLAN"
+      },
+      {
+        "choice_text": "CDP (Cisco Discovery Protocol)",
+        "is_correct": false,
+        "explanation": "ผิด CDP ใช้ค้นหาอุปกรณ์ข้างเคียง"
+      },
+      {
+        "choice_text": "HSRP (Hot Standby Router Protocol)",
+        "is_correct": false,
+        "explanation": "ผิด HSRP คือการสำรอง Default Gateway ของ Router"
+      }
+    ]
+  }
+]

@@ -1,0 +1,162 @@
+[
+  {
+    "seed_key": "network:10-pcap:q01",
+    "lesson_slug": "network-packet-capture-tcpdump",
+    "question_text": "ในการใช้งานคำสั่ง tcpdump บนเซิร์ฟเวอร์ Linux เหตุใดจึงแนะนำอย่างยิ่งให้ใส่แฟล็ก '-nn' ร่วมด้วยเสมอ?",
+    "scenario_text": "การใช้งานคำสั่งดักจับแพ็กเก็ตอย่างปลอดภัยและมีประสิทธิภาพ",
+    "difficulty": "easy",
+    "question_type": "multiple_choice",
+    "explanation": "แฟล็ก -nn สั่งให้ tcpdump ไม่ต้องพยายามแปลง IP Address เป็น Hostname และไม่ต้องแปลง Port เป็นชื่อบริการ ซึ่งช่วยป้องกันไม่ให้ระบบส่ง DNS Query เพิ่มเติมจนทำให้ผลลัพธ์ช้าหรือหน้าจอค้าง",
+    "tags": ["network", "tcpdump", "cli", "packet-capture"],
+    "choices": [
+      {
+        "choice_text": "เพื่อป้องกันไม่ให้ tcpdump พยายามแปลง IP เป็น Hostname และแปลง Port เป็นชื่อบริการ ซึ่งทำให้ผลลัพธ์แสดงได้รวดเร็วและไม่รบกวน DNS",
+        "is_correct": true,
+        "explanation": "ถูกต้อง -n ปิดการ Resolve IP, -nn ปิดการ Resolve ทั้ง IP และ Port"
+      },
+      {
+        "choice_text": "เพื่อเปิดการเข้ารหัสข้อมูลที่ดักจับได้ด้วยมาตรฐาน AES-256",
+        "is_correct": false,
+        "explanation": "ผิด tcpdump ไม่ได้เข้ารหัสไฟล์ด้วยแฟล็กนี้"
+      },
+      {
+        "choice_text": "เพื่อจำกัดให้ดักจับเฉพาะแพ็กเก็ตที่เป็นไวรัสเท่านั้น",
+        "is_correct": false,
+        "explanation": "ผิด tcpdump ดักจับแพ็กเก็ตตามฟิลเตอร์ ไม่ใช่โปรแกรมแอนตี้ไวรัส"
+      },
+      {
+        "choice_text": "เพื่อสั่งให้ระบบจำลองการส่งข้อมูลเสมือนโดยไม่ต้องแตะการ์ดแลนจริง",
+        "is_correct": false,
+        "explanation": "ผิด tcpdump ดักฟังจากการ์ดแลนจริง"
+      }
+    ]
+  },
+  {
+    "seed_key": "network:10-pcap:q02",
+    "lesson_slug": "network-packet-capture-tcpdump",
+    "question_text": "ในผลลัพธ์ของ tcpdump หากเห็นเครื่องต้นทางส่งแพ็กเก็ตที่มี 'Flags [S]' ออกไปซ้ำๆ แต่ไม่มีแพ็กเก็ตใดตอบกลับมาเลย พฤติกรรมนี้บ่งบอกถึงสาเหตุใดมากที่สุด?",
+    "scenario_text": "ช่างเทคนิคกำลังตรวจสอบว่าทำไมระบบ Web Application จึงเชื่อมต่อไปยังหลังบ้านไม่ได้",
+    "difficulty": "medium",
+    "question_type": "multiple_choice",
+    "explanation": "Flags [S] คือการส่ง SYN เพื่อขอเริ่มทำ 3-Way Handshake หากส่งซ้ำๆ (SYN Retransmission) โดยไม่มี SYN-ACK หรือ RST ตอบกลับมาเลย แสดงว่าแพ็กเก็ตถูกทิ้งเงียบๆ (Drop/Timeout) โดย Firewall หรือเครื่องปลายทางล่มสนิท",
+    "tags": ["network", "tcp", "tcpdump", "handshake", "firewall"],
+    "choices": [
+      {
+        "choice_text": "แพ็กเก็ตถูกบล็อกหรือถูกทิ้ง (DROP) โดย Firewall หรือเครื่องปลายทางปิดเครื่องอยู่",
+        "is_correct": true,
+        "explanation": "ถูกต้อง หากโดน DROP จะไม่มีการตอบกลับใดๆ ทำให้เครื่องต้นทางส่ง SYN ซ้ำจนกระทั่ง Connection timed out"
+      },
+      {
+        "choice_text": "การเชื่อมต่อสำเร็จสมบูรณ์และกำลังดาวน์โหลดไฟล์",
+        "is_correct": false,
+        "explanation": "ผิด ถ้าสำเร็จต้องมี [S.] และ [.] ตอบกลับมา"
+      },
+      {
+        "choice_text": "เครื่องปลายทางตอบปฏิเสธการเชื่อมต่อด้วย Connection Refused",
+        "is_correct": false,
+        "explanation": "ผิด หากปฏิเสธ ปลายทางจะส่ง Flags [R] (RST) สวนกลับมา ไม่ใช่เงียบหาย"
+      },
+      {
+        "choice_text": "สายแลนของเครื่องต้นทางหลุดออกจากเครื่องตนเอง",
+        "is_correct": false,
+        "explanation": "ผิด หากสายหลุดตั้งแต่เครื่องตัวเอง tcpdump จะไม่เห็นแพ็กเก็ตส่งออกไปได้"
+      }
+    ]
+  },
+  {
+    "seed_key": "network:10-pcap:q03",
+    "lesson_slug": "network-packet-capture-tcpdump",
+    "question_text": "หากเครื่องต้นทางส่งแพ็กเก็ต 'Flags [S]' (SYN) ออกไป แล้วได้รับแพ็กเก็ตที่มี 'Flags [R]' (RST / Reset) ตอบกลับมาในทันที ข้อสรุปใดถูกต้องที่สุด?",
+    "scenario_text": "การแยกแยะอาการระหว่าง Connection Timed Out กับ Connection Refused ด้วย Packet Capture",
+    "difficulty": "medium",
+    "question_type": "multiple_choice",
+    "explanation": "การได้รับ RST กลับมาแสดงว่าเส้นทางเครือข่ายและ Firewall ปล่อยให้แพ็กเก็ตผ่านไปถึงเครื่องปลายทางเรียบร้อยแล้ว แต่ที่เครื่องปลายทางไม่มีแอปพลิเคชันเปิดดักฟัง (Listen) อยู่ที่พอร์ตนั้น OS จึงปฏิเสธการเชื่อมต่อกลับมา",
+    "tags": ["network", "tcp", "tcp-flags", "reset", "troubleshooting"],
+    "choices": [
+      {
+        "choice_text": "เครือข่ายส่งข้อมูลถึงปลายทางได้ปกติ แต่ไม่มี Service หรือ Application เปิดรันรองรับอยู่ที่พอร์ตนั้น (Connection Refused)",
+        "is_correct": true,
+        "explanation": "ถูกต้อง RST เป็นสัญญาณว่าเครื่องปลายทางยังมีชีวิตอยู่แต่ไม่มีโปรแกรมเปิดฟังพอร์ตนั้น"
+      },
+      {
+        "choice_text": "สายแลนระหว่างทางขาดใน",
+        "is_correct": false,
+        "explanation": "ผิด หากสายขาดจะไม่มีแพ็กเก็ต RST ส่งสวนกลับมาหาเราได้"
+      },
+      {
+        "choice_text": "Firewall กำลังทำการทิ้งข้อมูลทั้งหมด",
+        "is_correct": false,
+        "explanation": "ผิด Firewall drop มักทำให้แพ็กเก็ตเงียบหายไป (Timed out)"
+      },
+      {
+        "choice_text": "ฮาร์ดดิสก์ของเครื่องต้นทางเสีย",
+        "is_correct": false,
+        "explanation": "ผิด ไม่เกี่ยวกับฮาร์ดดิสก์"
+      }
+    ]
+  },
+  {
+    "seed_key": "network:10-pcap:q04",
+    "lesson_slug": "network-packet-capture-tcpdump",
+    "question_text": "คำสั่ง tcpdump ในข้อใดถูกต้องในการดักจับแพ็กเก็ตบนการ์ดแลน eth0 เฉพาะพอร์ต 443 จำนวน 50 แพ็กเก็ต แล้วบันทึกลงไฟล์ชื่อ /tmp/ssl_test.pcap โดยไม่ Resolve ชื่อ?",
+    "scenario_text": "การดึงหลักฐานเพื่อนำไปวิเคราะห์ปัญหา SSL Handshake บน Wireshark",
+    "difficulty": "easy",
+    "question_type": "multiple_choice",
+    "explanation": "ไวยากรณ์ที่ถูกต้องคือ tcpdump -nn -i eth0 port 443 -c 50 -w /tmp/ssl_test.pcap",
+    "tags": ["network", "tcpdump", "cli", "pcap"],
+    "choices": [
+      {
+        "choice_text": "sudo tcpdump -nn -i eth0 port 443 -c 50 -w /tmp/ssl_test.pcap",
+        "is_correct": true,
+        "explanation": "ถูกต้อง มีครบทั้ง -nn, -i eth0, port 443, -c 50 และ -w ชี้ชื่อไฟล์"
+      },
+      {
+        "choice_text": "sudo tcpdump -i eth0 --save /tmp/ssl_test.pcap 443",
+        "is_correct": false,
+        "explanation": "ผิด tcpdump ไม่มีแฟล็ก --save (ต้องใช้ -w)"
+      },
+      {
+        "choice_text": "sudo tcpdump --port=443 --count=50 > /tmp/ssl_test.pcap",
+        "is_correct": false,
+        "explanation": "ผิด ไวยากรณ์ไม่ถูกต้องและใช้ redirection ธรรมดาจะทำให้ไฟล์ pcap เสียหาย"
+      },
+      {
+        "choice_text": "sudo tcpdump -r /tmp/ssl_test.pcap port 443",
+        "is_correct": false,
+        "explanation": "ผิด แฟล็ก -r ใช้สำหรับอ่านไฟล์ย้อนหลัง ไม่ใช่บันทึกไฟล์ใหม่"
+      }
+    ]
+  },
+  {
+    "seed_key": "network:10-pcap:q05",
+    "lesson_slug": "network-packet-capture-tcpdump",
+    "question_text": "ในโปรแกรม Wireshark หากต้องการวิเคราะห์ข้อความหรือข้อมูลดิบที่แอปพลิเคชันคุยกันในเซสชัน TCP ตั้งแต่เริ่มจนจบการเชื่อมต่ออย่างต่อเนื่อง ควรใช้ฟีเจอร์ใด?",
+    "scenario_text": "การแกะดูเนื้อหาคำสั่ง HTTP หรือข้อความที่มีปัญหาใน Wireshark",
+    "difficulty": "easy",
+    "question_type": "multiple_choice",
+    "explanation": "การคลิกขวาที่แพ็กเก็ตแล้วเลือก 'Follow -> TCP Stream' จะช่วยให้ Wireshark รวม Segment ทั้งหมดมารวบเป็นบทสนทนาแบบอ่านง่าย (เช่น ข้อความ HTTP Request และ Response ทั้งหมด)",
+    "tags": ["network", "wireshark", "tcp-stream", "packet-analysis"],
+    "choices": [
+      {
+        "choice_text": "คลิกขวาที่แพ็กเก็ตแล้วเลือก Follow -> TCP Stream",
+        "is_correct": true,
+        "explanation": "ถูกต้อง Follow TCP Stream ใช้ประกอบข้อมูลทั้งเซสชันออกมาเป็นข้อความอ่านต่อเนื่อง"
+      },
+      {
+        "choice_text": "เลือกเมนู File -> Export Objects -> JSON",
+        "is_correct": false,
+        "explanation": "ผิด ไม่ใช่การอ่านสตรีมข้อมูล TCP"
+      },
+      {
+        "choice_text": "คลิกเลือก Apply as Filter -> Selected MAC",
+        "is_correct": false,
+        "explanation": "ผิด เป็นเพียงการกรอง MAC Address"
+      },
+      {
+        "choice_text": "กดปุ่ม Restart Capture ทันที",
+        "is_correct": false,
+        "explanation": "ผิด จะเป็นการเริ่มดักจับใหม่และล้างข้อมูลเก่า"
+      }
+    ]
+  }
+]

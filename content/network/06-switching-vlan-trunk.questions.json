@@ -1,0 +1,162 @@
+[
+  {
+    "seed_key": "network:06-vlan:q01",
+    "lesson_slug": "network-switching-vlan-trunk",
+    "question_text": "เครื่อง Server A (IP 192.168.10.5) เสียบเข้าพอร์ต Gi0/1 (VLAN 10) และเครื่อง Server B (IP 192.168.20.5) เสียบเข้าพอร์ต Gi0/2 (VLAN 20) บน Switch ตัวเดียวกัน ทั้งสองเครื่องไม่สามารถ ping หากันได้เพราะสาเหตุใด?",
+    "scenario_text": "ช่างเทคนิคเสียบเซิร์ฟเวอร์สองตัวเข้าที่สวิตช์ตัวเดียวกัน แล้วสงสัยว่าทำไมปิงไม่ติด",
+    "difficulty": "medium",
+    "question_type": "multiple_choice",
+    "explanation": "เครื่องที่อยู่คนละ VLAN จะถูกแยก Broadcast Domain ออกจากกันอย่างเด็ดขาดที่ Layer 2 แม้จะอยู่บนสวิตช์ฮาร์ดแวร์ตัวเดียวกัน หากต้องการสื่อสารข้าม VLAN จะต้องมีอุปกรณ์ Layer 3 (Router หรือ L3 Switch) ทำหน้าที่ Inter-VLAN Routing",
+    "tags": ["network", "vlan", "switching", "routing"],
+    "choices": [
+      {
+        "choice_text": "เพราะอยู่คนละ VLAN ซึ่งตัดขาดการสื่อสารที่ Layer 2 ต้องอาศัย Router หรือ L3 Switch ในการส่งต่อ (Inter-VLAN Routing)",
+        "is_correct": true,
+        "explanation": "ถูกต้อง VLAN ทำหน้าที่แยกบรอดคาสต์โดเมน หากไม่มีอุปกรณ์ Layer 3 จะไม่สามารถคุยข้ามกันได้"
+      },
+      {
+        "choice_text": "เพราะสายสัญญาณของ Server B ขาดใน",
+        "is_correct": false,
+        "explanation": "ผิด ไม่ใช่สาเหตุหลัก เพราะทั้งสองตั้งใจอยู่คนละ VLAN"
+      },
+      {
+        "choice_text": "เพราะพอร์ตสวิตช์ต้องปรับเป็นโหมด Trunk ทั้งคู่",
+        "is_correct": false,
+        "explanation": "ผิด เซิร์ฟเวอร์ทั่วไปเชื่อมต่อด้วยพอร์ต Access ไม่ใช่ Trunk"
+      },
+      {
+        "choice_text": "เพราะสวิตช์ตัวเดียวกันไม่สามารถสร้างมากกว่า 1 VLAN ได้",
+        "is_correct": false,
+        "explanation": "ผิด สวิตช์สามารถสร้างได้หลาย VLAN (ปกติได้สูงสุด 4094 VLANs)"
+      }
+    ]
+  },
+  {
+    "seed_key": "network:06-vlan:q02",
+    "lesson_slug": "network-switching-vlan-trunk",
+    "question_text": "มาตรฐานสากลที่ใช้ในการแปะหัว Tag ขนาด 4 bytes ลงใน Ethernet Frame เพื่อระบุหมายเลข VLAN บนพอร์ต Trunk คือมาตรฐานใด?",
+    "scenario_text": "คำถามมาตรฐานในข้อสอบ Network Certification",
+    "difficulty": "easy",
+    "question_type": "multiple_choice",
+    "explanation": "IEEE 802.1Q (หรือเรียกสั้นๆ ว่า Dot1q) คือมาตรฐานสากลสำหรับการทำ VLAN Tagging บนพอร์ต Trunk",
+    "tags": ["network", "vlan", "standards", "trunk"],
+    "choices": [
+      {
+        "choice_text": "IEEE 802.1Q (Dot1q)",
+        "is_correct": true,
+        "explanation": "ถูกต้อง 802.1Q คือมาตรฐานอุตสาหกรรมสำหรับการแท็ก VLAN"
+      },
+      {
+        "choice_text": "IEEE 802.3ad",
+        "is_correct": false,
+        "explanation": "ผิด 802.3ad คือมาตรฐาน LACP (Link Aggregation)"
+      },
+      {
+        "choice_text": "IEEE 802.11ax",
+        "is_correct": false,
+        "explanation": "ผิด 802.11ax คือ Wi-Fi 6"
+      },
+      {
+        "choice_text": "IEEE 802.1D",
+        "is_correct": false,
+        "explanation": "ผิด 802.1D คือ Spanning Tree Protocol (STP)"
+      }
+    ]
+  },
+  {
+    "seed_key": "network:06-vlan:q03",
+    "lesson_slug": "network-switching-vlan-trunk",
+    "question_text": "เมื่อมีเฟรมที่ 'ไม่มี Tag' (Untagged Frame) วิ่งเข้ามาที่พอร์ต Trunk สวิตช์จะจัดการกับเฟรมนั้นอย่างไร?",
+    "scenario_text": "การทำความเข้าใจหลักการ Native VLAN บนพอร์ต Trunk",
+    "difficulty": "medium",
+    "question_type": "multiple_choice",
+    "explanation": "พอร์ต Trunk จะส่งต่อเฟรมที่ไม่มี Tag ไปยัง 'Native VLAN' (ซึ่งค่าเริ่มต้นบนสวิตช์มักเป็น VLAN 1)",
+    "tags": ["network", "vlan", "trunk", "native-vlan"],
+    "choices": [
+      {
+        "choice_text": "ส่งต่อเฟรมนั้นเข้าสู่ 'Native VLAN' ที่กำหนดไว้ของพอร์ตนั้น",
+        "is_correct": true,
+        "explanation": "ถูกต้อง เฟรม Untagged จะถูกส่งเข้า Native VLAN อัตโนมัติ"
+      },
+      {
+        "choice_text": "สวิตช์จะทิ้ง (Drop) เฟรมนั้นทันทีเพราะพอร์ต Trunk รับเฉพาะ Tagged Frame",
+        "is_correct": false,
+        "explanation": "ผิด พอร์ต Trunk ยอมรับ Untagged Frame ได้ 1 วง นั่นคือ Native VLAN"
+      },
+      {
+        "choice_text": "ส่งกระจายออกไปยังทุก VLAN ที่มีในสวิตช์",
+        "is_correct": false,
+        "explanation": "ผิด การส่งข้าม VLAN เป็นเรื่องต้องห้ามที่ Layer 2"
+      },
+      {
+        "choice_text": "สวิตช์จะแปลงเฟรมนั้นเป็นแพ็กเก็ต Layer 3 ทันที",
+        "is_correct": false,
+        "explanation": "ผิด สวิตช์ Layer 2 ไม่แปลงเฟรมเป็นแพ็กเก็ต"
+      }
+    ]
+  },
+  {
+    "seed_key": "network:06-vlan:q04",
+    "lesson_slug": "network-switching-vlan-trunk",
+    "question_text": "เมื่อ Switch ได้รับ Frame ที่มี Destination MAC Address ที่ 'ไม่มีอยู่ใน MAC Address Table' สวิตช์จะทำพฤติกรรมใด?",
+    "scenario_text": "กลไกการส่งต่อข้อมูลพื้นฐานของสวิตช์ (Switch Learning & Forwarding)",
+    "difficulty": "medium",
+    "question_type": "multiple_choice",
+    "explanation": "หากสวิตช์ไม่รู้จัก Destination MAC Address จะเกิดพฤติกรรมเรียกว่า 'Unknown Unicast Flooding' โดยสวิตช์จะส่งเฟรมนั้นออกไปยังทุกพอร์ตที่อยู่ใน VLAN เดียวกัน ยกเว้นพอร์ตที่รับเข้ามา",
+    "tags": ["network", "switching", "mac-table", "flooding"],
+    "choices": [
+      {
+        "choice_text": "Flooding: ส่งเฟรมนั้นออกไปทุกพอร์ตใน VLAN เดียวกัน ยกเว้นพอร์ตที่รับเฟรมเข้ามา",
+        "is_correct": true,
+        "explanation": "ถูกต้อง นี่คือกลไกพื้นฐานเพื่อให้ปลายทางได้รับข้อมูลและตอบกลับ สวิตช์จะได้เรียนรู้ MAC นั้น"
+      },
+      {
+        "choice_text": "Drop: ทิ้งเฟรมนั้นทันทีเพื่อความปลอดภัยของเครือข่าย",
+        "is_correct": false,
+        "explanation": "ผิด สวิตช์จะไม่ทิ้ง แต่จะส่งกระจาย (Flooding)"
+      },
+      {
+        "choice_text": "ส่งเฟรมนั้นไปยัง Default Gateway เสมอ",
+        "is_correct": false,
+        "explanation": "ผิด สวิตช์ Layer 2 ส่งเฟรมด้วย MAC ไม่ส่งไปที่ Gateway เอง เว้นแต่เครื่องต้นทางจะระบุ MAC ของ Gateway มา"
+      },
+      {
+        "choice_text": "สวิตช์จะทำการยิงคำสั่ง Ping ไปตรวจสอบเครื่องปลายทาง",
+        "is_correct": false,
+        "explanation": "ผิด สวิตช์ไม่มีกลไกส่ง Ping อัตโนมัติเมื่อไม่พบ MAC"
+      }
+    ]
+  },
+  {
+    "seed_key": "network:06-vlan:q05",
+    "lesson_slug": "network-switching-vlan-trunk",
+    "question_text": "บนเครื่องเซิร์ฟเวอร์ Linux คำสั่งใดใช้สำหรับตรวจสอบตารางจับคู่ระหว่าง IP Address และ MAC Address (ARP Table)?",
+    "scenario_text": "การตรวจสอบปัญหาความขัดแย้งของเครือข่ายบนเครื่องลูกข่าย",
+    "difficulty": "easy",
+    "question_type": "multiple_choice",
+    "explanation": "บน Linux ยุคใหม่ใช้คำสั่ง 'ip neigh show' (ย่อมาจาก neighbor) หรือคำสั่งดั้งเดิม 'arp -an' เพื่อดูตาราง ARP Cache",
+    "tags": ["network", "arp", "linux", "commands"],
+    "choices": [
+      {
+        "choice_text": "ip neigh show (หรือ arp -an)",
+        "is_correct": true,
+        "explanation": "ถูกต้อง ip neigh แสดงตาราง Neighbor/ARP บน Linux"
+      },
+      {
+        "choice_text": "ip route show",
+        "is_correct": false,
+        "explanation": "ผิด ip route ใช้ดูตาราง Routing ไม่ใช่ ARP"
+      },
+      {
+        "choice_text": "ss -tulpn",
+        "is_correct": false,
+        "explanation": "ผิด ss ใช้ดูสถานะ Port และ Socket ไม่ใช่ ARP"
+      },
+      {
+        "choice_text": "ethtool eth0",
+        "is_correct": false,
+        "explanation": "ผิด ethtool ใช้ดูความเร็วและฮาร์ดแวร์ของการ์ดแลน"
+      }
+    ]
+  }
+]

@@ -126,5 +126,69 @@
         "explanation": "Loopback 127.0.0.1 ทำงานแยกกัน ไม่เกี่ยวกับ Default Gateway"
       }
     ]
+  },
+  {
+    "seed_key": "network:01-ip-subnetting:q05",
+    "lesson_slug": "network-ip-subnetting",
+    "question_text": "กำหนดให้ IP Address คือ 192.168.1.130/26 จงหา Network ID และ Broadcast IP ของ Subnet นี้?",
+    "scenario_text": "ข้อสอบคำนวณ Subnetting ภาคปฏิบัติในการคัดเลือก Junior Network Engineer",
+    "difficulty": "hard",
+    "question_type": "multiple_choice",
+    "explanation": "/26 มี Subnet Mask คือ 255.255.255.192 ขนาด Block Size = 256 - 192 = 64 ช่วงของ Subnet คือ: 0-63, 64-127, 128-191, 192-255 ตัวเลข .130 ตกอยู่ในช่วง 128-191 ดังนั้น Network ID คือ 192.168.1.128 และ Broadcast IP คือ 192.168.1.191 (Host ใช้งานได้คือ .129 ถึง .190)",
+    "tags": ["network", "subnetting", "cidr", "calculation"],
+    "choices": [
+      {
+        "choice_text": "Network ID: 192.168.1.128, Broadcast IP: 192.168.1.191",
+        "is_correct": true,
+        "explanation": "ถูกต้อง /26 มี Block Size ละ 64 ไอพี .130 อยู่ในช่วง .128 ถึง .191"
+      },
+      {
+        "choice_text": "Network ID: 192.168.1.0, Broadcast IP: 192.168.1.255",
+        "is_correct": false,
+        "explanation": "ผิด นั่นคือช่วงของ /24"
+      },
+      {
+        "choice_text": "Network ID: 192.168.1.64, Broadcast IP: 192.168.1.127",
+        "is_correct": false,
+        "explanation": "ผิด ช่วง .64-.127 ยังไม่ถึง .130"
+      },
+      {
+        "choice_text": "Network ID: 192.168.1.128, Broadcast IP: 192.168.1.255",
+        "is_correct": false,
+        "explanation": "ผิด Broadcast ของ /26 ต้องเป็น .191 ไม่ใช่ .255"
+      }
+    ]
+  },
+  {
+    "seed_key": "network:01-ip-subnetting:q06",
+    "lesson_slug": "network-ip-subnetting",
+    "question_text": "ต้องการจัดสรร Subnet ให้กับแผนกหนึ่งที่มีเครื่องคอมพิวเตอร์และเซิร์ฟเวอร์รวม 28 เครื่อง ควรเลือก Subnet Mask ขนาดใดที่ประหยัด IP ที่สุดและเพียงพอต่อการใช้งาน?",
+    "scenario_text": "การวางแผน Subnet ในการขยายสาขาใหม่ของบริษัท",
+    "difficulty": "medium",
+    "question_type": "multiple_choice",
+    "explanation": "ต้องการ 28 เครื่อง ต้องหา 2^n - 2 >= 28 ถ้า n=4 (2^4-2 = 14) ไม่พอ ถ้า n=5 (2^5-2 = 30 เครื่อง) เพียงพอ ดังนั้น Host bit = 5 บิต และ Prefix length = 32 - 5 = /27 (Mask 255.255.255.224)",
+    "tags": ["network", "subnetting", "cidr", "calculation"],
+    "choices": [
+      {
+        "choice_text": "/27 (255.255.255.224 รองรับได้ 30 เครื่อง)",
+        "is_correct": true,
+        "explanation": "ถูกต้อง /27 ให้ 30 Usable Hosts เพียงพอสำหรับ 28 เครื่องและประหยัดที่สุด"
+      },
+      {
+        "choice_text": "/28 (255.255.255.240 รองรับได้ 14 เครื่อง)",
+        "is_correct": false,
+        "explanation": "ผิด /28 ได้แค่ 14 เครื่อง ไม่พอสำหรับ 28 เครื่อง"
+      },
+      {
+        "choice_text": "/26 (255.255.255.192 รองรับได้ 62 เครื่อง)",
+        "is_correct": false,
+        "explanation": "แม้จะพอแต่เปลือง IP เกินความจำเป็น ไม่ใช่ตัวเลือกที่ประหยัดที่สุด"
+      },
+      {
+        "choice_text": "/29 (255.255.255.248 รองรับได้ 6 เครื่อง)",
+        "is_correct": false,
+        "explanation": "ผิด /29 ได้แค่ 6 เครื่อง"
+      }
+    ]
   }
 ]

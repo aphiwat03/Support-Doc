@@ -1,0 +1,42 @@
+[
+  {
+    "seed_key": "network:07-dhcp:fc01",
+    "lesson_slug": "network-dhcp-nat",
+    "front_text": "ขั้นตอน DORA ของโปรโตคอล DHCP ย่อมาจากอะไร และทำงานอย่างไร?",
+    "back_text": "D = Discover (เครื่องลูกข่ายส่ง Broadcast ถามหา DHCP)\nO = Offer (DHCP Server เสนอหมายเลข IP ให้)\nR = Request (เครื่องลูกข่ายตอบรับเพื่อขอยืนยันใช้ IP นั้น)\nA = Acknowledge (DHCP Server ส่งการยืนยันสัญญา Lease Time กลับมา)",
+    "hint": "Discover -> Offer -> Request -> Acknowledge",
+    "display_order": 1
+  },
+  {
+    "seed_key": "network:07-dhcp:fc02",
+    "lesson_slug": "network-dhcp-nat",
+    "front_text": "เมื่อเครื่องคอมพิวเตอร์ได้รับไอพีในกลุ่ม 169.254.x.x (APIPA) มีความหมายว่าอย่างไรในเชิงเทคนิค?",
+    "back_text": "หมายความว่าเครื่องไม่สามารถติดต่อขอ IP จาก DHCP Server ได้สำเร็จ (เช่น สายแลนหลุด, พอร์ตสวิตช์ผิด VLAN, DHCP Server ดับ หรือ Pool ไอพีเต็ม) ระบบปฏิบัติการจึงสุ่มไอพี Link-Local มาให้ชั่วคราว",
+    "hint": "ขอ DHCP ไม่ผ่าน (APIPA)",
+    "display_order": 2
+  },
+  {
+    "seed_key": "network:07-dhcp:fc03",
+    "lesson_slug": "network-dhcp-nat",
+    "front_text": "DHCP Relay Agent (ip helper-address) มีบทบาทสำคัญอย่างไรในระบบเครือข่ายที่มีหลาย VLAN?",
+    "back_text": "เนื่องจากแพ็กเก็ต DHCP Discover ส่งแบบ Broadcast ซึ่งไม่สามารถวิ่งข้าม Router ได้ ฟังก์ชัน DHCP Relay จะช่วยดักจับ Broadcast ใน Subnet นั้น แล้วแปลงเป็น Unicast ส่งตรงไปยัง DHCP Server ที่อยู่ต่างวง Subnet ให้",
+    "hint": "ส่งต่อ Broadcast ข้าม Router ไปยัง DHCP Server",
+    "display_order": 3
+  },
+  {
+    "seed_key": "network:07-dhcp:fc04",
+    "lesson_slug": "network-dhcp-nat",
+    "front_text": "PAT (Port Address Translation) หรือ NAT Overload แตกต่างจาก Static NAT อย่างไร?",
+    "back_text": "Static NAT: แปลง 1 Private IP คู่กับ 1 Public IP แบบ 1-to-1 ถาวร (เหมาะกับ Web/Mail Server)\nPAT (NAT Overload): อนุญาตให้อุปกรณ์จำนวนมากใช้ Public IP เดียวกันพร้อมกันได้ โดยใช้ Port Number ในการแยกเซสชันของแต่ละเครื่อง",
+    "hint": "1-to-1 vs Many-to-1 โดยใช้ Port",
+    "display_order": 4
+  },
+  {
+    "seed_key": "network:07-dhcp:fc05",
+    "lesson_slug": "network-dhcp-nat",
+    "front_text": "โปรโตคอล DHCP ทำงานบน Transport Layer ด้วย Protocol และ Port ใด?",
+    "back_text": "ทำงานบน UDP (User Datagram Protocol):\n- พอร์ต 67 สำหรับ DHCP Server\n- พอร์ต 68 สำหรับ DHCP Client",
+    "hint": "UDP พอร์ต 67 และ 68",
+    "display_order": 5
+  }
+]

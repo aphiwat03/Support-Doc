@@ -1,0 +1,42 @@
+[
+  {
+    "seed_key": "network:06-vlan:fc01",
+    "lesson_slug": "network-switching-vlan-trunk",
+    "front_text": "อธิบายความแตกต่างระหว่าง Access Port และ Trunk Port บน Switch",
+    "back_text": "Access Port: เชื่อมต่อเครื่องลูกข่าย/เซิร์ฟเวอร์ รองรับเพียง 1 VLAN และส่งเฟรมแบบไม่มี Tag (Untagged)\nTrunk Port: เชื่อมต่อระหว่าง Switch-to-Switch หรือ Switch-to-Router รองรับหลาย VLAN พร้อมกัน และแปะ Tag ตามมาตรฐาน 802.1Q",
+    "hint": "Untagged 1 VLAN vs Tagged หลาย VLAN",
+    "display_order": 1
+  },
+  {
+    "seed_key": "network:06-vlan:fc02",
+    "lesson_slug": "network-switching-vlan-trunk",
+    "front_text": "โปรโตคอล ARP (Address Resolution Protocol) ทำหน้าที่อะไรในระบบเครือข่าย?",
+    "back_text": "ทำหน้าที่แปลงจาก IP Address (Layer 3) เป็น MAC Address (Layer 2) เพื่อให้การ์ดแลนสามารถสร้าง Ethernet Frame ส่งไปยังเครื่องเป้าหมายในวง LAN ได้ถูกต้อง",
+    "hint": "แปลง IP เป็น MAC",
+    "display_order": 2
+  },
+  {
+    "seed_key": "network:06-vlan:fc03",
+    "lesson_slug": "network-switching-vlan-trunk",
+    "front_text": "สวิตช์ Layer 2 มีขั้นตอนการสร้างและอัปเดต MAC Address Table อย่างไร?",
+    "back_text": "สวิตช์จะตรวจสอบ 'Source MAC Address' ของทุก Frame ที่วิ่งเข้ามาที่พอร์ต แล้วจดบันทึกลงในตารางคู่กับหมายเลขพอร์ตและ VLAN นั้นๆ (Learning phase)",
+    "hint": "ดู Source MAC ของเฟรมขาเข้า",
+    "display_order": 3
+  },
+  {
+    "seed_key": "network:06-vlan:fc04",
+    "lesson_slug": "network-switching-vlan-trunk",
+    "front_text": "Native VLAN บนพอร์ต Trunk คืออะไร และมีความพิเศษอย่างไร?",
+    "back_text": "คือ VLAN พิเศษประจำพอร์ต Trunk ที่รองรับเฟรมแบบ 'ไม่มี Tag' (Untagged Frame) หากมีเฟรมธรรมดาวิ่งเข้ามาที่พอร์ต Trunk สวิตช์จะส่งเข้า Native VLAN อัตโนมัติ (ค่าเริ่มต้นมักเป็น VLAN 1)",
+    "hint": "VLAN สำหรับ Untagged Frame บน Trunk",
+    "display_order": 4
+  },
+  {
+    "seed_key": "network:06-vlan:fc05",
+    "lesson_slug": "network-switching-vlan-trunk",
+    "front_text": "หากต้องการให้เครื่องที่อยู่ต่าง VLAN กันสามารถสื่อสารกันได้ ต้องใช้อุปกรณ์ใด และเรียกกระบวนการนี้ว่าอะไร?",
+    "back_text": "ต้องใช้อุปกรณ์ Layer 3 เช่น Router หรือ Layer 3 Switch โดยเรียกกระบวนการส่งต่อข้อมูลข้ามวงนี้ว่า 'Inter-VLAN Routing' (เช่น วิธี Router-on-a-Stick หรือใช้ SVI บน L3 Switch)",
+    "hint": "Router / L3 Switch (Inter-VLAN Routing)",
+    "display_order": 5
+  }
+]
