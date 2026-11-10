@@ -107,6 +107,7 @@ export function formatSidebarTitle(title: string): string {
     'การติดตั้ง OS ระยะไกล และการอัปเดต Firmware เซิร์ฟเวอร์อย่างปลอดภัย (OS Provisioning & Firmware Lifecycle)': 'ติดตั้ง OS & อัปเดต Firmware',
     'มาตรฐานการเดินสายสัญญาณ, ป้ายกำกับ และการจัดการสินทรัพย์ DCIM (Structured Cabling, Labeling & DCIM)': 'มาตรฐานจัดสาย, Label & DCIM',
     'กระบวนการปฏิบัติงาน, ความปลอดภัยทางกายภาพ และมาตรฐาน Tier (DC Operations, Safety & Tier Standards)': 'ปฏิบัติงาน DC, Safety & Tier',
+    'อุปกรณ์ประจำตู้แร็ค หัวปลั๊กไฟ IEC และเครื่องมือช่างหน้างาน Data Center (DC Equipment, Power Connectors & Field Toolkit)': 'อุปกรณ์ตู้แร็ค, ปลั๊ก IEC & เครื่องมือช่าง',
     'ทัศนคติ ความปลอดภัย และเทคนิคพิชิตสัมภาษณ์งาน Data Center (Hosting vs Colocation)': 'เทคนิคสัมภาษณ์ & Mindset',
   };
 
