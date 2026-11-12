@@ -24,6 +24,7 @@ const topicColorMap: Record<string, string> = {
   docker: 'bg-sky-400',
   troubleshooting: 'bg-rose-400',
   datacenter: 'bg-orange-400',
+  tools: 'bg-teal-400',
 };
 
 /**
@@ -71,6 +72,7 @@ export function formatSidebarTitle(title: string): string {
     'คำสั่งสำรวจและตรวจสอบเครือข่าย Cisco/Network CLI (Show Commands & Diagnostics)': 'คำสั่ง Cisco CLI & Show',
     'ถอดรหัสปัญหา Layer 1 และ Layer 2 หน้างาน (L1/L2 Troubleshooting & Storms)': 'ปัญหา L1/L2, STP & LACP',
     'การดักจับและวิเคราะห์แพ็กเก็ตด้วย tcpdump และ Wireshark (Packet Capture & Analysis)': 'Packet Capture (tcpdump)',
+    'การออกแบบระบบเครือข่าย: สถาปัตยกรรม 3-Tier, Spine-Leaf, Redundancy และการวางแผน IP (Network Design & Architecture)': 'ออกแบบ Network 3-Tier & Spine-Leaf',
 
     // SQL
     'Master รูปแบบ SQL JOIN และการประยุกต์ใช้งานจริง': 'รูปแบบ SQL JOIN',
@@ -109,6 +111,13 @@ export function formatSidebarTitle(title: string): string {
     'กระบวนการปฏิบัติงาน, ความปลอดภัยทางกายภาพ และมาตรฐาน Tier (DC Operations, Safety & Tier Standards)': 'ปฏิบัติงาน DC, Safety & Tier',
     'อุปกรณ์ประจำตู้แร็ค หัวปลั๊กไฟ IEC และเครื่องมือช่างหน้างาน Data Center (DC Equipment, Power Connectors & Field Toolkit)': 'อุปกรณ์ตู้แร็ค, ปลั๊ก IEC & เครื่องมือช่าง',
     'ทัศนคติ ความปลอดภัย และเทคนิคพิชิตสัมภาษณ์งาน Data Center (Hosting vs Colocation)': 'เทคนิคสัมภาษณ์ & Mindset',
+
+    // Tools & Network Simulators
+    'Cisco Packet Tracer: การจำลองระบบเครือข่าย, โหมด Realtime vs Simulation และการแกะแพ็กเก็ต PDU (Cisco Packet Tracer Essentials)': 'Cisco Packet Tracer',
+    'GNS3 & Network Emulation: การจำลองเราเตอร์ สวิตช์ และเซิร์ฟเวอร์ด้วย Real OS และ GNS3 VM (GNS3 & EVE-NG Emulation)': 'GNS3 & Network Emulation',
+    'Wireshark: การดักจับและผ่าโครงสร้างแพ็กเก็ต การใช้ Capture/Display Filters และวิเคราะห์ปัญหา (Wireshark Deep Dive)': 'Wireshark & Packet Analysis',
+    'Nmap & iPerf3: การสแกนพอร์ต ตรวจสอบช่องโหว่ และวัดประสิทธิภาพ Throughput เครือข่าย (Network Scanning & Performance Testing)': 'Nmap & iPerf3 ผ่านพอร์ต',
+    'MobaXterm & Remote Admin Tools: รวมเครื่องมือ SSH, Serial Console, X11 และการโอนไฟล์ SFTP/SCP (Terminal Emulators & Remote Access)': 'MobaXterm & Remote Access',
   };
 
   if (cleanMap[trimmed]) {

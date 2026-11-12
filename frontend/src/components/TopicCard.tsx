@@ -10,6 +10,7 @@ const topicColorMap: Record<string, string> = {
   docker: 'bg-sky-400',
   troubleshooting: 'bg-rose-400',
   datacenter: 'bg-orange-400',
+  tools: 'bg-teal-400',
 };
 
 interface TopicCardProps {

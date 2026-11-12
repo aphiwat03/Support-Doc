@@ -45,10 +45,11 @@ RESTART IDENTITY CASCADE;
 INSERT INTO public.topics VALUES (10, 'datacenter', 'Data Center & Hardware Ops', 'สายสัญญาณ Fiber/Copper, ฮาร์ดแวร์เซิร์ฟเวอร์, iDRAC/iLO, SAN Zoning, ระบบไฟ UPS/ATS, Hot/Cold Aisle และเทคนิคสัมภาษณ์ DC', 'Server', 'from-orange-500 to-amber-600', 7, true, '2026-11-04 15:19:45.48554+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.topics VALUES (5, 'docker', 'Docker & Containers', 'Docker Command, Container Lifecycle, Log, Networking และการแก้ปัญหา Container ล่ม', 'Container', 'from-sky-500 to-blue-600', 5, true, '2026-11-03 09:22:14.247234+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.topics VALUES (1, 'linux', 'Linux Administration', 'คำสั่งพื้นฐาน, การจัดการสิทธิ์ไฟล์, Process, Service systemctl และการวิเคราะห์ Log', 'Terminal', 'from-amber-500 to-orange-600', 1, true, '2026-11-03 09:22:14.247234+00', '2026-11-04 15:19:45.48554+00');
-INSERT INTO public.topics VALUES (2, 'network', 'Network Troubleshooting', 'TCP/IP, IP/Subnet, DNS, Routing, Port, Firewall และเครื่องมือวิเคราะห์เครือข่าย', 'Network', 'from-blue-500 to-cyan-600', 2, true, '2026-11-03 09:22:14.247234+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.topics VALUES (3, 'sql', 'SQL & Database Essentials', 'PostgreSQL Query, JOIN, Aggregations, Index, Performance และการตรวจสอบปัญหา DB', 'Database', 'from-emerald-500 to-teal-600', 3, true, '2026-11-03 09:22:14.247234+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.topics VALUES (4, 'web-api', 'Web & HTTP/API', 'HTTP Status Codes, Headers, REST API, curl, SSL/TLS Handshake และ Web Server', 'Globe', 'from-purple-500 to-indigo-600', 4, true, '2026-11-03 09:22:14.247234+00', '2026-11-04 15:19:45.48554+00');
 INSERT INTO public.topics VALUES (6, 'troubleshooting', 'Incident & Troubleshooting', 'ขั้นตอนวิเคราะห์ Root Cause, กรอบมาตรฐาน ITIL/SLA, Windows AD & GPO, อีเมล M365, Network Printer/SMB และแผนสำรองข้อมูล 3-2-1/DR', 'Wrench', 'from-rose-500 to-pink-600', 6, true, '2026-11-03 09:22:14.247234+00', '2026-11-10 12:53:16.618762+00');
+INSERT INTO public.topics VALUES (2, 'network', 'Network', 'สถาปัตยกรรมเครือข่าย, Network Design, TCP/IP, IP/Subnet, DNS, Routing, Switching, VLAN, NAT และเครื่องมือวิเคราะห์', 'Network', 'from-blue-500 to-cyan-600', 2, true, '2026-11-03 09:22:14.247234+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.topics VALUES (11, 'tools', 'Tools', 'เครื่องมือจำลองเครือข่ายและวิเคราะห์ระบบ: Cisco Packet Tracer, GNS3, Wireshark, Nmap, MobaXterm, iPerf3 สำหรับงาน Network & SysAdmin', 'Wrench', 'from-teal-500 to-cyan-600', 8, true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
 
 
 --
@@ -4009,6 +4010,440 @@ INSERT INTO public.lessons VALUES ('681252fc-9293-40e3-9100-c19b27e9f69c', 10, '
      - **Stop bits**: **`1`**
      - **Flow control**: **`None`** *(สำคัญมาก: ถ้าเผลอตั้งเป็น XON/XOFF บางครั้งจะพิมพ์คีย์บอร์ดไม่ไป!)*
 ', 12, 'beginner', 10, true, '2026-11-10 13:22:20.548088+00', '2026-11-10 13:22:20.548088+00');
+INSERT INTO public.lessons VALUES ('3e090998-8642-4e35-af78-02f95246485a', 2, 'network-design-architecture', 'การออกแบบระบบเครือข่าย: สถาปัตยกรรม 3-Tier, Spine-Leaf, Redundancy และการวางแผน IP (Network Design & Architecture)', 'หลักการออกแบบ Enterprise Network: โครงสร้าง 3-Tier (Core, Distribution, Access) เทียบกับ Spine-Leaf ใน Data Center, การออกแบบระบบสำรอง Redundancy (HSRP/VRRP, LACP, vPC), การวางแผนแบ่ง Subnet/VLAN และแนวคิดโซนความปลอดภัย DMZ', '# การออกแบบระบบเครือข่าย: สถาปัตยกรรม 3-Tier, Spine-Leaf, Redundancy และการวางแผน IP
+
+การแก้ปัญหาเครือข่าย (Troubleshooting) ที่ดีเริ่มต้นจากการเข้าใจ **"สถาปัตยกรรมการออกแบบ (Network Architecture)"** เพราะหากระบบเครือข่ายถูกวางโครงสร้างมาอย่างถูกต้อง มีจุดสำรองที่ไร้จุดบอด (No Single Point of Failure) และแบ่งกลุ่มทราฟฟิกชัดเจน เวลาเกิดปัญหาจะสามารถจำกัดวงความเสียหาย (Fault Domain) และสืบหาต้นตอได้อย่างรวดเร็ว
+
+---
+
+## 1. สถาปัตยกรรมองค์กรแบบดั้งเดิม: Cisco Hierarchical 3-Tier Model
+
+สำหรับระบบเครือข่ายสำนักงาน อาคาร หรือแคมปัสองค์กร มาตรฐานสากลที่ใช้มายาวนานคือ **โมเดลลำดับชั้น 3 ระดับ (Hierarchical 3-Tier Network Model)**:
+
+![แผนภาพเปรียบเทียบสถาปัตยกรรมเครือข่าย 3-Tier Model กับ Spine-Leaf Architecture](/images/network/network-3tier-vs-spineleaf.png)
+
+| ชั้น (Layer) | หน้าที่หลัก (Role & Responsibilities) | คุณสมบัติของอุปกรณ์และเทคโนโลยีที่ใช้ |
+|---|---|---|
+| **1. Core Layer (แกนหลัก)** | **"ทางด่วนส่งข้อมูลด้วยความเร็วสูงสุด"** มีหน้าที่นำส่งแพ็กเก็ตระหว่างส่วนต่างๆ ของเครือข่ายให้เร็วที่สุดเท่าที่จะทำได้<br>• **กฎเหล็ก**: ห้ามใส่ Access Control Lists (ACLs), ห้ามทำ Packet Filtering หรือ QoS ที่ซับซ้อนในชั้นนี้ เพราะจะทำให้สวิตช์ช้าลง | สวิตช์ระดับ Core Switch สเปกสูง มีพอร์ตความเร็วสูง (40G/100G) และทำงานแบบ Redundant คู่เสมอ |
+| **2. Distribution Layer (ชั้นกระจายสัญญาณ)** | **"ด่านควบคุมนโยบายและการคัดกรอง"** เชื่อมโยงระหว่าง Access Layer และ Core Layer<br>• ทำหน้าที่ Routing ระหว่าง VLAN (Inter-VLAN Routing)<br>• บังคับใช้นโยบายความปลอดภัย (Firewall / ACLs / Packet Filtering)<br>• รวมทราฟฟิก (Aggregation) และทำ QoS ก่อนส่งขึ้น Core | สวิตช์ Layer 3 ที่รองรับการประมวลผล Routing และ ACLs ได้อย่างรวดเร็ว |
+| **3. Access Layer (ชั้นเข้าถึง)** | **"ด่านเชื่อมต่ออุปกรณ์ปลายทาง"** เป็นจุดที่ผู้ใช้งาน คอมพิวเตอร์ ปริ้นเตอร์ กล้องวงจรปิด และ Access Point (AP) เสียบสายเข้ามาในเครือข่าย<br>• กำหนด VLAN ให้กับพอร์ต (Access Port)<br>• มีฟีเจอร์ป้องกันพอร์ต เช่น Port Security, DHCP Snooping, BPDU Guard | สวิตช์ Layer 2 หรือ Layer 2+ ที่มีพอร์ตหนาแน่น (24/48 พอร์ต) และรองรับ PoE จ่ายไฟให้อุปกรณ์ |
+
+> **Collapsed Core Architecture (2-Tier)**:
+> ในองค์กรขนาดเล็กถึงขนาดกลาง (SME) ที่มีงบประมาณจำกัด มักจะยุบชั้น Core และ Distribution เข้าด้วยกัน เรียกว่า **Collapsed Core** โดยมีสวิตช์หลักคู่หนึ่งทำหน้าที่ทั้ง Routing และเป็น Core ขององค์กร
+
+---
+
+## 2. สถาปัตยกรรมศูนย์ข้อมูลยุคใหม่: Spine-Leaf Architecture
+
+ทำไมใน **Data Center ยุคใหม่ (Cloud / Virtualization / Microservices)** จึงเลิกใช้โมเดล 3-Tier แล้วเปลี่ยนมาใช้ **Spine-Leaf Architecture (Clos Network)**?
+
+### ความแตกต่างของรูปแบบการไหลของข้อมูล (Traffic Patterns):
+- **North-South Traffic**: การไหลเข้า-ออกจากภายนอก (User นอกองค์กร วิ่งเข้ามาหา Server ในห้องแอร์) ➔ โมเดล 3-Tier ออกแบบมาเพื่อรองรับรูปแบบนี้ได้ดี
+- **East-West Traffic**: การคุยกันระหว่างเซิร์ฟเวอร์ต่อเซิร์ฟเวอร์ภายในห้องเดียวกัน (Server ➔ Database, Microservice ➔ Cache, VM ➔ VM Replication) ➔ ใน Data Center ยุคใหม่ **ทราฟฟิก East-West พุ่งสูงเกิน 80% ของทราฟฟิกทั้งหมด!**
+
+### จุดเด่นของ Spine-Leaf Architecture:
+1. **ทุก Leaf เชื่อมโยงกับทุก Spine (Full Mesh)**:
+   - **Leaf Switch**: ทำหน้าที่เป็นสวิตช์ประจำตู้แร็ค (Top-of-Rack - ToR) เชื่อมต่อตรงเข้ากับเซิร์ฟเวอร์
+   - **Spine Switch**: ทำหน้าที่เป็นแกนหลักเชื่อมระหว่าง Leaf ทุกตัว
+   - **กฎเหล็กของ Spine-Leaf**: **Leaf จะไม่คุยกันเองโดยตรง** และ **Spine จะไม่คุยกันเองโดยตรง**
+2. **ระยะทางและความหน่วงคงที่ (Predictable Latency / Maximum 2 Hops)**:
+   - เซิร์ฟเวอร์จากตู้แร็คใดๆ จะส่งข้อมูลไปยังเซิร์ฟเวอร์ในตู้แร็คอื่นโดยผ่านเพียง **Leaf ต้นทาง ➔ Spine ➔ Leaf ปลายทาง (เสมอ 2 Hops เท่านั้น!)**
+3. **เลิกใช้ STP แล้วแทนที่ด้วย ECMP (Equal-Cost Multi-Pathing)**:
+   - สวิตช์ใช้ Routing (Layer 3 เช่น BGP หรือ OSPF) และ ECMP ทำให้สายเชื่อมต่อทุกเส้น **เปิดใช้งานและส่งข้อมูลพร้อมกัน 100% (ไม่มีพอร์ตไหนถูกบล็อกเหมือน Spanning Tree)**
+
+---
+
+## 3. การออกแบบระบบสำรองความพร้อมใช้งานสูง (High Availability & Redundancy)
+
+เครือข่ายระดับมืออาชีพต้องไม่มี **Single Point of Failure (SPOF)** หากสายขาดหรือสวิตช์ตัวใดตัวหนึ่งระเบิด ระบบต้องทำงานต่อได้ทันทีโดยผู้ใช้ไม่รู้สึก:
+
+![การออกแบบระบบสำรอง Gateway ด้วย HSRP และ VRRP คู่กับ Link Aggregation LACP](/images/network/hsrp-vrrp-redundancy-design.png)
+
+### 1) การสำรอง Default Gateway: First Hop Redundancy Protocols (FHRP)
+คอมพิวเตอร์ลูกข่ายมักตั้งค่า Default Gateway เป็น IP เดียว หากเราเตอร์ตัวนั้นดับ เครื่องจะออกเน็ตไม่ได้ จึงต้องรวมสวิตช์/เราเตอร์ 2 ตัวเข้าด้วยกันด้วย Virtual IP (VIP):
+- **HSRP (Hot Standby Router Protocol)**: โปรโตคอลเฉพาะของ Cisco แบ่งบทบาทเป็น **Active** (ทำงานตัวหลัก) และ **Standby** (รอสแตนด์บาย)
+- **VRRP (Virtual Router Redundancy Protocol)**: มาตรฐานเปิดสากล (RFC 5798) ทำงานร่วมกันได้ทุกยี่ห้อ แบ่งเป็น **Master** และ **Backup**
+
+### 2) การรวมสายสัญญาณสำรอง: LACP / Port Channel
+การลากสายแลน 2–4 เส้นระหว่างสวิตช์เพื่อเพิ่มแบนด์วิดท์และเป็นเส้นทางสำรอง:
+- ใช้มาตรฐาน **802.3ad / 802.1AX (LACP - Link Aggregation Control Protocol)**
+- หากสายเส้นใดเส้นหนึ่งขาด ทราฟฟิกจะวิ่งผ่านสายเส้นที่เหลือทันทีโดยไม่เกิด Packet Drop
+
+### 3) การเชื่อมต่อแบบ Multi-Chassis (vPC / VSS / Switch Stacking)
+เพื่อให้เซิร์ฟเวอร์ 1 เครื่องสามารถต่อสายแลน 2 เส้นแยกไปยังสวิตช์คนละตัว (Switch A และ Switch B) เพื่อทำ LACP ข้ามตู้ได้:
+- **Cisco vPC (Virtual Port Channel)**: นิยมใช้บนสวิตช์ Cisco Nexus ใน Data Center
+- **Switch Stacking (เช่น Cisco Catalyst StackWise)**: นำสวิตช์หลายตัวมาผูกรวมเป็นสวิตช์เสมือนตัวเดียวกัน ควบคุมผ่าน Management IP เดียว
+
+---
+
+## 4. การวางแผนผัง IP และการแบ่งโซนความปลอดภัย (Network Segmentation)
+
+การออกแบบผัง IP ที่ดีต้องคิดถึงการขยายตัวในอนาคต (Scalability) และความปลอดภัย:
+
+1. **การแบ่ง VLAN ตามหน้าที่การทำงาน (Functional Segmentation)**:
+   - ห้ามนำเครื่องลูกข่าย เซิร์ฟเวอร์ และระบบจัดการมารวมอยู่ใน VLAN เดียวกันเด็ดขาด!
+   - ตัวอย่างการจัดสรร VLAN มาตรฐาน:
+     - `VLAN 10` (Workstations / Users): `10.10.10.0/24`
+     - `VLAN 20` (Voice / VoIP): `10.10.20.0/24` (เปิด QoS จัดลำดับความสำคัญ)
+     - `VLAN 50` (Server Farm / Production): `10.10.50.0/24`
+     - `VLAN 99` (Management / OOB): `10.10.99.0/24` (จำกัดสิทธิ์เฉพาะแอดมิน)
+2. **การออกแบบโซน DMZ (Demilitarized Zone)**:
+   - โซนที่อยู่ตรงกลางระหว่างอินเทอร์เน็ตภายนอกกับเครือข่ายภายในองค์กร
+   - วางเฉพาะเซิร์ฟเวอร์ที่ต้องเปิดให้คนภายนอกเข้าถึง (เช่น Web Server, Reverse Proxy, Mail Gateway)
+   - **กฎเหล็กของ DMZ**: **เซิร์ฟเวอร์ใน DMZ ต้องไม่มีสิทธิ์สั่งเปิดการเชื่อมต่อไปยังเครือข่ายภายใน (Internal Network) ได้โดยตรง!** (หากเว็บถูกแฮก คนร้ายจะติดอยู่ที่ DMZ ไม่สามารถทะลุเข้าฐานข้อมูลองค์กรได้)
+', 12, 'intermediate', 11, true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.lessons VALUES ('93a91167-81c5-4497-a769-3930c59a54b1', 11, 'tools-cisco-packet-tracer', 'Cisco Packet Tracer: การจำลองระบบเครือข่าย, โหมด Realtime vs Simulation และการแกะแพ็กเก็ต PDU (Cisco Packet Tracer Essentials)', 'ภาพรวมโปรแกรม Cisco Packet Tracer, การต่อสายและอุปกรณ์ Cisco (Router, Catalyst Switch, PC, Server), ความต่างของ Realtime Mode vs Simulation Mode (Event List, PDU Inspector) และข้อจำกัดเมื่อเทียบกับอุปกรณ์จริง', '# Cisco Packet Tracer: การจำลองระบบเครือข่าย, โหมด Realtime vs Simulation และการแกะแพ็กเก็ต PDU
+
+สำหรับทุกคนที่เริ่มต้นศึกษาด้าน Network, System Support หรือเตรียมสอบใบเซอร์ระดับสากลอย่าง **Cisco CCNA (200-301)** โปรแกรมจำลองเครือข่ายตัวแรกที่ทุกคนต้องได้สัมผัสคือ **Cisco Packet Tracer** ซึ่งพัฒนาโดย Cisco Networking Academy เพื่อให้เราสามารถออกแบบ ต่อสาย และพิมพ์คำสั่งคอนฟิกอุปกรณ์เครือข่ายได้เสมือนนั่งอยู่หน้าตู้แร็คจริงโดยไม่ต้องเสียเงินซื้ออุปกรณ์ฮาร์ดแวร์หลักแสนบาท
+
+---
+
+## 1. Packet Tracer คืออะไร และทำงานอย่างไร?
+
+**Cisco Packet Tracer จัดเป็นซอฟต์แวร์ประเภท "Network Simulator" (โปรแกรมจำลองพฤติกรรมเครือข่าย)**:
+- ตัวโปรแกรมไม่ได้รันระบบปฏิบัติการ Cisco IOS จริงๆ แต่ใช้วิธี **เขียนโปรแกรมเลียนแบบ (Simulate) การทำงานและคำสั่งของ IOS**
+- **ข้อดี**: กินทรัพยากรเครื่องน้อยมาก คอมพิวเตอร์สเปกทั่วไปหรือโน้ตบุ๊กทำงานก็สามารถเปิดแล็บที่มี Router 10 ตัว Switch 20 ตัวได้ลื่นไหล ไม่กิน RAM และ CPU
+- **ข้อจำกัดสำคัญ**: รองรับเฉพาะชุดคำสั่งพื้นฐานถึงระดับกลางของ Cisco IOS เท่านั้น คำสั่งระดับสูงเฉพาะทาง (เช่น สวิตชิ่งฟีเจอร์ขั้นสูงบางตัว, Dynamic Routing ขั้นสูง, BGP แบบละเอียด) จะพิมพ์ไม่ผ่าน
+
+![หน้าจอโปรแกรม Cisco Packet Tracer แสดงการต่อ Topology และการจำลอง PDU ในโหมด Simulation](/images/tools/packet-tracer-simulation-mode.png)
+
+---
+
+## 2. การเลือกอุปกรณ์และชนิดสายเชื่อมต่อ (Device & Cable Selection)
+
+ที่แถบเครื่องมือด้านล่างซ้ายของโปรแกรม คุณจะพบกับหมวดหมู่อุปกรณ์ที่ต้องเลือกใช้งาน:
+
+| สัญลักษณ์ / อุปกรณ์ | อุปกรณ์ยอดนิยมในโปรแกรม | หน้าที่และการใช้งานในแล็บ |
+|---|---|---|
+| **Routers** | **Cisco 2911 / 4321 / 1941** | ทำหน้าที่เชื่อมต่อข้ามเครือข่าย (Layer 3 Routing), NAT, DHCP Server และสร้าง VPN |
+| **Switches** | **Cisco Catalyst 2960 (Layer 2) / 3650 (Layer 3 Multilayer Switch)** | เชื่อมต่ออุปกรณ์ในวงแลนเดียวกัน, ตั้งค่า VLAN, Trunking 802.1Q, Spanning Tree และ Inter-VLAN Routing บน 3650 |
+| **End Devices** | **PC, Laptop, Server, Printer** | เครื่องลูกข่ายสำหรับตั้งค่า IP, ทดสอบ `ping`, `ipconfig`, ใช้งาน Web Browser, และ Server จำลอง (DNS, HTTP, DHCP, Syslog, TFTP) |
+| **Connections (สายเชื่อมต่อ)** | • **Copper Straight-Through (สายตรงเส้นทึบ)**<br>• **Copper Cross-Over (สายครอสเส้นประ)**<br>• **Fiber (สายไฟเบอร์สีส้ม)**<br>• **Console (สายสีฟ้าอ่อน)**<br>• **Serial DTE/DCE (สายสีแดงมีนาฬิกา)** | • **สายตรง**: ต่ออุปกรณ์ต่างชนิดกัน (PC ➔ Switch, Switch ➔ Router)<br>• **สายครอส**: ต่ออุปกรณ์ชนิดเดียวกัน (Switch ➔ Switch, Router ➔ Router, PC ➔ PC)<br>• **สาย Console**: ต่อจาก RS-232/USB ของ PC เข้าพอร์ต CONSOLE เพื่อเปิดหน้าต่าง Terminal คอนฟิก |
+
+> **Support Tip: Auto-Connect Cable (สายสายฟ้าสีส้ม)**:
+> หากเป็นมือใหม่ที่ไม่แน่ใจว่าต้องใช้สายประเภทใด สามารถคลิกที่ไอคอน **รูปสายฟ้าสีส้ม (Automatically Choose Connection Type)** โปรแกรมจะเลือกประเภทสายและพอร์ตที่เหมาะสมให้โดยอัตโนมัติ
+
+---
+
+## 3. หัวใจสำคัญ: Realtime Mode vs Simulation Mode
+
+จุดแข็งที่สุดที่ทำให้ Cisco Packet Tracer เหนือกว่าการทดลองบนอุปกรณ์จริงสำหรับผู้เริ่มต้น คือการสลับระหว่าง 2 โหมดการทำงาน:
+
+### 1) Realtime Mode (โหมดเวลาจริง - รูปนาฬิกา)
+- ระบบเครือข่ายทำงานตามเวลาจริง เช่นเดียวกับสวิตช์และเราเตอร์ของจริง
+- เมื่อเสียบสายแลน ไฟพอร์ตจะขึ้น **สีส้มกะพริบประมาณ 30–50 วินาที** (เพราะ Spanning Tree Protocol กำลังทำงานในสถานะ Listening ➔ Learning ➔ Forwarding)
+- **ทิปเร่งเวลา**: สามารถกดปุ่ม **"Fast Forward Time (Alt + D)"** เพื่อเร่งเวลาข้ามขั้นตอนรอคอย ให้ไฟพอร์ตเปลี่ยนเป็นสีเขียวทันที!
+
+### 2) Simulation Mode (โหมดจำลองภาพทีละก้าว - รูปนาฬิกาทราย/ซองจดหมาย)
+- **เวลาในเครือข่ายจะหยุดนิ่งชั่วคราว!**
+- เมื่อคุณสั่ง `ping` จาก PC0 ไปยัง PC1 คุณจะเห็น **ซองจดหมาย (PDU - Protocol Data Unit)** ปรากฏขึ้นบนหน้าจอ
+- เมื่อคุณกดปุ่ม **"Capture / Forward" (หรือกดแป้น Spacebar)** ซองจดหมายจะค่อยๆ เคลื่อนที่ทีละสเต็ป จาก PC0 ➔ Switch ➔ Router ➔ PC1
+- **Event List & Event Filter**: สามารถกดฟิลเตอร์เลือกดูเฉพาะโปรโตคอลที่สนใจได้ เช่น ดูเฉพาะ `ICMP`, `ARP`, `DNS`, `TCP`, `OSPF`
+
+---
+
+## 4. การผ่าโครงสร้างซองจดหมายด้วย PDU Inspector
+
+เมื่อคลิกที่ซองจดหมายในโหมด Simulation หน้าต่าง **PDU Information** จะเปิดขึ้นมา โดยแสดงข้อมูลแบ่งเป็น 2 มุมมองที่มีประโยชน์อย่างมหาศาลต่อการเรียนรู้:
+
+1. **OSI Model View (วิเคราะห์ตาม 7 เลเยอร์)**:
+   - แสดงให้เห็นทีละ Layer ตั้งแต่ **Layer 1 ถึง Layer 7** ทั้งฝั่งขาเข้า (**In Layers**) และฝั่งขาออก (**Out Layers**)
+   - มีคำอธิบายภาษาอังกฤษชัดเจน เช่น:
+     - *Layer 3: The destination IP address is not on the same subnet. The device sends the packet to the default gateway.*
+     - *Layer 2: The next-hop IP is not in the ARP table. The device drops the frame and broadcasts an ARP Request.*
+2. **Inbound / Outbound PDU Details (ผ่าไส้ในแพ็กเก็ต)**:
+   - แสดงโครงสร้าง Header จริง เช่น **Ethernet II Frame** (Source/Destination MAC), **IP Packet Header** (TTL, Protocol 1 สำหรับ ICMP, Source/Destination IP) และ **ICMP Payload**
+
+---
+
+## 5. การจัดการไฟล์และการเตรียมสอบ: PKT vs PKA
+
+- **ไฟล์ `.pkt` (Packet Tracer Network File)**: ไฟล์บันทึกผังเครือข่ายและคอนฟิกอุปกรณ์ทั่วไปที่เราสร้างขึ้น สามารถเซฟและส่งต่อให้เพื่อนร่วมทีมเปิดดูได้
+- **ไฟล์ `.pka` (Packet Tracer Activity File)**: ไฟล์โจทย์แบบฝึกหัดที่ล็อกการตั้งค่าไว้ มีหน้าต่างคำสั่งงาน (Instruction) พร้อมระบบ **ตรวจคะแนนอัตโนมัติ (Completion %)** และปุ่ม **Check Results** เพื่อดูว่าเราคอนฟิกหัวข้อใดถูกหรือผิด เป็นรูปแบบเดียวกับที่ใช้สอบวัดผลในหลักสูตร Cisco Networking Academy
+', 12, 'beginner', 1, true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.lessons VALUES ('9a90cb58-d93b-420d-b47b-7cb59fd88ba0', 11, 'tools-gns3-network-emulation', 'GNS3 & Network Emulation: การจำลองเราเตอร์ สวิตช์ และเซิร์ฟเวอร์ด้วย Real OS และ GNS3 VM (GNS3 & EVE-NG Emulation)', 'ความแตกต่างระหว่าง Network Simulator (Packet Tracer) vs Network Emulator (GNS3 / EVE-NG), สถาปัตยกรรม GNS3 GUI + GNS3 VM, การนำเข้า Cisco IOU / Dynamips / QEMU / Docker, การดักจับ Packet ด้วย Wireshark แบบเรียลไทม์', '# GNS3 & Network Emulation: การจำลองเราเตอร์ สวิตช์ และเซิร์ฟเวอร์ด้วย Real OS และ GNS3 VM
+
+เมื่อคุณก้าวข้ามจากระดับเริ่มต้น (CCNA) ไปสู่ระดับสูง (CCNP, CCIE, หรือระดับวิศวกรออกแบบระบบ Enterprise) คุณจะพบว่าข้อจำกัดของ Cisco Packet Tracer ไม่เพียงพออีกต่อไป เพราะในโลกความเป็นจริงคุณต้องทดสอบฟีเจอร์ขั้นสูง เช่น BGP, MPLS, OSPF Multi-Area, หรือเชื่อมต่อ Router ของ Cisco เข้ากับอุปกรณ์ยี่ห้ออื่นอย่าง Juniper, MikroTik, Fortinet และ Linux Server จริงๆ เครื่องมือระดับมาตรฐานอุตสาหกรรมสำหรับงานนี้คือ **GNS3 (Graphical Network Simulator-3)** และ **EVE-NG**
+
+---
+
+## 1. Network Simulator vs Network Emulator: ต่างกันอย่างไร?
+
+คำถามสัมภาษณ์ยอดฮิตที่ทดสอบความรู้ลึกทางเทคนิค:
+
+![สถาปัตยกรรม GNS3 Architecture ทำงานร่วมกับ GNS3 VM และการต่อ Bridge เข้ากับเครือข่ายจริง](/images/tools/gns3-vm-architecture.png)
+
+| คุณสมบัติ | Network Simulator (เช่น Cisco Packet Tracer) | Network Emulator (เช่น GNS3, EVE-NG) |
+|---|---|---|
+| **การทำงานเบื้องหลัง** | **เขียนโค้ดเลียนแบบพฤติกรรม** (Simulated Software) คำสั่งไหนคนเขียนโปรแกรมไม่ได้ใส่ไว้จะพิมพ์ไม่ผ่าน | **จำลองฮาร์ดแวร์เสมือน (CPU/RAM/NIC) แล้วนำ "ระบบปฏิบัติการจริง (Real OS Image)" มาบูตทำงาน** |
+| **ความสมจริงของฟังก์ชัน** | รองรับคำสั่งประมาณ 40–60% ของอุปกรณ์จริง | **สมจริง 100%!** คุณรัน Cisco IOS/IOS-XE, Juniper Junos, หรือ FortiOS ของจริง พิมพ์ได้ทุกคำสั่งและพฤติกรรมบั๊กเหมือนเครื่องจริงทุกประการ |
+| **การเชื่อมต่ออุปกรณ์ต่างค่าย** | จำลองได้เฉพาะอุปกรณ์ในระบบนิเวศของ Cisco | **จำลองอุปกรณ์ได้ไม่จำกัดค่าย** (Cisco, Arista, Juniper, MikroTik, Linux, Windows Server, pfSense) |
+| **การใช้ทรัพยากรเครื่อง** | ใช้ RAM/CPU น้อยมาก (ไม่เกิน 500 MB) | **กิน RAM และ CPU ตามจำนวนระบบปฏิบัติการจริง** (มักต้องใช้คอมพิวเตอร์ RAM 16–32 GB ขึ้นไป) |
+| **การจับแพ็กเก็ต (Packet Capture)** | ใช้โหมด Simulation ภายในโปรแกรม | **คลิกขวาแล้วเปิดโปรแกรม Wireshark ตัวจริงมาดักจับแพ็กเก็ตที่วิ่งผ่านสายสัญญาณแบบเรียลไทม์ได้เลย!** |
+
+---
+
+## 2. สถาปัตยกรรมของ GNS3: GUI Client + GNS3 VM
+
+ในการติดตั้ง GNS3 อย่างถูกต้องตามมาตรฐานสากล จะแบ่งโครงสร้างเป็น 2 ส่วนหลัก:
+
+1. **GNS3 All-in-One GUI Client**:
+   - เป็นโปรแกรมหน้าต่างกราฟิกติดตั้งบน Windows/macOS ของคุณ ใช้สำหรับวาดผัง (Topology), ลากวางอุปกรณ์, ลากสายเชื่อมต่อ และเปิดหน้าต่าง Terminal
+2. **GNS3 VM (Virtual Machine)**:
+   - เป็นระบบปฏิบัติการ Linux (Ubuntu) ที่ติดตั้งอยู่บน Hypervisor เช่น **VMware Workstation, VMware ESXi หรือ VirtualBox**
+   - **ทำไมต้องมี GNS3 VM?**: เพราะระบบปฏิบัติการเราเตอร์ยุคใหม่ (QEMU / KVM, IOU, Docker) ทำงานบน Linux Kernel ได้รวดเร็วและเสถียรกว่าบน Windows โดยตรงหลายเท่าตัว! ชิป CPU บนเครื่องของคุณจะเปิดฟีเจอร์ **Nested Virtualization (VT-x/AMD-V)** ส่งตรงให้ GNS3 VM จัดการ
+
+---
+
+## 3. รูปแบบอิมเมจของอุปกรณ์ที่นำมาวิ่งใน GNS3
+
+เมื่อคุณต้องการเพิ่มอุปกรณ์ใหม่เข้าไปใน GNS3 คุณจะได้ยินคำศัพท์เทคนิค 4 ชนิดนี้เสมอ:
+
+1. **Dynamips (Cisco IOS Image เก่า)**:
+   - บูตไฟล์ `.bin` ของเราเตอร์ตระกูลเก่า เช่น Cisco 7200, 3725, 2691
+   - **เทคนิคสำคัญ (Idle-PC)**: เนื่องจากเราเตอร์จริงไม่มีระบบประหยัดพลังงาน เมื่อรันในคอมพิวเตอร์ CPU ของคุณจะวิ่ง 100% ทันที ช่างเทคนิคจึงต้องคลิกขวาแล้วคำนวณค่า **`Idle-PC`** เพื่อบอกให้โปรแกรมสั่งหยุดรอบหมุน CPU ตอนเราเตอร์ว่างงาน ทำให้ CPU ลดลงเหลือ 1–2%
+2. **Cisco IOU / IOL (IOS on Linux / IOS on Unix)**:
+   - ไบนารีของ Cisco IOS ที่คอมไพล์มาเพื่อรันบนระบบปฏิบัติการ Linux โดยตรง
+   - **ข้อดี**: กิน RAM น้อยมาก (สวิตช์ 1 ตัวใช้ RAM เพียง 256–512 MB) และรองรับคำสั่ง Layer 2 Switching ขั้นสูงอย่างสมบูรณ์แบบ
+3. **QEMU / KVM Appliances (อิมเมจสมัยใหม่)**:
+   - ใช้จำลองอุปกรณ์ระดับองค์กรยุคใหม่ เช่น **Cisco CSR1000v / Catalyst 8000v (IOS-XE), Cisco ASAv (Firewall), Nexus 9000v, FortiGate VM, MikroTik CHR, Ubuntu Server**
+   - อิมเมจมักมาในรูปแบบไฟล์ `.qcow2` หรือ `.vmdk`
+4. **Docker Containers**:
+   - คอนเทนเนอร์ขนาดจิ๋วที่เปิดใช้งานได้ใน 1 วินาที เหมาะสำหรับทำโฮสต์ทดสอบ (เช่น Alpine Linux, Network Tools, Web Server) กิน RAM เพียง 16–32 MB ต่อตัว
+
+---
+
+## 4. ฟีเจอร์ไม้ตาย: Wireshark Live Capture & Cloud Node
+
+สิ่งที่ทำให้วิศวกรเครือข่ายทั่วโลกยกย่อง GNS3 คือ 2 ฟีเจอร์นี้:
+
+1. **Live Packet Capture with Wireshark**:
+   - เพียงแค่คลิกขวาที่เส้นสายเคเบิลระหว่าง Router 1 กับ Switch 1 แล้วเลือก **"Start Capture"**
+   - โปรแกรม **Wireshark ตัวจริงจะเด้งเปิดขึ้นมาทันที** และดักจับแพ็กเก็ตที่วิ่งผ่านสายเส้นนั้นแบบสดๆ ช่วยให้คุณเห็นแพ็กเก็ต OSPF Hello, BGP Open, หรือ TCP SYN ที่เราเตอร์ส่งหากันจริงๆ!
+2. **Cloud Node (การเชื่อมต่อเข้ากับเน็ตเวิร์กของโลกจริง)**:
+   - คุณสามารถลากไอคอน **`Cloud`** หรือ **`NAT`** มาวางในผัง แล้วลากสายแลนจากเราเตอร์เสมือนไปเสียบเข้ากับ Cloud Node
+   - ผลลัพธ์: **เราเตอร์เสมือนในคอมพิวเตอร์ของคุณจะสามารถออกสู่อินเทอร์เน็ตจริงได้!** สามารถสั่ง `ping 8.8.8.8`, สั่งอัปเดตแพ็กเกจบน Linux Server ในแล็บ หรือให้คอมพิวเตอร์ข้างนอกบ้าน SSH ข้ามเข้ามาจัดการเราเตอร์ในแล็บได้เสมือนอุปกรณ์จริง
+', 13, 'intermediate', 2, true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.lessons VALUES ('e0a4cdec-9071-4a41-bc6a-0aa782e85680', 11, 'tools-wireshark-packet-analysis', 'Wireshark: การดักจับและผ่าโครงสร้างแพ็กเก็ต การใช้ Capture/Display Filters และวิเคราะห์ปัญหา (Wireshark Deep Dive)', 'เจาะลึกโปรแกรม Wireshark, การเลือก Interface ดักจับ (Promiscuous Mode / Monitor Mode), ความต่างของ Capture Filter (BPF) vs Display Filter, เทคนิค Follow TCP Stream, Expert Info (Retransmission, Zero Window, RST) และการคำนวณ Latency', '# Wireshark: การดักจับและผ่าโครงสร้างแพ็กเก็ต การใช้ Capture/Display Filters และวิเคราะห์ปัญหา
+
+ในโลกของการแก้ปัญหาเครือข่ายระดับมืออาชีพ มีคำกล่าวว่า: *"แพ็กเก็ตไม่เคยโกหก (Packets Never Lie)"* ต่อให้แอปพลิเคชันจะฟ้องข้อความ Error คลุมเครือ หรือระบบปลายทางจะอ้างว่าฝั่งตนเองปกติ แต่ถ้าคุณเปิดโปรแกรม **Wireshark (Network Protocol Analyzer)** ขึ้นมาดักจับและผ่าดูไส้ในแพ็กเก็ต คุณจะเห็นความจริง 100% ว่าใครส่งอะไรมา หรือใครไม่ตอบสนอง
+
+---
+
+## 1. ส่วนประกอบหน้าต่างโปรแกรม Wireshark (The 3 Panes)
+
+เมื่อเปิดไฟล์บันทึกการดักจับ (`.pcap` หรือ `.pcapng`) หน้าจอหลักของ Wireshark จะแบ่งเป็น 3 บานหน้าต่าง (Three-Pane View):
+
+![หน้าต่างโปรแกรม Wireshark แสดง Packet List, Packet Details, Display Filter และ Expert Information](/images/tools/wireshark-interface-filters.png)
+
+1. **Top Pane: Packet List (รายการแพ็กเก็ตทั้งหมด)**:
+   - แสดงรายการแพ็กเก็ตเรียงตามเวลา (`No.`, `Time`, `Source`, `Destination`, `Protocol`, `Length`, `Info`)
+   - มีแถบสีอัตโนมัติ (**Coloring Rules**) ช่วยแยกแยะ เช่น สีเขียวอ่อน = HTTP, สีฟ้าอ่อน = DNS, สีดำตัวหนังสือแดง = TCP Error / Retransmission / RST
+2. **Middle Pane: Packet Details (ผ่าโครงสร้างตามชั้น OSI / TCP-IP)**:
+   - จุดเด่นที่สุดของ Wireshark! แสดง Header ของแต่ละชั้นที่ซ้อนกันอยู่ (Encapsulation):
+     - **Frame**: ข้อมูลระดับกายภาพ (Layer 1) เช่น ความยาวบิต และเวลาประทับ
+     - **Ethernet II**: ข้อมูล Layer 2 (Source/Destination MAC Address)
+     - **Internet Protocol Version 4/6**: ข้อมูล Layer 3 (Source/Destination IP, TTL, Flags)
+     - **Transmission Control Protocol / UDP**: ข้อมูล Layer 4 (Source/Destination Port, Seq, Ack, Window Size)
+     - **Hypertext Transfer Protocol / DNS**: ข้อมูล Layer 7 (Application Data)
+3. **Bottom Pane: Packet Bytes (ข้อมูลไบนารีระดับ Raw Bytes)**:
+   - แสดงรหัสเลขฐานสิบหก (**Hex Dump**) คู่กับตัวอักษร ASCII ดิบทางฝั่งขวา
+
+---
+
+## 2. กฎเหล็ก: Capture Filter vs Display Filter ต่างกันอย่างไร?
+
+ข้อผิดพลาดอันดับหนึ่งของผู้เริ่มต้นคือการจำสับสนระหว่างฟิลเตอร์ 2 ชนิดนี้:
+
+| คุณลักษณะ | Capture Filter (ฟิลเตอร์ก่อนดักจับ) | Display Filter (ฟิลเตอร์หลังดักจับ) |
+|---|---|---|
+| **จังหวะการทำงาน** | **กรองตั้งแต่ตอนดักจับข้อมูลจริง** แพ็กเก็ตที่ไม่ตรงเงื่อนไขจะถูกทิ้งทันที ไม่ถูกบันทึกหรือกินพื้นที่ใน RAM | **ดักจับทุกอย่างมาก่อน แล้วค่อยซ่อน/แสดงเฉพาะแพ็กเก็ตที่ต้องการ** บนหน้าจอในภายหลัง |
+| **ตำแหน่งที่ใส่** | กล่องข้อความสีเขียวก่อนกดเริ่ม Start Capture | แถบข้อความด้านบนสุดของหน้าต่าง Packet List (พิมพ์แล้วแถบจะเป็นสีเขียวถ้าไวยากรณ์ถูก, สีแดงถ้าไวยากรณ์ผิด) |
+| **ไวยากรณ์ (Syntax)** | **BPF (Berkeley Packet Filter)**<br>• ตัวอย่าง: `host 192.168.1.1`<br>• `port 80 or port 443`<br>• `net 10.0.0.0/8`<br>• `not arp and not icmp` | **Wireshark Display Syntax**<br>• ตัวอย่าง: `ip.addr == 192.168.1.1`<br>• `tcp.port in {80, 443}`<br>• `http.response.code >= 400`<br>• `tcp.flags.reset == 1` |
+| **ความยืดหยุ่น** | ต่ำกว่า (เปลี่ยนเงื่อนไขระหว่างจับไม่ได้) | **สูงมาก** (สามารถพิมพ์เปลี่ยนมุมมองค้นหาข้อมูลได้ตลอดเวลาโดยข้อมูลดิบไม่หาย) |
+
+---
+
+## 3. สูตรลัด Display Filter สำหรับงาน Support ประจำวัน
+
+เมื่อต้องสืบหาสาเหตุว่า *"เว็บช้า"*, *"ต่อไม่ติด"*, หรือ *"ระบบตัดการเชื่อมต่อไปเอง"* ให้ใช้สูตรฟิลเตอร์ยอดฮิตเหล่านี้:
+
+```text
+# 1. กรองเฉพาะ IP หรือ Subnet ที่ต้องการ
+ip.addr == 10.20.1.50
+ip.src == 192.168.1.100 and ip.dst == 10.0.0.1
+
+# 2. กรองหาปัญหาการเชื่อมต่อ TCP หลุด หรือถูกปฏิเสธ (Connection Reset / Refused)
+tcp.flags.reset == 1
+
+# 3. กรองหาแพ็กเก็ตที่ส่งซ้ำเนื่องจากเน็ตเวิร์กกระตุกหรือสูญหาย (Packet Loss / Retransmission)
+tcp.analysis.retransmission
+tcp.analysis.duplicate_ack
+
+# 4. กรองหาอาการเครื่องเซิร์ฟเวอร์ประมวลผลไม่ทันจนบัฟเฟอร์เต็ม (TCP Zero Window)
+tcp.analysis.zero_window
+
+# 5. กรองหาข้อผิดพลาดของเว็บและ API (HTTP 4xx Client Error หรือ 5xx Server Error)
+http.response.code >= 400
+
+# 6. กรองเฉพาะการสืบค้น DNS ที่ตอบกลับเป็น Error (เช่น ไม่พบชื่อโดเมน NXDOMAIN)
+dns.flags.rcode != 0
+```
+
+---
+
+## 4. เทคนิคไม้ตาย: Follow TCP Stream & Expert Info
+
+1. **Follow ➔ TCP Stream**:
+   - เมื่อเห็นแพ็กเก็ต HTTP หรือการคุยกันของแอปพลิเคชัน เพียงแค่ **คลิกขวาที่แพ็กเก็ตนั้น ➔ เลือก Follow ➔ TCP Stream**
+   - Wireshark จะถอดรหัสแพ็กเก็ตหลายร้อยตัว แล้วนำข้อความบทสนทนามาต่อกันเป็นหน้าต่างเดียวให้อ่านเหมือนแชต!
+   - **ข้อความสีแดง** = ข้อมูลที่ฝั่ง Client ส่งไป (เช่น `GET /api/login HTTP/1.1`)
+   - **ข้อความสีน้ำเงิน** = ข้อมูลที่ฝั่ง Server ตอบกลับมา (เช่น `HTTP/1.1 500 Internal Server Error`)
+2. **Expert Information (วิเคราะห์ปัญหาอัตโนมัติ)**:
+   - คลิกที่ปุ่มวงกลมสีที่มุมล่างซ้าย หรือเมนู **Analyze ➔ Expert Information**
+   - Wireshark จะสรุปความผิดปกติของเครือข่ายออกมาเป็นหมวดหมู่ทันที:
+     - **Errors (สีแดง)**: เช่น Malformed Packet หรือ Checksum ผิด
+     - **Warnings (สีเหลือง)**: เช่น Connection Reset, Retransmission, Spurious Retransmission
+     - **Notes (สีฟ้า)**: เช่น HTTP 404, Reassembled PDU
+', 13, 'intermediate', 3, true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.lessons VALUES ('3b325ae8-b7e2-4b0a-b86d-8e2bef22bd87', 11, 'tools-nmap-iperf-diagnostics', 'Nmap & iPerf3: การสแกนพอร์ต ตรวจสอบช่องโหว่ และวัดประสิทธิภาพ Throughput เครือข่าย (Network Scanning & Performance Testing)', 'การใช้งาน Nmap ค้นหา Host และ Port (-sS Stealth SYN, -sT, -sV, -O, -sU), การใช้งาน iPerf3 ทดสอบความเร็ว Throughput ท่อเครือข่าย (TCP Bandwidth, UDP Jitter & Packet Loss) และการใช้งาน WinMTR ตรวจจุด Latency คอขวด', '# Nmap & iPerf3: การสแกนพอร์ต ตรวจสอบช่องโหว่ และวัดประสิทธิภาพ Throughput เครือข่าย
+
+เมื่อมีข้อสงสัยว่า *"มีเซิร์ฟเวอร์เปิดพอร์ตอะไรทิ้งไว้บ้าง?"* หรือผู้ใช้งานบ่นว่า *"เน็ตเวิร์กระหว่างสาขาวิ่งช้ามาก ไม่ได้ความเร็ว 1 Gbps ตามที่ขอผู้ให้บริการไว้"* สองเครื่องมือมาตรฐานสากลที่สาย Network และ System Engineer ต้องมีติดตัวเสมอคือ **Nmap (Network Mapper)** และ **iPerf3**
+
+---
+
+## 1. Nmap: สุดยอดเครื่องมือสำรวจและสแกนพอร์ต (Network Scanner)
+
+**Nmap** คือเครื่องมือโอเพนซอร์สที่ใช้ค้นหาเครื่องโฮสต์ที่เปิดอยู่ในเครือข่าย (Host Discovery), ตรวจสอบพอร์ตที่เปิดให้บริการ (Port Scanning), ค้นหาเวอร์ชันของระบบปฏิบัติการ (OS Detection) และบริการที่รันอยู่ (Service Fingerprinting)
+
+![ผลลัพธ์การสแกนพอร์ตด้วย Nmap และการทดสอบความเร็ว Bandwidth Throughput ด้วย iPerf3](/images/tools/nmap-iperf3-testing.png)
+
+### รูปแบบคำสั่ง Nmap ที่ใช้จริงในงาน Support:
+
+```bash
+# 1. Ping Scan (ค้นหาว่ามี IP ใดเปิดเครื่องอยู่บ้างในวงแลน โดยไม่ต้องสแกนพอร์ต)
+nmap -sn 192.168.1.0/24
+
+# 2. TCP SYN Stealth Scan (สแกนแบบเนียน: ไม่ต่อ Handshake ครบ 3 ขั้น ไม่บันทึกลง Application Log)
+sudo nmap -sS 10.20.1.50
+
+# 3. สแกนตรวจสอบเวอร์ชันของบริการ (Service Version Detection) และระบบปฏิบัติการ (OS Detection)
+sudo nmap -sV -O 10.20.1.50
+
+# 4. สแกนพอร์ตเฉพาะเจาะจง หรือสแกนครบทุกพอร์ต (1-65535)
+nmap -p 22,80,443,3389 10.20.1.50
+nmap -p- 10.20.1.50
+
+# 5. สแกนพอร์ต UDP (ช้ากว่า TCP มาก ต้องระบุพอร์ตชัดเจน เช่น DNS 53 หรือ SNMP 161)
+sudo nmap -sU -p 53,161 10.20.1.50
+
+# 6. ใช้ Nmap Scripting Engine (NSE) ตรวจสอบช่องโหว่เบื้องต้น
+nmap --script vuln 10.20.1.50
+```
+
+### การอ่านสถานะของพอร์ต (Port States) จากผลลัพธ์ Nmap:
+- **`open`**: มีแอปพลิเคชันกำลังดักฟัง (Listening) และยอมรับการเชื่อมต่อ
+- **`closed`**: แพ็กเก็ตส่งไปถึงเครื่องปลายทาง แต่ **ไม่มีแอปพลิเคชันเปิดฟังที่พอร์ตนั้น** (เครื่องตอบกลับมาด้วย TCP RST ทันที)
+- **`filtered`**: แพ็กเก็ตไปไม่ถึงหรือไม่มีการตอบกลับ เพราะ **ถูก Firewall หรือ Access Control List (ACL) บล็อกไว้กลางทาง**
+
+---
+
+## 2. iPerf3: เครื่องมือวัดแบนด์วิดท์ Throughput ท่อเครือข่ายจริง
+
+เวลาทดสอบความเร็ว หลายคนชอบทดสอบด้วยการดาวน์โหลดไฟล์ผ่าน SMB/FTP แต่ความเร็วนั้นมักถูกจำกัดด้วยความเร็วของฮาร์ดดิสก์ (Disk I/O Bottleneck) ไม่ใช่ความเร็วจริงของสายสัญญาณ!
+
+**iPerf3** ขจัดปัญหานี้โดยการ **สร้างข้อมูลทราฟฟิกสังเคราะห์ขึ้นบน RAM โดยตรง แล้วยิงอัดผ่านท่อเน็ตเวิร์ก** เพื่อวัดขีดความสามารถสูงสุดของสายเคเบิลหรือลิงก์ระหว่างสาขา:
+
+### สถาปัตยกรรม Client-Server ของ iPerf3:
+1. **เครื่องฝั่ง Server (ผู้รอรับการทดสอบ)**:
+   ```bash
+   # รันโหมด Server รอรับการเชื่อมต่อที่พอร์ตมาตรฐาน TCP 5201
+   iperf3 -s
+   ```
+2. **เครื่องฝั่ง Client (ผู้เริ่มยิงทดสอบ)**:
+   ```bash
+   # 1. ทดสอบ TCP Throughput ปกติ นาน 10 วินาที
+   iperf3 -c 10.20.1.50
+
+   # 2. ทดสอบแบบเปิด 4 สตรีมพร้อมกัน (Parallel Streams) เพื่อเค้นท่อแบนด์วิดท์ให้เต็มพิกัด
+   iperf3 -c 10.20.1.50 -P 4
+
+   # 3. ทดสอบแบบสลับทิศทาง (Reverse Mode: ให้ Server ส่งข้อมูลกลับมาหา Client เพื่อวัดความเร็วดาวน์โหลด)
+   iperf3 -c 10.20.1.50 -R
+
+   # 4. ทดสอบโหมด UDP เพื่อวัดค่า Jitter (ความสั่นไหวของเวลา) และ Packet Loss (จำเป็นมากสำหรับระบบ Voice/VoIP)
+   iperf3 -c 10.20.1.50 -u -b 100M
+   ```
+
+---
+
+## 3. WinMTR: ตรวจสอบจุดคอขวดและจุด Packet Loss บนเส้นทาง
+
+เมื่อมีอาการ *"อินเทอร์เน็ตหลุดบ่อย"* หรือ *"เล่นเกม/ใช้งานแอปพลิเคชันแล้วแล็กเป็นพักๆ"* คำสั่ง `ping` ปกติบอกได้แค่ว่าปลายทางตอบหรือไม่ แต่ไม่บอกว่าสายมีปัญหาที่ชุมสายตัวไหน
+
+**WinMTR (หรือ MTR บน Linux)** นำคำสั่ง **`ping`** และ **`traceroute`** มารวมร่างกัน โดยการส่ง ICMP ต่อเนื่องไปยังทุกๆ Hop บนเส้นทางแบบเรียลไทม์:
+- ดูคอลัมน์ **`Loss %`**: หากพบ Packet Loss สูงที่ Hop ใด และตัวเลข Loss นั้น **ลามต่อเนื่องไปยัง Hop ถัดไปจนถึงปลายทาง** ➔ แสดงว่า **เราเตอร์ที่ Hop นั้นคือจุดที่มีปัญหาจริง!**
+- ดูคอลัมน์ **`Avg / Worst (ms)`**: ช่วยระบุได้ชัดเจนว่าความหน่วงพุ่งสูงขึ้นตั้งแต่การข้ามลิงก์ไหน
+', 12, 'intermediate', 4, true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.lessons VALUES ('57df0d37-2e95-4e42-9185-f2ba49596293', 11, 'tools-terminal-remote-access', 'MobaXterm & Remote Admin Tools: รวมเครื่องมือ SSH, Serial Console, X11 และการโอนไฟล์ SFTP/SCP (Terminal Emulators & Remote Access)', 'เครื่องมือรีโมทประจำเครื่องช่าง: MobaXterm vs PuTTY vs SecureCRT, ฟีเจอร์ Multi-execution (พิมพ์คำสั่ง 10 เครื่องพร้อมกัน), การเชื่อมต่อ Serial Console (COM Port 9600 8N1), Embedded SFTP Browser, X11 Forwarding และ WinSCP', '# MobaXterm & Remote Admin Tools: รวมเครื่องมือ SSH, Serial Console, X11 และการโอนไฟล์ SFTP/SCP
+
+งานของทีม Network Engineer, SysAdmin และ IT Support ในแต่ละวันกว่า 80% ไม่ได้นั่งอยู่หน้าเครื่องจริง แต่เป็นการ **เชื่อมต่อระยะไกล (Remote Access)** ไปยังอุปกรณ์สวิตช์ เราเตอร์ ไฟร์วอลล์ และลินุกซ์เซิร์ฟเวอร์นับร้อยเครื่อง การเลือกโปรแกรม Terminal Emulator ที่มีเครื่องมืออำนวยความสะดวกครบครันจะช่วยลดเวลาทำงานและป้องกันความผิดพลาดได้อย่างมหาศาล
+
+---
+
+## 1. เปรียบเทียบเครื่องมือ Terminal ยอดนิยม: PuTTY vs MobaXterm vs SecureCRT
+
+![หน้าจอโปรแกรม MobaXterm แสดง Multi-Execution SSH Sessions, Embedded SFTP และ Serial Console](/images/tools/mobaxterm-remote-sessions.png)
+
+| โปรแกรม | ข้อดีเด่น | ข้อจำกัด | ความเหมาะสมในการใช้งาน |
+|---|---|---|---|
+| **PuTTY** | • ขนาดไฟล์เล็กมาก (หลัก KB) พกใส่แฟลชไดรฟ์ได้ทันที<br>• กินแรมน้อย เสถียร ไม่เคยแฮงก์<br>• ฟรีและโอเพนซอร์ส | • หน้าตาเรียบง่าย ไม่มีแถบแท็บ (Tabbed)<br>• ไม่มีตัวจัดการไฟล์ SFTP ในตัว (ต้องลง WinSCP เพิ่ม)<br>• จัดการเซสชันจำนวนมากได้ยาก | เครื่องมือฉุกเฉินประจำกระเป๋าช่าง หรือใช้กับงานง่ายๆ เชื่อมต่อเครื่องเดียว |
+| **MobaXterm (All-In-One)** | • **มี Embedded SFTP ในตัว**: ล็อกอิน SSH ปุ๊บ โฟลเดอร์ไฟล์จะเด้งขึ้นมาทางซ้าย ลากวางไฟล์ขึ้นลงได้ทันที!<br>• **Multi-Execution**: พิมพ์คำสั่งครั้งเดียว วิ่งออกไปรันบนทุกแท็บพร้อมกัน<br>• มี X11 Server ในตัว (รันโปรแกรมหน้าต่างกราฟิกจาก Linux ข้ามมาโชว์บน Windows ได้ทันที)<br>• รองรับครบทุกโปรโตคอล: SSH, Telnet, Serial, RDP, VNC, FTP | เวอร์ชันฟรีจำกัดจำนวน Session ที่เซฟได้ไม่เกิน 12 เซสชัน | **เครื่องมืออันดับ 1 สำหรับวิศวกรและสาย Support ที่ต้องดูแลเซิร์ฟเวอร์และเน็ตเวิร์กประจำวัน** |
+| **SecureCRT** | • เสถียรและทรงพลังที่สุดในระดับ Enterprise<br>• รองรับระบบ Scripting (Python, VBScript) ขั้นสูงสำหรับงานอัตโนมัติ<br>• ปรับแต่งสีและคีย์ลัดได้ละเอียด | เป็นซอฟต์แวร์แบบมีค่าลิขสิทธิ์ (Commercial License) ราคาค่อนข้างสูง | องค์กรขนาดใหญ่ โทรคมนาคม (ISP) และทีม Network Automation ระดับสูง |
+
+---
+
+## 2. ฟีเจอร์ไม้ตายของ MobaXterm ที่คนทำงานต้องรู้
+
+### 1) Multi-Execution Mode (พิมพ์ทีเดียว รันทุกเครื่อง)
+- สมมุติว่าคุณต้องตรวจสอบสถานะ `uptime` หรืออัปเดตกฎไฟร์วอลล์บนเซิร์ฟเวอร์ 10 เครื่องพร้อมกัน
+- เพียงแค่เปิดแท็บ SSH เชื่อมต่อเซิร์ฟเวอร์ทั้ง 10 ตัว แล้วกดปุ่ม **"MultiExec" (รูปหน้าจอซ้อนกันที่มุมขวาบน)**
+- หน้าจอจะแบ่งเป็นตาราง และ **ทุกตัวอักษรที่คุณพิมพ์ จะถูกส่งไปประมวลผลบนเซิร์ฟเวอร์ทั้ง 10 เครื่องพร้อมกันในวินาทีเดียว!** ช่วยประหยัดเวลาได้นับสิบเท่า
+
+### 2) Automatic Embedded SFTP Browser (ลากวางไฟล์โดยไม่ต้องจำคำสั่ง)
+- เมื่อคุณล็อกอินเข้า Linux Server ด้วย SSH แถบด้านซ้ายของ MobaXterm จะเปิด **SFTP File Browser** ของเครื่องนั้นขึ้นมาทันที
+- สามารถดับเบิลคลิกเปิดแก้ไขไฟล์คอนฟิก (เช่น `/etc/nginx/nginx.conf`) บน Text Editor ของ Windows และเมื่อกดเซฟ โปรแกรมจะอัปโหลดกลับไปแทนที่บนเซิร์ฟเวอร์อัตโนมัติ
+
+### 3) X11 Forwarding (เปิดโปรแกรม GUI ของ Linux บน Windows)
+- ปกติเซิร์ฟเวอร์ Linux ในห้อง Data Center จะติดตั้งแบบ Minimal ไร้หน้าจอ Graphic (Headless)
+- แต่ถ้าคุณต้องติดตั้งฐานข้อมูลอย่าง **Oracle Database** หรือโปรแกรมที่ต้องใช้หน้าต่างติดตั้ง GUI (เช่น `xclock`, `virt-manager`, `wireshark`)
+- MobaXterm มี **X11 Server ฝังตัวอยู่ในโปรแกรม** เมื่อคุณพิมพ์คำสั่งเปิดโปรแกรม GUI บน SSH หน้าต่างโปรแกรมนั้นจะเด้งขึ้นมาให้คลิกบนหน้าจอ Windows ของคุณได้ทันทีโดยไม่ต้องลง Desktop Environment บนเซิร์ฟเวอร์!
+
+---
+
+## 3. การเชื่อมต่อ Serial Console หน้าตู้แร็ค (COM Port & Baud Rate)
+
+เมื่อสวิตช์หรือเราเตอร์ใหม่ยังไม่มี IP Address คุณต้องเสียบ **สาย Console (USB-to-RJ45)** เข้าคอมพิวเตอร์:
+
+1. ตรวจสอบหมายเลขพอร์ตใน Windows:
+   - กดปุ่ม `Win + X` ➔ เลือก **Device Manager ➔ Ports (COM & LPT)**
+   - ดูว่าสาย USB Serial ของคุณได้รับพอร์ตหมายเลขใด เช่น **`COM3`** หรือ **`COM4`**
+2. ตั้งค่าใน MobaXterm หรือ PuTTY:
+   - เลือกประเภทการเชื่อมต่อเป็น **`Serial`**
+   - **Serial port**: ใส่ชื่อพอร์ตให้ตรง เช่น **`COM3`**
+   - **Speed (Baud rate)**: มาตรฐานสากลคือ **`9600`** (ยกเว้นอุปกรณ์บางรุ่นใหม่ที่อาจใช้ `115200`)
+   - **Data bits: 8, Stop bits: 1, Parity: None, Flow Control: None (9600-8-N-1)**
+3. กดปุ่ม Connect แล้วเคาะแป้น **Enter 1–2 ครั้ง** บนคีย์บอร์ดเพื่อปลุกหน้าต่าง Console ของอุปกรณ์!
+
+---
+
+## 4. WinSCP: เครื่องมือโอนย้ายไฟล์ความปลอดภัยสูง (SFTP / SCP Client)
+
+หากต้องการโอนย้ายไฟล์ขนาดใหญ่ (เช่น อิมเมจระบบปฏิบัติการ ISO ขนาด 4–8 GB หรือไฟล์ Dump ฐานข้อมูล) ระหว่างเครื่อง Windows กับ Linux Server:
+- **WinSCP** เป็นโปรแกรมโอนไฟล์ผ่านโปรโตคอล **SFTP (SSH File Transfer Protocol - Port 22)** ที่เสถียรที่สุด
+- รองรับการ Resume ดาวน์โหลดต่อเมื่อเน็ตเวิร์กหลุด
+- มีฟังก์ชัน **Keepuptodate (Directory Synchronization)** ที่คอยตรวจจับว่าหากไฟล์ในเครื่องคอมพิวเตอร์ของคุณมีการแก้ไข จะสั่งซิงก์อัปโหลดขึ้นเซิร์ฟเวอร์ให้โดยอัตโนมัติ
+', 11, 'beginner', 5, true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
 
 
 --
@@ -4317,6 +4752,7 @@ INSERT INTO public.questions VALUES ('5b3a90cc-98f5-4e20-84a0-4571ae4f7428', 'tr
 INSERT INTO public.questions VALUES ('29bbd4c8-8c53-4803-aed5-19065d230d4f', 'troubleshooting:06-printer-smb:q05', 6, '36390028-97e0-4e57-b0db-c9c4f778cb68', 'พนักงานที่ทำงานจากบ้านแจ้งว่า เมื่อเชื่อมต่อ VPN ของบริษัท (ซึ่งตั้งค่าแบบ Split Tunnel) สามารถเปิดเข้าเซิร์ฟเวอร์ภายในด้วยหมายเลข IP (https://10.20.1.50) ได้ปกติ แต่พอพิมพ์ชื่อโดเมนภายใน (https://intranet.company.local) กลับขึ้นว่าไม่พบเว็บไซต์ (DNS_PROBE_FINISHED_NXDOMAIN) สาเหตุเกิดจากอะไร?', 'การวิเคราะห์ปัญหาการแปลงชื่อโดเมนภายในเมื่อเชื่อมต่อผ่านระบบ VPN', 'medium', 'multiple_choice', 'หากเข้าด้วย IP ได้ แปลว่า Routing ในอุโมงค์ VPN ทำงานถูกต้องแล้ว แต่การเข้าด้วยชื่อ .local ไม่ได้ แสดงว่าเครื่องของพนักงานยังคงถามชื่อโดเมนไปที่ DNS ของเน็ตบ้าน (หรือ 8.8.8.8) ซึ่งไม่รู้จักชื่อภายในบริษัท ต้องตั้งค่าให้ VPN จ่าย Internal DNS Server และ Search Domain ของบริษัทมาให้เครื่องลูกด้วย', '{vpn,split-tunnel,dns,troubleshooting}', true, '2026-11-10 12:53:16.618762+00', '2026-11-10 12:53:16.618762+00');
 INSERT INTO public.questions VALUES ('ac2a6f12-d7c5-40f8-8115-75aed1a9e22a', 'troubleshooting:07-backup-dr:q01', 6, 'efdde8b7-94d1-4638-bb7d-cc05c37f6634', 'ตามกฎการสำรองข้อมูลมาตรฐาน "3-2-1 Backup Rule" ตัวเลข 3, 2 และ 1 หมายถึงข้อใดตามลำดับ?', 'การออกแบบสถาปัตยกรรมการสำรองข้อมูลขององค์กรให้ปลอดภัยจากเหตุฮาร์ดแวร์พังและไฟไหม้', 'easy', 'multiple_choice', 'กฎ 3-2-1 หมายถึง มีข้อมูลทั้งหมดอย่างน้อย 3 ชุด (1 ข้อมูลจริง + 2 สำเนา), เก็บไว้บนสื่อบันทึกข้อมูลที่ต่างชนิดกันอย่างน้อย 2 ประเภท และมีอย่างน้อย 1 ชุดที่เก็บไว้นอกสถานที่ (Offsite/Cloud)', '{backup,3-2-1-rule,disaster-recovery,sysadmin}', true, '2026-11-10 12:53:16.618762+00', '2026-11-10 12:53:16.618762+00');
 INSERT INTO public.questions VALUES ('0f5d259c-9fb1-4888-8eaf-a4d4bbbeded2', 'troubleshooting:07-backup-dr:q02', 6, 'efdde8b7-94d1-4638-bb7d-cc05c37f6634', 'ความแตกต่างที่สำคัญที่สุดระหว่างค่า "RPO (Recovery Point Objective)" และ "RTO (Recovery Time Objective)" คือข้อใด?', 'การประชุมกำหนดเป้าหมายแผนกู้คืนระบบจากภัยพิบัติ (Disaster Recovery Plan) ร่วมกับผู้บริหาร', 'medium', 'multiple_choice', 'RPO วัดปริมาณข้อมูลที่ธุรกิจยอมให้สูญหายย้อนหลังได้ (เช่น ข้อมูลหายได้ไม่เกิน 15 นาที = ต้องซิงก์หรือ Backup ทุก 15 นาที) ส่วน RTO วัดระยะเวลาที่ระบบต้องใช้ในการกู้คืนจนกลับมาเปิดให้บริการได้อีกครั้งหลังเกิดเหตุล่ม', '{rpo,rto,disaster-recovery,sla}', true, '2026-11-10 12:53:16.618762+00', '2026-11-10 12:53:16.618762+00');
+INSERT INTO public.questions VALUES ('568dc972-faec-464f-ad31-e4e8daafcde6', 'tools:02-gns3:q01', 11, '9a90cb58-d93b-420d-b47b-7cb59fd88ba0', 'ความแตกต่างพื้นฐานที่สำคัญที่สุดระหว่าง Network Simulator (เช่น Packet Tracer) กับ Network Emulator (เช่น GNS3 หรือ EVE-NG) คือข้อใด?', 'การเลือกเครื่องมือสำหรับฝึกทำแล็บระดับสูง CCNP/CCIE และงานออกแบบระบบเครือข่าย', 'easy', 'multiple_choice', 'Simulator เขียนโปรแกรมเลียนแบบพฤติกรรมและมีชุดคำสั่งจำกัด ส่วน Emulator จำลองฮาร์ดแวร์เสมือนแล้วนำ "ระบบปฏิบัติการจริง (Real OS Image)" เช่น Cisco IOS, Juniper Junos, FortiOS มาบูตทำงาน จึงได้ฟังก์ชันและพฤติกรรมเหมือนอุปกรณ์จริง 100%', '{tools,gns3,emulator,simulator}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
 INSERT INTO public.questions VALUES ('7ee858e7-a270-4176-97df-b0535c488c4b', 'troubleshooting:07-backup-dr:q03', 6, 'efdde8b7-94d1-4638-bb7d-cc05c37f6634', 'บริษัทตั้งเวลาทำ "Full Backup" ทุกคืนวันอาทิตย์ และทำ "Incremental Backup" ทุกคืนวันจันทร์ถึงวันเสาร์ หากเซิร์ฟเวอร์พังในเช้าวันพฤหัสบดี ผู้ดูแลระบบจะต้องใช้ไฟล์ Backup ชุดใดบ้างในการกู้คืนข้อมูลให้กลับมาครบถ้วนถึงคืนวันพุธ?', 'การวางแผนและคำนวณชุดข้อมูลที่ต้องใช้ในการทำ Data Restore', 'medium', 'multiple_choice', 'Incremental Backup จะเก็บเฉพาะข้อมูลที่เปลี่ยนแปลงนับจาก Backup ครั้งก่อนหน้า (วันต่อวัน) ดังนั้นการกู้คืนจนถึงวันพุธ ต้องเริ่มจาก Full Backup ของวันอาทิตย์ แล้วนำ Incremental ของวันจันทร์ + วันอังคาร + วันพุธ มาต่อกันตามลำดับห้ามขาดแม้แต่วันเดียว', '{backup,incremental,differential,restore}', true, '2026-11-10 12:53:16.618762+00', '2026-11-10 12:53:16.618762+00');
 INSERT INTO public.questions VALUES ('01178e2b-5bd0-469a-b6ac-eb8e42962154', 'troubleshooting:07-backup-dr:q04', 6, 'efdde8b7-94d1-4638-bb7d-cc05c37f6634', 'เหตุใดในยุคที่การโจมตีด้วยไวรัสเรียกค่าไถ่ (Ransomware) ระบาดหนัก องค์กรจึงต้องมีสำเนาข้อมูลแบบ "Immutable Backup (WORM)" หรือ "Air-Gapped Backup" เพิ่มเติมจากการสำรองข้อมูลลง NAS ที่เชื่อมต่ออยู่ในเครือข่ายปกติ?', 'การป้องกันไม่ให้ข้อมูลสำรองถูกทำลายไปพร้อมกับเซิร์ฟเวอร์หลักเมื่อถูกโจมตีทางไซเบอร์', 'easy', 'multiple_choice', 'Ransomware สมัยใหม่ไม่ได้เข้ารหัสแค่ไฟล์ในเครื่องเหยื่อ แต่จะสแกนหา Network Share / NAS และเซิร์ฟเวอร์ Backup ที่ต่ออยู่ในเครือข่ายเพื่อสั่งลบหรือเข้ารหัสไฟล์ Backup ทิ้งด้วย การทำ Immutable (ห้ามลบ/ห้ามแก้ภายในระยะเวลาที่ล็อกไว้) หรือ Air-Gapped (ตัดขาดจากเครือข่าย) จึงเป็นปราการด่านสุดท้ายที่รับประกันว่าจะมีไฟล์สะอาดไว้กู้คืนแน่นอน', '{backup,ransomware,immutable,air-gap,security}', true, '2026-11-10 12:53:16.618762+00', '2026-11-10 12:53:16.618762+00');
 INSERT INTO public.questions VALUES ('12b0b468-bbe8-4508-915b-2ad193586103', 'troubleshooting:07-backup-dr:q05', 6, 'efdde8b7-94d1-4638-bb7d-cc05c37f6634', 'เมื่อพนักงานโทรแจ้ง Helpdesk ด้วยความตกใจว่า "ไฟล์ในเครื่องกำลังถูกเปลี่ยนนามสกุลเป็นรหัสแปลกๆ และหน้าจอขึ้นข้อความเรียกค่าไถ่ (Ransomware)" สิ่งแรกสุดที่เจ้าหน้าที่ IT Support ต้องสั่งให้ทำทันทีคือข้อใด?', 'การตอบสนองต่อเหตุการณ์ด้านความปลอดภัย (Incident Response - Containment) ในวินาทีแรก', 'easy', 'multiple_choice', 'หัวใจสำคัญที่สุดในวินาทีแรกที่พบการติดเชื้อ Ransomware คือการจำกัดวงความเสียหาย (Containment / Isolation) โดยต้องดึงสาย LAN ออกและปิด Wi-Fi ทันที เพื่อตัดขาดเครื่องนั้นออกจากเครือข่าย ไม่ให้มัลแวร์วิ่งผ่านพอร์ต SMB ไปเข้ารหัสทำลายไฟล์บน File Server ของทั้งบริษัท', '{ransomware,incident-response,security,containment}', true, '2026-11-10 12:53:16.618762+00', '2026-11-10 12:53:16.618762+00');
@@ -4324,6 +4760,35 @@ INSERT INTO public.questions VALUES ('f03f5c64-7d5e-4964-9ad8-bff75f35a6f5', 'da
 INSERT INTO public.questions VALUES ('3f1df441-85cc-45d3-9b85-504478cb0d29', 'datacenter:11-equip:q02', 10, '681252fc-9293-40e3-9100-c19b27e9f69c', 'หากเสียบสายไฟเบอร์เข้ากับโมดูล SFP+ บนสวิตช์แล้วไฟสถานะพอร์ตไม่ติด (Link Down) ช่างจึงถอดสายไฟเบอร์ออก แล้วนำ "หัวอุด Fiber Loopback Plug" เสียบเข้าที่ตัว SFP+ โดยตรง ปรากฏว่าไฟสถานะพอร์ตเปลี่ยนเป็นสีเขียว (Link Up) ทันที ข้อสรุปใดถูกต้อง?', 'การใช้เทคนิค Loopback Test เพื่อแยกแยะปัญหาพอร์ตสวิตช์/SFP กับสายเคเบิล', 'medium', 'multiple_choice', 'หัว Loopback ทำหน้าที่วนสัญญาณขาส่ง (Tx) กลับเข้าขารับ (Rx) ของตัว SFP+ เอง เมื่อเสียบแล้วไฟพอร์ตติดสีเขียว แสดงว่าทั้งพอร์ตของสวิตช์และตัวโมดูล SFP+ ทำงานส่งและรับแสงได้สมบูรณ์ 100% ปัญหาจึงเกิดจากสายไฟเบอร์หรืออุปกรณ์ปลายทางอีกฝั่งแน่นอน', '{datacenter,loopback,sfp,troubleshooting}', true, '2026-11-10 13:22:20.548088+00', '2026-11-10 13:22:20.548088+00');
 INSERT INTO public.questions VALUES ('5ebf818c-bdc8-4cf2-86d7-b46f7a87c14c', 'datacenter:11-equip:q04', 10, '681252fc-9293-40e3-9100-c19b27e9f69c', 'เหตุใดมาตรฐานการจัดการตู้แร็คใน Data Center จึงกำหนดให้ต้องนำแผ่นทึบที่เรียกว่า "Blanking Panel (Filler Panel)" ไปปิดทับช่อง U ที่ว่างอยู่ด้านหน้าตู้แร็คเสมอ?', 'การควบคุมทิศทางการไหลเวียนอากาศ (Airflow Management) ภายในตู้แร็ค 42U', 'easy', 'multiple_choice', 'หากปล่อยช่อง U ด้านหน้าตู้แร็คให้ว่างโบ๋ ลมร้อนที่ถูกเป่าออกทางด้านหลังตู้จะไหลย้อนผ่านช่องว่างนั้นวนกลับมาเข้าด้านหน้าของเซิร์ฟเวอร์ตัวข้างเคียง (Hot Air Recirculation) ทำให้เซิร์ฟเวอร์ดูดลมร้อนกลับเข้าไปจนอุณหภูมิสูงขึ้น', '{datacenter,rack,blanking-panel,cooling,airflow}', true, '2026-11-10 13:22:20.548088+00', '2026-11-10 13:22:20.548088+00');
 INSERT INTO public.questions VALUES ('197578ef-435e-4bf8-b842-3791da759a4c', 'datacenter:11-equip:q05', 10, '681252fc-9293-40e3-9100-c19b27e9f69c', 'ในการนำสาย Console (USB-to-RJ45 Rollover Cable) ไปเสียบเข้าพอร์ต CONSOLE ของ Network Switch หน้าตู้แร็ค ค่าพารามิเตอร์มาตรฐานสากล (Serial Configuration) ที่ต้องตั้งในโปรแกรม PuTTY คือข้อใด?', 'การเชื่อมต่อเข้าตั้งค่า Switch หรือ Router ครั้งแรกผ่านพอร์ต Serial Console หน้าเครื่อง', 'medium', 'multiple_choice', 'ค่ามาตรฐานสากลของพอร์ต Serial Console บนอุปกรณ์เครือข่าย (Cisco, Juniper, Aruba, HPE) คือ 9600-8-N-1 ได้แก่ Baud rate (Speed) = 9600, Data bits = 8, Parity = None, Stop bits = 1 และ Flow control = None', '{datacenter,console,serial,9600-8n1,switch}', true, '2026-11-10 13:22:20.548088+00', '2026-11-10 13:22:20.548088+00');
+INSERT INTO public.questions VALUES ('a52403ec-d3a6-4da0-9422-08738063d262', 'network:11-design:q01', 2, '3e090998-8642-4e35-af78-02f95246485a', 'ในสถาปัตยกรรมเครือข่ายแบบ 3-Tier Model (Core, Distribution, Access) ชั้นใดมีหน้าที่หลักในการนำส่งแพ็กเก็ตด้วยความเร็วสูงสุด (High-Speed Switching) โดยมีกฎเหล็กว่าห้ามเปิดใช้ ACLs หรือ Packet Filtering ที่ซับซ้อนในชั้นนี้เพื่อไม่ให้กระทบประสิทธิภาพ?', 'การออกแบบระบบเครือข่ายของแคมปัสองค์กรตามหลักการของ Cisco', 'easy', 'multiple_choice', 'Core Layer มีหน้าที่เพียงอย่างเดียวคือการสลับและส่งผ่านทราฟฟิกจำนวนมหาศาลด้วยความเร็วสูงสุด ดังนั้นจึงห้ามนำงานตรวจสอบความปลอดภัย เช่น ACLs, Packet Filtering หรือการประมวลผลที่ซับซ้อนมาไว้ในชั้นนี้ โดยงานเหล่านั้นจะถูกผลักไปไว้ที่ชั้น Distribution Layer แทน', '{network,network-design,3-tier,core-layer}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('0c0e2c5e-3d78-42c0-b521-d904e7ee48b9', 'network:11-design:q02', 2, '3e090998-8642-4e35-af78-02f95246485a', 'เหตุผลหลักที่ศูนย์ข้อมูล (Data Center) ยุคใหม่เปลี่ยนจากสถาปัตยกรรม 3-Tier มาใช้ "Spine-Leaf Architecture" คือข้อใด?', 'การออกแบบเครือข่ายเพื่อรองรับ Cloud Computing และ Microservices ใน Data Center', 'medium', 'multiple_choice', 'ใน Data Center ยุคใหม่ ทราฟฟิกส่วนใหญ่เป็นแบบ East-West (เครื่องเซิร์ฟเวอร์คุยกันเองภายใน) ซึ่ง Spine-Leaf ออกแบบมาให้ Leaf ทุกตัวเชื่อมกับ Spine ทุกตัว ทำให้การคุยข้ามตู้แร็คมีระยะทางเพียง 2 Hops เสมอ และใช้ ECMP วิ่งทุกท่อพร้อมกันโดยไม่ถูก STP บล็อก', '{network,spine-leaf,datacenter,architecture}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('a8a4e9a3-b5ff-4059-97c5-1ea9fd24f1f4', 'network:11-design:q03', 2, '3e090998-8642-4e35-af78-02f95246485a', 'โปรโตคอลมาตรฐานเปิดสากล (Open Standard) ในข้อใดที่ใช้สร้าง Virtual Default Gateway ร่วมกันระหว่างเราเตอร์/สวิตช์ 2 ตัว เพื่อป้องกันไม่ให้เครื่องลูกข่ายออกอินเทอร์เน็ตไม่ได้เมื่อเราเตอร์ตัวหลักดับลง?', 'การทำ First Hop Redundancy Protocol (FHRP) ระหว่างอุปกรณ์ต่างยี่ห้อ', 'easy', 'multiple_choice', 'VRRP (Virtual Router Redundancy Protocol) เป็นมาตรฐานเปิดสากล (RFC 5798) ที่รองรับการทำ Virtual Gateway บนอุปกรณ์ทุกยี่ห้อ ส่วน HSRP เป็นโปรโตคอลเฉพาะของ Cisco', '{network,vrrp,hsrp,redundancy,fhrp}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('58226d42-ba11-4316-b7ed-a5926488badd', 'network:11-design:q04', 2, '3e090998-8642-4e35-af78-02f95246485a', 'เทคโนโลยีใดที่ช่วยให้สวิตช์คู่หนึ่ง (เช่น Cisco Nexus) ทำงานร่วมกันเสมือนเป็นสวิตช์ตัวเดียว ทำให้เซิร์ฟเวอร์สามารถรวมสายแลน 2 เส้นด้วย LACP ต่อแยกไปยังสวิตช์คนละตู้ได้ เพื่อป้องกันปัญหา Single Point of Failure ระดับตู้สวิตช์?', 'การออกแบบการเชื่อมต่อสาย Dual Uplink จาก Server ไปยัง Top-of-Rack Switch คู่', 'medium', 'multiple_choice', 'Cisco vPC (Virtual Port Channel) หรือ Multi-chassis EtherChannel ช่วยให้พอร์ตจากสวิตช์สองตัวที่แยกจากกันทางกายภาพ ทำงานเป็น Port Channel เดียวกันเชื่อมต่อเข้ากับเซิร์ฟเวอร์ลูกได้', '{network,vpc,lacp,etherchannel,redundancy}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('2078e3ed-e858-4d2a-b8b4-e0ee255ac29c', 'network:11-design:q05', 2, '3e090998-8642-4e35-af78-02f95246485a', 'ตามหลักการออกแบบความปลอดภัยของโซน DMZ (Demilitarized Zone) ข้อใดคือกฎเหล็กที่สำคัญที่สุดในการป้องกันการโจมตีทะลุเข้าสู่ระบบฐานข้อมูลภายใน?', 'การออกแบบสถาปัตยกรรม Firewall แบ่งแยกโซน Web, DMZ และ Internal Database', 'medium', 'multiple_choice', 'กฎเหล็กของ DMZ คือ อนุญาตให้คนภายนอกเรียกเข้า DMZ ได้ และอนุญาตให้ภายในเรียกเข้า DMZ ได้ แต่ "ห้ามให้เซิร์ฟเวอร์ใน DMZ เป็นผู้ริเริ่มสร้างการเชื่อมต่อไปยังเครือข่ายภายใน (Initiate Connection to Internal)" หากเว็บถูกยึด คนร้ายจะไม่สามารถสั่งโจมตีเจาะระบบฐานข้อมูลภายในได้โดยตรง', '{network,dmz,firewall,security,architecture}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('a727b57c-471f-4098-baa1-0369e65a00ee', 'tools:01-packet-tracer:q01', 11, '93a91167-81c5-4497-a769-3930c59a54b1', 'Cisco Packet Tracer จัดเป็นซอฟต์แวร์ประเภทใด และมีความแตกต่างจาก Network Emulator อย่าง GNS3 หรือ EVE-NG อย่างไร?', 'การทำความเข้าใจขีดความสามารถและข้อจำกัดของเครื่องมือจำลองเครือข่าย', 'easy', 'multiple_choice', 'Packet Tracer เป็น Network Simulator (โปรแกรมจำลองพฤติกรรม) ที่เลียนแบบการทำงานและคำสั่งของ Cisco IOS โดยไม่ได้รันไฟล์ระบบปฏิบัติการจริง จึงกินทรัพยากรเครื่องน้อยมาก แต่รองรับชุดคำสั่งจำกัดเฉพาะที่โปรแกรมสร้างไว้ ต่างจาก GNS3/EVE-NG ที่เป็น Emulator รันระบบปฏิบัติการจริง', '{tools,cisco-packet-tracer,simulator,network}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('06567e5a-aea4-4301-889e-31d49ac89174', 'tools:01-packet-tracer:q02', 11, '93a91167-81c5-4497-a769-3930c59a54b1', 'ในโปรแกรม Cisco Packet Tracer โหมดการทำงาน "Simulation Mode" มีจุดเด่นสำคัญที่แตกต่างจาก "Realtime Mode" อย่างไร?', 'การฝึกหัดวิเคราะห์การเดินทางของแพ็กเก็ตและโปรโตคอล ARP/ICMP', 'easy', 'multiple_choice', 'ใน Simulation Mode เวลาในเครือข่ายจะหยุดนิ่ง และผู้ใช้สามารถกดเดินหน้า (Capture/Forward) เพื่อดูซองจดหมาย PDU เดินทางทีละก้าว พร้อมคลิกเปิดดู Header ของแต่ละเลเยอร์ใน OSI Model (Layer 1-7) ได้อย่างละเอียด', '{tools,packet-tracer,simulation-mode,pdu}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('854a5934-7449-45be-80a5-c32b00b0208c', 'tools:01-packet-tracer:q03', 11, '93a91167-81c5-4497-a769-3930c59a54b1', 'เมื่อต่อสายแลนระหว่าง Switch กับ PC ในโหมด Realtime แล้วพบว่าไฟพอร์ตที่สวิตช์ขึ้นเป็น "สีส้ม" นานประมาณ 30–50 วินาทีก่อนจะเปลี่ยนเป็นสีเขียว อาการนี้เกิดจากสาเหตุใดและสามารถกดเร่งเวลาได้อย่างไร?', 'พฤติกรรมการทำงานของ Spanning Tree Protocol (STP) บนสวิตช์ Cisco', 'medium', 'multiple_choice', 'ไฟสีส้มเกิดจากกระบวนการทำงานปกติของ Spanning Tree Protocol (STP) ที่กำลังตรวจสอบสถานะ Listening และ Learning เพื่อป้องกัน Loop และใน Packet Tracer สามารถกดปุ่ม "Fast Forward Time (Alt + D)" เพื่อเร่งเวลาข้ามการรอคอยได้ทันที', '{tools,packet-tracer,stp,spanning-tree}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('a665524c-1dcd-4cb9-af0f-3c7110e65a72', 'tools:01-packet-tracer:q04', 11, '93a91167-81c5-4497-a769-3930c59a54b1', 'หากต้องการเชื่อมต่อระหว่างคอมพิวเตอร์ PC เข้ากับพอร์ต CONSOLE ของ Cisco Switch ใน Packet Tracer เพื่อพิมพ์คำสั่งคอนฟิก IOS ผ่านโปรแกรม Terminal เสมือน จะต้องเลือกใช้สายเคเบิลชนิดใดในโปรแกรม?', 'การต่อสายเพื่อเข้าตั้งค่าอุปกรณ์เครือข่ายครั้งแรก (Out-of-Band Management)', 'easy', 'multiple_choice', 'สาย Console ในโปรแกรม Packet Tracer มีสัญลักษณ์เป็นสายสีฟ้าอ่อน (Rollover Cable) เชื่อมจากพอร์ต RS 232 หรือ USB ของ PC เข้ากับพอร์ต CONSOLE ของ Switch/Router', '{tools,packet-tracer,console,cabling}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('1b69be04-7692-4128-a45d-4e898b67651b', 'tools:01-packet-tracer:q05', 11, '93a91167-81c5-4497-a769-3930c59a54b1', 'ไฟล์นามสกุล ".pka" ในโปรแกรม Cisco Packet Tracer มีคุณลักษณะพิเศษที่แตกต่างจากไฟล์ ".pkt" ทั่วไปอย่างไร?', 'การทำแบบฝึกหัดและข้อสอบในหลักสูตร Cisco Networking Academy', 'easy', 'multiple_choice', 'ไฟล์ .pka (Packet Tracer Activity) คือไฟล์ข้อสอบหรือแล็บแบบฝึกหัดที่มีการล็อก Topology ไว้ มีหน้าต่างโจทย์แนะนำขั้นตอน และมีระบบตรวจวัดคะแนนความถูกต้อง (Completion Percentage) แบบอัตโนมัติ', '{tools,packet-tracer,pka,pkt,certification}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('bab6c130-fd6a-4bcd-b882-377783f5af02', 'tools:02-gns3:q02', 11, '9a90cb58-d93b-420d-b47b-7cb59fd88ba0', 'ในการใช้งาน GNS3 ร่วมกับอิมเมจเราเตอร์ตระกูลเก่าของ Dynamips (เช่น Cisco 3725 หรือ 7200) เหตุใดช่างเทคนิคจึงต้องกดคำนวณและตั้งค่า "Idle-PC"?', 'การแก้ปัญหาคอมพิวเตอร์ทำงานหนักและพัดลมหมุนเสียงดังเมื่อเปิดรันเราเตอร์ใน GNS3', 'medium', 'multiple_choice', 'เราเตอร์ของจริงไม่มีกลไกหยุดหมุนรอบ CPU เมื่อว่างงาน เมื่อนำอิมเมจมาบูตบน PC ตัวโปรแกรมจะกิน CPU คอมพิวเตอร์ 100% เต็ม การคำนวณและใส่ค่า Idle-PC จะช่วยบอก GNS3 ให้สั่งหยุดการทำงานของลูปว่าง (Idle loop) ทำให้การใช้งาน CPU ของเครื่องลดลงเหลือเพียง 1-2%', '{tools,gns3,dynamips,idle-pc,performance}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('f01fc036-5329-41fe-9b18-f53eb57ef654', 'tools:02-gns3:q03', 11, '9a90cb58-d93b-420d-b47b-7cb59fd88ba0', 'เหตุใดแนวทางปฏิบัติที่ดีที่สุด (Best Practice) ในการติดตั้ง GNS3 บนคอมพิวเตอร์ยุคปัจจุบัน จึงแนะนำให้รันร่วมกับ "GNS3 VM" บน VMware หรือ VirtualBox แทนการรันบนระบบปฏิบัติการหลักโดยตรง?', 'การวางสถาปัตยกรรมระบบสำหรับทำแล็บเสมือนที่มีเราเตอร์และอุปกรณ์จำนวนมาก', 'medium', 'multiple_choice', 'ระบบปฏิบัติการเราเตอร์ยุคใหม่ส่วนใหญ่ทำงานบน QEMU/KVM, IOU และ Docker ซึ่งต้องการ Linux Kernel และระบบ Nested Virtualization ทำให้การรันบน GNS3 VM (ที่เป็น Linux) มีความเสถียร ประสิทธิภาพสูงกว่า และรองรับอิมเมจได้หลากหลายกว่าการรันบน Windows โดยตรง', '{tools,gns3,gns3-vm,virtualization,qemu}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('09b67e70-88d1-4ad7-8214-29e1433c3b30', 'tools:02-gns3:q04', 11, '9a90cb58-d93b-420d-b47b-7cb59fd88ba0', 'หากวิศวกรต้องการตรวจสอบการทำงานของแพ็กเก็ตที่วิ่งผ่านสายสัญญาณระหว่างเราเตอร์ 2 ตัวใน GNS3 อย่างละเอียดแบบเรียลไทม์ ฟีเจอร์ใดของ GNS3 ที่ตอบโจทย์การทำงานนี้ได้ดีที่สุด?', 'การวิเคราะห์ปัญหา OSPF Neighbor ไม่ขึ้นในแล็บเสมือน', 'easy', 'multiple_choice', 'GNS3 มีความสามารถผสานการทำงานกับ Wireshark ในตัว เพียงแค่คลิกขวาที่สายเชื่อมต่อแล้วเลือก "Start Capture" โปรแกรม Wireshark ตัวจริงจะเปิดขึ้นมาดักจับแพ็กเก็ตที่วิ่งผ่านสายเส้นนั้นได้แบบสดๆ', '{tools,gns3,wireshark,packet-capture}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('c029cd6e-d453-43e2-9215-ccfdfde2dd1a', 'tools:02-gns3:q05', 11, '9a90cb58-d93b-420d-b47b-7cb59fd88ba0', 'โหนดประเภทใดใน GNS3 ที่ใช้สำหรับการเชื่อมต่อ (Bridge) เครือข่ายเสมือนภายในแล็บ ให้ออกสู่อินเทอร์เน็ตจริง หรือเชื่อมต่อกับเน็ตเวิร์กการ์ด (NIC) ของคอมพิวเตอร์จริงภายนอกได้?', 'การทำให้อุปกรณ์เราเตอร์ในแล็บ GNS3 สามารถทดสอบ ping ออก 8.8.8.8 บนอินเทอร์เน็ตจริง', 'easy', 'multiple_choice', 'Cloud Node หรือ NAT Node ใน GNS3 ทำหน้าที่บริดจ์พอร์ตเสมือนเข้ากับอินเทอร์เฟซจริงของการ์ดแลน/Wi-Fi บนเครื่องจริง ทำให้เครื่องในแล็บสามารถรับ IP และวิ่งออกสู่อินเทอร์เน็ตภายนอกได้', '{tools,gns3,cloud-node,nat,bridging}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('5f156ae1-1e17-450b-8749-f9e0c3e70abd', 'tools:03-wireshark:q01', 11, 'e0a4cdec-9071-4a41-bc6a-0aa782e85680', 'ความแตกต่างที่สำคัญที่สุดระหว่าง "Capture Filter" และ "Display Filter" ในโปรแกรม Wireshark คือข้อใด?', 'การเลือกใช้งานตัวกรองข้อมูลขณะดักจับทราฟฟิกเครือข่ายความเร็วสูง', 'medium', 'multiple_choice', 'Capture Filter ทำงานก่อนการบันทึก (ใช้ไวยากรณ์ BPF เช่น "port 80") แพ็กเก็ตที่ไม่ตรงเงื่อนไขจะถูกทิ้งทันทีช่วยประหยัดเนื้อที่ RAM/Disk ส่วน Display Filter ทำงานหลังจากการดักจับแล้ว (ใช้ไวยากรณ์ เช่น "http.response.code == 404") โดยสามารถเปลี่ยนมุมมองฟิลเตอร์ไปมาได้ตลอดเวลาโดยข้อมูลดิบไม่สูญหาย', '{tools,wireshark,filters,packet-capture}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('41b6c586-ddea-48bd-82a2-898b85af31b7', 'tools:03-wireshark:q02', 11, 'e0a4cdec-9071-4a41-bc6a-0aa782e85680', 'หากต้องการกรองดูเฉพาะแพ็กเก็ตที่เกิดปัญหาการส่งข้อมูลซ้ำเนื่องจากเครือข่ายมี Packet Loss (TCP Retransmission) บนแถบ Display Filter ของ Wireshark ควรใช้คำสั่งใด?', 'การวิเคราะห์ปัญหาแอปพลิเคชันทำงานช้าและสงสัยว่ามีสัญญาณดรอปบนลิงก์เครือข่าย', 'easy', 'multiple_choice', 'คำสั่ง "tcp.analysis.retransmission" เป็น Display Filter ในตัวของ Wireshark ที่ใช้กรองแสดงเฉพาะแพ็กเก็ตที่ถูกส่งซ้ำเนื่องจากไม่ได้รับ ACK ภายในเวลาที่กำหนด', '{tools,wireshark,tcp,retransmission,troubleshooting}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('6d0e94d0-a2a7-44fc-9f1d-476523f2d61e', 'tools:03-wireshark:q03', 11, 'e0a4cdec-9071-4a41-bc6a-0aa782e85680', 'ฟีเจอร์ "Follow TCP Stream" ในโปรแกรม Wireshark มีประโยชน์อย่างไรต่องานวิเคราะห์ปัญหาของทีม Support?', 'การตรวจสอบเนื้อหาข้อความการสนทนาระหว่าง Client กับ Web Server', 'easy', 'multiple_choice', 'Follow TCP Stream จะรวมรวมแพ็กเก็ตทั้งหมดของเซสชัน TCP นั้นมาเรียงต่อกันและถอดรหัสเป็นข้อความบทสนทนา (Application Payload) แสดงในหน้าต่างเดียว โดยแยกสีระหว่างข้อความที่ Client ส่งไป (สีแดง) และข้อความที่ Server ตอบกลับ (สีน้ำเงิน)', '{tools,wireshark,follow-tcp-stream,support}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('d135eb3b-8119-4b9e-a8a7-d02cbe474d93', 'tools:03-wireshark:q04', 11, 'e0a4cdec-9071-4a41-bc6a-0aa782e85680', 'เมื่อวิเคราะห์ไฟล์ดักจับแพ็กเก็ตแล้วพบข้อความเตือนในหมวด TCP Analysis ว่า "TCP ZeroWindow" อาการนี้สะท้อนถึงปัญหาทางเทคนิคใด?', 'การตรวจสอบสาเหตุที่การโอนย้ายไฟล์ขนาดใหญ่เกิดอาการค้างและชะงักเป็นระยะ', 'medium', 'multiple_choice', 'TCP ZeroWindow หมายถึง บัฟเฟอร์ขารับ (Receive Buffer) ของเครื่องปลายทางเต็ม จนไม่สามารถรับข้อมูลเพิ่มได้ จึงส่งแพ็กเก็ตบอกฝั่งส่งให้หยุดส่งข้อมูลชั่วคราว มักเกิดจากเครื่องปลายทาง CPU สูง หรือดิสก์เขียนข้อมูลไม่ทัน', '{tools,wireshark,tcp,zerowindow,performance}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('6d64dc59-ddea-4533-8979-6b8ea6f9f142', 'tools:03-wireshark:q05', 11, 'e0a4cdec-9071-4a41-bc6a-0aa782e85680', 'ในแถบสีแสดงผลเริ่มต้นของ Wireshark (Coloring Rules) บรรทัดของแพ็กเก็ตที่มี "พื้นหลังสีดำและตัวอักษรสีแดง" มักสื่อถึงเหตุการณ์ประเภทใด?', 'การสังเกตความผิดปกติของเครือข่ายอย่างรวดเร็วผ่านสายตา (Visual Inspection)', 'easy', 'multiple_choice', 'ตามกฎการระบายสีเริ่มต้นของ Wireshark แถบสีดำตัวหนังสือสีแดงถูกสงวนไว้สำหรับข้อผิดพลาดของโพรโทคอล TCP เช่น TCP RST (Reset / ปฏิเสธการเชื่อมต่อ), Retransmission หรือ Checksum Error', '{tools,wireshark,coloring-rules,tcp-error}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('9f476cd4-a948-43f9-b90d-84b81fd323eb', 'tools:04-nmap-iperf:q01', 11, '3b325ae8-b7e2-4b0a-b86d-8e2bef22bd87', 'เมื่อรันคำสั่ง Nmap สแกนพอร์ตไปยังเซิร์ฟเวอร์ปลายทางแล้วผลลัพธ์แสดงสถานะของพอร์ตเป็น "filtered" ความหมายที่ถูกต้องที่สุดคือข้อใด?', 'การตรวจสอบผลการสแกนพอร์ตเพื่อวิเคราะห์ปัญหาการเข้าถึงบริการ', 'easy', 'multiple_choice', 'สถานะ "filtered" หมายความว่า Nmap ไม่สามารถระบุได้ว่าพอร์ตนั้นเปิดหรือปิดอยู่ เนื่องจากแพ็กเก็ตถูกไฟร์วอลล์ (Firewall), ตัวกรองแพ็กเก็ต (Packet Filter) หรือกฎ ACL บล็อกไว้ทำให้ไม่มีการตอบกลับมายังเครื่องสแกน', '{tools,nmap,port-scanning,firewall}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('e4a1fbaa-6e2c-410a-90ac-765d08fe8cac', 'tools:04-nmap-iperf:q02', 11, '3b325ae8-b7e2-4b0a-b86d-8e2bef22bd87', 'การสแกนพอร์ตด้วย Nmap แบบ "TCP SYN Scan (-sS)" หรือ Stealth Scan มีข้อดีอย่างไรเมื่อเทียบกับ TCP Connect Scan (-sT)?', 'การเลือกโหมดการสแกนพอร์ตที่รวดเร็วและไม่สร้างภาระให้แอปพลิเคชันบนเซิร์ฟเวอร์', 'medium', 'multiple_choice', 'TCP SYN Scan (-sS) เป็นการสแกนแบบกึ่งเปิด (Half-open) โดยส่งแพ็กเก็ต SYN ไป เมื่อเซิร์ฟเวอร์ตอบ SYN-ACK กลับมา Nmap จะส่ง RST ไปตัดการเชื่อมต่อทันทีโดยไม่ส่ง ACK ขั้นสุดท้าย ทำให้ไม่เกิดการเชื่อมต่อสมบูรณ์ จึงไม่ถูกบันทึกใน Application Log ของเซิร์ฟเวอร์ส่วนใหญ่และทำงานเร็วกว่า', '{tools,nmap,tcp-syn-scan,security}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('73ff1c39-1bb8-4053-906a-d70a3304293d', 'tools:04-nmap-iperf:q03', 11, '3b325ae8-b7e2-4b0a-b86d-8e2bef22bd87', 'เหตุใดการทดสอบความเร็วแบนด์วิดท์ของลิงก์เครือข่ายด้วย "iPerf3" จึงให้ผลลัพธ์ที่แม่นยำกว่าการทดสอบด้วยการดาวน์โหลดไฟล์ขนาดใหญ่ผ่านโฟลเดอร์แชร์ SMB/Windows?', 'การตรวจรับมอบสายเช่าสัญญาณ (Leased Line 1 Gbps) ระหว่างสองสาขา', 'easy', 'multiple_choice', 'การดาวน์โหลดไฟล์จริงจะติดคอขวดที่ความเร็วการอ่านเขียนของฮาร์ดดิสก์ (Disk I/O) และ Overhead ของโพรโทคอล SMB ส่วน iPerf3 สร้างข้อมูลสังเคราะห์บนหน่วยความจำ RAM โดยตรงแล้วยิงอัดผ่านท่อเน็ตเวิร์ก ทำให้วัดสมรรถนะจริงของระบบเครือข่ายได้ 100%', '{tools,iperf3,bandwidth,throughput,testing}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('ba52ae68-c043-400b-acaf-37a707acee39', 'tools:04-nmap-iperf:q04', 11, '3b325ae8-b7e2-4b0a-b86d-8e2bef22bd87', 'ในการทดสอบประสิทธิภาพเครือข่ายเพื่อประเมินความพร้อมสำหรับระบบโทรศัพท์ไอพี (VoIP) หรือระบบประชุมออนไลน์ การรัน iPerf3 ในโหมด "UDP (-u)" ช่วยวัดค่าสำคัญใดเพิ่มเติมจากโหมด TCP ปกติ?', 'การตรวจสอบคุณภาพเครือข่ายก่อนติดตั้งระบบโทรศัพท์ IP Phone ของสำนักงาน', 'medium', 'multiple_choice', 'ระบบ VoIP ทำงานบน UDP ซึ่งความเสถียรของเสียงขึ้นอยู่กับค่า Jitter (ความสั่นไหวของเวลาหน่วง) และ Packet Loss (การสูญหายของแพ็กเก็ต) ซึ่งคำสั่ง "iperf3 -u" จะแสดงสถิติทั้ง Jitter และ Packet Loss ออกมาอย่างละเอียด', '{tools,iperf3,udp,jitter,voip}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('2dabfa05-a324-432d-ae60-5c73846c9e73', 'tools:04-nmap-iperf:q05', 11, '3b325ae8-b7e2-4b0a-b86d-8e2bef22bd87', 'เมื่อใช้เครื่องมือ "WinMTR" ตรวจสอบเส้นทางเครือข่ายไปยังเซิร์ฟเวอร์ปลายทาง สัญญาณใดที่บ่งบอกว่าเราเตอร์ตัวใดตัวหนึ่งบนเส้นทางคือ "จุดคอขวดหรือจุดที่เกิดปัญหาจริง"?', 'การไล่หาสาเหตุอาการเน็ตเวิร์กกระตุกและหลุดเป็นช่วงๆ', 'easy', 'multiple_choice', 'หากค่า Loss % เกิดขึ้นที่ Hop ใด Hop หนึ่ง แล้วตัวเลข Loss นั้นยังคงส่งผลต่อเนื่องไปยัง Hop ถัดไปจนถึงปลายทาง แสดงว่าเราเตอร์ที่ Hop นั้นเกิดปัญหาจริง (ต่างจากกรณีที่ Hop กลางทางติด Loss ตัวเดียวแต่ Hop ถัดไปเป็น 0% ซึ่งเกิดจากการที่อุปกรณ์ตัวนั้นตั้งค่าลดความสำคัญของการตอบ ICMP)', '{tools,winmtr,mtr,latency,packet-loss}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('b09a3292-b282-4bd5-b1bc-9c369e87d4b5', 'tools:05-mobaxterm:q01', 11, '57df0d37-2e95-4e42-9185-f2ba49596293', 'ฟีเจอร์ "Multi-Execution Mode" ในโปรแกรม MobaXterm มีประโยชน์อย่างไรต่องานดูแลระบบของวิศวกรเครือข่ายและ SysAdmin?', 'การตรวจสอบสถานะและเวอร์ชันของสวิตช์จำนวน 8 ตัวในเวลาเดียวกัน', 'easy', 'multiple_choice', 'Multi-Execution Mode ช่วยให้พิมพ์คำสั่งบนคีย์บอร์ดเพียงครั้งเดียว แล้วคำสั่งนั้นจะถูกส่งไปประมวลผลบนทุกเซสชันหรือแท็บเทอร์มินัลที่เปิดอยู่พร้อมกันทันที ช่วยประหยัดเวลาอย่างมหาศาลในการตรวจเช็กอุปกรณ์หลายเครื่อง', '{tools,mobaxterm,multi-execution,sysadmin}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('2a6d2840-cad2-417a-99c9-0819e078bee2', 'tools:05-mobaxterm:q02', 11, '57df0d37-2e95-4e42-9185-f2ba49596293', 'เมื่อเชื่อมต่อสาย Console (USB-to-RJ45) เข้ากับโน้ตบุ๊กเพื่อตั้งค่าสวิตช์หน้าตู้แร็ค หากไม่ทราบว่าสายแปลงนั้นได้รับหมายเลขพอร์ต COM ใด ช่างเทคนิคสามารถเข้าไปตรวจสอบได้จากเมนูใดของระบบปฏิบัติการ Windows?', 'ขั้นตอนการตรวจสอบพอร์ต Serial ก่อนเริ่มการเชื่อมต่อผ่าน Terminal Emulator', 'easy', 'multiple_choice', 'สามารถตรวจสอบหมายเลขพอร์ต COM ได้จาก Device Manager (ตัวจัดการอุปกรณ์) ภายใต้หมวดหมู่ Ports (COM & LPT) ซึ่งจะแสดงชื่อพอร์ต เช่น COM3 หรือ COM4', '{tools,serial,com-port,device-manager,console}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('fbf79fd2-d9f5-4d67-ae52-1d301301aa23', 'tools:05-mobaxterm:q03', 11, '57df0d37-2e95-4e42-9185-f2ba49596293', 'การเปิดใช้งาน "X11 Forwarding" ผ่านเซสชัน SSH ในโปรแกรม MobaXterm ช่วยให้ผู้ดูแลระบบสามารถทำสิ่งใดได้?', 'การติดตั้งซอฟต์แวร์บนเซิร์ฟเวอร์ Linux ที่จำเป็นต้องมีหน้าต่างตัวช่วยติดตั้งแบบกราฟิก (GUI Wizard)', 'medium', 'multiple_choice', 'X11 Forwarding ช่วยส่งผ่านหน้าต่างกราฟิก (GUI) ของโปรแกรมที่รันอยู่บน Linux Server ข้ามผ่านช่องทาง SSH มาเรนเดอร์และแสดงผลบนหน้าจอ Windows ของเครื่องลูกข่ายได้โดยตรง โดยที่ตัวเซิร์ฟเวอร์ไม่จำเป็นต้องลง Desktop Environment', '{tools,x11,ssh,mobaxterm,gui}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('064b4c09-3817-47a7-887d-304df38cb2a2', 'tools:05-mobaxterm:q04', 11, '57df0d37-2e95-4e42-9185-f2ba49596293', 'โปรแกรม WinSCP ใช้โปรโตคอลความปลอดภัยมาตรฐานใดในการโอนย้ายไฟล์ระหว่างคอมพิวเตอร์ Windows กับเซิร์ฟเวอร์ Linux และทำงานบนพอร์ตเริ่มต้นหมายเลขใด?', 'การอัปโหลดไฟล์คอนฟิกและไฟล์อิมเมจระบบขึ้นเซิร์ฟเวอร์อย่างปลอดภัย', 'easy', 'multiple_choice', 'WinSCP ใช้โปรโตคอล SFTP (SSH File Transfer Protocol) ซึ่งทำงานอยู่บนช่องทางปลอดภัยของ SSH ผ่านพอร์ตมาตรฐาน TCP 22', '{tools,winscp,sftp,scp,ports}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.questions VALUES ('903470ef-ea5f-4fdf-9738-2d4c4feb90fa', 'tools:05-mobaxterm:q05', 11, '57df0d37-2e95-4e42-9185-f2ba49596293', 'ข้อได้เปรียบสำคัญที่โปรแกรม MobaXterm มอบให้แก่ผู้ใช้งานทันทีที่เปิดเซสชัน SSH เชื่อมต่อไปยัง Linux Server คือข้อใด?', 'การบริหารจัดการไฟล์คอนฟิกบนเซิร์ฟเวอร์โดยไม่ต้องเปิดโปรแกรม FTP แยกต่างหาก', 'easy', 'multiple_choice', 'MobaXterm มีตัวจัดการไฟล์ SFTP ฝังตัวอยู่ทางแถบซ้ายมืออัตโนมัติ (Embedded SFTP Browser) ทำให้สามารถลากไฟล์ไปมาระหว่าง Windows กับ Linux ได้ทันที และสามารถดับเบิลคลิกแก้ไขไฟล์คอนฟิกบน Text Editor ในเครื่องแล้วกดเซฟอัปเดตกลับไปได้เลย', '{tools,mobaxterm,sftp,remote-access}', true, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
 
 
 --
@@ -5103,6 +5568,7 @@ INSERT INTO public.choices VALUES ('f86e1dc1-116b-4674-8354-05909c110b4d', 'b1a7
 INSERT INTO public.choices VALUES ('ed91efc0-8033-48ab-b04c-c03ad494f924', 'b1a7c889-ec7f-44a7-b4f3-badaee11adc0', 'พอร์ต UDP 53 เพราะเครื่องพิมพ์ทำหน้าที่เป็น DNS Server', false, 'ผิด พอร์ต 53 คือ DNS', 3);
 INSERT INTO public.choices VALUES ('6e5f0ad6-e9d5-4bad-99f5-8b6ab0c1bb07', 'b1a7c889-ec7f-44a7-b4f3-badaee11adc0', 'พอร์ต TCP 3389 เพราะใช้โปรโตคอล Remote Desktop', false, 'ผิด พอร์ต 3389 คือ RDP', 4);
 INSERT INTO public.choices VALUES ('b2fd645f-4134-4877-8c1b-93b1bbd5b775', '9f84eb24-f2f7-4a37-a212-cdf50df72acb', 'อ่านไฟล์ได้อย่างเดียว (Read Only) ไม่สามารถสร้างหรือแก้ไขไฟล์ได้ เพราะเมื่อนำ Share กับ NTFS มาเทียบกัน สิทธิ์ที่เข้มงวดกว่าจะชนะเสมอ', true, 'ถูกต้อง กฎเหล็กคือระหว่าง Share Permission กับ NTFS Permission ตัวที่จำกัดสิทธิ์แคบกว่า (Most Restrictive) จะเป็นผลลัพธ์สุดท้าย', 1);
+INSERT INTO public.choices VALUES ('54d49221-5ce0-427e-ad1d-93c76b158dc3', '58226d42-ba11-4316-b7ed-a5926488badd', 'WPA3 Enterprise', false, 'ผิด WPA3 เป็นมาตรฐานความปลอดภัยของ Wi-Fi', 4);
 INSERT INTO public.choices VALUES ('bd26fac2-1e39-4b4e-8905-5c9f90ed0d7f', '9f84eb24-f2f7-4a37-a212-cdf50df72acb', 'มีสิทธิ์เต็มที่ (Full Control) ลบและแก้ไขไฟล์ได้ทั้งหมด', false, 'ผิด แม้ NTFS จะให้ Full Control แต่ติดด่าน Share Permission ที่ให้แค่ Read', 2);
 INSERT INTO public.choices VALUES ('6018ff1d-48b2-408b-bb6f-15fa844a4b5b', '9f84eb24-f2f7-4a37-a212-cdf50df72acb', 'ไม่สามารถเปิดดูโฟลเดอร์ได้เลย (Access Denied)', false, 'ผิด ทั้งสองด่านยังอนุญาตให้ Read ได้ จึงยังเปิดอ่านไฟล์ได้', 3);
 INSERT INTO public.choices VALUES ('f785515c-f784-47c0-a865-7743eb3d3e3b', '9f84eb24-f2f7-4a37-a212-cdf50df72acb', 'สามารถแก้ไขไฟล์ได้เฉพาะวันจันทร์ถึงวันพุธ', false, 'ผิด ไม่เกี่ยวข้องกับวันในสัปดาห์', 4);
@@ -5144,6 +5610,7 @@ INSERT INTO public.choices VALUES ('975d13e8-7fad-4a04-bee9-baf03fa9689f', '3f1d
 INSERT INTO public.choices VALUES ('06753a17-3ed8-431c-b4d1-2ac2b1b3ca13', '3f1df441-85cc-45d3-9b85-504478cb0d29', 'ต้องฟอร์แมตการตั้งค่าของสวิตช์ทั้งหมด', false, 'ผิด ไม่เกี่ยวข้องกับการล้างคอนฟิก', 4);
 INSERT INTO public.choices VALUES ('0cd8f17c-31f1-411e-9eb6-5db6d0a077a0', 'bc88461e-fd06-4893-8284-d9a61fcd853b', 'C13/C14 (10A-15A ขาแนวตั้ง) ใช้กับเซิร์ฟเวอร์และสวิตช์ทั่วไป ส่วน C19/C20 (16A-20A หัวสี่เหลี่ยมขาแนวนอน) ใช้กับอุปกรณ์กินไฟสูง เช่น Blade Chassis หรือ Core Switch', true, 'ถูกต้อง C19/C20 มีขนาดใหญ่กว่าและขาเป็นแนวนอนเพื่อรองรับกระแสไฟสูงถึง 16A-20A', 1);
 INSERT INTO public.choices VALUES ('5586336d-0c76-413e-9874-e22c428f05a7', 'bc88461e-fd06-4893-8284-d9a61fcd853b', 'C13/C14 ใช้ส่งสัญญาณอินเทอร์เน็ต ส่วน C19/C20 ใช้ส่งสัญญาณภาพออกหน้าจอ', false, 'ผิด ทั้งสองชนิดเป็นหัวปลั๊กสายไฟกำลัง (AC Power Connectors)', 2);
+INSERT INTO public.choices VALUES ('4bde56ef-4e56-4767-b870-d56533e3d89f', 'c029cd6e-d453-43e2-9215-ccfdfde2dd1a', 'Recycle Bin Node', false, 'ผิด ไม่ใช่โหนดเชื่อมต่อเครือข่าย', 4);
 INSERT INTO public.choices VALUES ('0352d08c-c6cf-4985-91d3-02392e7b4c79', 'bc88461e-fd06-4893-8284-d9a61fcd853b', 'C13/C14 ใช้เฉพาะในทวีปเอเชีย ส่วน C19/C20 ใช้เฉพาะในทวีปแอฟริกา', false, 'ผิด ทั้งคู่เป็นมาตรฐานสากล IEC 60320 ที่ใช้ใน Data Center ทั่วโลก', 3);
 INSERT INTO public.choices VALUES ('70115b6c-79ef-4b26-8317-cf87a8549384', 'bc88461e-fd06-4893-8284-d9a61fcd853b', 'ทั้งสองแบบมีรูปร่างและขนาดเท่ากันทุกประการ เสียบแทนกันได้เลย', false, 'ผิด รูปร่างและทิศทางขาต่างกันเพื่อป้องกันการนำสายทนกระแสต่ำไปเสียบอุปกรณ์กินไฟสูง', 4);
 INSERT INTO public.choices VALUES ('98929cba-d859-4a68-af3c-dab316bf5125', '5ebf818c-bdc8-4cf2-86d7-b46f7a87c14c', 'เพื่อกั้นไม่ให้ลมร้อนจากด้านหลังตู้แร็คไหลย้อนผ่านช่องว่างวนกลับมาเข้าหน้าเครื่องเซิร์ฟเวอร์ (ป้องกัน Hot Air Recirculation)', true, 'ถูกต้อง Blanking Panel ช่วยรักษาความดันและแยกฝั่งลมเย็นหน้าตู้กับลมร้อนหลังตู้ไม่ให้ปะปนกัน', 1);
@@ -5154,6 +5621,124 @@ INSERT INTO public.choices VALUES ('057678c5-f552-41a4-a1ce-9948a8d30c5b', '1975
 INSERT INTO public.choices VALUES ('168019b9-1217-40ff-832a-ab7ade0034fa', '197578ef-435e-4bf8-b842-3791da759a4c', 'Port: 80, Protocol: HTTP, Proxy: Enabled', false, 'ผิด นั่นคือการตั้งค่าเว็บเบราว์เซอร์ ไม่ใช่พอร์ต Serial Console', 2);
 INSERT INTO public.choices VALUES ('f6771770-5184-40b5-8def-d4e403109a50', '197578ef-435e-4bf8-b842-3791da759a4c', 'Speed: 1,000,000, Data bits: 64, Parity: Even, Stop bits: 10', false, 'ผิด ค่าไม่ตรงมาตรฐานพอร์ต RS-232 Serial จะทำให้หน้าจอขึ้นตัวอักษรขยะอ่านไม่ออก', 3);
 INSERT INTO public.choices VALUES ('5a015c8c-6bae-4ed8-b9fd-c251352d7dab', '197578ef-435e-4bf8-b842-3791da759a4c', 'ไม่ต้องตั้งค่าใดๆ เพียงแค่เสียบสายเข้าช่องพอร์ตไฟเลี้ยง PSU', false, 'ผิด ต้องเสียบที่พอร์ต CONSOLE และเปิดโปรแกรม Terminal โหมด Serial', 4);
+INSERT INTO public.choices VALUES ('23bab315-b5f7-4488-a4e9-fcd365549a9b', 'a52403ec-d3a6-4da0-9422-08738063d262', 'Core Layer (ชั้นแกนหลัก)', true, 'ถูกต้อง Core Layer เน้นความเร็วสูงสุดและปราศจากกฎคัดกรองที่ซับซ้อน', 1);
+INSERT INTO public.choices VALUES ('21c52dad-e7ca-4f26-9d38-bd69f976c51b', 'a52403ec-d3a6-4da0-9422-08738063d262', 'Access Layer', false, 'ผิด Access Layer เป็นจุดที่ต่อเข้ากับผู้ใช้งาน', 2);
+INSERT INTO public.choices VALUES ('c274d14b-452d-44d9-9316-1836c632f105', 'a52403ec-d3a6-4da0-9422-08738063d262', 'Distribution Layer', false, 'ผิด Distribution Layer เป็นชั้นที่ทำหน้าที่คัดกรอง ACLs และ Routing', 3);
+INSERT INTO public.choices VALUES ('e31905d7-0113-46a5-8e66-ae5292279a2e', 'a52403ec-d3a6-4da0-9422-08738063d262', 'Physical Layer', false, 'ผิด ไม่ใช่ชั้นสถาปัตยกรรมในโมเดล 3-Tier ของ Cisco', 4);
+INSERT INTO public.choices VALUES ('a00be04b-0037-41bb-802c-e42c0c1683ad', '0c0e2c5e-3d78-42c0-b521-d904e7ee48b9', 'เพื่อรองรับปริมาณทราฟฟิกแบบ East-West (เซิร์ฟเวอร์คุยกันเอง) ที่พุ่งสูงขึ้น โดยมีระยะทางส่งข้อมูลคงที่เพียง 2 Hops เสมอ และใช้ ECMP เปิดใช้ทุกเส้นทางพร้อมกัน', true, 'ถูกต้อง Spine-Leaf ให้ความหน่วงต่ำคงที่ (Predictable Latency) และไม่พึ่งพา Spanning Tree', 1);
+INSERT INTO public.choices VALUES ('5fe29135-3a5b-4418-b2dd-51b9d3bd1f5a', '0c0e2c5e-3d78-42c0-b521-d904e7ee48b9', 'เพื่อลดจำนวนเซิร์ฟเวอร์ที่ต้องติดตั้งในตู้แร็คลงครึ่งหนึ่ง', false, 'ผิด สถาปัตยกรรมเครือข่ายไม่ได้ลดจำนวนเซิร์ฟเวอร์', 2);
+INSERT INTO public.choices VALUES ('885f47d3-d0f7-42d5-bd6b-44d09b177676', '0c0e2c5e-3d78-42c0-b521-d904e7ee48b9', 'เพื่อไม่ให้ต้องใช้สายไฟเบอร์ออปติกในศูนย์ข้อมูลอีกต่อไป', false, 'ผิด Spine-Leaf ใช้สายไฟเบอร์ออปติกความเร็วสูงจำนวนมาก', 3);
+INSERT INTO public.choices VALUES ('5d97e39d-7ffa-4ba3-be28-7adb5a8af2b9', '0c0e2c5e-3d78-42c0-b521-d904e7ee48b9', 'เพื่ออนุญาตให้บุคคลภายนอกเข้าถึงฐานข้อมูลภายในได้โดยไม่ต้องมีรหัสผ่าน', false, 'ผิด ผิดหลักความปลอดภัยอย่างยิ่ง', 4);
+INSERT INTO public.choices VALUES ('e06827a5-8ed8-4d7b-bf16-f01ac5ecaead', 'a8a4e9a3-b5ff-4059-97c5-1ea9fd24f1f4', 'VRRP (Virtual Router Redundancy Protocol)', true, 'ถูกต้อง VRRP เป็นมาตรฐานเปิดสากลสำหรับสร้าง Virtual Gateway สำรอง', 1);
+INSERT INTO public.choices VALUES ('0453ed16-4f56-49dd-b344-b86cd3e73b16', 'a8a4e9a3-b5ff-4059-97c5-1ea9fd24f1f4', 'HSRP (Hot Standby Router Protocol)', false, 'ผิด HSRP เป็นโปรโตคอลเฉพาะของ Cisco (Cisco Proprietary)', 2);
+INSERT INTO public.choices VALUES ('804ce591-c6fa-43b9-98d9-1514cce2c365', 'a8a4e9a3-b5ff-4059-97c5-1ea9fd24f1f4', 'SNMP (Simple Network Management Protocol)', false, 'ผิด SNMP ใช้สำหรับตรวจวัดและตรวจสอบอุปกรณ์', 3);
+INSERT INTO public.choices VALUES ('3a3a220b-fb31-4769-8c11-867e0fffdb4a', 'a8a4e9a3-b5ff-4059-97c5-1ea9fd24f1f4', 'DHCP (Dynamic Host Configuration Protocol)', false, 'ผิด DHCP ใช้สำหรับแจกจ่าย IP Address', 4);
+INSERT INTO public.choices VALUES ('65cb2159-27d2-4cef-a3b8-77d2cbd221a6', '58226d42-ba11-4316-b7ed-a5926488badd', 'vPC (Virtual Port Channel) หรือ Multi-Chassis Link Aggregation (MLAG)', true, 'ถูกต้อง vPC/MLAG ช่วยให้ทำ Port Channel ข้ามสองสวิตช์ได้', 1);
+INSERT INTO public.choices VALUES ('ca7fd675-b414-4a3e-a0b8-7d3d00c1a4ed', '58226d42-ba11-4316-b7ed-a5926488badd', 'NAT (Network Address Translation)', false, 'ผิด NAT ใช้สำหรับแปลง IP Address', 2);
+INSERT INTO public.choices VALUES ('ed14cef7-180b-4e61-b3bf-bae71bd12bd1', '58226d42-ba11-4316-b7ed-a5926488badd', 'DNS Dynamic Update', false, 'ผิด DNS ใช้แปลงชื่อโดเมนเป็น IP', 3);
+INSERT INTO public.choices VALUES ('febe1126-4eee-43ee-b0b0-8a56adfb792d', '2078e3ed-e858-4d2a-b8b4-e0ee255ac29c', 'เซิร์ฟเวอร์ที่อยู่ในโซน DMZ ต้องไม่ได้รับอนุญาตให้ริเริ่มสร้างการเชื่อมต่อ (Initiate Connection) เข้าไปยังเครือข่ายภายในองค์กรโดยตรง', true, 'ถูกต้อง ป้องกันไม่ให้แฮกเกอร์ใช้เครื่องใน DMZ ที่ถูกแฮกเป็นฐานเจาะระบบหลังบ้าน', 1);
+INSERT INTO public.choices VALUES ('05c660d6-8866-4345-aaed-986dbd5d9c3f', '2078e3ed-e858-4d2a-b8b4-e0ee255ac29c', 'ต้องตั้งรหัสผ่านของเครื่องใน DMZ เป็นคำว่า admin เสมอ', false, 'ผิด รหัสผ่านง่ายเกินไปและอันตรายมาก', 2);
+INSERT INTO public.choices VALUES ('afcbc0e2-3e65-4e2e-a8f8-d09f4db3f235', '2078e3ed-e858-4d2a-b8b4-e0ee255ac29c', 'ต้องปิดไฟร์วอลล์ทั้งหมดของโซน DMZ เพื่อให้ทราฟฟิกวิ่งได้เร็ว', false, 'ผิด DMZ ต้องถูกควบคุมด้วยไฟร์วอลล์อย่างเข้มงวด', 3);
+INSERT INTO public.choices VALUES ('ac17a637-4021-43e4-bee7-3b6354b6f1f1', '2078e3ed-e858-4d2a-b8b4-e0ee255ac29c', 'ห้ามเชื่อมต่อสายแลนเข้ากับเซิร์ฟเวอร์ใน DMZ เด็ดขาด', false, 'ผิด หากไม่ต่อสายแลน เซิร์ฟเวอร์จะไม่สามารถให้บริการเว็บได้', 4);
+INSERT INTO public.choices VALUES ('2348a998-df53-489f-aa70-e440852d104a', 'a727b57c-471f-4098-baa1-0369e65a00ee', 'เป็น Network Simulator (โปรแกรมจำลองพฤติกรรม) ที่กินทรัพยากรเครื่องน้อยมาก แต่รองรับชุดคำสั่งของ Cisco IOS เพียงบางส่วน ไม่ได้รันระบบปฏิบัติการจริง', true, 'ถูกต้อง Packet Tracer เป็น Simulator ที่เขียนโค้ดเลียนแบบคำสั่ง IOS', 1);
+INSERT INTO public.choices VALUES ('6ce707ca-c041-4b76-aae1-574fd3641f2e', 'a727b57c-471f-4098-baa1-0369e65a00ee', 'เป็นโปรแกรมแฮกเกอร์สำหรับดักจับรหัสผ่าน Wi-Fi ของเพื่อนบ้าน', false, 'ผิด Packet Tracer เป็นโปรแกรมเพื่อการศึกษาการออกแบบและคอนฟิกเครือข่าย', 2);
+INSERT INTO public.choices VALUES ('baa22130-a214-4e91-9da8-13318008d75e', 'a727b57c-471f-4098-baa1-0369e65a00ee', 'เป็นระบบปฏิบัติการเซิร์ฟเวอร์ที่ใช้ติดตั้งบนเครื่องฮาร์ดแวร์จริง', false, 'ผิด Packet Tracer เป็นแอพพลิเคชันซิมูเลเตอร์ ไม่ใช่ OS เซิร์ฟเวอร์', 3);
+INSERT INTO public.choices VALUES ('be4892df-8bc8-49dd-b293-c67cbbe2fea4', 'a727b57c-471f-4098-baa1-0369e65a00ee', 'เป็นโปรแกรมตัดต่อวิดีโอของบริษัท Cisco', false, 'ผิด ไม่เกี่ยวข้องกับงานตัดต่อวิดีโอ', 4);
+INSERT INTO public.choices VALUES ('c3cc31c9-3b78-4c8c-a005-087a51fbec7c', '06567e5a-aea4-4301-889e-31d49ac89174', 'เวลาในเครือข่ายจะหยุดชั่วคราว ทำให้เห็นซองจดหมาย PDU เคลื่อนที่ทีละก้าว และสามารถคลิกอ่านข้อมูล Header ของ OSI แต่ละเลเยอร์ได้', true, 'ถูกต้อง Simulation Mode ช่วยให้เห็นการทำงานของโปรโตคอลอย่างเป็นขั้นเป็นตอน', 1);
+INSERT INTO public.choices VALUES ('22c1e636-8c8e-4495-a260-0932cb898ccc', '06567e5a-aea4-4301-889e-31d49ac89174', 'ทำให้เครื่องคอมพิวเตอร์ที่บ้านเชื่อมต่อไปยังอินเทอร์เน็ตขององค์กร NASA อัตโนมัติ', false, 'ผิด ไม่เกี่ยวข้องกับการเชื่อมต่อภายนอก', 2);
+INSERT INTO public.choices VALUES ('7bbc990f-92ef-4265-a0cf-b6f9c6f8171d', '06567e5a-aea4-4301-889e-31d49ac89174', 'ปิดการทำงานของพอร์ตสวิตช์ทั้งหมดในโปรแกรมอย่างถาวร', false, 'ผิด Simulation Mode ไม่ได้ปิดพอร์ต แต่หยุดเวลาเพื่อจำลองการส่งข้อมูล', 3);
+INSERT INTO public.choices VALUES ('a4e06c58-47cf-4ef7-8fa5-40fb4ee330b0', '06567e5a-aea4-4301-889e-31d49ac89174', 'ใช้สำหรับส่งอีเมลจริงหาผู้ใช้งานภายนอก', false, 'ผิด เป็นเพียงการจำลองทราฟฟิกภายในโปรแกรม', 4);
+INSERT INTO public.choices VALUES ('472f9cb8-fb24-4672-a1b3-9a821d8ad36f', '854a5934-7449-45be-80a5-c32b00b0208c', 'เป็นพฤติกรรมปกติของ Spanning Tree Protocol (STP) ที่กำลังฟังและเรียนรู้สถานะพอร์ต สามารถกดปุ่ม "Fast Forward Time" เพื่อเร่งเวลาให้เป็นสีเขียวทันที', true, 'ถูกต้อง STP ใช้เวลาประมาณ 30-50 วินาที และ Fast Forward Time ช่วยเร่งข้ามขั้นตอนนี้ได้', 1);
+INSERT INTO public.choices VALUES ('c4b937af-c9aa-4554-a640-c715b8140070', '854a5934-7449-45be-80a5-c32b00b0208c', 'สายแลนขาดใน ต้องลบสายทิ้งแล้วลากใหม่ 10 รอบ', false, 'ผิด สายไม่ได้ขาด เป็นขั้นตอนการทำงานปกติของ STP', 2);
+INSERT INTO public.choices VALUES ('21539ed4-9f5f-45c8-a16d-a9a814992a26', '854a5934-7449-45be-80a5-c32b00b0208c', 'สวิตช์กำลังถูกไวรัสโจมตี ต้องรีบูตคอมพิวเตอร์ทันที', false, 'ผิด สวิตช์ทำงานปกติ', 3);
+INSERT INTO public.choices VALUES ('8a759b2a-4dc0-4d99-ae68-f7eff969ade3', '854a5934-7449-45be-80a5-c32b00b0208c', 'โปรแกรม Packet Tracer เกิดข้อผิดพลาดร้ายแรงและต้องติดตั้ง Windows ใหม่', false, 'ผิด เป็นการทำงานที่ถูกต้องตามโปรโตคอลเครือข่าย', 4);
+INSERT INTO public.choices VALUES ('1e6462d7-2f38-4b3c-9dda-583a8d99a486', 'a665524c-1dcd-4cb9-af0f-3c7110e65a72', 'Console Cable (สายสีฟ้าอ่อน)', true, 'ถูกต้อง สาย Console เชื่อมระหว่างพอร์ต Serial/USB ของ PC เข้ากับพอร์ต Console ของอุปกรณ์', 1);
+INSERT INTO public.choices VALUES ('55780098-80ae-4e0b-a1a2-35867d211a16', 'a665524c-1dcd-4cb9-af0f-3c7110e65a72', 'Coaxial Cable (สายเคเบิลทีวีสีดำ)', false, 'ผิด สาย Coaxial ใช้กับโมเด็มเคเบิล DOCSIS', 2);
+INSERT INTO public.choices VALUES ('6e233369-f27a-4b94-8b07-715984d020ab', 'a665524c-1dcd-4cb9-af0f-3c7110e65a72', 'Fiber Optic Cable (สายไฟเบอร์สีส้ม)', false, 'ผิด สายไฟเบอร์ใช้ส่งสัญญาณแสงความเร็วสูง ไม่ใช่สายต่อเข้าพอร์ต Console', 3);
+INSERT INTO public.choices VALUES ('97973753-3d11-424a-87a7-7908d2847fcf', 'a665524c-1dcd-4cb9-af0f-3c7110e65a72', 'Phone Cable (สายโทรศัพท์ 2 คอร์)', false, 'ผิด สายโทรศัพท์ใช้กับพอร์ต RJ11 โมเด็ม', 4);
+INSERT INTO public.choices VALUES ('99da6faf-5756-479b-9e35-4b760cd071cd', '9f476cd4-a948-43f9-b90d-84b81fd323eb', 'เครื่องปลายทางไฟดับและฮาร์ดดิสก์พัง', false, 'ผิด filtered เกิดจากการบล็อกของอุปกรณ์ความปลอดภัย', 4);
+INSERT INTO public.choices VALUES ('3e0bb80f-d9a0-4460-9b34-a7236fa1502e', '1b69be04-7692-4128-a45d-4e898b67651b', 'เป็นไฟล์แบบฝึกหัดกิจกรรม (Activity File) ที่มีระบบตรวจเช็กคะแนนความคืบหน้าอัตโนมัติ (Completion %) และล็อกหน้าต่างข้อสอบไว้', true, 'ถูกต้อง .pka ใช้สำหรับแบบฝึกหัดและข้อสอบแล็บที่มีระบบตรวจให้คะแนนอัตโนมัติ', 1);
+INSERT INTO public.choices VALUES ('f50b16a4-0971-4579-b224-3eb5c63e405f', '1b69be04-7692-4128-a45d-4e898b67651b', 'เป็นไฟล์วิดีโอสอนการใช้งานที่เปิดด้วยโปรแกรม Windows Media Player', false, 'ผิด .pka ไม่ใช่ไฟล์วิดีโอ', 2);
+INSERT INTO public.choices VALUES ('4fe9fabc-086e-4cd6-8646-6e6ce275d6ba', '1b69be04-7692-4128-a45d-4e898b67651b', 'เป็นไฟล์สำรองข้อมูลของระบบปฏิบัติการ Windows', false, 'ผิด ไม่เกี่ยวข้องกับ OS สำรอง', 3);
+INSERT INTO public.choices VALUES ('358225b8-b065-4724-9d77-f38edf43366c', '1b69be04-7692-4128-a45d-4e898b67651b', 'เป็นไฟล์ไวรัสที่ห้ามเปิดเด็ดขาด', false, 'ผิด เป็นไฟล์มาตรฐานของ Cisco Networking Academy', 4);
+INSERT INTO public.choices VALUES ('955f0de0-93c2-460b-8440-b92b77c74a65', '568dc972-faec-464f-ad31-e4e8daafcde6', 'Emulator นำระบบปฏิบัติการจริง (Real OS Image) มาบูตทำงานบนฮาร์ดแวร์จำลอง ทำให้ได้ฟังก์ชันและคำสั่งครบถ้วนเหมือนเครื่องจริง 100% ต่างจาก Simulator ที่เพียงแค่เขียนโปรแกรมเลียนแบบคำสั่งบางส่วน', true, 'ถูกต้อง Emulator รันไฟล์อิมเมจของจริง 100%', 1);
+INSERT INTO public.choices VALUES ('0376c5a6-a701-47d6-a525-ea083e7b3114', '568dc972-faec-464f-ad31-e4e8daafcde6', 'Simulator สามารถรันบนมือถือได้ แต่ Emulator รันได้เฉพาะบนเครื่องคิดเลข', false, 'ผิด ไม่เกี่ยวข้องกัน', 2);
+INSERT INTO public.choices VALUES ('9e4f1a96-1370-4431-a0ad-00036bcb6b79', '568dc972-faec-464f-ad31-e4e8daafcde6', 'Emulator ใช้งานได้เฉพาะเมื่อไม่มีอินเทอร์เน็ต', false, 'ผิด สามารถต่อออกเน็ตจริงผ่าน Cloud Node ได้', 3);
+INSERT INTO public.choices VALUES ('89940447-32e3-4b7e-be74-d3a9a8c6c6c0', '568dc972-faec-464f-ad31-e4e8daafcde6', 'ทั้งสองแบบทำงานเหมือนกันทุกประการ ต่างกันแค่ชื่อบริษัทผู้ผลิต', false, 'ผิด สถาปัตยกรรมเบื้องหลังและการใช้ทรัพยากรต่างกันอย่างสิ้นเชิง', 4);
+INSERT INTO public.choices VALUES ('6729c3c1-62ee-46c5-83b9-4c34e99e56c7', 'bab6c130-fd6a-4bcd-b882-377783f5af02', 'เพื่อลดการใช้งาน CPU ของคอมพิวเตอร์ไม่ให้พุ่งขึ้น 100% เมื่อเราเตอร์อยู่ในสถานะว่างงาน (Idle)', true, 'ถูกต้อง Idle-PC คือจุดคำนวณรอบลูปว่างเพื่อหยุดการกิน CPU สูงเกินจำเป็น', 1);
+INSERT INTO public.choices VALUES ('99fcd1cf-18d7-426c-8f93-06403743789f', 'bab6c130-fd6a-4bcd-b882-377783f5af02', 'เพื่อเปลี่ยนรหัสผ่านของผู้ดูแลระบบให้เป็นค่าเริ่มต้น', false, 'ผิด ไม่เกี่ยวกับการตั้งรหัสผ่าน', 2);
+INSERT INTO public.choices VALUES ('b9978f78-e770-456a-8435-bc3926561ee0', 'bab6c130-fd6a-4bcd-b882-377783f5af02', 'เพื่อเพิ่มความเร็วในการดาวน์โหลดไฟล์จากอินเทอร์เน็ตเป็น 10 Gbps', false, 'ผิด ไม่เกี่ยวข้องกับความเร็วเน็ต', 3);
+INSERT INTO public.choices VALUES ('ac674a9a-9d61-4e2f-a232-febaf3f4f629', 'bab6c130-fd6a-4bcd-b882-377783f5af02', 'เพื่อสั่งปิดหน้าจอคอมพิวเตอร์เมื่อไม่ได้ขยับเมาส์', false, 'ผิด นั่นคือฟังก์ชัน Sleep ของระบบปฏิบัติการ', 4);
+INSERT INTO public.choices VALUES ('211bfe3d-25a8-4b3d-928b-de9851ce1372', 'f01fc036-5329-41fe-9b18-f53eb57ef654', 'เพราะ GNS3 VM ทำงานบน Linux Kernel ที่รองรับเทคโนโลยี KVM/QEMU, IOU และ Docker ได้เสถียรและมีประสิทธิภาพสูงกว่าการรันบน Windows โดยตรง', true, 'ถูกต้อง Linux VM จัดการ IOU, QEMU และ Virtualization ได้ดีกว่า Windows มาก', 1);
+INSERT INTO public.choices VALUES ('d6bc3c44-8d0e-494b-b82e-f1e16f944ea6', 'f01fc036-5329-41fe-9b18-f53eb57ef654', 'เพราะถ้าไม่ใช้ GNS3 VM โปรแกรมจะบังคับให้จ่ายเงินรายเดือน', false, 'ผิด GNS3 เป็นซอฟต์แวร์โอเพนซอร์สฟรี', 2);
+INSERT INTO public.choices VALUES ('46729f53-071c-4bdc-8af5-d5c625306f7f', 'f01fc036-5329-41fe-9b18-f53eb57ef654', 'เพราะ GNS3 VM ช่วยป้องกันไม่ให้คีย์บอร์ดเสีย', false, 'ผิด ไม่เกี่ยวข้องกัน', 3);
+INSERT INTO public.choices VALUES ('79d1f6a7-7b17-4996-ac10-11e5ad9c7066', 'f01fc036-5329-41fe-9b18-f53eb57ef654', 'เพราะ GNS3 VM สามารถผลิตกระแสไฟฟ้าสำรองให้คอมพิวเตอร์ได้', false, 'ผิด VM เป็นซอฟต์แวร์เสมือน ไม่ใช่ฮาร์ดแวร์จ่ายไฟ', 4);
+INSERT INTO public.choices VALUES ('ec039b3b-7f23-4a46-9320-d753de2394f8', '09b67e70-88d1-4ad7-8214-29e1433c3b30', 'คลิกขวาที่เส้นสายเคเบิลแล้วเลือก "Start Capture" เพื่อเปิดโปรแกรม Wireshark ดักจับแพ็กเก็ตสดบนสายเส้นนั้นทันที', true, 'ถูกต้อง GNS3 สามารถเรียก Wireshark มาดักจับทราฟฟิกสดบนสายเชื่อมต่อได้ทันที', 1);
+INSERT INTO public.choices VALUES ('0a69b4fd-ed77-415b-9191-3c7dfe9aa27f', '09b67e70-88d1-4ad7-8214-29e1433c3b30', 'ใช้กล้องถ่ายรูปส่องไปที่หน้าจอคอมพิวเตอร์', false, 'ผิด ไม่ใช่วิธีการทางเทคนิคในการดักจับแพ็กเก็ต', 2);
+INSERT INTO public.choices VALUES ('08eba91b-1205-4868-add8-c95693c967d4', '09b67e70-88d1-4ad7-8214-29e1433c3b30', 'ถอดปลั๊กไฟคอมพิวเตอร์ออกแล้วเสียบใหม่', false, 'ผิด การตัดไฟไม่ช่วยตรวจสอบแพ็กเก็ต', 3);
+INSERT INTO public.choices VALUES ('d8391303-5428-4e71-bdec-8f9db2550621', '09b67e70-88d1-4ad7-8214-29e1433c3b30', 'สั่งลบโฟลเดอร์ System32 ออกจากระบบ', false, 'ผิด อันตรายมากและทำให้ระบบเสียหาย', 4);
+INSERT INTO public.choices VALUES ('e7a013c0-de90-41f0-8179-fe9774cbf7ca', 'c029cd6e-d453-43e2-9215-ccfdfde2dd1a', 'Cloud Node หรือ NAT Node', true, 'ถูกต้อง Cloud / NAT Node ทำหน้าที่เชื่อมต่อโลกเสมือนในแล็บเข้ากับเครือข่ายจริง', 1);
+INSERT INTO public.choices VALUES ('fc6e8913-ff0c-4ee9-9558-7fab81ae6a62', 'c029cd6e-d453-43e2-9215-ccfdfde2dd1a', 'Power Supply Node', false, 'ผิด ไม่มีโหนดชนิดนี้ใน GNS3', 2);
+INSERT INTO public.choices VALUES ('17944d99-cb1b-49ac-8566-29bccf610b82', 'c029cd6e-d453-43e2-9215-ccfdfde2dd1a', 'Audio Speaker Node', false, 'ผิด ไม่เกี่ยวกับการส่งต่อทราฟฟิกเครือข่าย', 3);
+INSERT INTO public.choices VALUES ('a655791b-1b30-44b0-99c0-67ac45719feb', '5f156ae1-1e17-450b-8749-f9e0c3e70abd', 'Capture Filter ใช้คัดกรองตั้งแต่ก่อนบันทึกข้อมูล (ทราฟฟิกที่ไม่ตรงจะถูกทิ้งทันที) ส่วน Display Filter ใช้กรองซ่อน/แสดงผลข้อมูลหลังจากที่ดักจับมาแล้ว', true, 'ถูกต้อง Capture Filter กรองก่อนบันทึกลงไฟล์ ส่วน Display Filter กรองการแสดงผลบนหน้าจอ', 1);
+INSERT INTO public.choices VALUES ('8aef92ec-ce44-4bed-af33-108dd28ad767', '5f156ae1-1e17-450b-8749-f9e0c3e70abd', 'Capture Filter ใช้บน Windows เท่านั้น ส่วน Display Filter ใช้บน Mac เท่านั้น', false, 'ผิด ทั้งสองฟิลเตอร์ใช้งานได้บนทุกระบบปฏิบัติการ', 2);
+INSERT INTO public.choices VALUES ('ee66a1d3-b116-4899-8375-c6a110ec5abc', '5f156ae1-1e17-450b-8749-f9e0c3e70abd', 'Capture Filter กรองเฉพาะไวรัส ส่วน Display Filter กรองเฉพาะรูปภาพ', false, 'ผิด ทั้งสองใช้กรองแพ็กเก็ตเครือข่ายตามเงื่อนไขที่กำหนด', 3);
+INSERT INTO public.choices VALUES ('2c3ab31c-beee-4120-bf5b-d01a94f327bd', '5f156ae1-1e17-450b-8749-f9e0c3e70abd', 'ทั้งสองแบบมีไวยากรณ์และหน้าที่เหมือนกันทุกประการ ใช้แทนกันได้เสมอ', false, 'ผิด ไวยากรณ์และสถาปัตยกรรมการทำงานต่างกันอย่างสิ้นเชิง', 4);
+INSERT INTO public.choices VALUES ('01764999-e971-4fec-9d1c-98d5d2ceec18', '41b6c586-ddea-48bd-82a2-898b85af31b7', 'tcp.analysis.retransmission', true, 'ถูกต้อง เป็นฟิลเตอร์วิเคราะห์การส่งแพ็กเก็ตซ้ำของ Wireshark', 1);
+INSERT INTO public.choices VALUES ('2ad0f938-1d25-4479-a1c8-962342f6371b', '41b6c586-ddea-48bd-82a2-898b85af31b7', 'ip.delete.all', false, 'ผิด ไม่มีคำสั่งนี้ใน Wireshark', 2);
+INSERT INTO public.choices VALUES ('611b1e16-2f20-48b1-86fe-5e1fd0942862', '41b6c586-ddea-48bd-82a2-898b85af31b7', 'ping -t 8.8.8.8', false, 'ผิด นั่นเป็นคำสั่งทดสอบในคอมมานด์ไลน์', 3);
+INSERT INTO public.choices VALUES ('84ef8ce6-0761-4bd8-b92c-6f42fd009ca1', '41b6c586-ddea-48bd-82a2-898b85af31b7', 'show run | include retransmit', false, 'ผิด นั่นเป็นคำสั่งบน Cisco IOS', 4);
+INSERT INTO public.choices VALUES ('c15f3706-0838-4836-9268-8eab8288759c', '6d0e94d0-a2a7-44fc-9f1d-476523f2d61e', 'รวมแพ็กเก็ตทั้งหมดของเซสชันนั้นมาประกอบเป็นบทสนทนาต่อเนื่องในหน้าต่างเดียว ทำให้อ่านเนื้อหา HTTP Request/Response ได้อย่างครบถ้วน', true, 'ถูกต้อง Follow TCP Stream ช่วยให้เห็นบทสนทนาของ Application Layer ทั้งหมดได้ทันที', 1);
+INSERT INTO public.choices VALUES ('48996b35-17ca-44da-bb7e-a959af7415e0', '6d0e94d0-a2a7-44fc-9f1d-476523f2d61e', 'ส่งสัญญาณเสียงไซเรนเตือนไปยังห้องผู้บริหารเมื่อเซิร์ฟเวอร์ล่ม', false, 'ผิด ไม่ใช่ฟังก์ชันเตือนภัยด้วยเสียงไซเรน', 2);
+INSERT INTO public.choices VALUES ('bc752100-ffaf-4853-9b75-1160e92a4672', '6d0e94d0-a2a7-44fc-9f1d-476523f2d61e', 'สั่งเปลี่ยนรหัสผ่าน Wi-Fi ของเราเตอร์โดยอัตโนมัติ', false, 'ผิด Wireshark เป็นเครื่องมือดักจับ ไม่ใช่โปรแกรมเปลี่ยนรหัสผ่าน', 3);
+INSERT INTO public.choices VALUES ('ad40e788-a67c-43c9-92e3-e8e6fb893726', '6d0e94d0-a2a7-44fc-9f1d-476523f2d61e', 'เพิ่มความเร็วแบนด์วิดท์ของสายแลนให้เป็นสองเท่า', false, 'ผิด โปรแกรมดักจับไม่ได้เพิ่มความเร็วฮาร์ดแวร์', 4);
+INSERT INTO public.choices VALUES ('305db9c9-2dde-4547-ba39-0e6d23d83c24', 'd135eb3b-8119-4b9e-a8a7-d02cbe474d93', 'บัฟเฟอร์ขารับ (Receive Buffer) ของเครื่องปลายทางเต็มจนไม่สามารถรับข้อมูลเพิ่มได้ จึงสั่งให้เครื่องต้นทางหยุดส่งข้อมูลชั่วคราว', true, 'ถูกต้อง ZeroWindow แสดงว่าเครื่องฝั่งรับประมวลผลข้อมูลไม่ทันจนบัฟเฟอร์เต็ม', 1);
+INSERT INTO public.choices VALUES ('5369307e-a628-4b92-bf4e-bec0a9f12738', 'd135eb3b-8119-4b9e-a8a7-d02cbe474d93', 'ระบบปฏิบัติการ Windows ถูกลบออกจากเครื่องแล้ว', false, 'ผิด ไม่เกี่ยวกับการลบ OS', 2);
+INSERT INTO public.choices VALUES ('21f2e567-4c91-4000-947d-3580fb21eae5', 'd135eb3b-8119-4b9e-a8a7-d02cbe474d93', 'ความเร็วในการพิมพ์คีย์บอร์ดของช่างเทคนิคช้าเกินไป', false, 'ผิด ไม่เกี่ยวกับความเร็วการพิมพ์', 3);
+INSERT INTO public.choices VALUES ('eeb058fc-b2ed-4321-ac1d-a051840c7392', 'd135eb3b-8119-4b9e-a8a7-d02cbe474d93', 'สายไฟเบอร์ออปติกถูกหนูกัดขาด', false, 'ผิด ถ้าสายขาดจะไม่สามารถส่งแพ็กเก็ต TCP แจ้งเตือนสถานะ ZeroWindow ได้', 4);
+INSERT INTO public.choices VALUES ('8a02ebd3-aef7-4a6d-ae13-f68765024bf6', '6d64dc59-ddea-4533-8979-6b8ea6f9f142', 'ข้อผิดพลาดของโพรโทคอล TCP (เช่น TCP Reset, Retransmission หรือ Connection Refused)', true, 'ถูกต้อง สีดำตัวหนังสือแดงคือสัญญาณเตือนของ TCP Error ชัดเจน', 1);
+INSERT INTO public.choices VALUES ('31deeac5-25a1-4e48-b820-da449bd18808', '6d64dc59-ddea-4533-8979-6b8ea6f9f142', 'แพ็กเก็ตส่งเพลง MP3 คุณภาพสูง', false, 'ผิด ไม่ใช่การระบายสีไฟล์เพลง', 2);
+INSERT INTO public.choices VALUES ('b61e85f6-23cb-463c-a453-99326a9d0c7c', '6d64dc59-ddea-4533-8979-6b8ea6f9f142', 'เซิร์ฟเวอร์ได้รับโบนัสประจำปี', false, 'ผิด ไม่เกี่ยวข้องกับข้อมูลบุคคล', 3);
+INSERT INTO public.choices VALUES ('144c831e-9cac-4b7b-ab78-4a0c4eaae845', '6d64dc59-ddea-4533-8979-6b8ea6f9f142', 'การเชื่อมต่อสำเร็จ 100% ปราศจากข้อผิดพลาดใดๆ', false, 'ผิด การเชื่อมต่อปกติมักเป็นสีเขียว ฟ้า หรือเทา ไม่ใช่สีดำแดง', 4);
+INSERT INTO public.choices VALUES ('7cdd3339-f489-4a4e-afdb-d2299fb368c5', '9f476cd4-a948-43f9-b90d-84b81fd323eb', 'มีไฟร์วอลล์หรือกฎ ACL บล็อกทราฟฟิกไว้ ทำให้แพ็กเก็ตไปไม่ถึงหรือถูกปิดกั้นการตอบกลับ', true, 'ถูกต้อง สถานะ filtered คือสัญญาณชัดเจนว่าติด Firewall', 1);
+INSERT INTO public.choices VALUES ('52ff1d9f-aa26-45b9-97e0-8419b3994059', '9f476cd4-a948-43f9-b90d-84b81fd323eb', 'พอร์ตนั้นเปิดให้บริการปกติและพร้อมรับการเชื่อมต่อ', false, 'ผิด นั่นคือนิยามของสถานะ open', 2);
+INSERT INTO public.choices VALUES ('39130a8f-79f2-43a0-8622-e05f200f4e7a', '9f476cd4-a948-43f9-b90d-84b81fd323eb', 'พอร์ตนั้นไม่มีบริการใดเปิดอยู่และเครื่องปลายทางตอบกลับด้วย TCP RST', false, 'ผิด นั่นคือนิยามของสถานะ closed', 3);
+INSERT INTO public.choices VALUES ('51ab3509-9b3a-450b-867d-80fde39613dc', 'e4a1fbaa-6e2c-410a-90ac-765d08fe8cac', 'ไม่ทำกระบวนการ 3-Way Handshake ให้เสร็จสมบูรณ์ (ส่ง RST ตัดทันทีเมื่อได้รับ SYN-ACK) จึงทำงานได้รวดเร็วและไม่ถูกบันทึกลง Application Log ของบริการส่วนใหญ่', true, 'ถูกต้อง SYN Scan เป็นเทคนิค Half-open ที่รวดเร็วและหลบเลี่ยงการบันทึก Log ระดับแอป', 1);
+INSERT INTO public.choices VALUES ('7ab62622-4d09-4391-8697-b36473207f34', 'e4a1fbaa-6e2c-410a-90ac-765d08fe8cac', 'สามารถกู้คืนรหัสผ่านของผู้ดูแลระบบออกมาเป็นไฟล์ข้อความได้', false, 'ผิด Nmap เป็นตัวสแกนพอร์ต ไม่ใช่โปรแกรมถอดรหัสผ่าน', 2);
+INSERT INTO public.choices VALUES ('7eff2f46-92c0-4dab-9ecd-474a7f610b06', 'e4a1fbaa-6e2c-410a-90ac-765d08fe8cac', 'ช่วยลดอุณหภูมิความร้อนของชิป CPU ในเครื่องเซิร์ฟเวอร์', false, 'ผิด ไม่เกี่ยวข้องกับอุณหภูมิฮาร์ดแวร์', 3);
+INSERT INTO public.choices VALUES ('7a19a339-f94c-493d-af60-4ca95f14d053', 'e4a1fbaa-6e2c-410a-90ac-765d08fe8cac', 'ใช้งานได้โดยไม่ต้องมีสิทธิ์ Root หรือ Administrator', false, 'ผิด SYN Scan ต้องสร้าง Raw Socket จึงต้องใช้สิทธิ์ Root/Admin', 4);
+INSERT INTO public.choices VALUES ('2484f0b2-1b0e-4664-96e6-b3d6140c5786', '73ff1c39-1bb8-4053-906a-d70a3304293d', 'เพราะ iPerf3 สร้างข้อมูลสังเคราะห์บน RAM โดยตรง จึงไม่ติดคอขวดที่ความเร็วอ่านเขียนฮาร์ดดิสก์ (Disk I/O) เหมือนการก๊อปปี้ไฟล์ทั่วไป', true, 'ถูกต้อง ขจัดคอขวดด้าน Disk I/O ทำให้เห็นประสิทธิภาพเครือข่ายที่แท้จริง', 1);
+INSERT INTO public.choices VALUES ('4bcd4f75-7c4c-49d0-adb4-c5c23ccaecc5', '73ff1c39-1bb8-4053-906a-d70a3304293d', 'เพราะ iPerf3 เปลี่ยนสายแลนธรรมดาให้กลายเป็นสายเคเบิลทองคำ', false, 'ผิด ซอฟต์แวร์ไม่สามารถเปลี่ยนวัสดุทางกายภาพของสายได้', 2);
+INSERT INTO public.choices VALUES ('1b77d9c6-ae3f-49ee-8eab-93bac57b04d1', '73ff1c39-1bb8-4053-906a-d70a3304293d', 'เพราะ iPerf3 บังคับให้ผู้ให้บริการอินเทอร์เน็ตลดราคาค่าบริการลง 50%', false, 'ผิด ไม่เกี่ยวกับการคิดค่าบริการ', 3);
+INSERT INTO public.choices VALUES ('b3eccee7-e9a4-4bd2-b08a-69e64213d74c', '73ff1c39-1bb8-4053-906a-d70a3304293d', 'เพราะ iPerf3 วัดผลได้เฉพาะบนระบบเครือข่ายไร้สาย 5G เท่านั้น', false, 'ผิด ใช้งานได้กับเครือข่ายทุกประเภททั้งสายและไร้สาย', 4);
+INSERT INTO public.choices VALUES ('74358cf5-2d86-4b22-bea7-32d28fab4f1a', 'ba52ae68-c043-400b-acaf-37a707acee39', 'ค่าความสั่นไหวของเวลาหน่วง (Jitter) และอัตราการสูญหายของแพ็กเก็ต (Packet Loss Percentage)', true, 'ถูกต้อง โหมด UDP ใน iPerf3 รายงานทั้งค่า Jitter (ms) และ Packet Loss (%)', 1);
+INSERT INTO public.choices VALUES ('51fa993d-534f-4d86-b853-a048b4731481', 'ba52ae68-c043-400b-acaf-37a707acee39', 'ราคากลางของเครื่องโทรศัพท์ IP Phone ในท้องตลาด', false, 'ผิด ไม่ใช่ข้อมูลทางการค้า', 2);
+INSERT INTO public.choices VALUES ('11905cca-e7ac-4a30-8ce7-47707ee29c55', 'ba52ae68-c043-400b-acaf-37a707acee39', 'หมายเลขบัตรประชาชนของพนักงานในออฟฟิศ', false, 'ผิด ไม่เกี่ยวข้องกับข้อมูลส่วนบุคคล', 3);
+INSERT INTO public.choices VALUES ('238d29ef-87ea-4e00-888c-b4c77e6baa68', 'ba52ae68-c043-400b-acaf-37a707acee39', 'ความดังของเสียงเรียกเข้าลำโพง', false, 'ผิด iPerf3 วัดประสิทธิภาพระดับแพ็กเก็ตเครือข่าย', 4);
+INSERT INTO public.choices VALUES ('082d5c6c-0f33-418a-b073-6a7f38fefde3', '2dabfa05-a324-432d-ae60-5c73846c9e73', 'พบค่า Loss % สูงขึ้นที่ Hop นั้น และตัวเลขการสูญหายยังคงปรากฏต่อเนื่องในทุก Hop ถัดไปจนถึงปลายทาง', true, 'ถูกต้อง Loss ที่แท้จริงต้องส่งผลกระทบต่อเนื่องไปจนถึงโหนดปลายทาง', 1);
+INSERT INTO public.choices VALUES ('9b6a63ed-7d9d-42a4-8f8e-67640e1c1ed3', '2dabfa05-a324-432d-ae60-5c73846c9e73', 'ตัวเลข Hop เปลี่ยนเป็นสีชมพูทั้งหมด', false, 'ผิด โปรแกรมไม่ได้เปลี่ยนเป็นสีชมพู', 2);
+INSERT INTO public.choices VALUES ('75c52e56-7225-42af-8dd9-46888abbcf07', '2dabfa05-a324-432d-ae60-5c73846c9e73', 'หน้าจอคอมพิวเตอร์ดับและเปิดไม่ติดอีกเลย', false, 'ผิด ไม่เกี่ยวข้องกับจอภาพดับ', 3);
+INSERT INTO public.choices VALUES ('3812ac76-529f-4628-9109-a47e722c4214', '2dabfa05-a324-432d-ae60-5c73846c9e73', 'ค่า Worst Latency เท่ากับ 0 ms ทุกช่อง', false, 'ผิด ค่า 0 ms แปลว่าไม่มีความหน่วงเลย', 4);
+INSERT INTO public.choices VALUES ('8c2f2b3d-c688-444d-b236-f815af95bc47', 'b09a3292-b282-4bd5-b1bc-9c369e87d4b5', 'ช่วยให้คำสั่งที่พิมพ์เพียงครั้งเดียวถูกส่งไปรันบนทุกแท็บเทอร์มินัลที่เปิดอยู่พร้อมกันในเวลาเดียวกัน', true, 'ถูกต้อง Multi-Execution ส่งคำสั่งออกไปทุกหน้าต่างพร้อมกัน', 1);
+INSERT INTO public.choices VALUES ('85d41a91-bdfa-4f16-b3a9-48ee3bec470e', 'b09a3292-b282-4bd5-b1bc-9c369e87d4b5', 'ช่วยเพิ่มความเร็วรอบพัดลมระบายความร้อนของโน้ตบุ๊ก', false, 'ผิด ไม่เกี่ยวข้องกับพัดลมเครื่อง', 2);
+INSERT INTO public.choices VALUES ('771b98c9-3511-4d4e-ab4a-b7cca22f4212', 'b09a3292-b282-4bd5-b1bc-9c369e87d4b5', 'สั่งรีสตาร์ทเราเตอร์ของบริษัทอื่นโดยไม่ต้องใส่รหัสผ่าน', false, 'ผิด ผิดทั้งหลักการทำงานและความปลอดภัย', 3);
+INSERT INTO public.choices VALUES ('d89840b4-879f-4cd0-a96f-401d05793880', 'b09a3292-b282-4bd5-b1bc-9c369e87d4b5', 'เปลี่ยนภาษาของแป้นพิมพ์จากภาษาไทยเป็นภาษาอังกฤษอัตโนมัติ', false, 'ผิด ไม่ใช่ฟังก์ชันของ Multi-Execution', 4);
+INSERT INTO public.choices VALUES ('e99c79cf-2e53-43d0-8d3a-f33a8e56bf20', '2a6d2840-cad2-417a-99c9-0819e078bee2', 'Device Manager (ตัวจัดการอุปกรณ์) ภายใต้หมวดหมู่ Ports (COM & LPT)', true, 'ถูกต้อง Device Manager แสดงรายการฮาร์ดแวร์และหมายเลข COM Port จริง', 1);
+INSERT INTO public.choices VALUES ('92a0c784-8fdc-49ec-be50-6e0668aa1e9e', '2a6d2840-cad2-417a-99c9-0819e078bee2', 'Recycle Bin (ถังขยะของระบบ)', false, 'ผิด ถังขยะมีไว้เก็บไฟล์ที่ถูกลบ', 2);
+INSERT INTO public.choices VALUES ('8bf13937-f0da-41b3-8548-a740d977f635', '2a6d2840-cad2-417a-99c9-0819e078bee2', 'โปรแกรม Paint', false, 'ผิด Paint เป็นโปรแกรมวาดภาพ', 3);
+INSERT INTO public.choices VALUES ('84a3116c-2019-4981-8380-4620dc070ade', '2a6d2840-cad2-417a-99c9-0819e078bee2', 'หน้าจอแสดงภาพพักหน้าจอ (Screensaver)', false, 'ผิด ไม่เกี่ยวข้องกับฮาร์ดแวร์', 4);
+INSERT INTO public.choices VALUES ('e302c3e9-3075-4604-85e8-250341d9615b', 'fbf79fd2-d9f5-4d67-ae52-1d301301aa23', 'เปิดแสดงผลหน้าต่างกราฟิก (GUI) ของแอปพลิเคชันจาก Linux Server ข้ามมาแสดงบนหน้าจอ Windows ผ่านช่องทาง SSH ได้โดยตรง', true, 'ถูกต้อง X11 Forwarding ช่วยให้เปิดโปรแกรมกราฟิกของ Linux บน Windows ได้', 1);
+INSERT INTO public.choices VALUES ('e660af64-5984-497e-91a0-076ea65fc4f8', 'fbf79fd2-d9f5-4d67-ae52-1d301301aa23', 'สั่งให้สายไฟเบอร์ออปติกเปลี่ยนเป็นสายแลนทองแดง', false, 'ผิด เป็นไปไม่ได้ในทางกายภาพ', 2);
+INSERT INTO public.choices VALUES ('e7a37cb0-ed21-47a2-bdf5-a08d80be4b75', 'fbf79fd2-d9f5-4d67-ae52-1d301301aa23', 'แปลงไฟล์รูปภาพให้เป็นไฟล์เสียง MP3', false, 'ผิด ไม่เกี่ยวข้องกับการแปลงไฟล์มีเดีย', 3);
+INSERT INTO public.choices VALUES ('76a89b54-ded2-4054-8ce1-ef1e08ca5f32', 'fbf79fd2-d9f5-4d67-ae52-1d301301aa23', 'ปิดระบบไฟฟ้าของตึกสำนักงานจากระยะไกล', false, 'ผิด X11 เป็นระบบแสดงผลกราฟิกของระบบ Unix/Linux', 4);
+INSERT INTO public.choices VALUES ('b3477c16-1455-4542-83fd-55ec832830c4', '064b4c09-3817-47a7-887d-304df38cb2a2', 'SFTP (SSH File Transfer Protocol) บนพอร์ต TCP 22', true, 'ถูกต้อง SFTP ทำงานผ่านการเข้ารหัสของ SSH พอร์ต 22', 1);
+INSERT INTO public.choices VALUES ('0cfcbe6e-577c-4bc8-a243-7c40b3c7381a', '064b4c09-3817-47a7-887d-304df38cb2a2', 'HTTP ธรรมดาบนพอร์ต TCP 80', false, 'ผิด พอร์ต 80 เป็นเว็บแบบไม่เข้ารหัส', 2);
+INSERT INTO public.choices VALUES ('0e5739a6-6c75-4324-8563-de05608a268a', '064b4c09-3817-47a7-887d-304df38cb2a2', 'Telnet บนพอร์ต TCP 23', false, 'ผิด Telnet เป็นข้อความธรรมดาไม่ปลอดภัย', 3);
+INSERT INTO public.choices VALUES ('892342ca-8316-4972-9a7a-88c13d017efa', '064b4c09-3817-47a7-887d-304df38cb2a2', 'DNS บนพอร์ต UDP 53', false, 'ผิด พอร์ต 53 ใช้สำหรับค้นหาชื่อโดเมน', 4);
+INSERT INTO public.choices VALUES ('c2ce9cba-729a-4511-8f0a-114d30be64e8', '903470ef-ea5f-4fdf-9738-2d4c4feb90fa', 'มีแถบ SFTP Browser ฝังในตัวทางด้านซ้าย ช่วยให้ลากวางไฟล์และดับเบิลคลิกแก้ไขไฟล์คอนฟิกได้ทันทีโดยไม่ต้องเปิดโปรแกรมอื่นเพิ่ม', true, 'ถูกต้อง Embedded SFTP Browser คือจุดเด่นที่สะดวกที่สุดของ MobaXterm', 1);
+INSERT INTO public.choices VALUES ('6f3fa1c2-e4fc-499f-8519-10701da67450', '903470ef-ea5f-4fdf-9738-2d4c4feb90fa', 'แจกเงินคริปโตเคอร์เรนซีฟรีทุกครั้งที่ล็อกอิน', false, 'ผิด ไม่เกี่ยวข้องกับเงินคริปโต', 2);
+INSERT INTO public.choices VALUES ('23aebc3c-d103-48d1-a21b-a4d076635063', '903470ef-ea5f-4fdf-9738-2d4c4feb90fa', 'ล้างประวัติอาชญากรรมของผู้ใช้งานออกจากระบบ', false, 'ผิด ไม่เกี่ยวข้องกัน', 3);
+INSERT INTO public.choices VALUES ('a9e92d13-96d5-401d-8b29-cd154979d06c', '903470ef-ea5f-4fdf-9738-2d4c4feb90fa', 'บังคับให้เซิร์ฟเวอร์เปลี่ยนภาษาเครื่องเป็นภาษาเยอรมัน', false, 'ผิด ภาษาของเซิร์ฟเวอร์ขึ้นอยู่กับ locale ที่ตั้งค่าไว้', 4);
 
 
 --
@@ -5737,6 +6322,66 @@ INSERT INTO public.flashcards VALUES ('f1a28a48-5fb3-429e-8b1c-c0b21ac4175d', 'd
 - Parity: None
 - Stop bits: 1
 - Flow control: None', '9600-8-N-1 (Flow control = None)', 5, '2026-11-10 13:22:20.548088+00', '2026-11-10 13:22:20.548088+00');
+INSERT INTO public.flashcards VALUES ('7683d542-475f-43f6-a276-fd38d4caa810', 'network:11-design:fc01', 2, '3e090998-8642-4e35-af78-02f95246485a', 'โมเดล 3-Tier ของ Cisco ประกอบด้วย 3 ชั้นใดบ้าง และ Core Layer มีกฎเหล็กสำคัญอย่างไร?', '1. Core Layer: ทางด่วนส่งข้อมูลความเร็วสูง (กฎเหล็ก: ห้ามใส่ ACLs/Packet Filter ซับซ้อน เพื่อรักษาความเร็วสูงสุด)
+2. Distribution Layer: ชั้นควบคุมนโยบาย, ACLs, Inter-VLAN Routing
+3. Access Layer: ชั้นเชื่อมต่ออุปกรณ์ปลายทาง (PC, AP, Printer)', 'Core (เร็วสุด ห้ามใส่ ACL), Distribution (กรองและ Routing), Access (ต่อผู้ใช้)', 1, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('5128d77c-b804-44b6-aff1-5c7535ac976c', 'network:11-design:fc02', 2, '3e090998-8642-4e35-af78-02f95246485a', 'ทำไม Data Center ยุคใหม่จึงเปลี่ยนมาใช้ Spine-Leaf Architecture แทน 3-Tier?', 'เพราะทราฟฟิกใน Data Center ยุคใหม่เป็นแบบ East-West (Server คุยกับ Server) สูงเกิน 80%
+Spine-Leaf ทำให้ทุกคู่ตู้แร็คมีระยะทางคงที่ 2 Hops เสมอ และใช้ ECMP (Layer 3) วิ่งพร้อมกันทุกเส้นโดยไม่ถูก Spanning Tree บล็อก', 'รองรับ East-West traffic, ระยะทางคงที่ 2 Hops, ใช้ ECMP แทน STP', 2, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('a90046e8-a276-4d2e-af77-0b2423d8512d', 'network:11-design:fc03', 2, '3e090998-8642-4e35-af78-02f95246485a', 'HSRP กับ VRRP คืออะไร และต่างกันอย่างไร?', 'คือโปรโตคอลสร้าง Virtual Default Gateway สำรอง (FHRP) ระหว่างสวิตช์/เราเตอร์ 2 ตัว:
+- HSRP: ลิขสิทธิ์เฉพาะของ Cisco (แบ่งเป็น Active / Standby)
+- VRRP: มาตรฐานเปิดสากล ใช้ได้กับทุกยี่ห้อ (แบ่งเป็น Master / Backup)', 'Virtual Gateway สำรอง: HSRP = Cisco, VRRP = มาตรฐานเปิดสากล', 3, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('91ca31f3-3a23-4f3c-8cbb-9c99625fa1c2', 'network:11-design:fc04', 2, '3e090998-8642-4e35-af78-02f95246485a', 'vPC (Virtual Port Channel) หรือ MLAG มีประโยชน์อย่างไรในการต่อเซิร์ฟเวอร์เข้าตู้แร็ค?', 'ช่วยให้เซิร์ฟเวอร์สามารถต่อสายแลน 2 เส้นด้วย LACP แยกไปยังสวิตช์คนละตู้ได้ โดยสวิตช์คู่มองเห็นเป็น Port Channel เดียวกัน ทำให้ไม่มีจุดล้มเหลวเดี่ยว (SPOF) ระดับตู้สวิตช์', 'ทำ LACP ข้ามสวิตช์ 2 ตัว ป้องกันสวิตช์ตัวใดตัวหนึ่งพัง', 4, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('51aa221e-7791-48e1-bbca-98e904040fba', 'network:11-design:fc05', 2, '3e090998-8642-4e35-af78-02f95246485a', 'DMZ (Demilitarized Zone) คืออะไร และมีกฎเหล็กความปลอดภัยอย่างไร?', 'โซนเครือข่ายตรงกลางระหว่างอินเทอร์เน็ตกับวงภายใน ใช้ตั้งเซิร์ฟเวอร์สาธารณะ (Web/Proxy)
+กฎเหล็ก: เครื่องใน DMZ ต้องไม่สามารถริเริ่มสร้างการเชื่อมต่อ (Initiate Connection) เข้าสู่วงภายในองค์กรได้โดยตรง เพื่อป้องกันคนร้ายทะลุเข้าหาฐานข้อมูล', 'โซนคั่นกลางเซิร์ฟเวอร์สาธารณะ ห้ามเริ่มต่อสายเข้าสู่วงภายใน', 5, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('1c42edd3-cded-4007-94d0-2483c90ab243', 'tools:01-packet-tracer:fc01', 11, '93a91167-81c5-4497-a769-3930c59a54b1', 'Cisco Packet Tracer จัดเป็นซอฟต์แวร์ประเภทใด และมีข้อดี-ข้อจำกัดอย่างไร?', 'เป็น "Network Simulator" (จำลองพฤติกรรมและคำสั่ง)
+- ข้อดี: กินทรัพยากรน้อยมาก ทำแล็บขนาดใหญ่บนโน้ตบุ๊กทั่วไปได้สบาย
+- ข้อจำกัด: รองรับคำสั่ง IOS เฉพาะชุดที่กำหนดไว้ ไม่สามารถรันฟีเจอร์ระดับสูงของจริงได้ทั้งหมด', 'Network Simulator กินสเปกน้อย แต่คำสั่งไม่ครบ 100% เหมือนของจริง', 1, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('e441f420-50c9-4627-bc41-cf24400a5c86', 'tools:01-packet-tracer:fc02', 11, '93a91167-81c5-4497-a769-3930c59a54b1', 'Realtime Mode กับ Simulation Mode ใน Packet Tracer ต่างกันอย่างไร?', '- Realtime Mode: เครือข่ายทำงานตามเวลาจริง (ไฟส้ม STP รอ 30-50 วินาที มีปุ่ม Fast Forward Time ช่วยเร่งเวลา)
+- Simulation Mode: เวลาหยุดนิ่ง เห็นซองจดหมาย PDU วิ่งทีละก้าว และกดดู Header ของ OSI Model แต่ละชั้นได้', 'เวลาจริง (เร่งเวลาได้) vs เวลาหยุดนิ่ง (แกะดู PDU ทีละก้าว)', 2, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('d999d8ef-305d-4761-8b50-ebeea107ec9f', 'tools:01-packet-tracer:fc03', 11, '93a91167-81c5-4497-a769-3930c59a54b1', 'ปุ่มลัดใดใน Packet Tracer ใช้เร่งเวลา (Fast Forward Time) ข้ามช่วงรอไฟพอร์ตสีส้มของ Spanning Tree?', 'กดปุ่ม "Alt + D" หรือคลิกปุ่มลูกศรคู่ >> ด้านล่างข้างรูปนาฬิกา', 'Alt + D (Fast Forward Time)', 3, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('42ec9f6a-cbc9-46cb-b669-4c5127e70c3f', 'tools:01-packet-tracer:fc04', 11, '93a91167-81c5-4497-a769-3930c59a54b1', 'PDU Inspector ใน Simulation Mode ช่วยแสดงข้อมูลอะไรบ้างในการวิเคราะห์เครือข่าย?', '1. OSI Model View: แสดงขั้นตอนการประมวลผลของ Layer 1 ถึง Layer 7 (ทั้ง Inbound และ Outbound)
+2. PDU Details: ผ่าดูข้อมูลโครงสร้าง Header จริง เช่น MAC Address, IP Header, TCP/UDP พอร์ต และ ICMP Type', 'OSI 7 Layers ขั้นตอนการคิด + ไส้ใน Packet Header จริง', 4, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('cc942bce-ae78-48a1-9a39-5be2b890b208', 'tools:01-packet-tracer:fc05', 11, '93a91167-81c5-4497-a769-3930c59a54b1', 'ไฟล์แล็บ ".pkt" กับ ".pka" ของ Packet Tracer ต่างกันอย่างไร?', '- .pkt: ไฟล์บันทึกผังเครือข่ายและคอนฟิกทั่วไป (บันทึกและแก้ไขได้อิสระ)
+- .pka: ไฟล์ Activity โจทย์แบบฝึกหัด มีระบบตรวจคะแนนอัตโนมัติ (Completion %) และล็อกหน้าต่างคำสั่งไว้', '.pkt = ไฟล์ผังทั่วไป, .pka = ไฟล์โจทย์สอบตรวจคะแนนอัตโนมัติ', 5, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('5bbc3786-0d90-4a5f-b7a6-d2232ca29821', 'tools:02-gns3:fc01', 11, '9a90cb58-d93b-420d-b47b-7cb59fd88ba0', 'Network Simulator (Packet Tracer) กับ Network Emulator (GNS3/EVE-NG) ต่างกันอย่างไร?', '- Simulator: เขียนโปรแกรมเลียนแบบคำสั่ง กินสเปกน้อย แต่คำสั่งไม่ครบ 100%
+- Emulator: จำลองฮาร์ดแวร์เสมือนแล้วนำ "ระบบปฏิบัติการจริง (Real OS)" มาบูต สมจริง 100% รองรับหลายยี่ห้อ แต่กิน RAM/CPU สูง', 'จำลองคำสั่งบางส่วน (กินสเปกน้อย) vs บูต OS จริง 100% (กิน RAM/CPU สูง)', 1, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('0e9a1fb1-e2fb-413f-b353-576da58e5256', 'tools:02-gns3:fc02', 11, '9a90cb58-d93b-420d-b47b-7cb59fd88ba0', 'สถาปัตยกรรม GNS3 GUI ทำงานคู่กับ GNS3 VM อย่างไร?', 'GNS3 GUI ติดตั้งบนเครื่องหลักเพื่อวาดผังและควบคุม ส่วน GNS3 VM รันบน VMware/VirtualBox (Linux) เพื่อรันระบบปฏิบัติการเสมือน (QEMU/KVM, IOU, Docker) ให้มีประสิทธิภาพและเสถียรภาพสูงสุด', 'GUI วาดผังบนโฮสต์ + VM (Linux) เป็นตัวรันอุปกรณ์เสมือน', 2, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('e9117e23-44f5-47fe-8477-04fa3feab391', 'tools:02-gns3:fc03', 11, '9a90cb58-d93b-420d-b47b-7cb59fd88ba0', 'ค่า "Idle-PC" ใน GNS3 คืออะไร และจำเป็นต้องตั้งค่าเมื่อใด?', 'คือค่าที่คำนวณรอบลูปว่างของเราเตอร์ Dynamips เพื่อสั่งหยุดการหมุน CPU คอมพิวเตอร์ตอนเราเตอร์ว่างงาน ป้องกันไม่ให้ CPU ของเครื่องโฮสต์พุ่งขึ้น 100%', 'สั่งหยุดรอบ CPU ตอนเราเตอร์ว่างงาน ป้องกัน CPU วิ่ง 100%', 3, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('9314cd4a-d91f-4b23-9e7a-771dce0dc332', 'tools:02-gns3:fc04', 11, '9a90cb58-d93b-420d-b47b-7cb59fd88ba0', 'อิมเมจชนิดใดใน GNS3 ที่กินทรัพยากรน้อยมากแต่รองรับคำสั่ง Layer 2/3 Cisco ได้สมบูรณ์แบบ?', 'Cisco IOU / IOL (IOS on Linux) ซึ่งกิน RAM เพียง 256–512 MB ต่อตัว และรองรับการทำสวิตชิ่งขั้นสูงอย่างสมบูรณ์', 'Cisco IOU (IOS on Linux)', 4, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('435e9281-4de0-4be0-b8b6-c4db13d7761b', 'tools:02-gns3:fc05', 11, '9a90cb58-d93b-420d-b47b-7cb59fd88ba0', 'การทำ Packet Capture ใน GNS3 เชื่อมโยงกับโปรแกรมใด และมีขั้นตอนอย่างไร?', 'เชื่อมโยงกับ Wireshark ในตัว เพียงแค่คลิกขวาที่เส้นสายเคเบิลที่ต้องการ แล้วเลือก "Start Capture" โปรแกรม Wireshark จะเปิดขึ้นมาแสดงแพ็กเก็ตสดที่วิ่งผ่านสายเส้นนั้นทันที', 'คลิกขวาที่สาย ➔ Start Capture ➔ Wireshark เปิดขึ้นมาอัตโนมัติ', 5, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('6e3f7ca6-b56c-40cf-b6a4-c613cecc131b', 'tools:03-wireshark:fc01', 11, 'e0a4cdec-9071-4a41-bc6a-0aa782e85680', 'หน้าต่าง 3 ช่องหลัก (Three Panes) ของโปรแกรม Wireshark มีอะไรบ้างและแสดงข้อมูลอะไร?', '1. Top Pane (Packet List): รายการแพ็กเก็ตเรียงตามเวลา พร้อมสีเตือน
+2. Middle Pane (Packet Details): ผ่าโครงสร้าง Header ตามชั้น OSI (Ethernet -> IP -> TCP/UDP -> App)
+3. Bottom Pane (Packet Bytes): ข้อมูลดิบแบบ Hex Dump และ ASCII', 'Packet List, Packet Details (OSI Layers), Packet Bytes (Hex Dump)', 1, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('0566fc6c-0d26-43c7-a4df-004b26d91381', 'tools:03-wireshark:fc02', 11, 'e0a4cdec-9071-4a41-bc6a-0aa782e85680', 'Capture Filter กับ Display Filter ใน Wireshark ต่างกันอย่างไร?', '- Capture Filter (BPF): กรองก่อนบันทึกจริง ไม่ตรงเงื่อนไขจะทิ้งทันที ประหยัด RAM/Disk (เช่น "port 80")
+- Display Filter: ดักจับข้อมูลทั้งหมดมาก่อน แล้วค่อยพิมพ์ซ่อน/แสดงบนหน้าจอ เปลี่ยนมุมมองได้ตลอดข้อมูลดิบไม่หาย (เช่น "tcp.flags.reset == 1")', 'กรองก่อนจับทิ้งทันที (BPF) vs ดักจับหมดแล้วค่อยกรองมุมมองหน้าจอ', 2, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('a9d2f8e5-a691-401c-9dba-8ad983370927', 'tools:03-wireshark:fc03', 11, 'e0a4cdec-9071-4a41-bc6a-0aa782e85680', 'Display Filter สำหรับกรองหาแพ็กเก็ตที่ถูกส่งซ้ำ (Retransmission) และการตัดการเชื่อมต่อ (TCP Reset) คืออะไร?', '- แพ็กเก็ตส่งซ้ำ (Packet Loss): tcp.analysis.retransmission
+- ตัดการเชื่อมต่อ / Refused: tcp.flags.reset == 1', 'tcp.analysis.retransmission และ tcp.flags.reset == 1', 3, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('0cfe80a3-135c-4b51-bd3b-75a5f77c484a', 'tools:03-wireshark:fc04', 11, 'e0a4cdec-9071-4a41-bc6a-0aa782e85680', 'Follow TCP Stream ใน Wireshark มีหน้าที่อะไร?', 'รวบรวมแพ็กเก็ตทั้งหมดของเซสชัน TCP นั้นมาต่อกันเป็นบทสนทนาต่อเนื่องในหน้าต่างเดียว ทำให้อ่านข้อความที่คุยกันได้ง่าย (ข้อความสีแดง = ฝั่งส่ง Client, ข้อความสีน้ำเงิน = ฝั่งตอบ Server)', 'ประกอบข้อความแชต/HTTP ระหว่าง Client (สีแดง) และ Server (สีน้ำเงิน)', 4, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('94ee5873-f6e0-49c1-a912-91b2190f139b', 'tools:03-wireshark:fc05', 11, 'e0a4cdec-9071-4a41-bc6a-0aa782e85680', 'TCP ZeroWindow หมายถึงอะไรในมุมมองการวิเคราะห์ปัญหาเครือข่าย?', 'หมายถึง บัฟเฟอร์ขารับ (Receive Buffer) ของเครื่องปลายทางเต็ม ไม่สามารถรับข้อมูลเพิ่มได้ จึงบอกให้เครื่องต้นทางหยุดส่งข้อมูลชั่วคราว มักสะท้อนว่าเครื่องปลายทาง CPU สูง หรือดิสก์เขียนข้อมูลไม่ทัน', 'Receive Buffer ของเครื่องปลายทางเต็ม สั่งต้นทางหยุดส่งชั่วคราว', 5, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('2e05c459-9791-491f-959d-a5a71246aef1', 'tools:04-nmap-iperf:fc01', 11, '3b325ae8-b7e2-4b0a-b86d-8e2bef22bd87', 'ผลลัพธ์สถานะพอร์ต "open", "closed" และ "filtered" ของ Nmap ต่างกันอย่างไร?', '- open: พอร์ตเปิด มีแอปพลิเคชันดักฟังและรับการเชื่อมต่อ
+- closed: แพ็กเก็ตถึงเครื่อง แต่ไม่มีแอปพลิเคชันเปิดฟัง (เครื่องตอบ TCP RST กลับมา)
+- filtered: แพ็กเก็ตถูกบล็อกโดย Firewall หรือ ACL กลางทาง ไม่มีทางตอบกลับ', 'open=มีคนฟัง, closed=ไม่มีคนฟังแต่เครื่องตอบ RST, filtered=โดน Firewall บล็อก', 1, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('8c0000be-4bee-4312-89a0-506ed3d5c820', 'tools:04-nmap-iperf:fc02', 11, '3b325ae8-b7e2-4b0a-b86d-8e2bef22bd87', 'คำสั่ง Nmap สำหรับสแกนแบบ Stealth SYN Scan และสแกน Service Version คืออะไร?', '- Stealth SYN Scan: sudo nmap -sS <เป้าหมาย>
+- Service Version Detection: nmap -sV <เป้าหมาย>
+- ตรวจระบบปฏิบัติการ (OS): sudo nmap -O <เป้าหมาย>', '-sS (SYN scan), -sV (Version), -O (OS detection)', 2, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('adfd87af-e898-455b-aa86-b936cad787ee', 'tools:04-nmap-iperf:fc03', 11, '3b325ae8-b7e2-4b0a-b86d-8e2bef22bd87', 'ทำไม iPerf3 ถึงวัดความเร็วท่อเครือข่ายได้แม่นยำกว่าการก๊อปปี้ไฟล์?', 'เพราะ iPerf3 สร้างข้อมูลสังเคราะห์บนหน่วยความจำ RAM โดยตรงแล้วยิงอัดผ่านท่อเน็ตเวิร์ก จึงไม่ติดคอขวดที่ความเร็วการอ่านเขียนของฮาร์ดดิสก์ (Disk I/O) ทำให้เห็นสมรรถนะจริงของเครือข่าย 100%', 'สร้างทราฟฟิกบน RAM โดยตรง ไม่ติดคอขวด Disk I/O', 3, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('cc80026d-3518-49c7-a349-c5c5e5e16032', 'tools:04-nmap-iperf:fc04', 11, '3b325ae8-b7e2-4b0a-b86d-8e2bef22bd87', 'คำสั่งรัน iPerf3 ฝั่ง Server และฝั่ง Client ในโหมด TCP ปกติ กับโหมด UDP คืออะไร?', '- ฝั่ง Server: iperf3 -s
+- ฝั่ง Client (TCP): iperf3 -c <server_ip>
+- ฝั่ง Client (UDP วัด Jitter/Loss): iperf3 -c <server_ip> -u -b 100M', 'iperf3 -s (server) และ iperf3 -c <ip> (client) เพิ่ม -u สำหรับ UDP', 4, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('49041708-a4f3-4060-a5b6-db546120f26a', 'tools:04-nmap-iperf:fc05', 11, '3b325ae8-b7e2-4b0a-b86d-8e2bef22bd87', 'WinMTR (หรือ MTR) รวมความสามารถของคำสั่งใดเข้าด้วยกัน และช่วยวิเคราะห์ปัญหาอย่างไร?', 'รวม "ping" และ "traceroute" เข้าด้วยกัน โดยส่งแพ็กเก็ตต่อเนื่องไปยังทุก Hop บนเส้นทาง ทำให้เห็นค่า Loss % และ Latency (Avg/Worst) ของแต่ละช่วงชุมสายได้แบบเรียลไทม์', 'ping + traceroute ต่อเนื่อง เห็น Loss % และ Latency แต่ละ Hop', 5, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('0ccc7841-9cb5-4c85-bbec-60fa17092db0', 'tools:05-mobaxterm:fc01', 11, '57df0d37-2e95-4e42-9185-f2ba49596293', 'จุดเด่นหลักของโปรแกรม MobaXterm เมื่อเทียบกับ PuTTY คืออะไร?', '1. มี Embedded SFTP Browser ฝังตัวด้านซ้าย ลากวางไฟล์และแก้ Text ได้ทันที
+2. รองรับ Multi-Execution พิมพ์ครั้งเดียวรันทุกแท็บพร้อมกัน
+3. มี X11 Server ในตัว เปิดโปรแกรม GUI ของ Linux บน Windows ได้
+4. รองรับ Tabbed interface จัดการหลายเซสชันสะดวก', 'SFTP ในตัว, Multi-Execution รันทุกแท็บ, X11 Server, แท็บหลายหน้าต่าง', 1, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('ee81d453-7b77-4597-9af2-67325da89d81', 'tools:05-mobaxterm:fc02', 11, '57df0d37-2e95-4e42-9185-f2ba49596293', 'Multi-Execution Mode ใน MobaXterm ใช้ทำงานอย่างไร?', 'เปิดเซสชัน SSH หลายเครื่องพร้อมกัน แล้วกดปุ่ม MultiExec ข้อความหรือคำสั่งทุกตัวที่พิมพ์จะถูกส่งไปประมวลผลบนทุกแท็บในวินาทีเดียวกัน', 'พิมพ์ครั้งเดียว คำสั่งส่งไปรันบนทุกเซิร์ฟเวอร์พร้อมกัน', 2, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('bc554664-986c-4272-b4d4-49acc6303b5c', 'tools:05-mobaxterm:fc03', 11, '57df0d37-2e95-4e42-9185-f2ba49596293', 'X11 Forwarding ใน SSH คืออะไร และช่วยงานอะไร?', 'การส่งผ่านหน้าต่างกราฟิก (GUI) ของโปรแกรมที่รันบน Linux Server ข้ามมาแสดงผลบนหน้าจอ Windows ของเครื่องลูกข่าย เช่น เปิดตัวติดตั้ง Oracle หรือโปรแกรมจำลอง', 'ส่งหน้าต่างโปรแกรม GUI ของ Linux มาเปิดบน Windows ผ่าน SSH', 3, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('010324d3-7a5a-41af-825d-b3a11ac4bce2', 'tools:05-mobaxterm:fc04', 11, '57df0d37-2e95-4e42-9185-f2ba49596293', 'ค่าคอนฟิก Serial พอร์ตสำหรับต่อสาย Console เข้าสวิตช์หน้าตู้แร็คตามมาตรฐานสากลคืออะไร?', 'มาตรฐาน "9600-8-N-1":
+- Speed (Baud): 9600
+- Data bits: 8
+- Parity: None
+- Stop bits: 1
+- Flow Control: None (ตรวจหมายเลข COM Port ได้จาก Device Manager)', '9600-8-N-1 (Flow Control = None)', 4, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
+INSERT INTO public.flashcards VALUES ('fc062af8-8626-4c80-b370-c590968ed79e', 'tools:05-mobaxterm:fc05', 11, '57df0d37-2e95-4e42-9185-f2ba49596293', 'WinSCP ใช้โปรโตคอลและพอร์ตใดในการโอนย้ายไฟล์ความปลอดภัยสูง?', 'ใช้โปรโตคอล SFTP (SSH File Transfer Protocol) ผ่านพอร์ตมาตรฐาน TCP 22 มีฟังก์ชัน Resume และ Directory Synchronization', 'SFTP ผ่านพอร์ต TCP 22', 5, '2026-11-12 08:26:05.561698+00', '2026-11-12 08:26:05.561698+00');
 
 
 --
@@ -5779,7 +6424,7 @@ INSERT INTO public.study_activity VALUES ('d6027f00-54d5-464d-ba47-572878ad091e'
 -- Name: topics_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.topics_id_seq', 10, true);
+SELECT pg_catalog.setval('public.topics_id_seq', 11, true);
 
 
 --
