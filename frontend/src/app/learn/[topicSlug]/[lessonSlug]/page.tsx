@@ -7,7 +7,6 @@ import {
   ArrowLeft, 
   ArrowRight, 
   ArrowUp,
-  Bookmark, 
   HelpCircle, 
   Layers,
   Check
@@ -80,13 +79,10 @@ export default function LessonDetailPage() {
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   const { 
-    bookmarkIds, 
-    toggleBookmarkId, 
     completedLessonIds, 
     toggleCompletedLessonId, 
     setStreakInfo 
   } = useAppStore();
-  const isBookmarked = lesson ? bookmarkIds.has(lesson.id) : false;
   const isCompleted = lesson ? completedLessonIds.has(lesson.id) : false;
 
   useEffect(() => {
@@ -147,37 +143,6 @@ export default function LessonDetailPage() {
   const headings = useMemo(() => {
     return lesson?.content_md ? extractHeadings(lesson.content_md) : [];
   }, [lesson?.content_md]);
-
-  const handleBookmark = async () => {
-    if (!lesson) return;
-    const isCurrentlyBookmarked = bookmarkIds.has(lesson.id);
-
-    // Optimistic UI toggle
-    toggleBookmarkId(lesson.id);
-
-    if (isCurrentlyBookmarked) {
-      toast.info('นำออกจากบุ๊กมาร์กแล้ว');
-    } else {
-      toast.success('บันทึกบุ๊กมาร์กเรียบร้อย');
-    }
-
-    try {
-      if (isCurrentlyBookmarked) {
-        await api.deleteBookmarkByItem('lesson', lesson.id);
-      } else {
-        await api.addBookmark({
-          item_type: 'lesson',
-          item_id: lesson.id,
-          notes: `บุ๊กมาร์กบทเรียน: ${lesson.title}`,
-        });
-      }
-    } catch (err) {
-      console.error('Bookmark toggle error:', err);
-      // Rollback on error
-      toggleBookmarkId(lesson.id);
-      toast.error('ไม่สามารถบันทึกได้ โปรดลองอีกครั้ง');
-    }
-  };
 
   const handleToggleComplete = async () => {
     if (!lesson) return;
@@ -289,24 +254,11 @@ export default function LessonDetailPage() {
           <span className="text-[var(--color-text)] font-medium truncate max-w-xs">{lesson.title}</span>
         </nav>
 
-        {/* Title Header Row with Bookmark Button */}
-        <div className="flex items-start justify-between gap-4 mb-3">
+        {/* Title Header Row */}
+        <div className="mb-3">
           <h1 className="font-heading text-2xl sm:text-3xl font-bold text-[var(--color-text)] leading-[1.35]">
             {lesson.title}
           </h1>
-
-          <button
-            onClick={handleBookmark}
-            aria-label={isBookmarked ? 'ลบบุ๊กมาร์ก' : 'บันทึกบทเรียนนี้'}
-            title={isBookmarked ? 'บันทึกแล้ว' : 'บันทึกบทเรียนนี้'}
-            className={`p-2 rounded-md border shrink-0 transition-colors ${
-              isBookmarked
-                ? 'bg-amber-400/10 text-amber-400 border-amber-400/30'
-                : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]'
-            }`}
-          >
-            <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-amber-400' : ''}`} />
-          </button>
         </div>
 
         {/* Metadata Row */}

@@ -7,7 +7,6 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Lightbulb,
-  Bookmark,
   CheckCircle2,
   XCircle,
   HelpCircle,
@@ -34,7 +33,7 @@ export default function FlashcardsPage() {
   const [showHint, setShowHint] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const { bookmarkIds, toggleBookmarkId, setStreakInfo } = useAppStore();
+  const { setStreakInfo } = useAppStore();
 
   // Load topics & saved ratings
   useEffect(() => {
@@ -151,29 +150,6 @@ export default function FlashcardsPage() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentIndex, displayedCards.length, currentCard, isFlipped]);
-
-  const handleBookmark = async () => {
-    if (!currentCard) return;
-    const isCurrentlyBookmarked = bookmarkIds.has(currentCard.id);
-    toggleBookmarkId(currentCard.id);
-
-    try {
-      if (isCurrentlyBookmarked) {
-        await api.deleteBookmarkByItem('flashcard', currentCard.id);
-        toast.info('นำออกจากบุ๊กมาร์กแล้ว');
-      } else {
-        await api.addBookmark({
-          item_type: 'flashcard',
-          item_id: currentCard.id,
-          notes: `ทบทวนการ์ด: ${currentCard.front_text.slice(0, 40)}`,
-        });
-        toast.success('บันทึกบุ๊กมาร์กเรียบร้อย');
-      }
-    } catch (err) {
-      console.error(err);
-      toggleBookmarkId(currentCard.id);
-    }
-  };
 
   const masteredCount = flashcards.filter((c) => ratings[c.id] === 'mastered').length;
   const reviewCount = flashcards.filter((c) => ratings[c.id] === 'review').length;
@@ -325,21 +301,6 @@ export default function FlashcardsPage() {
                 <RotateCw className="h-3.5 w-3.5 text-[var(--color-accent)] group-hover:rotate-180 transition-transform duration-300" />
                 <span>{isFlipped ? 'เฉลย & คำอธิบาย' : 'คำถาม (กด Space พลิก)'}</span>
               </span>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleBookmark();
-                }}
-                className={`p-1.5 rounded-md border transition-colors ${
-                  bookmarkIds.has(currentCard.id)
-                    ? 'bg-amber-400/10 text-amber-400 border-amber-400/30'
-                    : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
-                }`}
-                title="Bookmark การ์ดนี้"
-              >
-                <Bookmark className={`h-3.5 w-3.5 ${bookmarkIds.has(currentCard.id) ? 'fill-amber-400' : ''}`} />
-              </button>
             </div>
 
             {/* Content text */}

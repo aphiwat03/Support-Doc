@@ -99,12 +99,3 @@ export interface QuizResult {
   is_completed: boolean;
   evaluated_questions: EvaluatedQuestion[];
 }
-
-export interface Bookmark {
-  id: string;
-  item_type: 'question' | 'lesson' | 'flashcard';
-  item_id: string;
-  notes?: string;
-  created_at: string;
-  item_details?: any;
-}

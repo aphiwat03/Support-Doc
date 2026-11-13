@@ -40,7 +40,6 @@ async function bootstrap() {
     .addTag('Questions', 'คลังข้อสอบและสุ่มโจทย์ตามเงื่อนไข')
     .addTag('Quiz Engine', 'ระบบทำข้อสอบ ตรวจคำตอบ จับเวลา และสรุปผลวิเคราะห์')
     .addTag('Flashcards', 'ระบบการ์ดทบทวนความรู้ด่วน (Spaced Flashcards)')
-    .addTag('Bookmarks', 'ระบบบันทึกรายการสำหรับทบทวนซ้ำ')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

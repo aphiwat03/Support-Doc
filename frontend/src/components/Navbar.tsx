@@ -12,7 +12,6 @@ export const Navbar = () => {
   const { 
     isSidebarOpen, 
     toggleSidebar, 
-    setBookmarkIds, 
     setCompletedLessonIds, 
     streakDays, 
     studiedToday, 
@@ -20,18 +19,7 @@ export const Navbar = () => {
   } = useAppStore();
 
   useEffect(() => {
-    // 1. Initial bookmarks
-    api.getBookmarks()
-      .then((bookmarks) => {
-        if (Array.isArray(bookmarks)) {
-          setBookmarkIds(bookmarks.map((b) => b.item_id));
-        }
-      })
-      .catch((err) => {
-        console.warn('Initial bookmarks fetch deferred:', err);
-      });
-
-    // 2. Initial progress
+    // 1. Initial progress
     api.getProgress()
       .then((progress) => {
         if (progress?.completed_lesson_ids) {
@@ -42,7 +30,7 @@ export const Navbar = () => {
         console.warn('Initial progress fetch deferred:', err);
       });
 
-    // 3. Initial streak
+    // 2. Initial streak
     api.getStreakSummary()
       .then((summary) => {
         if (summary) {
@@ -52,7 +40,7 @@ export const Navbar = () => {
       .catch((err) => {
         console.warn('Initial streak fetch deferred:', err);
       });
-  }, [setBookmarkIds, setCompletedLessonIds, setStreakInfo]);
+  }, [setCompletedLessonIds, setStreakInfo]);
 
   // Re-synchronize Streak & Progress whenever navigating routes
   useEffect(() => {
@@ -70,7 +58,6 @@ export const Navbar = () => {
     { href: '/labs', label: 'แล็บ' },
     { href: '/quiz', label: 'แบบทดสอบ' },
     { href: '/flashcards', label: 'แฟลชการ์ด' },
-    { href: '/bookmarks', label: 'บุ๊กมาร์ก' },
     { href: '/streak', label: 'สถิติ Streak' },
   ];
 

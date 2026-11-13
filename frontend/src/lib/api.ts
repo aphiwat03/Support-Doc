@@ -1,4 +1,4 @@
-import { Topic, Lesson, Question, Flashcard, QuizSession, QuizResult, Bookmark } from '@/types';
+import { Topic, Lesson, Question, Flashcard, QuizSession, QuizResult } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -67,22 +67,6 @@ export const api = {
 
   // Flashcards
   getFlashcards: (topicSlug?: string) => fetchJson<Flashcard[]>(`/flashcards${topicSlug ? `?topic_slug=${topicSlug}` : ''}`),
-
-  // Bookmarks
-  getBookmarks: (itemType?: string) => fetchJson<Bookmark[]>(`/bookmarks${itemType ? `?item_type=${itemType}` : ''}`),
-  addBookmark: (body: { item_type: string; item_id: string; notes?: string }) =>
-    fetchJson<Bookmark>('/bookmarks', {
-      method: 'POST',
-      body: JSON.stringify(body),
-    }),
-  deleteBookmark: (id: string) =>
-    fetchJson<{ success: boolean; id: string }>(`/bookmarks/${id}`, {
-      method: 'DELETE',
-    }),
-  deleteBookmarkByItem: (itemType: string, itemId: string) =>
-    fetchJson<{ success: boolean; id: string }>(`/bookmarks/by-item/${itemType}/${itemId}`, {
-      method: 'DELETE',
-    }),
 
   // Progress Tracking
   getProgress: () =>
